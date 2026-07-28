@@ -34,6 +34,10 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /AkarPromax Office/);
   assert.match(html, /الشريط الإخباري/);
   assert.match(html, /أدوات المنصة/);
+  assert.match(html, /اختيار اللغة/);
+  assert.match(html, /العربية/);
+  assert.match(html, /English/);
+  assert.match(html, /Türkçe/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {
