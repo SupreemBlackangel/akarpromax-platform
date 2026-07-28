@@ -77,10 +77,10 @@ type Translation = {
   sidebar: Array<[string, string]>;
 };
 
-const languageOptions: Array<{ id: Locale; short: string; label: string }> = [
-  { id: "ar", short: "AR", label: "العربية" },
-  { id: "en", short: "EN", label: "English" },
-  { id: "tr", short: "TR", label: "Türkçe" },
+const languageOptions: Array<{ id: Locale; short: string; symbol: string; label: string }> = [
+  { id: "ar", short: "AR", symbol: "ع", label: "العربية" },
+  { id: "en", short: "EN", symbol: "🇬🇧", label: "English" },
+  { id: "tr", short: "TR", symbol: "🇹🇷", label: "Türkçe" },
 ];
 
 const translations: Record<Locale, Translation> = {
@@ -344,8 +344,10 @@ function AdSlot({ copy, tone = "light" }: { copy: Translation; tone?: "light" | 
 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
+  const [languageOpen, setLanguageOpen] = useState(false);
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
+  const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -375,8 +377,13 @@ export default function Home() {
             <div className="header-tools" aria-label={copy.toolsAria}>
               <a href="#top" aria-label={copy.countryAria}>{copy.country}　⌖</a>
               <a href="#top" aria-label={copy.currencyAria}>{copy.currency}</a>
-              <div className="language-switcher" role="group" aria-label={copy.languageAria}>
-                {languageOptions.map((option) => <button key={option.id} type="button" className={locale === option.id ? "language-option active" : "language-option"} aria-label={option.label} aria-pressed={locale === option.id} onClick={() => setLocale(option.id)}>{option.short}</button>)}
+              <div className="language-switcher" aria-label={copy.languageAria}>
+                <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
+                  <span className="language-symbol" aria-hidden="true">{selectedLanguage.symbol}</span><span>{selectedLanguage.short}</span><span className="language-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div className="language-dropdown" role="menu" hidden={!languageOpen}>
+                  {languageOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={locale === option.id ? "language-option active" : "language-option"} aria-label={option.label} aria-pressed={locale === option.id} onClick={() => { setLocale(option.id); setLanguageOpen(false); }}><span className="language-symbol" aria-hidden="true">{option.symbol}</span><span>{option.label}</span><small>{option.short}</small></button>)}
+                </div>
               </div>
               <a href="#top" aria-label={copy.officeAppAria}>▣</a>
               <a className="admin-chip" href="#account">Admin　♙</a>
