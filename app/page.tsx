@@ -556,11 +556,14 @@ export default function Home() {
   const [countryOpen, setCountryOpen] = useState(false);
   const [city, setCity] = useState("om-muscat");
   const [cityOpen, setCityOpen] = useState(false);
+  const [sidebarPinned, setSidebarPinned] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
   const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
   const selectedCity = cityOptions.find((option) => option.id === city && option.countryId === country) ?? citiesForCountry(country)[0] ?? cityOptions[0];
+  const sidebarOpen = sidebarPinned || sidebarHovered;
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -586,8 +589,8 @@ export default function Home() {
 
   return (
     <main className="reference-app" id="top" dir={direction} data-locale={locale}>
-      <aside className="right-sidebar" aria-label={copy.sidebarAria}>
-        <div className="sidebar-head"><Brand copy={copy} /><button type="button" aria-label={copy.closeMenu}>×</button></div>
+      <aside id="right-sidebar" className={sidebarOpen ? "right-sidebar sidebar-open" : "right-sidebar"} aria-label={copy.sidebarAria} onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
+        <div className="sidebar-head"><Brand copy={copy} /><button type="button" aria-label={copy.closeMenu} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>×</button></div>
         <div className="sidebar-scroll">
           {copy.sidebar.map(([icon, label], index) => (
             <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={index === 0 ? "#top" : `#module-${index}`} key={`${locale}-${index}-${label}`}>
@@ -602,7 +605,7 @@ export default function Home() {
         <div className="sticky-topbar">
         <header className="reference-header">
           <div className="container header-inner">
-            <button className="menu-trigger" type="button" aria-label={copy.showMenu}>☰</button>
+            <button className="menu-trigger" type="button" aria-label={sidebarPinned ? copy.closeMenu : copy.showMenu} aria-controls="right-sidebar" aria-expanded={sidebarPinned} onClick={() => { setSidebarPinned((pinned) => !pinned); setSidebarHovered(false); }}>☰</button>
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
               <div className="country-switcher" aria-label={copy.countryAria}>
