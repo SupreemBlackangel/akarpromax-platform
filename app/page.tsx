@@ -599,6 +599,7 @@ export default function Home() {
       </aside>
 
       <div className="site-canvas">
+        <div className="sticky-topbar">
         <header className="reference-header">
           <div className="container header-inner">
             <button className="menu-trigger" type="button" aria-label={copy.showMenu}>☰</button>
@@ -641,6 +642,7 @@ export default function Home() {
             <div className="ticker-track">{copy.ticker.map((item, index) => <span key={`${locale}-ticker-${index}`}>{index > 0 && " • "}{item}</span>)}</div>
             <button type="button" aria-label={copy.tickerPause}>Ⅱ</button>
           </div>
+        </div>
         </div>
 
         <section className="hero-ad container" aria-label={copy.heroAria}>
