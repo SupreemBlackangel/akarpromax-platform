@@ -393,6 +393,10 @@ function AdSlot({ copy, tone = "light" }: { copy: Translation; tone?: "light" | 
   return <div className={`ad-slot ad-${tone}`} aria-label={copy.adDescription}><span>{copy.adLabel}</span><small>{copy.adDescription}</small></div>;
 }
 
+function CountryFlag({ country }: { country: CountryOption }) {
+  return <span className="country-flag" aria-hidden="true"><img src={`https://flagcdn.com/24x18/${country.id}.png`} alt="" decoding="async" onError={(event) => { event.currentTarget.parentElement?.classList.add("emoji-fallback"); }} /><span className="country-flag-emoji">{country.flag}</span></span>;
+}
+
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -436,10 +440,10 @@ export default function Home() {
             <div className="header-tools" aria-label={copy.toolsAria}>
               <div className="country-switcher" aria-label={copy.countryAria}>
                 <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => setCountryOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
-                  <span className="country-flag" aria-hidden="true">{selectedCountry.flag}</span><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
+                  <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
-                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { setCountry(option.id); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); }}><span className="country-flag" aria-hidden="true">{option.flag}</span><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { setCountry(option.id); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
                 </div>
               </div>
               <a href="#top" aria-label={copy.currencyAria}>{copy.currency}</a>
