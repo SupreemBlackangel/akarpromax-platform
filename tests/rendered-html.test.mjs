@@ -32,7 +32,8 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /<title>عقار بروماكس \| منصة العقار الذكية في عُمان<\/title>/);
   assert.match(html, /قرارك العقاري/);
   assert.match(html, /AkarPromax Office/);
-  assert.match(html, /منصة واحدة، وحدات مستقلة/);
+  assert.match(html, /الشريط الإخباري/);
+  assert.match(html, /أدوات المنصة/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {
