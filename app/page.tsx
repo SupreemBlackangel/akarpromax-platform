@@ -16,6 +16,7 @@ type Translation = {
   showMenu: string;
   toolsAria: string;
   countryAria: string;
+  cityAria: string;
   currencyAria: string;
   languageAria: string;
   officeAppAria: string;
@@ -118,6 +119,82 @@ const countryOptions: CountryOption[] = [
   { id: "tr", flag: "🇹🇷", names: { ar: "تركيا", en: "Türkiye", tr: "Türkiye" }, timeZones: ["Europe/Istanbul"], localeCodes: ["tr-tr", "tr"] },
 ];
 
+type CityOption = {
+  id: string;
+  countryId: CountryId;
+  names: Record<Locale, string>;
+  timeZones?: string[];
+};
+
+const cityOptions: CityOption[] = [
+  { id: "dz-algiers", countryId: "dz", names: { ar: "الجزائر العاصمة", en: "Algiers", tr: "Cezayir" }, timeZones: ["Africa/Algiers"] },
+  { id: "dz-oran", countryId: "dz", names: { ar: "وهران", en: "Oran", tr: "Oran" } },
+  { id: "bh-manama", countryId: "bh", names: { ar: "المنامة", en: "Manama", tr: "Manama" }, timeZones: ["Asia/Bahrain"] },
+  { id: "bh-muharraq", countryId: "bh", names: { ar: "المحرق", en: "Muharraq", tr: "Muharrak" } },
+  { id: "km-moroni", countryId: "km", names: { ar: "موروني", en: "Moroni", tr: "Moroni" }, timeZones: ["Indian/Comoro"] },
+  { id: "km-mutsamudu", countryId: "km", names: { ar: "موتسامودو", en: "Mutsamudu", tr: "Mutsamudu" } },
+  { id: "dj-djibouti", countryId: "dj", names: { ar: "مدينة جيبوتي", en: "Djibouti City", tr: "Cibuti" }, timeZones: ["Africa/Djibouti"] },
+  { id: "dj-ali-sabieh", countryId: "dj", names: { ar: "علي صبيح", en: "Ali Sabieh", tr: "Ali Sabieh" } },
+  { id: "eg-cairo", countryId: "eg", names: { ar: "القاهرة", en: "Cairo", tr: "Kahire" }, timeZones: ["Africa/Cairo"] },
+  { id: "eg-alexandria", countryId: "eg", names: { ar: "الإسكندرية", en: "Alexandria", tr: "İskenderiye" } },
+  { id: "iq-baghdad", countryId: "iq", names: { ar: "بغداد", en: "Baghdad", tr: "Bağdat" }, timeZones: ["Asia/Baghdad"] },
+  { id: "iq-basra", countryId: "iq", names: { ar: "البصرة", en: "Basra", tr: "Basra" } },
+  { id: "jo-amman", countryId: "jo", names: { ar: "عمّان", en: "Amman", tr: "Amman" }, timeZones: ["Asia/Amman"] },
+  { id: "jo-aqaba", countryId: "jo", names: { ar: "العقبة", en: "Aqaba", tr: "Akabe" } },
+  { id: "kw-kuwait-city", countryId: "kw", names: { ar: "مدينة الكويت", en: "Kuwait City", tr: "Kuveyt Şehri" }, timeZones: ["Asia/Kuwait"] },
+  { id: "kw-al-ahmadi", countryId: "kw", names: { ar: "الأحمدي", en: "Al Ahmadi", tr: "El Ahmedi" } },
+  { id: "lb-beirut", countryId: "lb", names: { ar: "بيروت", en: "Beirut", tr: "Beyrut" }, timeZones: ["Asia/Beirut"] },
+  { id: "lb-tripoli", countryId: "lb", names: { ar: "طرابلس", en: "Tripoli", tr: "Trablus" } },
+  { id: "ly-tripoli", countryId: "ly", names: { ar: "طرابلس", en: "Tripoli", tr: "Trablus" }, timeZones: ["Africa/Tripoli"] },
+  { id: "ly-benghazi", countryId: "ly", names: { ar: "بنغازي", en: "Benghazi", tr: "Bingazi" } },
+  { id: "mr-nouakchott", countryId: "mr", names: { ar: "نواكشوط", en: "Nouakchott", tr: "Nuakşot" }, timeZones: ["Africa/Nouakchott"] },
+  { id: "mr-nouadhibou", countryId: "mr", names: { ar: "نواذيبو", en: "Nouadhibou", tr: "Nouadhibou" } },
+  { id: "ma-rabat", countryId: "ma", names: { ar: "الرباط", en: "Rabat", tr: "Rabat" }, timeZones: ["Africa/Casablanca"] },
+  { id: "ma-casablanca", countryId: "ma", names: { ar: "الدار البيضاء", en: "Casablanca", tr: "Kazablanka" } },
+  { id: "om-muscat", countryId: "om", names: { ar: "مسقط", en: "Muscat", tr: "Maskat" }, timeZones: ["Asia/Muscat"] },
+  { id: "om-nizwa", countryId: "om", names: { ar: "نزوى", en: "Nizwa", tr: "Nizva" } },
+  { id: "om-salalah", countryId: "om", names: { ar: "صلالة", en: "Salalah", tr: "Salalah" } },
+  { id: "ps-jerusalem", countryId: "ps", names: { ar: "القدس", en: "Jerusalem", tr: "Kudüs" }, timeZones: ["Asia/Gaza", "Asia/Hebron"] },
+  { id: "ps-gaza", countryId: "ps", names: { ar: "غزة", en: "Gaza", tr: "Gazze" } },
+  { id: "qa-doha", countryId: "qa", names: { ar: "الدوحة", en: "Doha", tr: "Doha" }, timeZones: ["Asia/Qatar"] },
+  { id: "qa-al-rayyan", countryId: "qa", names: { ar: "الريان", en: "Al Rayyan", tr: "Er Reyyan" } },
+  { id: "sa-riyadh", countryId: "sa", names: { ar: "الرياض", en: "Riyadh", tr: "Riyad" }, timeZones: ["Asia/Riyadh"] },
+  { id: "sa-jeddah", countryId: "sa", names: { ar: "جدة", en: "Jeddah", tr: "Cidde" } },
+  { id: "sa-mecca", countryId: "sa", names: { ar: "مكة المكرمة", en: "Mecca", tr: "Mekke" } },
+  { id: "so-mogadishu", countryId: "so", names: { ar: "مقديشو", en: "Mogadishu", tr: "Mogadişu" }, timeZones: ["Africa/Mogadishu"] },
+  { id: "so-hargeisa", countryId: "so", names: { ar: "هرجيسا", en: "Hargeisa", tr: "Hargeysa" } },
+  { id: "sd-khartoum", countryId: "sd", names: { ar: "الخرطوم", en: "Khartoum", tr: "Hartum" }, timeZones: ["Africa/Khartoum"] },
+  { id: "sd-port-sudan", countryId: "sd", names: { ar: "بورتسودان", en: "Port Sudan", tr: "Port Sudan" } },
+  { id: "sy-damascus", countryId: "sy", names: { ar: "دمشق", en: "Damascus", tr: "Şam" }, timeZones: ["Asia/Damascus"] },
+  { id: "sy-aleppo", countryId: "sy", names: { ar: "حلب", en: "Aleppo", tr: "Halep" } },
+  { id: "tn-tunis", countryId: "tn", names: { ar: "تونس العاصمة", en: "Tunis", tr: "Tunus" }, timeZones: ["Africa/Tunis"] },
+  { id: "tn-sfax", countryId: "tn", names: { ar: "صفاقس", en: "Sfax", tr: "Sfax" } },
+  { id: "ae-abu-dhabi", countryId: "ae", names: { ar: "أبوظبي", en: "Abu Dhabi", tr: "Abu Dabi" }, timeZones: ["Asia/Dubai"] },
+  { id: "ae-dubai", countryId: "ae", names: { ar: "دبي", en: "Dubai", tr: "Dubai" } },
+  { id: "ye-sanaa", countryId: "ye", names: { ar: "صنعاء", en: "Sana'a", tr: "Sana" }, timeZones: ["Asia/Aden"] },
+  { id: "ye-aden", countryId: "ye", names: { ar: "عدن", en: "Aden", tr: "Aden" } },
+  { id: "tr-istanbul", countryId: "tr", names: { ar: "إسطنبول", en: "Istanbul", tr: "İstanbul" }, timeZones: ["Europe/Istanbul"] },
+  { id: "tr-ankara", countryId: "tr", names: { ar: "أنقرة", en: "Ankara", tr: "Ankara" } },
+  { id: "tr-antalya", countryId: "tr", names: { ar: "أنطاليا", en: "Antalya", tr: "Antalya" } },
+];
+
+function citiesForCountry(countryId: CountryId) {
+  return cityOptions.filter((city) => city.countryId === countryId);
+}
+
+function detectCity(countryId: CountryId): string {
+  const availableCities = citiesForCountry(countryId);
+  if (typeof window === "undefined") return availableCities[0]?.id ?? "";
+  try {
+    const stored = window.localStorage.getItem("akarpromax-city");
+    if (stored && availableCities.some((city) => city.id === stored)) return stored;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return availableCities.find((city) => city.timeZones?.includes(timeZone))?.id ?? availableCities[0]?.id ?? "";
+  } catch {
+    return availableCities[0]?.id ?? "";
+  }
+}
+
 function detectCountry(): CountryId {
   if (typeof window === "undefined") return "om";
   try {
@@ -146,6 +223,7 @@ const translations: Record<Locale, Translation> = {
     showMenu: "إظهار القائمة",
     toolsAria: "أدوات الحساب والمنصة",
     countryAria: "الدولة",
+    cityAria: "المدينة",
     currencyAria: "العملة",
     languageAria: "اختيار اللغة",
     officeAppAria: "تطبيق المكتب",
@@ -227,6 +305,7 @@ const translations: Record<Locale, Translation> = {
     showMenu: "Show menu",
     toolsAria: "Account and platform tools",
     countryAria: "Country",
+    cityAria: "City",
     currencyAria: "Currency",
     languageAria: "Choose language",
     officeAppAria: "Office app",
@@ -308,6 +387,7 @@ const translations: Record<Locale, Translation> = {
     showMenu: "Menüyü göster",
     toolsAria: "Hesap ve platform araçları",
     countryAria: "Ülke",
+    cityAria: "Şehir",
     currencyAria: "Para birimi",
     languageAria: "Dil seçin",
     officeAppAria: "Ofis uygulaması",
@@ -402,10 +482,13 @@ export default function Home() {
   const [languageOpen, setLanguageOpen] = useState(false);
   const [country, setCountry] = useState<CountryId>("om");
   const [countryOpen, setCountryOpen] = useState(false);
+  const [city, setCity] = useState("om-muscat");
+  const [cityOpen, setCityOpen] = useState(false);
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
   const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
+  const selectedCity = cityOptions.find((option) => option.id === city && option.countryId === country) ?? citiesForCountry(country)[0] ?? cityOptions[0];
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -416,7 +499,18 @@ export default function Home() {
   useEffect(() => {
     const detectedCountry = detectCountry();
     setCountry(detectedCountry);
+    const detectedCity = detectCity(detectedCountry);
+    setCity(detectedCity);
   }, []);
+
+  useEffect(() => {
+    const availableCities = citiesForCountry(country);
+    if (!availableCities.some((option) => option.id === city)) {
+      const nextCity = detectCity(country);
+      setCity(nextCity);
+      if (nextCity) window.localStorage.setItem("akarpromax-city", nextCity);
+    }
+  }, [country, city]);
 
   return (
     <main className="reference-app" id="top" dir={direction} data-locale={locale}>
@@ -443,7 +537,15 @@ export default function Home() {
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
-                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { setCountry(option.id); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                </div>
+              </div>
+              <div className="city-switcher" aria-label={copy.cityAria}>
+                <button className="city-trigger" type="button" aria-haspopup="menu" aria-expanded={cityOpen} onClick={() => setCityOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setCityOpen(false); }}>
+                  <span className="city-pin" aria-hidden="true">⌖</span><span>{selectedCity.names[locale]}</span><span className="city-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div className="city-dropdown" role="menu" hidden={!cityOpen}>
+                  {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitem" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-pressed={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
                 </div>
               </div>
               <a href="#top" aria-label={copy.currencyAria}>{copy.currency}</a>
