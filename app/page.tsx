@@ -1,24 +1,24 @@
 const sidebarItems = [
   ["⌂", "الرئيسية"],
-  ["☆", "تقييمات الخدمات"],
-  ["□", "المحادثات"],
-  ["▥", "تحليلات السوق"],
-  ["✥", "التوثيق وشارة الزرقاء"],
-  ["ϟ", "أداء القرن العقاري"],
-  ["♕", "إدارة Elite Leads"],
-  ["▣", "سجل أنشطة الإدارة"],
-  ["↗", "أسعار السوق"],
-  ["▤", "إدارة العقارات والمكاتب"],
-  ["⚒", "إدارة الحرفيين"],
-  ["▱", "إدارة المدونة"],
-  ["⌘", "تذاكر الدعم"],
-  ["♧", "الإشعارات"],
-  ["⚑", "التقارير"],
-  ["▤", "المحتوى الثابت"],
-  ["◎", "مدير الفيديو"],
-  ["⚙", "إعدادات النظام"],
+  ["▥", "الكتب والبرامج"],
+  ["◁", "أعلن معنا"],
+  ["⌖", "من نحن"],
+  ["♧", "اتصل بنا"],
+  ["⌘", "الأسئلة الشائعة"],
+  ["▦", "لوحة الإدارة"],
+  ["♙", "إدارة المستخدمين"],
+  ["◁", "إدارة الإعلانات"],
+  ["◁", "admin.newsTicker"],
+  ["▣", "إدارة الاشتراكات"],
+  ["⚑", "إدارة العقارات"],
+  ["⚒", "إدارة الخدمات"],
   ["♢", "إدارة المسوقين"],
-  ["▦", "القوائم والتصنيفات"],
+  ["♧", "المشرفون والصلاحيات"],
+  ["⚿", "مفاتيح التراخيص"],
+  ["▤", "الخطط والأسعار"],
+  ["◇", "الخصومات والكوبونات"],
+  ["▱", "التقارير والتحليلات"],
+  ["⚙", "إعدادات النظام"],
 ];
 
 const quickLinks = ["الرئيسية", "عقارات للبيع", "عقارات للإيجار", "المكاتب العقارية", "خدمات أخرى", "المدونة العقارية"];
@@ -55,10 +55,9 @@ export default function Home() {
       <div className="site-canvas">
         <header className="reference-header">
           <div className="container header-inner">
+            <button className="menu-trigger" type="button" aria-label="إظهار القائمة">☰</button>
             <Brand />
-            <nav className="main-nav" aria-label="روابط رئيسية">
-              <a href="#properties">العقارات</a><a href="#services">الخدمات</a><a href="#offices">المكاتب</a><a href="#about">عن المنصة</a>
-            </nav>
+            <div className="header-tools" aria-label="أدوات الحساب والمنصة"><a href="#top" aria-label="الدولة">عُمان　⌖</a><a href="#top" aria-label="العملة">ر.ع</a><a href="#top" aria-label="اللغة">EN</a><a href="#top" aria-label="تطبيق المكتب">▣</a><a className="admin-chip" href="#account">Admin　♙</a></div>
             <div className="header-actions"><a href="#account">دخول</a><a className="header-register" href="#account">تسجيل جديد</a></div>
           </div>
         </header>
@@ -70,8 +69,9 @@ export default function Home() {
           </div>
         </div>
 
-        <section className="top-ads container" aria-label="الإعلانات العلوية">
-          <AdSlot /><AdSlot /><AdSlot />
+        <section className="hero-ad container" aria-label="إعلان الهيدر الرئيسي">
+          <div className="hero-ad-copy"><p>إعلان مميز من عقار بروماكس</p><h2>اكتشف العقارات<br /><strong>للبيع والإيجار</strong></h2><span>المنصة العقارية الرائدة في عُمان</span><a href="#properties">استكشف الآن <b>←</b></a></div>
+          <div className="hero-ad-footer"><span>●</span><span>●</span><span className="active">●</span><span>●</span></div>
         </section>
 
         <section className="welcome-band" id="about">
