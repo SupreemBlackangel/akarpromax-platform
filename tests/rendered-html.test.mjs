@@ -38,6 +38,9 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /العربية/);
   assert.match(html, /English/);
   assert.match(html, /Türkçe/);
+  assert.match(html, /country-trigger/);
+  assert.match(html, /country-dropdown/);
+  assert.match(html, /country-flag/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {

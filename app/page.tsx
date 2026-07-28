@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Locale = "ar" | "en" | "tr";
+type CountryId = string;
 
 type Translation = {
   metaTitle: string;
@@ -82,6 +83,56 @@ const languageOptions: Array<{ id: Locale; short: string; symbol: string; label:
   { id: "en", short: "EN", symbol: "🇬🇧", label: "English" },
   { id: "tr", short: "TR", symbol: "🇹🇷", label: "Türkçe" },
 ];
+
+type CountryOption = {
+  id: CountryId;
+  flag: string;
+  names: Record<Locale, string>;
+  timeZones: string[];
+  localeCodes: string[];
+};
+
+const countryOptions: CountryOption[] = [
+  { id: "dz", flag: "🇩🇿", names: { ar: "الجزائر", en: "Algeria", tr: "Cezayir" }, timeZones: ["Africa/Algiers"], localeCodes: ["ar-dz", "fr-dz"] },
+  { id: "bh", flag: "🇧🇭", names: { ar: "البحرين", en: "Bahrain", tr: "Bahreyn" }, timeZones: ["Asia/Bahrain"], localeCodes: ["ar-bh"] },
+  { id: "km", flag: "🇰🇲", names: { ar: "جزر القمر", en: "Comoros", tr: "Komorlar" }, timeZones: ["Indian/Comoro"], localeCodes: ["ar-km", "fr-km"] },
+  { id: "dj", flag: "🇩🇯", names: { ar: "جيبوتي", en: "Djibouti", tr: "Cibuti" }, timeZones: ["Africa/Djibouti"], localeCodes: ["ar-dj", "fr-dj"] },
+  { id: "eg", flag: "🇪🇬", names: { ar: "مصر", en: "Egypt", tr: "Mısır" }, timeZones: ["Africa/Cairo"], localeCodes: ["ar-eg"] },
+  { id: "iq", flag: "🇮🇶", names: { ar: "العراق", en: "Iraq", tr: "Irak" }, timeZones: ["Asia/Baghdad"], localeCodes: ["ar-iq"] },
+  { id: "jo", flag: "🇯🇴", names: { ar: "الأردن", en: "Jordan", tr: "Ürdün" }, timeZones: ["Asia/Amman"], localeCodes: ["ar-jo"] },
+  { id: "kw", flag: "🇰🇼", names: { ar: "الكويت", en: "Kuwait", tr: "Kuveyt" }, timeZones: ["Asia/Kuwait"], localeCodes: ["ar-kw"] },
+  { id: "lb", flag: "🇱🇧", names: { ar: "لبنان", en: "Lebanon", tr: "Lübnan" }, timeZones: ["Asia/Beirut"], localeCodes: ["ar-lb"] },
+  { id: "ly", flag: "🇱🇾", names: { ar: "ليبيا", en: "Libya", tr: "Libya" }, timeZones: ["Africa/Tripoli"], localeCodes: ["ar-ly"] },
+  { id: "mr", flag: "🇲🇷", names: { ar: "موريتانيا", en: "Mauritania", tr: "Moritanya" }, timeZones: ["Africa/Nouakchott"], localeCodes: ["ar-mr", "fr-mr"] },
+  { id: "ma", flag: "🇲🇦", names: { ar: "المغرب", en: "Morocco", tr: "Fas" }, timeZones: ["Africa/Casablanca"], localeCodes: ["ar-ma", "fr-ma"] },
+  { id: "om", flag: "🇴🇲", names: { ar: "عُمان", en: "Oman", tr: "Umman" }, timeZones: ["Asia/Muscat"], localeCodes: ["ar-om"] },
+  { id: "ps", flag: "🇵🇸", names: { ar: "فلسطين", en: "Palestine", tr: "Filistin" }, timeZones: ["Asia/Gaza", "Asia/Hebron"], localeCodes: ["ar-ps"] },
+  { id: "qa", flag: "🇶🇦", names: { ar: "قطر", en: "Qatar", tr: "Katar" }, timeZones: ["Asia/Qatar"], localeCodes: ["ar-qa"] },
+  { id: "sa", flag: "🇸🇦", names: { ar: "السعودية", en: "Saudi Arabia", tr: "Suudi Arabistan" }, timeZones: ["Asia/Riyadh"], localeCodes: ["ar-sa"] },
+  { id: "so", flag: "🇸🇴", names: { ar: "الصومال", en: "Somalia", tr: "Somali" }, timeZones: ["Africa/Mogadishu"], localeCodes: ["ar-so"] },
+  { id: "sd", flag: "🇸🇩", names: { ar: "السودان", en: "Sudan", tr: "Sudan" }, timeZones: ["Africa/Khartoum"], localeCodes: ["ar-sd"] },
+  { id: "sy", flag: "🇸🇾", names: { ar: "سوريا", en: "Syria", tr: "Suriye" }, timeZones: ["Asia/Damascus"], localeCodes: ["ar-sy"] },
+  { id: "tn", flag: "🇹🇳", names: { ar: "تونس", en: "Tunisia", tr: "Tunus" }, timeZones: ["Africa/Tunis"], localeCodes: ["ar-tn", "fr-tn"] },
+  { id: "ae", flag: "🇦🇪", names: { ar: "الإمارات العربية المتحدة", en: "United Arab Emirates", tr: "Birleşik Arap Emirlikleri" }, timeZones: ["Asia/Dubai"], localeCodes: ["ar-ae"] },
+  { id: "ye", flag: "🇾🇪", names: { ar: "اليمن", en: "Yemen", tr: "Yemen" }, timeZones: ["Asia/Aden"], localeCodes: ["ar-ye"] },
+  { id: "tr", flag: "🇹🇷", names: { ar: "تركيا", en: "Türkiye", tr: "Türkiye" }, timeZones: ["Europe/Istanbul"], localeCodes: ["tr-tr", "tr"] },
+];
+
+function detectCountry(): CountryId {
+  if (typeof window === "undefined") return "om";
+  try {
+    const stored = window.localStorage.getItem("akarpromax-country");
+    if (stored && countryOptions.some((country) => country.id === stored)) return stored;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const byTimeZone = countryOptions.find((country) => country.timeZones.includes(timeZone));
+    if (byTimeZone) return byTimeZone.id;
+    const browserLocale = (navigator.language || "").toLowerCase();
+    const byLocale = countryOptions.find((country) => country.localeCodes.some((code) => browserLocale.startsWith(code)));
+    return byLocale?.id ?? "om";
+  } catch {
+    return "om";
+  }
+}
 
 const translations: Record<Locale, Translation> = {
   ar: {
@@ -345,15 +396,23 @@ function AdSlot({ copy, tone = "light" }: { copy: Translation; tone?: "light" | 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [country, setCountry] = useState<CountryId>("om");
+  const [countryOpen, setCountryOpen] = useState(false);
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
+  const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = direction;
     document.title = copy.metaTitle;
   }, [copy.metaTitle, direction, locale]);
+
+  useEffect(() => {
+    const detectedCountry = detectCountry();
+    setCountry(detectedCountry);
+  }, []);
 
   return (
     <main className="reference-app" id="top" dir={direction} data-locale={locale}>
@@ -375,7 +434,14 @@ export default function Home() {
             <button className="menu-trigger" type="button" aria-label={copy.showMenu}>☰</button>
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
-              <a href="#top" aria-label={copy.countryAria}>{copy.country}　⌖</a>
+              <div className="country-switcher" aria-label={copy.countryAria}>
+                <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => setCountryOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
+                  <span className="country-flag" aria-hidden="true">{selectedCountry.flag}</span><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div className="country-dropdown" role="menu" hidden={!countryOpen}>
+                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { setCountry(option.id); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); }}><span className="country-flag" aria-hidden="true">{option.flag}</span><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                </div>
+              </div>
               <a href="#top" aria-label={copy.currencyAria}>{copy.currency}</a>
               <div className="language-switcher" aria-label={copy.languageAria}>
                 <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
