@@ -48,13 +48,16 @@ test("server-renders the AkarPromax public landing page", async () => {
 });
 
 test("does not retain the starter preview or starter metadata", async () => {
-  const [page, layout, packageJson] = await Promise.all([
+  const [page, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.match(layout, /عقار بروماكس/);
   assert.match(layout, /openGraph/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(styles, /prefers-color-scheme:\s*dark/);
+  assert.match(styles, /color-scheme:\s*dark/);
 });
