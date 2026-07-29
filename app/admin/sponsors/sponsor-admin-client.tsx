@@ -189,7 +189,10 @@ export default function SponsorAdminClient({
 
   async function uploadSponsorLogo(file: File | undefined) {
     if (!file) return;
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const validFileType = ["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type) ||
+      ["png", "jpg", "jpeg", "webp"].includes(extension || "");
+    if (!validFileType) {
       setMessage("صيغة الشعار غير مدعومة. استخدم PNG أو JPG أو WebP.");
       return;
     }
@@ -203,11 +206,19 @@ export default function SponsorAdminClient({
     try {
       const payload = new FormData();
       payload.append("file", file);
+      if (form.id) payload.append("sponsorId", form.id);
       const response = await fetch("/api/sponsor-assets", { method: "POST", body: payload });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "تعذر رفع الشعار");
+      const assetResponse = await fetch(data.url, { cache: "no-store" });
+      if (!assetResponse.ok || !assetResponse.headers.get("content-type")?.startsWith("image/")) {
+        throw new Error("تم رفع الملف لكن تعذر التحقق من الصورة. حاول مرة أخرى.");
+      }
       setForm((current) => ({ ...current, logoUrl: data.url }));
-      setMessage(`تم رفع الشعار «${data.name}» بنجاح.`);
+      if (data.attached) await loadSponsors();
+      setMessage(data.attached
+        ? `تم رفع الشعار «${data.name}» وربطه بالحملة تلقائيًا.`
+        : `تم رفع الشعار «${data.name}» بنجاح. احفظ الحملة لإكمال الربط.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر رفع الشعار");
     } finally {
@@ -387,6 +398,7 @@ export default function SponsorAdminClient({
         <div className="admin-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setEditing(false); }}>
           <form className="admin-dialog" onSubmit={saveCampaign}>
             <div className="admin-dialog-head"><div><p>{form.id ? "تعديل الحملة" : "حملة جديدة"}</p><h2>بيانات الراعي</h2></div><button type="button" aria-label="إغلاق" onClick={() => setEditing(false)}>×</button></div>
+            {message && <div className="admin-dialog-message" role="status">{message}</div>}
             <div className="admin-form-grid">
               <label>الدولة<select required value={form.countryCode} disabled={Boolean(identity.countryCode)} onChange={(event) => setForm({ ...form, countryCode: event.target.value })}>{countries.map(([id, label]) => <option value={id} key={id}>{label}</option>)}</select></label>
               <label>الفئة<select value={form.tier} onChange={(event) => setForm({ ...form, tier: event.target.value })}><option value="exclusive">الراعي الحصري</option><option value="gold">الراعي الذهبي</option><option value="standard">راعٍ مشارك</option></select></label>

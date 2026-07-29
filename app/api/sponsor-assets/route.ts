@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { canManageCountry, getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getSponsorAssetsBucket } from "@/lib/runtime-assets";
+import { getRuntimeDb } from "@/lib/runtime-db";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,19 @@ const contentTypes = {
   "image/jpeg": "jpg",
   "image/webp": "webp",
 } as const;
+
+type SupportedContentType = keyof typeof contentTypes;
+
+function resolveContentType(file: File): SupportedContentType | null {
+  const declaredType = file.type === "image/jpg" ? "image/jpeg" : file.type;
+  if (declaredType in contentTypes) return declaredType as SupportedContentType;
+
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension === "png") return "image/png";
+  if (extension === "jpg" || extension === "jpeg") return "image/jpeg";
+  if (extension === "webp") return "image/webp";
+  return null;
+}
 
 function isValidLogoKey(key: string) {
   return /^sponsors\/logos\/[a-f0-9-]{36}\.(png|jpg|webp)$/.test(key);
@@ -61,6 +75,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const sponsorId = String(formData.get("sponsorId") || "").trim().slice(0, 80);
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Image file is required" }, { status: 400 });
   }
@@ -68,10 +83,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Image must be smaller than 4 MB" }, { status: 400 });
   }
 
-  const contentType = file.type as keyof typeof contentTypes;
-  const extension = contentTypes[contentType];
-  if (!extension) {
+  const contentType = resolveContentType(file);
+  if (!contentType) {
     return NextResponse.json({ error: "Only PNG, JPG and WebP images are supported" }, { status: 415 });
+  }
+  const extension = contentTypes[contentType];
+
+  let sponsor: { id: string; country_code: string } | null = null;
+  let db: D1Database | null = null;
+  if (sponsorId) {
+    db = await getRuntimeDb();
+    sponsor = await db.prepare(
+      "SELECT id, country_code FROM sponsors WHERE id = ?1 LIMIT 1",
+    )
+      .bind(sponsorId)
+      .first<{ id: string; country_code: string }>();
+    if (!sponsor || !canManageCountry(identity, sponsor.country_code)) {
+      return NextResponse.json({ error: "Sponsor not found" }, { status: 404 });
+    }
   }
 
   const buffer = await file.arrayBuffer();
@@ -80,6 +109,7 @@ export async function POST(request: NextRequest) {
   }
 
   const key = `sponsors/logos/${crypto.randomUUID()}.${extension}`;
+  const url = `/api/sponsor-assets?key=${encodeURIComponent(key)}`;
   const bucket = await getSponsorAssetsBucket();
   await bucket.put(key, buffer, {
     httpMetadata: {
@@ -93,11 +123,34 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  if (sponsor && db) {
+    try {
+      await db.batch([
+        db.prepare(
+          "UPDATE sponsors SET logo_url = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        ).bind(sponsor.id, url),
+        db.prepare(
+          `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
+           VALUES (?1, ?2, 'sponsor.logo_uploaded', 'sponsor', ?3, ?4)`,
+        ).bind(
+          crypto.randomUUID(),
+          identity.email,
+          sponsor.id,
+          JSON.stringify({ key, originalName: file.name.slice(0, 180), size: file.size }),
+        ),
+      ]);
+    } catch (error) {
+      await bucket.delete(key);
+      throw error;
+    }
+  }
+
   return NextResponse.json({
     key,
-    url: `/api/sponsor-assets?key=${encodeURIComponent(key)}`,
+    url,
     name: file.name,
     size: file.size,
+    attached: Boolean(sponsor),
   }, { status: 201 });
 }
 

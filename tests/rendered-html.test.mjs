@@ -92,6 +92,7 @@ test("includes the country sponsor administration and generated campaign art", a
 
   assert.match(page, /\/api\/user-context/);
   assert.match(page, /\/api\/sponsors\?country=/);
+  assert.match(page, /activeSponsor\?\.logoUrl \|\| activeSponsor\?\.bannerUrl/);
   assert.match(page, /sidebar-sponsor-admin/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);
@@ -101,8 +102,12 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(accessApi, /access:write/);
   assert.match(sponsorAssetsApi, /MAX_LOGO_BYTES/);
   assert.match(sponsorAssetsApi, /fileSignatureMatches/);
+  assert.match(sponsorAssetsApi, /sponsor\.logo_uploaded/);
+  assert.match(sponsorAssetsApi, /UPDATE sponsors SET logo_url/);
   assert.match(admin, /admin-campaign-art/);
   assert.match(admin, /admin-campaign-preview-logo/);
+  assert.match(admin, /payload\.append\("sponsorId", form\.id\)/);
+  assert.match(admin, /admin-dialog-message/);
   assert.match(admin, /disabled=\{busy \|\| logoUploading\}/);
   assert.match(auth, /admin@localhost\.akarpromax/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS sponsors/);
