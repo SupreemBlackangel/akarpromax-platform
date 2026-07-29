@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Sponsor artwork and logos may be managed runtime URLs. */
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 type Identity = {
@@ -115,7 +115,10 @@ export default function SponsorAdminClient({
   const [form, setForm] = useState<CampaignForm>(emptyCampaign);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(true);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoDragActive, setLogoDragActive] = useState(false);
   const [message, setMessage] = useState("");
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [accessForm, setAccessForm] = useState({
     email: "",
     displayName: "",
@@ -182,6 +185,40 @@ export default function SponsorAdminClient({
         ? current.placements.filter((item) => item !== placement)
         : [...current.placements, placement],
     }));
+  }
+
+  async function uploadSponsorLogo(file: File | undefined) {
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setMessage("صيغة الشعار غير مدعومة. استخدم PNG أو JPG أو WebP.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setMessage("حجم الشعار يجب ألا يتجاوز 4 ميغابايت.");
+      return;
+    }
+
+    setLogoUploading(true);
+    setMessage("");
+    try {
+      const payload = new FormData();
+      payload.append("file", file);
+      const response = await fetch("/api/sponsor-assets", { method: "POST", body: payload });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "تعذر رفع الشعار");
+      setForm((current) => ({ ...current, logoUrl: data.url }));
+      setMessage(`تم رفع الشعار «${data.name}» بنجاح.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر رفع الشعار");
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  function handleLogoDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setLogoDragActive(false);
+    void uploadSponsorLogo(event.dataTransfer.files[0]);
   }
 
   async function saveCampaign(event: FormEvent) {
@@ -349,7 +386,23 @@ export default function SponsorAdminClient({
               <label>الاسم بالإنجليزية<input required dir="ltr" value={form.nameEn} onChange={(event) => setForm({ ...form, nameEn: event.target.value })} /></label>
               <label>الاسم بالتركية<input required dir="ltr" value={form.nameTr} onChange={(event) => setForm({ ...form, nameTr: event.target.value })} /></label>
               <label>الموقع الإلكتروني<input type="url" dir="ltr" value={form.websiteUrl || ""} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
-              <label>رابط الشعار<input dir="ltr" placeholder="https://..." value={form.logoUrl || ""} onChange={(event) => setForm({ ...form, logoUrl: event.target.value })} /></label>
+              <div className="admin-logo-field" role="group" aria-labelledby="sponsor-logo-label">
+                <span id="sponsor-logo-label">شعار الراعي</span>
+                <div
+                  className={`admin-logo-dropzone${logoDragActive ? " drag-active" : ""}${logoUploading ? " uploading" : ""}`}
+                  onDragEnter={(event) => { event.preventDefault(); setLogoDragActive(true); }}
+                  onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setLogoDragActive(true); }}
+                  onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setLogoDragActive(false); }}
+                  onDrop={handleLogoDrop}
+                >
+                  <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { void uploadSponsorLogo(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+                  <div className="admin-logo-preview">{form.logoUrl ? <img src={form.logoUrl} alt="معاينة شعار الراعي" /> : <span aria-hidden="true">⬆</span>}</div>
+                  <div className="admin-logo-dropcopy"><strong>{logoUploading ? "جارٍ رفع الشعار..." : "اسحب الشعار وأفلته هنا"}</strong><small>PNG أو JPG أو WebP — بحد أقصى 4 MB</small></div>
+                  <button type="button" disabled={logoUploading} onClick={() => logoInputRef.current?.click()}>{logoUploading ? "جارٍ الرفع" : "اختيار من الكمبيوتر"}</button>
+                  {form.logoUrl && <button className="admin-logo-remove" type="button" onClick={() => setForm({ ...form, logoUrl: "" })}>إزالة</button>}
+                </div>
+                <div className="admin-logo-url"><span>أو من رابط مباشر</span><input dir="ltr" placeholder="https://example.com/logo.png" value={form.logoUrl || ""} onChange={(event) => setForm({ ...form, logoUrl: event.target.value })} /></div>
+              </div>
               <label>الصورة المصممة<select value={form.bannerUrl} onChange={(event) => setForm({ ...form, bannerUrl: event.target.value })}>{bannerPresets.map(([url, label]) => <option value={url} key={url}>{label}</option>)}</select></label>
               <label>اسم مسؤول التواصل<input value={form.contactName || ""} onChange={(event) => setForm({ ...form, contactName: event.target.value })} /></label>
               <label>بريد التواصل<input type="email" dir="ltr" value={form.contactEmail || ""} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} /></label>
