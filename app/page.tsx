@@ -194,6 +194,20 @@ type PublicSponsor = {
   tier: string;
 };
 
+type HeroAdSlide = {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  posterUrl?: string;
+  eyebrow: string;
+  title: string;
+  accent: string;
+  description: string;
+  cta: string;
+  href: string;
+  sponsored?: boolean;
+};
+
 type ViewerContext = {
   authenticated: boolean;
   displayName: string;
@@ -207,6 +221,10 @@ const sponsorBannerByCountry: Record<string, string> = {
   sa: "/sponsors/saudi-emerald.webp",
   tr: "/sponsors/turkiye-crimson.webp",
 };
+
+function isVideoAsset(url: string) {
+  return /\.(?:mp4|webm|ogg)(?:[?#].*)?$/i.test(url);
+}
 
 const roleLabels: Record<Locale, Record<string, string>> = {
   ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", country_manager: "مدير دولة", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
@@ -709,8 +727,12 @@ export default function Home() {
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
+  const [heroInteracting, setHeroInteracting] = useState(false);
   const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
   const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
+  const heroTouchStartX = useRef<number | null>(null);
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
@@ -726,6 +748,44 @@ export default function Home() {
   const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
   const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
   const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
+  const heroSlides: HeroAdSlide[] = [
+    {
+      id: "discover",
+      mediaType: "image",
+      mediaUrl: "/og.png",
+      eyebrow: copy.heroEyebrow,
+      title: copy.heroTitle,
+      accent: copy.heroAccent,
+      description: copy.heroSub,
+      cta: copy.heroCta,
+      href: "#properties",
+    },
+    {
+      id: "country-sponsor",
+      mediaType: isVideoAsset(sponsorBannerUrl) ? "video" : "image",
+      mediaUrl: sponsorBannerUrl,
+      posterUrl: sponsorBannerByCountry[country] || "/sponsors/arab-blue.webp",
+      eyebrow: copy.sponsorLabel,
+      title: activeSponsor ? sponsorName : locale === "ar" ? "إعلان يتغير حسب الدولة" : locale === "tr" ? "Ülkeye göre değişen reklam" : "Advertising tailored by country",
+      accent: selectedCountry.names[locale],
+      description: activeSponsor ? copy.sponsorDescription : locale === "ar" ? "مساحة مرنة لعرض حملات الرعاة بالصور أو الفيديو وفق موقع الزائر." : locale === "tr" ? "Ziyaretçinin konumuna göre görsel veya video sponsor kampanyaları için esnek alan." : "A flexible image or video campaign space tailored to each visitor’s location.",
+      cta: sponsorActionLabel,
+      href: sponsorTargetHref,
+      sponsored: Boolean(activeSponsor),
+    },
+    {
+      id: "market",
+      mediaType: "image",
+      mediaUrl: "/sponsors/arab-blue.webp",
+      eyebrow: locale === "ar" ? "فرص عقارية مختارة" : locale === "tr" ? "Seçilmiş gayrimenkul fırsatları" : "Curated property opportunities",
+      title: locale === "ar" ? "ابحث بثقة" : locale === "tr" ? "Güvenle arayın" : "Search with confidence",
+      accent: locale === "ar" ? "واتخذ قرارك بوضوح" : locale === "tr" ? "ve net karar verin" : "and decide with clarity",
+      description: locale === "ar" ? "تجربة عقارية واضحة تجمع الإعلانات والخدمات والمكاتب في مكان واحد." : locale === "tr" ? "İlanları, hizmetleri ve ofisleri tek yerde buluşturan net bir gayrimenkul deneyimi." : "A clear property experience bringing listings, services and offices together.",
+      cta: copy.heroCta,
+      href: "#properties",
+    },
+  ];
+  const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
   const canOpenSponsorAdmin = viewer.permissions.includes("sponsors:read");
   const sidebarIndexes = viewer.role === "super_admin"
     ? copy.sidebar.map((_, index) => index)
@@ -739,6 +799,7 @@ export default function Home() {
             ? [0, 1, 2, 3, 4, 5, 17]
             : [0, 1, 2, 3, 4, 5];
   const sidebarOpen = sidebarPinned || sidebarHovered;
+  const selectHeroSlide = (index: number) => setActiveHeroIndex((index + heroSlides.length) % heroSlides.length);
 
   const trackSponsorEvent = (placement: "header" | "content" | "footer", eventType: "impression" | "click") => {
     if (!activeSponsor) return;
@@ -771,6 +832,14 @@ export default function Home() {
     document.documentElement.dir = direction;
     document.title = copy.metaTitle;
   }, [copy.metaTitle, direction, locale]);
+
+  useEffect(() => {
+    if (heroPaused || heroInteracting || heroSlides.length < 2) return;
+    const timer = window.setTimeout(() => {
+      setActiveHeroIndex((index) => (index + 1) % heroSlides.length);
+    }, 6500);
+    return () => window.clearTimeout(timer);
+  }, [activeHeroIndex, heroInteracting, heroPaused, heroSlides.length]);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("akarpromax-theme");
@@ -930,18 +999,57 @@ export default function Home() {
         </div>
         </div>
 
+        <section
+          className={`hero-ad hero-ad-slider${heroPaused || heroInteracting ? " is-paused" : ""}`}
+          aria-label={copy.heroAria}
+          aria-roledescription={locale === "ar" ? "عرض شرائح إعلاني" : locale === "tr" ? "Reklam slayt gösterisi" : "Advertisement carousel"}
+          tabIndex={0}
+          onMouseEnter={() => setHeroInteracting(true)}
+          onMouseLeave={() => setHeroInteracting(false)}
+          onFocusCapture={() => setHeroInteracting(true)}
+          onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeroInteracting(false); }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") selectHeroSlide(activeHeroIndex - 1);
+            if (event.key === "ArrowRight") selectHeroSlide(activeHeroIndex + 1);
+          }}
+          onTouchStart={(event) => { heroTouchStartX.current = event.touches[0]?.clientX ?? null; }}
+          onTouchEnd={(event) => {
+            if (heroTouchStartX.current === null) return;
+            const distance = (event.changedTouches[0]?.clientX ?? heroTouchStartX.current) - heroTouchStartX.current;
+            if (Math.abs(distance) > 48) selectHeroSlide(activeHeroIndex + (distance > 0 ? -1 : 1));
+            heroTouchStartX.current = null;
+          }}
+        >
+          <div className="hero-ad-media" key={`${activeHeroSlide.id}-${activeHeroSlide.mediaUrl}`}>
+            {activeHeroSlide.mediaType === "video"
+              ? <video className="hero-ad-asset" src={activeHeroSlide.mediaUrl} poster={activeHeroSlide.posterUrl} autoPlay muted loop playsInline preload="metadata" />
+              : <img className="hero-ad-asset" src={activeHeroSlide.mediaUrl} alt="" decoding="async" fetchPriority={activeHeroIndex === 0 ? "high" : "auto"} />}
+          </div>
+          <div className="container hero-ad-inner">
+            <div className="hero-ad-copy">
+              <p>{activeHeroSlide.eyebrow}</p>
+              <h2>{activeHeroSlide.title}<br /><strong>{activeHeroSlide.accent}</strong></h2>
+              <span>{activeHeroSlide.description}</span>
+              <a href={activeHeroSlide.href} target={activeHeroSlide.href.startsWith("http") ? "_blank" : undefined} rel={activeHeroSlide.sponsored ? "sponsored noopener" : undefined} onClick={() => { if (activeHeroSlide.sponsored) trackSponsorEvent("header", "click"); }}>{activeHeroSlide.cta} <b>{copy.arrow}</b></a>
+            </div>
+            <div className="hero-ad-controls" aria-label={locale === "ar" ? "التحكم في الإعلانات" : locale === "tr" ? "Reklam kontrolleri" : "Advertisement controls"}>
+              <button className="hero-arrow" type="button" onClick={() => selectHeroSlide(activeHeroIndex - 1)} aria-label={locale === "ar" ? "الإعلان السابق" : locale === "tr" ? "Önceki reklam" : "Previous advertisement"}>‹</button>
+              <div className="hero-ad-dots">
+                {heroSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeHeroIndex % heroSlides.length ? "active" : ""} aria-label={`${locale === "ar" ? "عرض الإعلان" : locale === "tr" ? "Reklamı göster" : "Show advertisement"} ${index + 1}`} aria-current={index === activeHeroIndex % heroSlides.length ? "true" : undefined} onClick={() => selectHeroSlide(index)}><span /></button>)}
+              </div>
+              <button className="hero-pause" type="button" onClick={() => setHeroPaused((paused) => !paused)} aria-label={heroPaused ? locale === "ar" ? "تشغيل الإعلانات تلقائيًا" : locale === "tr" ? "Otomatik oynatmayı başlat" : "Start advertisement autoplay" : locale === "ar" ? "إيقاف الإعلانات مؤقتًا" : locale === "tr" ? "Reklamları duraklat" : "Pause advertisements"}>{heroPaused ? "▶" : "Ⅱ"}</button>
+              <button className="hero-arrow" type="button" onClick={() => selectHeroSlide(activeHeroIndex + 1)} aria-label={locale === "ar" ? "الإعلان التالي" : locale === "tr" ? "Sonraki reklam" : "Next advertisement"}>›</button>
+            </div>
+          </div>
+        </section>
+
         {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
           <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`}>
-            <div className="sponsor-ribbon-visual" aria-hidden="true"><img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" decoding="async" fetchPriority="high" /></div>
+            <div className="sponsor-ribbon-visual" aria-hidden="true">{isVideoAsset(sponsorBannerUrl) ? <video className="sponsor-visual-image" src={sponsorBannerUrl} autoPlay muted loop playsInline preload="metadata" /> : <img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" decoding="async" />}</div>
             <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span><a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></div>
             <div className="sponsor-brand-placeholder"><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} /><div className="sponsor-brand-details"><small>{sponsorLogoUrl ? copy.sponsorLogo : locale === "ar" ? "هوية الراعي" : locale === "tr" ? "Sponsor kimliği" : "Sponsor identity"}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
           </div>
         </section>}
-
-        <section className="hero-ad container" aria-label={copy.heroAria}>
-          <div className="hero-ad-copy"><p>{copy.heroEyebrow}</p><h2>{copy.heroTitle}<br /><strong>{copy.heroAccent}</strong></h2><span>{copy.heroSub}</span><a href="#properties">{copy.heroCta} <b>{copy.arrow}</b></a></div>
-          <div className="hero-ad-footer"><span>●</span><span>●</span><span className="active">●</span><span>●</span></div>
-        </section>
 
         <section className="welcome-band" id="about">
           <div className="container welcome-grid">

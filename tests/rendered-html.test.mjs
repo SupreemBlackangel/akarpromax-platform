@@ -92,6 +92,10 @@ test("includes the country sponsor administration and generated campaign art", a
 
   assert.match(page, /\/api\/user-context/);
   assert.match(page, /\/api\/sponsors\?country=/);
+  assert.match(page, /HeroAdSlide/);
+  assert.match(page, /hero-ad-media/);
+  assert.match(page, /hero-ad-controls/);
+  assert.match(page, /mediaType === "video"/);
   assert.match(page, /sponsor-ribbon-visual/);
   assert.match(page, /sponsor-visual-image/);
   assert.match(page, /SponsorIdentity/);
