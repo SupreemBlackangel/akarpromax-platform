@@ -137,8 +137,8 @@ html[dir="ltr"] .sponsor-ribbon { grid-template-areas: "visual copy brand"; }
 .sponsor-ribbon-visual { position: relative; grid-area: visual; min-width: 0; min-height: 230px; overflow: hidden; background: color-mix(in srgb, var(--sponsor-soft) 72%, #dce5e2); }
 .sponsor-ribbon-visual::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(180deg, transparent 56%, rgba(3,18,29,.42)); pointer-events: none; content: ""; }
 .sponsor-ribbon-visual .sponsor-visual-backdrop { position: absolute; z-index: 0; inset: -18px; width: calc(100% + 36px); height: calc(100% + 36px); object-fit: cover; filter: blur(16px) saturate(.82); opacity: .34; transform: scale(1.08); }
-.sponsor-ribbon-visual .sponsor-visual-image { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; transition: transform .35s ease; }
-.sponsor-ribbon:hover .sponsor-visual-image { transform: scale(1.012); }
+.sponsor-ribbon-visual .sponsor-visual-image { position: absolute; z-index: 1; inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); display: block; object-fit: cover; object-position: center; transform: scale(1.01); transition: transform .35s ease; }
+.sponsor-ribbon:hover .sponsor-visual-image { transform: scale(1.045); }
 .sponsor-ribbon-visual > span { position: absolute; z-index: 3; inset-inline-start: 18px; bottom: 16px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(4,24,34,.68); color: #fff; backdrop-filter: blur(8px); font-size: 9px; font-weight: 900; }
 .sponsor-copy { grid-area: copy; align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: 28px 30px; border-inline-end: 1px solid color-mix(in srgb, var(--sponsor-accent) 20%, #e1e8f2); }
 .sponsor-copy p { color: var(--sponsor-deep); font-size: 10px; font-weight: 900; }
