@@ -93,7 +93,8 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(page, /\/api\/user-context/);
   assert.match(page, /\/api\/sponsors\?country=/);
   assert.match(page, /sponsor-ribbon-visual/);
-  assert.match(page, /<img src=\{sponsorBannerUrl\}/);
+  assert.match(page, /sponsor-visual-backdrop/);
+  assert.match(page, /sponsor-visual-image/);
   assert.match(page, /sidebar-sponsor-admin/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);

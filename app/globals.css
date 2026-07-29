@@ -134,23 +134,24 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 html[dir="ltr"] .sponsor-ribbon { grid-template-areas: "visual copy brand"; }
 .sponsor-ribbon-image { isolation: isolate; }
 .sponsor-ribbon::before { position: absolute; z-index: -1; width: 240px; height: 240px; inset-inline-start: 28%; bottom: -170px; border: 34px solid color-mix(in srgb, var(--sponsor-accent) 11%, transparent); border-radius: 50%; content: ""; }
-.sponsor-ribbon-visual { position: relative; grid-area: visual; min-width: 0; min-height: 230px; overflow: hidden; background: var(--sponsor-deep); }
-.sponsor-ribbon-visual::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(3,18,29,.48)); content: ""; }
-.sponsor-ribbon-visual img { width: 100%; height: 100%; min-height: 230px; display: block; object-fit: cover; transition: transform .35s ease; }
-.sponsor-ribbon:hover .sponsor-ribbon-visual img { transform: scale(1.025); }
-.sponsor-ribbon-visual > span { position: absolute; z-index: 1; inset-inline-start: 18px; bottom: 16px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(4,24,34,.68); color: #fff; backdrop-filter: blur(8px); font-size: 9px; font-weight: 900; }
+.sponsor-ribbon-visual { position: relative; grid-area: visual; min-width: 0; min-height: 230px; overflow: hidden; background: color-mix(in srgb, var(--sponsor-soft) 72%, #dce5e2); }
+.sponsor-ribbon-visual::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(180deg, transparent 56%, rgba(3,18,29,.42)); pointer-events: none; content: ""; }
+.sponsor-ribbon-visual .sponsor-visual-backdrop { position: absolute; z-index: 0; inset: -18px; width: calc(100% + 36px); height: calc(100% + 36px); object-fit: cover; filter: blur(16px) saturate(.82); opacity: .34; transform: scale(1.08); }
+.sponsor-ribbon-visual .sponsor-visual-image { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; transition: transform .35s ease; }
+.sponsor-ribbon:hover .sponsor-visual-image { transform: scale(1.012); }
+.sponsor-ribbon-visual > span { position: absolute; z-index: 3; inset-inline-start: 18px; bottom: 16px; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(4,24,34,.68); color: #fff; backdrop-filter: blur(8px); font-size: 9px; font-weight: 900; }
 .sponsor-copy { grid-area: copy; align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: 28px 30px; border-inline-end: 1px solid color-mix(in srgb, var(--sponsor-accent) 20%, #e1e8f2); }
 .sponsor-copy p { color: var(--sponsor-deep); font-size: 10px; font-weight: 900; }
 .sponsor-copy h2 { margin-top: 5px; color: var(--ink); font-size: clamp(23px, 2.6vw, 34px); line-height: 1.15; letter-spacing: -.03em; }
 .sponsor-copy > span { display: block; max-width: 520px; margin-top: 9px; color: #71809a; font-size: 11px; line-height: 1.75; }
 .sponsor-copy > .sponsor-cta { width: fit-content; margin-top: 17px; }
-.sponsor-brand-placeholder { grid-area: brand; align-self: stretch; display: grid; align-content: center; justify-items: center; gap: 10px; padding: 24px 20px; background: color-mix(in srgb, var(--sponsor-soft) 54%, #fff); text-align: center; }
+.sponsor-brand-placeholder { grid-area: brand; align-self: stretch; display: grid; align-content: center; justify-items: center; gap: 7px; padding: 14px 16px; background: color-mix(in srgb, var(--sponsor-soft) 54%, #fff); text-align: center; }
 .sponsor-brand-placeholder > div:nth-child(2) small { display: block; color: #8a99b0; font-size: 9px; }
 .sponsor-brand-placeholder > div:nth-child(2) strong { display: block; max-width: 190px; margin-top: 4px; color: var(--ink); font-size: 16px; line-height: 1.3; }
 .sponsor-brand-placeholder > .sponsor-logo, .sponsor-brand-placeholder > .sponsor-logo-image { justify-self: center; }
-.sponsor-brand-placeholder > .sponsor-logo { width: 112px; height: 112px; padding: 12px 9px 9px; border-radius: 28px 28px 8px 28px; }
-.sponsor-brand-placeholder > .sponsor-logo > span { font-size: 45px; }
-.sponsor-brand-placeholder > .sponsor-logo-image { width: 154px; height: 112px; padding: 6px; border-radius: 22px; }
+.sponsor-brand-placeholder > .sponsor-logo { width: min(100%, 178px); height: 154px; padding: 14px 10px 10px; border-radius: 30px 30px 9px 30px; }
+.sponsor-brand-placeholder > .sponsor-logo > span { font-size: 56px; }
+.sponsor-brand-placeholder > .sponsor-logo-image { width: min(100%, 178px); height: 154px; padding: 3px; border-radius: 24px; }
 .sponsor-brand-placeholder > .sponsor-country-chip { grid-column: auto; margin-top: 0; }
 .sponsor-logo { width: 56px; height: 56px; display: grid; grid-template-rows: 1fr auto; place-items: center; padding: 7px 5px 5px; border-radius: 15px 15px 4px 15px; background: var(--sponsor-accent); color: var(--sponsor-contrast); box-shadow: 0 8px 18px color-mix(in srgb, var(--sponsor-accent) 24%, transparent); }
 .sponsor-logo-image { width: 56px; height: 56px; padding: 6px; border: 1px solid color-mix(in srgb, var(--sponsor-accent) 35%, #dce5f4); border-radius: 15px; background: #fff; object-fit: contain; box-shadow: 0 8px 18px color-mix(in srgb, var(--sponsor-accent) 18%, transparent); }
@@ -345,18 +346,17 @@ html[data-theme="dark"] .payments span { border-color: #304867; background: #0f1
 
 @media (max-width: 900px) {
   .sponsor-ribbon, html[dir="ltr"] .sponsor-ribbon { grid-template-columns: minmax(0, 1fr) minmax(220px, .72fr); grid-template-areas: "visual visual" "copy brand"; }
-  .sponsor-ribbon-visual, .sponsor-ribbon-visual img { min-height: 205px; max-height: 240px; }
+  .sponsor-ribbon-visual { min-height: 205px; max-height: 240px; }
   .sponsor-copy { min-height: 215px; border-inline-end: 1px solid color-mix(in srgb, var(--sponsor-accent) 20%, #e1e8f2); }
   .sponsor-brand-placeholder { min-height: 215px; }
-  .sponsor-brand-placeholder > .sponsor-logo { width: 96px; height: 96px; }
-  .sponsor-brand-placeholder > .sponsor-logo-image { width: 132px; height: 96px; }
+  .sponsor-brand-placeholder > .sponsor-logo, .sponsor-brand-placeholder > .sponsor-logo-image { width: min(100%, 168px); height: 145px; }
   .sponsor-inline { grid-template-columns: auto auto 1fr; }
   .sponsor-inline > a { grid-column: 3; }
 }
 
 @media (max-width: 650px) {
   .sponsor-ribbon, html[dir="ltr"] .sponsor-ribbon { grid-template-columns: 1fr; grid-template-areas: "visual" "copy" "brand"; border-radius: 15px; }
-  .sponsor-ribbon-visual, .sponsor-ribbon-visual img { min-height: 190px; max-height: 220px; }
+  .sponsor-ribbon-visual { min-height: 190px; max-height: 220px; }
   .sponsor-copy { min-height: 0; padding: 24px 20px; border-inline-end: 0; border-bottom: 1px solid color-mix(in srgb, var(--sponsor-accent) 20%, #e1e8f2); }
   .sponsor-copy > .sponsor-cta { width: 100%; }
   .sponsor-brand-placeholder { min-height: 0; grid-template-columns: 110px minmax(0, 1fr); justify-items: start; padding: 20px; text-align: start; }

@@ -915,7 +915,7 @@ export default function Home() {
 
         {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
           <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`}>
-            <div className="sponsor-ribbon-visual" aria-hidden="true"><img src={sponsorBannerUrl} alt="" /><span><CountryFlag country={selectedCountry} />{copy.sponsorLabel}</span></div>
+            <div className="sponsor-ribbon-visual" aria-hidden="true"><img className="sponsor-visual-backdrop" src={sponsorBannerUrl} alt="" /><img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" /><span><CountryFlag country={selectedCountry} />{copy.sponsorLabel}</span></div>
             <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span><a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></div>
             <div className="sponsor-brand-placeholder">{sponsorLogoUrl ? <img className="sponsor-logo-image" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorLogo}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
           </div>
