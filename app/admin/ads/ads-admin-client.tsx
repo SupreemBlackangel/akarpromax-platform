@@ -139,6 +139,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics">("campaigns");
   const [editing, setEditing] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
   const [previewLocale, setPreviewLocale] = useState<"ar" | "en" | "tr">("ar");
   const [form, setForm] = useState<CampaignForm>({ ...emptyCampaign });
   const [busy, setBusy] = useState(true);
@@ -194,6 +195,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType } : {}),
     });
     setPreviewLocale("ar");
+    setWizardStep(1);
     setEditing(true);
     setMessage("");
   }
@@ -207,6 +209,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       endAt: campaign.endAt || null,
     });
     setPreviewLocale("ar");
+    setWizardStep(1);
     setEditing(true);
     setMessage("");
   }
@@ -294,6 +297,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       setAssets((items) => [...uploaded, ...items]);
       const selected = uploaded[0];
       if (selected) setForm((current) => ({ ...current, mediaUrl: selected.url, mediaType: selected.mediaType }));
+      await loadAssets();
       setMessage(uploaded.length === 1 ? "تم رفع الملف واختياره للحملة." : `تم رفع ${uploaded.length} ملفات إلى المكتبة، واختير أول ملف للحملة.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر رفع الوسائط");
@@ -391,19 +395,20 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
         </section>}
       </section>
 
-      {editing && <div className="ads-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setEditing(false); }}>
-        <form className="ads-dialog" onSubmit={saveCampaign}>
-          <div className="ads-dialog-head"><div><p>{form.id ? "تعديل الحملة" : "حملة جديدة"}</p><h2>إعداد إعلان الهيرو</h2></div><button type="button" aria-label="إغلاق" onClick={() => setEditing(false)}>×</button></div>
-          {message && <div className="ads-dialog-message" role="status">{message}</div>}
+      {editing && <section className="ads-wizard-shell">
+        <form className="ads-wizard" onSubmit={saveCampaign}>
+          <header className="ads-wizard-head"><div><p>{form.id ? "تعديل الحملة" : "حملة جديدة"}</p><h2>إعداد إعلان الهيرو</h2></div><button type="button" onClick={() => setEditing(false)}>العودة للحملات</button></header>
+          <nav className="ads-wizard-steps" aria-label="خطوات إعداد الحملة">{["الأساسيات", "الوسائط", "المحتوى", "الاستهداف", "الجدولة", "المعاينة"].map((label, index) => <button type="button" key={label} className={wizardStep === index + 1 ? "active" : wizardStep > index + 1 ? "done" : ""} onClick={() => setWizardStep(index + 1)}><span>{index + 1}</span>{label}</button>)}</nav>
+          {message && <div className="ads-wizard-message" role="status">{message}</div>}
 
-          <section className="ads-form-section"><div><span>1</span><h3>البيانات الأساسية</h3></div><div className="ads-form-grid">
+          <section className="ads-form-section" hidden={wizardStep !== 1}><div><span>1</span><h3>البيانات الأساسية</h3></div><div className="ads-form-grid">
             <label>اسم الحملة الداخلي<input required value={form.internalName} onChange={(event) => setForm({ ...form, internalName: event.target.value })} /></label>
             <label>الجهة المعلنة<input required value={form.advertiserName} onChange={(event) => setForm({ ...form, advertiserName: event.target.value })} /></label>
             <label>نوع الحملة<select value={form.campaignType} onChange={(event) => setForm({ ...form, campaignType: event.target.value })}><option value="platform">إعلان المنصة</option><option value="sponsor">راعٍ</option><option value="property">عقار مميز</option><option value="service">خدمة</option></select></label>
             <label>رابط زر الإجراء<input required dir="ltr" value={form.targetUrl} onChange={(event) => setForm({ ...form, targetUrl: event.target.value })} /></label>
           </div></section>
 
-          <section className="ads-form-section"><div><span>2</span><h3>الصورة أو الفيديو</h3></div>
+          <section className="ads-form-section" hidden={wizardStep !== 2}><div><span>2</span><h3>الصورة أو الفيديو</h3></div>
             <div className={`ads-dialog-upload${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files); }}>
               <div className="ads-dialog-media-preview">{form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} muted controls preload="metadata" /> : <img src={form.mediaUrl} alt="معاينة الوسائط" />}</div>
               <div><strong>{uploading ? "جارٍ رفع الملفات..." : "اسحب الصور والفيديوهات هنا"}</strong><small>ارفع عدة ملفات معًا؛ الفيديو لا يتجاوز 15 ثانية، ويُختار أول ملف للحملة.</small></div>
@@ -417,7 +422,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             </div>
           </section>
 
-          <section className="ads-form-section"><div><span>3</span><h3>المحتوى والترجمات</h3></div>
+          <section className="ads-form-section" hidden={wizardStep !== 3}><div><span>3</span><h3>المحتوى والترجمات</h3></div>
             <div className="ads-language-columns">
               {(["ar", "en", "tr"] as const).map((language) => {
                 const labels = { ar: "العربية", en: "English", tr: "Türkçe" };
@@ -433,7 +438,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             </div>
           </section>
 
-          <section className="ads-form-section"><div><span>4</span><h3>الاستهداف</h3></div>
+          <section className="ads-form-section" hidden={wizardStep !== 4}><div><span>4</span><h3>الاستهداف</h3></div>
             <fieldset className="ads-choice-fieldset"><legend>الدول — عدم تحديد دولة يعني جميع الدول</legend><div>{countries.map(([id, label]) => <label key={id}><input type="checkbox" disabled={Boolean(identity.countryCode && identity.countryCode.toLowerCase() !== id)} checked={form.countries.includes(id)} onChange={() => toggleList("countries", id)} />{label}</label>)}</div></fieldset>
             <label className="ads-wide-field">المدن (اختياري — اكتب معرّفات المدن مفصولة بفاصلة)<input dir="ltr" placeholder="om-muscat, sa-riyadh" value={form.cities.join(", ")} onChange={(event) => setForm({ ...form, cities: event.target.value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean) })} /></label>
             <div className="ads-target-grid">
@@ -442,7 +447,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             </div>
           </section>
 
-          <section className="ads-form-section"><div><span>5</span><h3>الجدولة والنشر</h3></div><div className="ads-form-grid">
+          <section className="ads-form-section" hidden={wizardStep !== 5}><div><span>5</span><h3>الجدولة والنشر</h3></div><div className="ads-form-grid">
             <label>البداية<input type="datetime-local" value={(form.startAt || "").slice(0, 16)} onChange={(event) => setForm({ ...form, startAt: event.target.value || null })} /></label>
             <label>النهاية<input type="datetime-local" value={(form.endAt || "").slice(0, 16)} onChange={(event) => setForm({ ...form, endAt: event.target.value || null })} /></label>
             <label>ترتيب الظهور<input type="number" min="1" max="999" value={form.priority} onChange={(event) => setForm({ ...form, priority: Number(event.target.value) })} /><small>1 يظهر أولاً، ثم 2 وهكذا.</small></label>
@@ -450,7 +455,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             <label>الحالة<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="draft">مسودة</option>{canPublish && <option value="active">نشطة</option>}<option value="paused">متوقفة</option><option value="expired">منتهية</option></select></label>
           </div></section>
 
-          <section className="ads-form-section"><div><span>6</span><h3>المعاينة</h3></div>
+          <section className="ads-form-section" hidden={wizardStep !== 6}><div><span>6</span><h3>المعاينة</h3></div>
             <div className="ads-preview-toolbar">{(["ar", "en", "tr"] as const).map((language) => <button className={previewLocale === language ? "active" : ""} type="button" onClick={() => setPreviewLocale(language)} key={language}>{language.toUpperCase()}</button>)}</div>
             <div className="ads-live-preview" dir={previewLocale === "ar" ? "rtl" : "ltr"}>
               {form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} autoPlay muted loop playsInline /> : <img src={form.mediaUrl} alt="" />}
@@ -458,9 +463,9 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             </div>
           </section>
 
-          <div className="ads-dialog-actions"><button type="button" onClick={() => setEditing(false)}>إلغاء</button><button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button></div>
+          <footer className="ads-wizard-actions"><button type="button" onClick={() => wizardStep === 1 ? setEditing(false) : setWizardStep((step) => step - 1)}>{wizardStep === 1 ? "إلغاء" : "السابق"}</button>{wizardStep < 6 ? <button className="primary" type="button" onClick={() => setWizardStep((step) => step + 1)}>التالي</button> : <button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button>}</footer>
         </form>
-      </div>}
+      </section>}
     </main>
   );
 }
