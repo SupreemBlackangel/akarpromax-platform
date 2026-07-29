@@ -1,6 +1,7 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- Sponsor logos and country flags are runtime-managed URLs. */
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 type Locale = "ar" | "en" | "tr";
 type CountryId = string;
@@ -178,6 +179,39 @@ const sponsorToneByCountry: Record<string, SponsorTone> = {
   jo: "crimson", kw: "blue", lb: "crimson", ly: "emerald", mr: "gold", ma: "crimson",
   om: "gold", ps: "emerald", qa: "crimson", sa: "emerald", so: "blue", sd: "blue",
   sy: "crimson", tn: "crimson", ae: "gold", ye: "crimson", tr: "crimson",
+};
+
+type PublicSponsor = {
+  id: string;
+  countryCode: string;
+  nameAr: string;
+  nameEn: string;
+  nameTr: string;
+  websiteUrl: string | null;
+  logoUrl: string | null;
+  bannerUrl: string;
+  placements: string[];
+  tier: string;
+};
+
+type ViewerContext = {
+  authenticated: boolean;
+  displayName: string;
+  role: string;
+  countryCode: string | null;
+  permissions: string[];
+};
+
+const sponsorBannerByCountry: Record<string, string> = {
+  om: "/sponsors/oman-gold.webp",
+  sa: "/sponsors/saudi-emerald.webp",
+  tr: "/sponsors/turkiye-crimson.webp",
+};
+
+const roleLabels: Record<Locale, Record<string, string>> = {
+  ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", country_manager: "مدير دولة", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
+  en: { guest: "Guest", viewer: "Viewer", analyst: "Analyst", content_editor: "Editor", country_manager: "Country manager", sponsor_admin: "Sponsor admin", super_admin: "Super admin" },
+  tr: { guest: "Ziyaretçi", viewer: "Kullanıcı", analyst: "Analist", content_editor: "Editör", country_manager: "Ülke yöneticisi", sponsor_admin: "Sponsor yöneticisi", super_admin: "Süper yönetici" },
 };
 
 type CityOption = {
@@ -657,6 +691,8 @@ export default function Home() {
   const [themeReady, setThemeReady] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
+  const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
   const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
@@ -667,7 +703,34 @@ export default function Home() {
   const selectedCurrency = currenciesByCountry[country] ?? currenciesByCountry.om;
   const selectedSponsorTone = sponsorToneByCountry[country] ?? "blue";
   const sponsorContactHref = `mailto:partners@akarpromax.om?subject=${encodeURIComponent(`AkarPromax sponsor — ${selectedCountry.names.en}`)}`;
+  const sponsorBannerUrl = activeSponsor?.bannerUrl || sponsorBannerByCountry[country] || "/sponsors/arab-blue.webp";
+  const sponsorName = activeSponsor ? (locale === "ar" ? activeSponsor.nameAr : locale === "tr" ? activeSponsor.nameTr : activeSponsor.nameEn) : copy.sponsorAvailable;
+  const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
+  const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
+  const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
+  const canOpenSponsorAdmin = viewer.permissions.includes("sponsors:read");
+  const sidebarIndexes = viewer.role === "super_admin"
+    ? copy.sidebar.map((_, index) => index)
+    : viewer.role === "sponsor_admin"
+      ? [0, 1, 2, 3, 4, 5, 6, 17]
+      : viewer.role === "country_manager"
+        ? [0, 1, 2, 3, 4, 5, 6, 12, 13, 17]
+        : viewer.role === "content_editor"
+          ? [0, 1, 2, 3, 4, 5, 9]
+          : viewer.role === "analyst"
+            ? [0, 1, 2, 3, 4, 5, 17]
+            : [0, 1, 2, 3, 4, 5];
   const sidebarOpen = sidebarPinned || sidebarHovered;
+
+  const trackSponsorEvent = (placement: "header" | "content" | "footer", eventType: "impression" | "click") => {
+    if (!activeSponsor) return;
+    void fetch("/api/sponsor-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sponsorId: activeSponsor.id, countryCode: country, placement, eventType }),
+      keepalive: true,
+    }).catch(() => undefined);
+  };
 
   const cancelDropdownClose = (key: "country" | "city" | "language" | "theme") => {
     const timer = dropdownCloseTimers.current[key];
@@ -693,8 +756,13 @@ export default function Home() {
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("akarpromax-theme");
-    if (storedTheme === "system" || storedTheme === "light" || storedTheme === "dark") setThemeMode(storedTheme);
-    setThemeReady(true);
+    let mounted = true;
+    window.queueMicrotask(() => {
+      if (!mounted) return;
+      if (storedTheme === "system" || storedTheme === "light" || storedTheme === "dark") setThemeMode(storedTheme);
+      setThemeReady(true);
+    });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -713,19 +781,57 @@ export default function Home() {
 
   useEffect(() => {
     const detectedCountry = detectCountry();
-    setCountry(detectedCountry);
     const detectedCity = detectCity(detectedCountry);
-    setCity(detectedCity);
+    let mounted = true;
+    window.queueMicrotask(() => {
+      if (!mounted) return;
+      setCountry(detectedCountry);
+      setCity(detectedCity);
+    });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
     const availableCities = citiesForCountry(country);
     if (!availableCities.some((option) => option.id === city)) {
       const nextCity = detectCity(country);
-      setCity(nextCity);
-      if (nextCity) window.localStorage.setItem("akarpromax-city", nextCity);
+      window.queueMicrotask(() => {
+        setCity(nextCity);
+        if (nextCity) window.localStorage.setItem("akarpromax-city", nextCity);
+      });
     }
   }, [country, city]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/user-context", { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data: ViewerContext | null) => { if (data) setViewer(data); })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/sponsors?country=${encodeURIComponent(country)}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : { sponsors: [] })
+      .then((data: { sponsors?: PublicSponsor[] }) => setActiveSponsor(data.sponsors?.[0] ?? null))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [country]);
+
+  useEffect(() => {
+    if (!activeSponsor) return;
+    activeSponsor.placements.forEach((placement) => {
+      if (!["header", "content", "footer"].includes(placement)) return;
+      void fetch("/api/sponsor-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sponsorId: activeSponsor.id, countryCode: country, placement, eventType: "impression" }),
+        keepalive: true,
+      }).catch(() => undefined);
+    });
+  }, [activeSponsor, country]);
 
   useEffect(() => () => {
     Object.values(dropdownCloseTimers.current).forEach((timer) => {
@@ -738,13 +844,14 @@ export default function Home() {
       <aside id="right-sidebar" className={sidebarOpen ? "right-sidebar sidebar-open" : "right-sidebar"} aria-label={copy.sidebarAria} onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
         <div className="sidebar-head"><Brand copy={copy} /><button type="button" aria-label={copy.closeMenu} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>×</button></div>
         <div className="sidebar-scroll">
-          {copy.sidebar.map(([icon, label], index) => (
+          {copy.sidebar.map(([icon, label], index) => ({ icon, label, index })).filter((item) => sidebarIndexes.includes(item.index)).map(({ icon, label, index }) => (
             <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={index === 0 ? "#top" : `#module-${index}`} key={`${locale}-${index}-${label}`}>
               <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
             </a>
           ))}
+          {canOpenSponsorAdmin && <a className="sidebar-link sidebar-sponsor-admin" href="/admin/sponsors"><span className="sidebar-icon" aria-hidden="true">◆</span><span>{locale === "ar" ? "إدارة الرعاة" : locale === "tr" ? "Sponsor yönetimi" : "Sponsor management"}</span></a>}
         </div>
-        <div className="sidebar-foot">{copy.brandTitle} © 2026</div>
+        <div className="sidebar-foot"><strong>{viewer.authenticated ? viewer.displayName : copy.brandTitle}</strong><span>{roleLabels[locale][viewer.role] ?? viewer.role} © 2026</span></div>
       </aside>
 
       <div className="site-canvas">
@@ -760,7 +867,7 @@ export default function Home() {
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
-                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitemradio" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-checked={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setActiveSponsor(null); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
                 </div>
               </div>
               <div className="city-switcher" aria-label={copy.cityAria} onMouseEnter={() => cancelDropdownClose("city")} onMouseLeave={() => scheduleDropdownClose("city", () => setCityOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("city"); setCityOpen(false); } }}>
@@ -768,7 +875,7 @@ export default function Home() {
                   <span className="city-pin" aria-hidden="true">⌖</span><span>{selectedCity.names[locale]}</span><span className="city-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="city-dropdown" role="menu" hidden={!cityOpen}>
-                  {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitem" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-pressed={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
+                  {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitemradio" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-checked={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
                 </div>
               </div>
               </div>
@@ -779,7 +886,7 @@ export default function Home() {
                   <span className="language-symbol" aria-hidden="true">{selectedLanguage.symbol}</span><span>{selectedLanguage.short}</span><span className="language-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="language-dropdown" role="menu" hidden={!languageOpen}>
-                  {languageOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={locale === option.id ? "language-option active" : "language-option"} aria-label={option.label} aria-pressed={locale === option.id} onClick={() => { setLocale(option.id); setLanguageOpen(false); }}><span className="language-symbol" aria-hidden="true">{option.symbol}</span><span>{option.label}</span><small>{option.short}</small></button>)}
+                  {languageOptions.map((option) => <button key={option.id} type="button" role="menuitemradio" className={locale === option.id ? "language-option active" : "language-option"} aria-label={option.label} aria-checked={locale === option.id} onClick={() => { setLocale(option.id); setLanguageOpen(false); }}><span className="language-symbol" aria-hidden="true">{option.symbol}</span><span>{option.label}</span><small>{option.short}</small></button>)}
                 </div>
               </div>
               <div className="theme-switcher" aria-label={copy.themeAria} onMouseEnter={() => cancelDropdownClose("theme")} onMouseLeave={() => scheduleDropdownClose("theme", () => setThemeOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("theme"); setThemeOpen(false); } }}>
@@ -787,13 +894,13 @@ export default function Home() {
                   <span className="theme-symbol" aria-hidden="true">{selectedTheme.symbol}</span><span>{copy[selectedTheme.labelKey]}</span><span className="theme-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="theme-dropdown" role="menu" hidden={!themeOpen}>
-                  {themeOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={themeMode === option.id ? "theme-option active" : "theme-option"} aria-pressed={themeMode === option.id} onClick={() => { setThemeMode(option.id); setThemeOpen(false); }}><span className="theme-symbol" aria-hidden="true">{option.symbol}</span><span>{copy[option.labelKey]}</span></button>)}
+                  {themeOptions.map((option) => <button key={option.id} type="button" role="menuitemradio" className={themeMode === option.id ? "theme-option active" : "theme-option"} aria-checked={themeMode === option.id} onClick={() => { setThemeMode(option.id); setThemeOpen(false); }}><span className="theme-symbol" aria-hidden="true">{option.symbol}</span><span>{copy[option.labelKey]}</span></button>)}
                 </div>
               </div>
               </div>
               <a className="office-tool" href="#top" aria-label={copy.officeAppAria} title={copy.officeAppAria}>▣</a>
             </div>
-            <div className="header-actions"><a className="admin-chip" href="#account"><span className="admin-label">Admin</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
+            <div className="header-actions"><a className="admin-chip" href={canOpenSponsorAdmin ? "/admin/sponsors" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
           </div>
         </header>
 
@@ -805,13 +912,13 @@ export default function Home() {
         </div>
         </div>
 
-        <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
-          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone}`}>
+        {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
+          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`} style={{ "--sponsor-image": `url("${sponsorBannerUrl}")` } as CSSProperties}>
             <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span></div>
-            <div className="sponsor-brand-placeholder"><div className="sponsor-logo" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><small>{copy.sponsorLogo}</small><strong>{copy.sponsorAvailable}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
-            <a className="sponsor-cta" href={sponsorContactHref}>{copy.sponsorCta} <b>{copy.arrow}</b></a>
+            <div className="sponsor-brand-placeholder">{activeSponsor?.logoUrl ? <img className="sponsor-logo-image" src={activeSponsor.logoUrl} alt={sponsorName} /> : <div className="sponsor-logo" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorLogo}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
+            <a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a>
           </div>
-        </section>
+        </section>}
 
         <section className="hero-ad container" aria-label={copy.heroAria}>
           <div className="hero-ad-copy"><p>{copy.heroEyebrow}</p><h2>{copy.heroTitle}<br /><strong>{copy.heroAccent}</strong></h2><span>{copy.heroSub}</span><a href="#properties">{copy.heroCta} <b>{copy.arrow}</b></a></div>
@@ -830,7 +937,7 @@ export default function Home() {
           <div className="property-grid reference-cards">
             {copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
           </div>
-          <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span><div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{copy.sponsorAvailable}</span></div><a href={sponsorContactHref}>{copy.sponsorCta} <b>{copy.arrow}</b></a></aside>
+          {sponsorPlacements.includes("content") && <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span>{activeSponsor?.logoUrl ? <img className="sponsor-logo-image sponsor-logo-small" src={activeSponsor.logoUrl} alt={sponsorName} /> : <div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{sponsorName}</span></div><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("content", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></aside>}
         </section>
 
         <section className="services-band" id="services" aria-labelledby="services-title">
@@ -843,7 +950,7 @@ export default function Home() {
 
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div><div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}><div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><small>{copy.sponsorFooter}</small><strong>{copy.sponsorOfficial} {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorContactHref}>{copy.sponsorCta}</a></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div>{sponsorPlacements.includes("footer") && <div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}>{activeSponsor?.logoUrl ? <img className="sponsor-logo-image sponsor-logo-small" src={activeSponsor.logoUrl} alt={sponsorName} /> : <div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorFooter}</small><strong>{sponsorName} — {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("footer", "click")}>{sponsorActionLabel}</a></div>}<div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
       </div>
     </main>

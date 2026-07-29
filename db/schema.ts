@@ -103,3 +103,67 @@ export const auditLogs = sqliteTable(
   },
   (table) => [index("audit_entity_idx").on(table.entityType, table.entityId)],
 );
+
+export const sponsorAccess = sqliteTable(
+  "sponsor_access",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    displayName: text("display_name"),
+    role: text("role").notNull().default("viewer"),
+    countryCode: text("country_code"),
+    status: text("status").notNull().default("active"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_access_email_unique").on(table.email),
+    index("sponsor_access_role_country_idx").on(table.role, table.countryCode),
+  ],
+);
+
+export const sponsors = sqliteTable(
+  "sponsors",
+  {
+    id: text("id").primaryKey(),
+    countryCode: text("country_code").notNull(),
+    nameAr: text("name_ar").notNull(),
+    nameEn: text("name_en").notNull(),
+    nameTr: text("name_tr").notNull(),
+    tier: text("tier").notNull().default("exclusive"),
+    status: text("status").notNull().default("draft"),
+    websiteUrl: text("website_url"),
+    logoUrl: text("logo_url"),
+    bannerUrl: text("banner_url").notNull().default("/sponsors/arab-blue.webp"),
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    placements: text("placements").notNull().default("[\"header\",\"content\",\"footer\"]"),
+    startAt: text("start_at"),
+    endAt: text("end_at"),
+    priority: integer("priority").notNull().default(100),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsors_country_status_priority_idx").on(table.countryCode, table.status, table.priority),
+    index("sponsors_campaign_dates_idx").on(table.startAt, table.endAt),
+  ],
+);
+
+export const sponsorEvents = sqliteTable(
+  "sponsor_events",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    countryCode: text("country_code").notNull(),
+    placement: text("placement").notNull(),
+    eventType: text("event_type").notNull(),
+    occurredAt: text("occurred_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_events_sponsor_type_idx").on(table.sponsorId, table.eventType),
+    index("sponsor_events_country_date_idx").on(table.countryCode, table.occurredAt),
+  ],
+);

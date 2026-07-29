@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 async function render() {
@@ -70,4 +70,29 @@ test("does not retain the starter preview or starter metadata", async () => {
   assert.match(styles, /html\[data-theme="dark"\]/);
   assert.match(styles, /color-scheme:\s*dark/);
   assert.match(layout, /akarpromax-theme/);
+});
+
+test("includes the country sponsor administration and generated campaign art", async () => {
+  const [page, admin, schema, sponsorApi, accessApi, ...images] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
+    stat(new URL("../public/sponsors/oman-gold.webp", import.meta.url)),
+    stat(new URL("../public/sponsors/saudi-emerald.webp", import.meta.url)),
+    stat(new URL("../public/sponsors/turkiye-crimson.webp", import.meta.url)),
+    stat(new URL("../public/sponsors/arab-blue.webp", import.meta.url)),
+  ]);
+
+  assert.match(page, /\/api\/user-context/);
+  assert.match(page, /\/api\/sponsors\?country=/);
+  assert.match(page, /sidebar-sponsor-admin/);
+  assert.match(admin, /المستخدمون والصلاحيات/);
+  assert.match(admin, /مواضع الظهور/);
+  assert.match(schema, /sponsorAccess/);
+  assert.match(schema, /sponsorEvents/);
+  assert.match(sponsorApi, /sponsor\.created/);
+  assert.match(accessApi, /access:write/);
+  images.forEach((image) => assert.ok(image.size > 40_000));
 });
