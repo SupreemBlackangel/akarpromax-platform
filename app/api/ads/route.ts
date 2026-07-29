@@ -49,6 +49,7 @@ type AdRow = {
   impressions?: number;
   clicks?: number;
 };
+type CreativeRow = { id: string; campaign_id: string; media_type: string; media_url: string; mobile_media_url: string | null; poster_url: string | null; position: number; duration_seconds: number; status: string };
 
 const adSelect = `
   SELECT a.id, a.internal_name, a.advertiser_name, a.campaign_type, a.status,
@@ -144,6 +145,16 @@ function serialise(row: AdRow) {
   };
 }
 
+async function attachCreatives(db: D1Database, campaigns: ReturnType<typeof serialise>[]) {
+  if (!campaigns.length) return campaigns;
+  const ids = campaigns.map((campaign) => campaign.id);
+  const placeholders = ids.map((_, index) => `?${index + 1}`).join(",");
+  const rows = await db.prepare(`SELECT id, campaign_id, media_type, media_url, mobile_media_url, poster_url, position, duration_seconds, status FROM ad_creatives WHERE campaign_id IN (${placeholders}) ORDER BY position ASC`).bind(...ids).all<CreativeRow>();
+  const grouped = new Map<string, CreativeRow[]>();
+  rows.results.forEach((row) => grouped.set(row.campaign_id, [...(grouped.get(row.campaign_id) || []), row]));
+  return campaigns.map((campaign) => ({ ...campaign, creatives: (grouped.get(campaign.id) || []).filter((creative) => creative.status === "active").map((creative) => ({ id: creative.id, mediaType: creative.media_type, mediaUrl: creative.media_url, mobileMediaUrl: creative.mobile_media_url, posterUrl: creative.poster_url, position: Number(creative.position), durationSeconds: Number(creative.duration_seconds) })) }));
+}
+
 function canManageTargets(identity: SponsorIdentity, countries: string[]) {
   if (identity.role === "super_admin" || identity.role === "ad_manager") return true;
   if (!identity.countryCode) return false;
@@ -161,6 +172,13 @@ function normalisePayload(body: Record<string, unknown>, identity: SponsorIdenti
   if (identity.countryCode && identity.role !== "super_admin" && identity.role !== "ad_manager") {
     countries = [identity.countryCode.toLowerCase()];
   }
+  const creatives = Array.isArray(body.creatives) ? body.creatives.slice(0, 20).flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const creative = item as Record<string, unknown>;
+    const mediaUrl = cleanUrl(creative.mediaUrl, true);
+    const mediaType = cleanChoice(creative.mediaType, mediaTypes, "image");
+    return mediaUrl ? [{ id: clean(creative.id, 80) || crypto.randomUUID(), mediaUrl, mediaType, mobileMediaUrl: cleanUrl(creative.mobileMediaUrl), posterUrl: cleanUrl(creative.posterUrl), position: index + 1, durationSeconds: Math.max(3, Math.min(15, Number(creative.durationSeconds) || 6)) }] : [];
+  }) : [];
   return {
     internalName: clean(body.internalName, 140),
     advertiserName: clean(body.advertiserName, 140),
@@ -194,6 +212,7 @@ function normalisePayload(body: Record<string, unknown>, identity: SponsorIdenti
     weight: Math.max(1, Math.min(100, Number(body.weight) || 100)),
     startAt: clean(body.startAt, 40) || null,
     endAt: clean(body.endAt, 40) || null,
+    creatives,
   };
 }
 
@@ -235,7 +254,7 @@ export async function GET(request: NextRequest) {
        ORDER BY CASE a.status WHEN 'active' THEN 0 WHEN 'draft' THEN 1 WHEN 'paused' THEN 2 ELSE 3 END,
                 a.priority ASC, a.updated_at DESC`,
     ).all<AdRow>();
-    const campaigns = rows.results.map(serialise).filter((campaign) => campaignVisibleToCountry(identity, campaign));
+    const campaigns = await attachCreatives(db, rows.results.map(serialise).filter((campaign) => campaignVisibleToCountry(identity, campaign)));
     return NextResponse.json({ identity, campaigns }, { headers: { "Cache-Control": "private, no-store" } });
   }
 
@@ -253,7 +272,7 @@ export async function GET(request: NextRequest) {
        ORDER BY a.priority ASC, a.weight DESC, a.updated_at DESC
        LIMIT 60`,
     ).all<AdRow>();
-    const campaigns = rows.results
+    const campaigns = await attachCreatives(db, rows.results
       .map(serialise)
       .filter((campaign) =>
         (!campaign.countries.length || campaign.countries.includes(country)) &&
@@ -261,7 +280,7 @@ export async function GET(request: NextRequest) {
         campaign.languages.includes(locale) &&
         campaign.devices.includes(device)
       )
-      .slice(0, 8);
+      .slice(0, 8));
     return NextResponse.json({ campaigns }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=90" } });
   } catch {
     return NextResponse.json({ campaigns: [] }, { headers: { "Cache-Control": "no-store" } });
@@ -306,6 +325,7 @@ export async function POST(request: NextRequest) {
     JSON.stringify(payload.languages), JSON.stringify(payload.devices),
     payload.priority, payload.weight, payload.startAt, payload.endAt, identity.email,
   ).run();
+  if (payload.creatives.length) await db.batch(payload.creatives.map((creative) => db.prepare(`INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, poster_url, position, duration_seconds) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds)));
   await writeAudit(db, identity.email, "ad.created", id, { status: payload.status, countries: payload.countries });
   return NextResponse.json({ id }, { status: 201 });
 }
@@ -357,6 +377,8 @@ export async function PATCH(request: NextRequest) {
     JSON.stringify(payload.languages), JSON.stringify(payload.devices),
     payload.priority, payload.weight, payload.startAt, payload.endAt,
   ).run();
+  await db.prepare("DELETE FROM ad_creatives WHERE campaign_id = ?1").bind(id).run();
+  if (payload.creatives.length) await db.batch(payload.creatives.map((creative) => db.prepare(`INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, poster_url, position, duration_seconds) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds)));
   await writeAudit(db, identity.email, "ad.updated", id, { status: payload.status });
   return NextResponse.json({ ok: true });
 }

@@ -38,6 +38,7 @@ type Campaign = {
   endAt: string | null;
   impressions: number;
   clicks: number;
+  creatives?: Creative[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -53,6 +54,7 @@ type Asset = {
   uploadedBy?: string | null;
   createdAt?: string;
 };
+type Creative = { id: string; mediaType: "image" | "video"; mediaUrl: string; mobileMediaUrl: string | null; posterUrl: string | null; position: number; durationSeconds: number };
 
 type CampaignForm = Omit<Campaign, "impressions" | "clicks">;
 
@@ -109,6 +111,7 @@ const emptyCampaign: CampaignForm = {
   weight: 100,
   startAt: null,
   endAt: null,
+  creatives: [],
 };
 
 function countryName(code: string) {
@@ -314,7 +317,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       }
       setAssets((items) => [...uploaded, ...items]);
       const selected = uploaded[0];
-      if (selected) setForm((current) => ({ ...current, mediaUrl: selected.url, mediaType: selected.mediaType }));
+      if (selected) setForm((current) => ({ ...current, mediaUrl: current.creatives?.length ? current.mediaUrl : selected.url, mediaType: current.creatives?.length ? current.mediaType : selected.mediaType, creatives: [...(current.creatives || []), ...uploaded.map((asset, index) => ({ id: asset.id, mediaType: asset.mediaType, mediaUrl: asset.url, mobileMediaUrl: null, posterUrl: null, position: (current.creatives?.length || 0) + index + 1, durationSeconds: 6 }))] }));
       await loadAssets();
       setMessage(uploaded.length === 1 ? "تم رفع الملف واختياره للحملة." : `تم رفع ${uploaded.length} ملفات إلى المكتبة، واختير أول ملف للحملة.`);
     } catch (error) {
@@ -438,6 +441,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <label>نسخة الهاتف (اختياري)<input dir="ltr" value={form.mobileMediaUrl || ""} onChange={(event) => setForm({ ...form, mobileMediaUrl: event.target.value || null })} /></label>
               <label>صورة غلاف الفيديو<input dir="ltr" value={form.posterUrl || ""} onChange={(event) => setForm({ ...form, posterUrl: event.target.value || null })} /></label>
             </div>
+            {!!form.creatives?.length && <div className="ads-creative-playlist">{form.creatives.map((creative, index) => <article key={`${creative.id}-${index}`}><span>{index + 1}</span>{creative.mediaType === "video" ? <video src={creative.mediaUrl} muted /> : <img src={creative.mediaUrl} alt="" />}<strong>الشريحة {index + 1}</strong><label>ثوانٍ<input type="number" min="3" max="15" value={creative.durationSeconds} onChange={(event) => setForm({ ...form, creatives: form.creatives?.map((item, itemIndex) => itemIndex === index ? { ...item, durationSeconds: Number(event.target.value) } : item) })} /></label><button type="button" disabled={index === 0} onClick={() => setForm({ ...form, creatives: form.creatives?.map((item, itemIndex, list) => itemIndex === index ? { ...list[index - 1], position: index } : itemIndex === index - 1 ? { ...list[index], position: index - 1 } : item) })}>↑</button><button type="button" disabled={index === form.creatives!.length - 1} onClick={() => setForm({ ...form, creatives: form.creatives?.map((item, itemIndex, list) => itemIndex === index ? { ...list[index + 1], position: index + 2 } : itemIndex === index + 1 ? { ...list[index], position: index + 1 } : item) })}>↓</button></article>)}</div>}
           </section>
 
           <section className="ads-form-section" hidden={wizardStep !== 3}><div><span>3</span><h3>المحتوى والترجمات</h3></div>

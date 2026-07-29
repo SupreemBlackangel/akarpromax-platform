@@ -222,6 +222,7 @@ type PublicAdCampaign = {
   ctaAr: string; ctaEn: string; ctaTr: string;
   targetUrl: string;
   campaignType: string;
+  creatives?: Array<{ id: string; mediaType: "image" | "video"; mediaUrl: string; mobileMediaUrl: string | null; posterUrl: string | null; position: number; durationSeconds: number }>;
 };
 
 type ViewerContext = {
@@ -805,12 +806,12 @@ export default function Home() {
       href: "#properties",
     },
   ];
-  const managedHeroSlides: HeroAdSlide[] = managedHeroAds.map((campaign) => ({
-    id: `campaign-${campaign.id}`,
+  const managedHeroSlides: HeroAdSlide[] = managedHeroAds.flatMap((campaign) => (campaign.creatives?.length ? campaign.creatives : [{ id: campaign.id, mediaType: campaign.mediaType, mediaUrl: campaign.mediaUrl, mobileMediaUrl: campaign.mobileMediaUrl, posterUrl: campaign.posterUrl, position: 1, durationSeconds: 6 }]).map((creative) => ({
+    id: `campaign-${campaign.id}-${creative.id}`,
     campaignId: campaign.id,
-    mediaType: campaign.mediaType,
-    mediaUrl: deviceType === "mobile" && campaign.mobileMediaUrl ? campaign.mobileMediaUrl : campaign.mediaUrl,
-    posterUrl: campaign.posterUrl || undefined,
+    mediaType: creative.mediaType,
+    mediaUrl: deviceType === "mobile" && creative.mobileMediaUrl ? creative.mobileMediaUrl : creative.mediaUrl,
+    posterUrl: creative.posterUrl || undefined,
     eyebrow: locale === "ar" ? campaign.eyebrowAr : locale === "tr" ? campaign.eyebrowTr : campaign.eyebrowEn,
     title: locale === "ar" ? campaign.titleAr : locale === "tr" ? campaign.titleTr : campaign.titleEn,
     accent: locale === "ar" ? campaign.accentAr : locale === "tr" ? campaign.accentTr : campaign.accentEn,
@@ -818,7 +819,7 @@ export default function Home() {
     cta: locale === "ar" ? campaign.ctaAr : locale === "tr" ? campaign.ctaTr : campaign.ctaEn,
     href: campaign.targetUrl,
     sponsored: campaign.campaignType === "sponsor",
-  }));
+  })));
   const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
   const canOpenSponsorAdmin = viewer.permissions.includes("sponsors:read");

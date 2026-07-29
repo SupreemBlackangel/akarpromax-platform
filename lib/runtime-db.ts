@@ -120,6 +120,18 @@ async function ensureSponsorSchema(db: D1Database) {
       device TEXT NOT NULL,
       occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS ad_creatives (
+      id TEXT PRIMARY KEY NOT NULL,
+      campaign_id TEXT NOT NULL,
+      media_type TEXT NOT NULL,
+      media_url TEXT NOT NULL,
+      mobile_media_url TEXT,
+      poster_url TEXT,
+      position INTEGER NOT NULL DEFAULT 1,
+      duration_seconds INTEGER NOT NULL DEFAULT 6,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
     db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS sponsor_access_email_unique ON sponsor_access (email)"),
     db.prepare("CREATE INDEX IF NOT EXISTS sponsor_access_role_country_idx ON sponsor_access (role, country_code)"),
     db.prepare("CREATE INDEX IF NOT EXISTS sponsors_country_status_priority_idx ON sponsors (country_code, status, priority)"),
@@ -133,5 +145,6 @@ async function ensureSponsorSchema(db: D1Database) {
     db.prepare("CREATE INDEX IF NOT EXISTS ad_campaigns_priority_idx ON ad_campaigns (priority, updated_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS ad_events_campaign_type_idx ON ad_events (campaign_id, event_type)"),
     db.prepare("CREATE INDEX IF NOT EXISTS ad_events_country_date_idx ON ad_events (country_code, occurred_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS ad_creatives_campaign_position_idx ON ad_creatives (campaign_id, position)"),
   ]);
 }

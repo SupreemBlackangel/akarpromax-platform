@@ -233,6 +233,23 @@ export const adCampaigns = sqliteTable(
   ],
 );
 
+export const adCreatives = sqliteTable(
+  "ad_creatives",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id").notNull(),
+    mediaType: text("media_type").notNull(),
+    mediaUrl: text("media_url").notNull(),
+    mobileMediaUrl: text("mobile_media_url"),
+    posterUrl: text("poster_url"),
+    position: integer("position").notNull().default(1),
+    durationSeconds: integer("duration_seconds").notNull().default(6),
+    status: text("status").notNull().default("active"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("ad_creatives_campaign_position_idx").on(table.campaignId, table.position)],
+);
+
 export const adEvents = sqliteTable(
   "ad_events",
   {
