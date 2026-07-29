@@ -711,6 +711,7 @@ export default function Home() {
             <button className="menu-trigger" type="button" aria-label={sidebarPinned ? copy.closeMenu : copy.showMenu} aria-controls="right-sidebar" aria-expanded={sidebarPinned} onClick={() => { setSidebarPinned((pinned) => !pinned); setSidebarHovered(false); }}>☰</button>
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
+              <div className="tool-cluster location-cluster">
               <div className="country-switcher" aria-label={copy.countryAria} onMouseEnter={() => cancelDropdownClose("country")} onMouseLeave={() => scheduleDropdownClose("country", () => setCountryOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("country"); setCountryOpen(false); } }}>
                 <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => { setCountryOpen((open) => !open); setCityOpen(false); setLanguageOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
@@ -727,6 +728,8 @@ export default function Home() {
                   {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitem" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-pressed={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
                 </div>
               </div>
+              </div>
+              <div className="tool-cluster preference-cluster">
               <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>
               <div className="language-switcher" aria-label={copy.languageAria} onMouseEnter={() => cancelDropdownClose("language")} onMouseLeave={() => scheduleDropdownClose("language", () => setLanguageOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("language"); setLanguageOpen(false); } }}>
                 <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setCountryOpen(false); setCityOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
@@ -744,10 +747,10 @@ export default function Home() {
                   {themeOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={themeMode === option.id ? "theme-option active" : "theme-option"} aria-pressed={themeMode === option.id} onClick={() => { setThemeMode(option.id); setThemeOpen(false); }}><span className="theme-symbol" aria-hidden="true">{option.symbol}</span><span>{copy[option.labelKey]}</span></button>)}
                 </div>
               </div>
-              <a href="#top" aria-label={copy.officeAppAria}>▣</a>
-              <a className="admin-chip" href="#account">Admin　♙</a>
+              </div>
+              <a className="office-tool" href="#top" aria-label={copy.officeAppAria} title={copy.officeAppAria}>▣</a>
             </div>
-            <div className="header-actions"><a href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
+            <div className="header-actions"><a className="admin-chip" href="#account"><span className="admin-label">Admin</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
           </div>
         </header>
 
