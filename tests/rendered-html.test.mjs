@@ -92,7 +92,8 @@ test("includes the country sponsor administration and generated campaign art", a
 
   assert.match(page, /\/api\/user-context/);
   assert.match(page, /\/api\/sponsors\?country=/);
-  assert.match(page, /activeSponsor\?\.logoUrl \|\| activeSponsor\?\.bannerUrl/);
+  assert.match(page, /sponsor-ribbon-visual/);
+  assert.match(page, /<img src=\{sponsorBannerUrl\}/);
   assert.match(page, /sidebar-sponsor-admin/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);
@@ -106,6 +107,7 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(sponsorAssetsApi, /UPDATE sponsors SET logo_url/);
   assert.match(admin, /admin-campaign-art/);
   assert.match(admin, /admin-campaign-preview-logo/);
+  assert.match(admin, /صورة خلفية شريط الراعي/);
   assert.match(admin, /payload\.append\("sponsorId", form\.id\)/);
   assert.match(admin, /admin-dialog-message/);
   assert.match(admin, /disabled=\{busy \|\| logoUploading\}/);

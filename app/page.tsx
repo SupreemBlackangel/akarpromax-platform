@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Sponsor logos and country flags are runtime-managed URLs. */
 
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Locale = "ar" | "en" | "tr";
 type CountryId = string;
@@ -704,7 +704,7 @@ export default function Home() {
   const selectedSponsorTone = sponsorToneByCountry[country] ?? "blue";
   const sponsorContactHref = `mailto:partners@akarpromax.om?subject=${encodeURIComponent(`AkarPromax sponsor — ${selectedCountry.names.en}`)}`;
   const sponsorBannerUrl = activeSponsor?.bannerUrl || sponsorBannerByCountry[country] || "/sponsors/arab-blue.webp";
-  const sponsorLogoUrl = activeSponsor?.logoUrl || activeSponsor?.bannerUrl || null;
+  const sponsorLogoUrl = activeSponsor?.logoUrl || null;
   const sponsorName = activeSponsor ? (locale === "ar" ? activeSponsor.nameAr : locale === "tr" ? activeSponsor.nameTr : activeSponsor.nameEn) : copy.sponsorAvailable;
   const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
   const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
@@ -914,10 +914,10 @@ export default function Home() {
         </div>
 
         {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
-          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`} style={{ "--sponsor-image": `url("${sponsorBannerUrl}")` } as CSSProperties}>
-            <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span></div>
-            <div className="sponsor-brand-placeholder">{sponsorLogoUrl ? <img className="sponsor-logo-image" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorLogo}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
-            <a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a>
+          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`}>
+            <div className="sponsor-ribbon-visual" aria-hidden="true"><img src={sponsorBannerUrl} alt="" /><span><CountryFlag country={selectedCountry} />{copy.sponsorLabel}</span></div>
+            <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span><a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></div>
+            <div className="sponsor-brand-placeholder">{sponsorLogoUrl ? <img className="sponsor-logo-image" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorLogo}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
           </div>
         </section>}
 

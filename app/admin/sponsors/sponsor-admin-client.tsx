@@ -423,7 +423,7 @@ export default function SponsorAdminClient({
                 </div>
                 <div className="admin-logo-url"><span>أو من رابط مباشر</span><input dir="ltr" placeholder="https://example.com/logo.png" value={form.logoUrl || ""} onChange={(event) => setForm({ ...form, logoUrl: event.target.value })} /></div>
               </div>
-              <label>الصورة المصممة<select value={form.bannerUrl} onChange={(event) => setForm({ ...form, bannerUrl: event.target.value })}>{bannerPresets.map(([url, label]) => <option value={url} key={url}>{label}</option>)}</select></label>
+              <label>صورة خلفية شريط الراعي<select value={form.bannerUrl} onChange={(event) => setForm({ ...form, bannerUrl: event.target.value })}>{bannerPresets.map(([url, label]) => <option value={url} key={url}>{label}</option>)}</select></label>
               <label>اسم مسؤول التواصل<input value={form.contactName || ""} onChange={(event) => setForm({ ...form, contactName: event.target.value })} /></label>
               <label>بريد التواصل<input type="email" dir="ltr" value={form.contactEmail || ""} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} /></label>
               <label>هاتف التواصل<input dir="ltr" value={form.contactPhone || ""} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} /></label>
