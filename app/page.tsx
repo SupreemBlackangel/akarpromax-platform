@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 type Locale = "ar" | "en" | "tr";
 type CountryId = string;
+type ThemeMode = "system" | "light" | "dark";
 
 type Translation = {
   metaTitle: string;
@@ -19,6 +20,10 @@ type Translation = {
   cityAria: string;
   currencyAria: string;
   languageAria: string;
+  themeAria: string;
+  themeSystem: string;
+  themeLight: string;
+  themeDark: string;
   officeAppAria: string;
   login: string;
   register: string;
@@ -83,6 +88,12 @@ const languageOptions: Array<{ id: Locale; short: string; symbol: string; label:
   { id: "ar", short: "AR", symbol: "ع", label: "العربية" },
   { id: "en", short: "EN", symbol: "🇬🇧", label: "English" },
   { id: "tr", short: "TR", symbol: "🇹🇷", label: "Türkçe" },
+];
+
+const themeOptions: Array<{ id: ThemeMode; symbol: string; labelKey: "themeSystem" | "themeLight" | "themeDark" }> = [
+  { id: "system", symbol: "◐", labelKey: "themeSystem" },
+  { id: "light", symbol: "☀", labelKey: "themeLight" },
+  { id: "dark", symbol: "☾", labelKey: "themeDark" },
 ];
 
 type CountryOption = {
@@ -330,6 +341,10 @@ const translations: Record<Locale, Translation> = {
     cityAria: "المدينة",
     currencyAria: "العملة",
     languageAria: "اختيار اللغة",
+    themeAria: "اختيار مظهر المنصة",
+    themeSystem: "حسب النظام",
+    themeLight: "نهاري",
+    themeDark: "داكن",
     officeAppAria: "تطبيق المكتب",
     login: "دخول",
     register: "تسجيل جديد",
@@ -412,6 +427,10 @@ const translations: Record<Locale, Translation> = {
     cityAria: "City",
     currencyAria: "Currency",
     languageAria: "Choose language",
+    themeAria: "Choose appearance",
+    themeSystem: "System",
+    themeLight: "Light",
+    themeDark: "Dark",
     officeAppAria: "Office app",
     login: "Log in",
     register: "Register",
@@ -494,6 +513,10 @@ const translations: Record<Locale, Translation> = {
     cityAria: "Şehir",
     currencyAria: "Para birimi",
     languageAria: "Dil seçin",
+    themeAria: "Görünüm seçin",
+    themeSystem: "Sistem",
+    themeLight: "Açık",
+    themeDark: "Koyu",
     officeAppAria: "Ofis uygulaması",
     login: "Giriş yap",
     register: "Kayıt ol",
@@ -588,18 +611,22 @@ export default function Home() {
   const [countryOpen, setCountryOpen] = useState(false);
   const [city, setCity] = useState("om-muscat");
   const [cityOpen, setCityOpen] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+  const [themeOpen, setThemeOpen] = useState(false);
+  const [themeReady, setThemeReady] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
-  const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language", number>>>({});
+  const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
+  const selectedTheme = themeOptions.find((option) => option.id === themeMode) ?? themeOptions[0];
   const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
   const selectedCity = cityOptions.find((option) => option.id === city && option.countryId === country) ?? citiesForCountry(country)[0] ?? cityOptions[0];
   const selectedCurrency = currenciesByCountry[country] ?? currenciesByCountry.om;
   const sidebarOpen = sidebarPinned || sidebarHovered;
 
-  const cancelDropdownClose = (key: "country" | "city" | "language") => {
+  const cancelDropdownClose = (key: "country" | "city" | "language" | "theme") => {
     const timer = dropdownCloseTimers.current[key];
     if (timer !== undefined) {
       window.clearTimeout(timer);
@@ -607,7 +634,7 @@ export default function Home() {
     }
   };
 
-  const scheduleDropdownClose = (key: "country" | "city" | "language", close: () => void) => {
+  const scheduleDropdownClose = (key: "country" | "city" | "language" | "theme", close: () => void) => {
     cancelDropdownClose(key);
     dropdownCloseTimers.current[key] = window.setTimeout(() => {
       close();
@@ -620,6 +647,26 @@ export default function Home() {
     document.documentElement.dir = direction;
     document.title = copy.metaTitle;
   }, [copy.metaTitle, direction, locale]);
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem("akarpromax-theme");
+    if (storedTheme === "system" || storedTheme === "light" || storedTheme === "dark") setThemeMode(storedTheme);
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) return;
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const applyTheme = () => {
+      const resolvedTheme = themeMode === "system" ? (systemTheme.matches ? "dark" : "light") : themeMode;
+      document.documentElement.dataset.theme = resolvedTheme;
+      document.documentElement.dataset.themeMode = themeMode;
+    };
+    applyTheme();
+    window.localStorage.setItem("akarpromax-theme", themeMode);
+    if (themeMode === "system") systemTheme.addEventListener("change", applyTheme);
+    return () => systemTheme.removeEventListener("change", applyTheme);
+  }, [themeMode, themeReady]);
 
   useEffect(() => {
     const detectedCountry = detectCountry();
@@ -665,7 +712,7 @@ export default function Home() {
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
               <div className="country-switcher" aria-label={copy.countryAria} onMouseEnter={() => cancelDropdownClose("country")} onMouseLeave={() => scheduleDropdownClose("country", () => setCountryOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("country"); setCountryOpen(false); } }}>
-                <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => { setCountryOpen((open) => !open); setCityOpen(false); setLanguageOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
+                <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => { setCountryOpen((open) => !open); setCityOpen(false); setLanguageOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
@@ -673,7 +720,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="city-switcher" aria-label={copy.cityAria} onMouseEnter={() => cancelDropdownClose("city")} onMouseLeave={() => scheduleDropdownClose("city", () => setCityOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("city"); setCityOpen(false); } }}>
-                <button className="city-trigger" type="button" aria-haspopup="menu" aria-expanded={cityOpen} onClick={() => { setCityOpen((open) => !open); setCountryOpen(false); setLanguageOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCityOpen(false); }}>
+                <button className="city-trigger" type="button" aria-haspopup="menu" aria-expanded={cityOpen} onClick={() => { setCityOpen((open) => !open); setCountryOpen(false); setLanguageOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCityOpen(false); }}>
                   <span className="city-pin" aria-hidden="true">⌖</span><span>{selectedCity.names[locale]}</span><span className="city-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="city-dropdown" role="menu" hidden={!cityOpen}>
@@ -682,11 +729,19 @@ export default function Home() {
               </div>
               <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>
               <div className="language-switcher" aria-label={copy.languageAria} onMouseEnter={() => cancelDropdownClose("language")} onMouseLeave={() => scheduleDropdownClose("language", () => setLanguageOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("language"); setLanguageOpen(false); } }}>
-                <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setCountryOpen(false); setCityOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
+                <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setCountryOpen(false); setCityOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
                   <span className="language-symbol" aria-hidden="true">{selectedLanguage.symbol}</span><span>{selectedLanguage.short}</span><span className="language-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="language-dropdown" role="menu" hidden={!languageOpen}>
                   {languageOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={locale === option.id ? "language-option active" : "language-option"} aria-label={option.label} aria-pressed={locale === option.id} onClick={() => { setLocale(option.id); setLanguageOpen(false); }}><span className="language-symbol" aria-hidden="true">{option.symbol}</span><span>{option.label}</span><small>{option.short}</small></button>)}
+                </div>
+              </div>
+              <div className="theme-switcher" aria-label={copy.themeAria} onMouseEnter={() => cancelDropdownClose("theme")} onMouseLeave={() => scheduleDropdownClose("theme", () => setThemeOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("theme"); setThemeOpen(false); } }}>
+                <button className="theme-trigger" type="button" aria-haspopup="menu" aria-expanded={themeOpen} title={`${copy.themeAria}: ${copy[selectedTheme.labelKey]}`} onClick={() => { setThemeOpen((open) => !open); setCountryOpen(false); setCityOpen(false); setLanguageOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setThemeOpen(false); }}>
+                  <span className="theme-symbol" aria-hidden="true">{selectedTheme.symbol}</span><span>{copy[selectedTheme.labelKey]}</span><span className="theme-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div className="theme-dropdown" role="menu" hidden={!themeOpen}>
+                  {themeOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={themeMode === option.id ? "theme-option active" : "theme-option"} aria-pressed={themeMode === option.id} onClick={() => { setThemeMode(option.id); setThemeOpen(false); }}><span className="theme-symbol" aria-hidden="true">{option.symbol}</span><span>{copy[option.labelKey]}</span></button>)}
                 </div>
               </div>
               <a href="#top" aria-label={copy.officeAppAria}>▣</a>

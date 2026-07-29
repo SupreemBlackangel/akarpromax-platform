@@ -45,6 +45,8 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /city-dropdown/);
   assert.match(html, /currency-chip/);
   assert.match(html, /OMR/);
+  assert.match(html, /theme-switcher/);
+  assert.match(html, /theme-dropdown/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {
@@ -58,6 +60,7 @@ test("does not retain the starter preview or starter metadata", async () => {
   assert.match(layout, /عقار بروماكس/);
   assert.match(layout, /openGraph/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  assert.match(styles, /prefers-color-scheme:\s*dark/);
+  assert.match(styles, /html\[data-theme="dark"\]/);
   assert.match(styles, /color-scheme:\s*dark/);
+  assert.match(layout, /akarpromax-theme/);
 });
