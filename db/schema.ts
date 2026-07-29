@@ -167,3 +167,86 @@ export const sponsorEvents = sqliteTable(
     index("sponsor_events_country_date_idx").on(table.countryCode, table.occurredAt),
   ],
 );
+
+export const adAssets = sqliteTable(
+  "ad_assets",
+  {
+    id: text("id").primaryKey(),
+    objectKey: text("object_key").notNull(),
+    url: text("url").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    mediaType: text("media_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    uploadedBy: text("uploaded_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("ad_assets_object_key_unique").on(table.objectKey),
+    index("ad_assets_media_created_idx").on(table.mediaType, table.createdAt),
+  ],
+);
+
+export const adCampaigns = sqliteTable(
+  "ad_campaigns",
+  {
+    id: text("id").primaryKey(),
+    internalName: text("internal_name").notNull(),
+    advertiserName: text("advertiser_name").notNull(),
+    campaignType: text("campaign_type").notNull().default("platform"),
+    status: text("status").notNull().default("draft"),
+    mediaType: text("media_type").notNull().default("image"),
+    mediaUrl: text("media_url").notNull(),
+    mobileMediaUrl: text("mobile_media_url"),
+    posterUrl: text("poster_url"),
+    eyebrowAr: text("eyebrow_ar").notNull(),
+    eyebrowEn: text("eyebrow_en").notNull(),
+    eyebrowTr: text("eyebrow_tr").notNull(),
+    titleAr: text("title_ar").notNull(),
+    titleEn: text("title_en").notNull(),
+    titleTr: text("title_tr").notNull(),
+    accentAr: text("accent_ar").notNull(),
+    accentEn: text("accent_en").notNull(),
+    accentTr: text("accent_tr").notNull(),
+    descriptionAr: text("description_ar").notNull(),
+    descriptionEn: text("description_en").notNull(),
+    descriptionTr: text("description_tr").notNull(),
+    ctaAr: text("cta_ar").notNull(),
+    ctaEn: text("cta_en").notNull(),
+    ctaTr: text("cta_tr").notNull(),
+    targetUrl: text("target_url").notNull(),
+    countries: text("countries").notNull().default("[]"),
+    cities: text("cities").notNull().default("[]"),
+    languages: text("languages").notNull().default("[\"ar\",\"en\",\"tr\"]"),
+    devices: text("devices").notNull().default("[\"desktop\",\"mobile\"]"),
+    priority: integer("priority").notNull().default(100),
+    weight: integer("weight").notNull().default(100),
+    startAt: text("start_at"),
+    endAt: text("end_at"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("ad_campaigns_status_dates_idx").on(table.status, table.startAt, table.endAt),
+    index("ad_campaigns_priority_idx").on(table.priority, table.updatedAt),
+  ],
+);
+
+export const adEvents = sqliteTable(
+  "ad_events",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id").notNull(),
+    eventType: text("event_type").notNull(),
+    countryCode: text("country_code").notNull(),
+    cityId: text("city_id"),
+    locale: text("locale").notNull(),
+    device: text("device").notNull(),
+    occurredAt: text("occurred_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("ad_events_campaign_type_idx").on(table.campaignId, table.eventType),
+    index("ad_events_country_date_idx").on(table.countryCode, table.occurredAt),
+  ],
+);

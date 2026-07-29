@@ -123,3 +123,40 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(hosting, /"r2": "SPONSOR_ASSETS"/);
   images.forEach((image) => assert.ok(image.size > 40_000));
 });
+
+test("includes the managed advertising center, media storage and targeted hero delivery", async () => {
+  const [page, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, migration, styles] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/ads/ads-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/ads/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/ad-assets/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/ad-events/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/runtime-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/sponsor-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0001_stormy_anita_blake.sql", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /\/api\/ads\?country=/);
+  assert.match(page, /\/api\/ad-events/);
+  assert.match(page, /campaignId/);
+  assert.match(page, /IntersectionObserver/);
+  assert.match(admin, /مركز إعلانات hero-ad-media/);
+  assert.match(admin, /image\/png,image\/jpeg,image\/webp,video\/mp4,video\/webm,video\/ogg/);
+  assert.match(admin, /مكتبة الصور والفيديو/);
+  assert.match(adsApi, /ads:publish/);
+  assert.match(adsApi, /countries/);
+  assert.match(assetsApi, /MAX_VIDEO_BYTES/);
+  assert.match(assetsApi, /signatureMatches/);
+  assert.match(eventsApi, /video_complete/);
+  assert.match(schema, /adCampaigns/);
+  assert.match(schema, /adAssets/);
+  assert.match(schema, /adEvents/);
+  assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS ad_campaigns/);
+  assert.match(permissions, /ad_manager/);
+  assert.match(permissions, /media:upload/);
+  assert.match(migration, /CREATE TABLE `ad_campaigns`/);
+  assert.match(styles, /\.ads-admin/);
+  assert.match(styles, /\.ads-live-preview/);
+});

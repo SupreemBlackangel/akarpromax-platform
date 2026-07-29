@@ -59,6 +59,7 @@ const roleLabels: Record<string, string> = {
   analyst: "محلل التقارير",
   content_editor: "محرر الرعاة",
   country_manager: "مدير دولة",
+  ad_manager: "مدير الإعلانات",
   sponsor_admin: "مدير الرعاة",
   super_admin: "المدير العام",
 };

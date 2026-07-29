@@ -7,6 +7,7 @@ export type SponsorRole =
   | "analyst"
   | "content_editor"
   | "country_manager"
+  | "ad_manager"
   | "sponsor_admin"
   | "super_admin";
 
@@ -22,11 +23,12 @@ export type SponsorIdentity = {
 const permissionsByRole: Record<SponsorRole, string[]> = {
   guest: [],
   viewer: [],
-  analyst: ["sponsors:read", "analytics:read"],
-  content_editor: ["sponsors:read", "sponsors:edit"],
-  country_manager: ["sponsors:read", "sponsors:edit", "sponsors:publish", "analytics:read"],
-  sponsor_admin: ["sponsors:read", "sponsors:edit", "sponsors:publish", "analytics:read", "access:read"],
-  super_admin: ["sponsors:read", "sponsors:edit", "sponsors:publish", "analytics:read", "access:read", "access:write"],
+  analyst: ["sponsors:read", "ads:read", "ads:analytics", "analytics:read"],
+  content_editor: ["sponsors:read", "sponsors:edit", "ads:read", "ads:edit", "media:upload"],
+  country_manager: ["sponsors:read", "sponsors:edit", "sponsors:publish", "ads:read", "ads:edit", "ads:publish", "ads:analytics", "media:upload", "analytics:read"],
+  ad_manager: ["ads:read", "ads:edit", "ads:publish", "ads:analytics", "media:upload", "access:read"],
+  sponsor_admin: ["sponsors:read", "sponsors:edit", "sponsors:publish", "ads:read", "ads:analytics", "analytics:read", "access:read"],
+  super_admin: ["sponsors:read", "sponsors:edit", "sponsors:publish", "ads:read", "ads:edit", "ads:publish", "ads:analytics", "media:upload", "analytics:read", "access:read", "access:write"],
 };
 
 type AccessRow = {
@@ -102,6 +104,6 @@ export function hasSponsorPermission(identity: SponsorIdentity, permission: stri
 }
 
 export function canManageCountry(identity: SponsorIdentity, countryCode: string): boolean {
-  if (identity.role === "super_admin" || identity.role === "sponsor_admin") return true;
+  if (identity.role === "super_admin" || identity.role === "sponsor_admin" || identity.role === "ad_manager") return true;
   return identity.countryCode?.toLowerCase() === countryCode.toLowerCase();
 }

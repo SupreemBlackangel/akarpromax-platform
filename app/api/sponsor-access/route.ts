@@ -9,6 +9,7 @@ const assignableRoles: SponsorRole[] = [
   "analyst",
   "content_editor",
   "country_manager",
+  "ad_manager",
   "sponsor_admin",
   "super_admin",
 ];
@@ -38,7 +39,7 @@ export async function GET() {
   const rows = await db.prepare(
     `SELECT id, email, display_name, role, country_code, status, created_at, updated_at
      FROM sponsor_access
-     ORDER BY CASE role WHEN 'super_admin' THEN 0 WHEN 'sponsor_admin' THEN 1 ELSE 2 END,
+     ORDER BY CASE role WHEN 'super_admin' THEN 0 WHEN 'ad_manager' THEN 1 WHEN 'sponsor_admin' THEN 2 ELSE 3 END,
               display_name, email`,
   ).all<AccessRow>();
 

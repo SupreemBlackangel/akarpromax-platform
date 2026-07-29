@@ -196,6 +196,7 @@ type PublicSponsor = {
 
 type HeroAdSlide = {
   id: string;
+  campaignId?: string;
   mediaType: "image" | "video";
   mediaUrl: string;
   posterUrl?: string;
@@ -206,6 +207,21 @@ type HeroAdSlide = {
   cta: string;
   href: string;
   sponsored?: boolean;
+};
+
+type PublicAdCampaign = {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  mobileMediaUrl: string | null;
+  posterUrl: string | null;
+  eyebrowAr: string; eyebrowEn: string; eyebrowTr: string;
+  titleAr: string; titleEn: string; titleTr: string;
+  accentAr: string; accentEn: string; accentTr: string;
+  descriptionAr: string; descriptionEn: string; descriptionTr: string;
+  ctaAr: string; ctaEn: string; ctaTr: string;
+  targetUrl: string;
+  campaignType: string;
 };
 
 type ViewerContext = {
@@ -227,9 +243,9 @@ function isVideoAsset(url: string) {
 }
 
 const roleLabels: Record<Locale, Record<string, string>> = {
-  ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", country_manager: "مدير دولة", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
-  en: { guest: "Guest", viewer: "Viewer", analyst: "Analyst", content_editor: "Editor", country_manager: "Country manager", sponsor_admin: "Sponsor admin", super_admin: "Super admin" },
-  tr: { guest: "Ziyaretçi", viewer: "Kullanıcı", analyst: "Analist", content_editor: "Editör", country_manager: "Ülke yöneticisi", sponsor_admin: "Sponsor yöneticisi", super_admin: "Süper yönetici" },
+  ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", country_manager: "مدير دولة", ad_manager: "مدير الإعلانات", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
+  en: { guest: "Guest", viewer: "Viewer", analyst: "Analyst", content_editor: "Editor", country_manager: "Country manager", ad_manager: "Ad manager", sponsor_admin: "Sponsor admin", super_admin: "Super admin" },
+  tr: { guest: "Ziyaretçi", viewer: "Kullanıcı", analyst: "Analist", content_editor: "Editör", country_manager: "Ülke yöneticisi", ad_manager: "Reklam yöneticisi", sponsor_admin: "Sponsor yöneticisi", super_admin: "Süper yönetici" },
 };
 
 type CityOption = {
@@ -727,12 +743,16 @@ export default function Home() {
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
+  const [managedHeroAds, setManagedHeroAds] = useState<PublicAdCampaign[]>([]);
+  const [deviceType, setDeviceType] = useState<"desktop" | "mobile">("desktop");
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [heroPaused, setHeroPaused] = useState(false);
   const [heroInteracting, setHeroInteracting] = useState(false);
   const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
   const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
   const heroTouchStartX = useRef<number | null>(null);
+  const heroSectionRef = useRef<HTMLElement | null>(null);
+  const recordedAdEvents = useRef(new Set<string>());
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
@@ -748,7 +768,7 @@ export default function Home() {
   const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
   const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
   const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
-  const heroSlides: HeroAdSlide[] = [
+  const fallbackHeroSlides: HeroAdSlide[] = [
     {
       id: "discover",
       mediaType: "image",
@@ -785,12 +805,30 @@ export default function Home() {
       href: "#properties",
     },
   ];
+  const managedHeroSlides: HeroAdSlide[] = managedHeroAds.map((campaign) => ({
+    id: `campaign-${campaign.id}`,
+    campaignId: campaign.id,
+    mediaType: campaign.mediaType,
+    mediaUrl: deviceType === "mobile" && campaign.mobileMediaUrl ? campaign.mobileMediaUrl : campaign.mediaUrl,
+    posterUrl: campaign.posterUrl || undefined,
+    eyebrow: locale === "ar" ? campaign.eyebrowAr : locale === "tr" ? campaign.eyebrowTr : campaign.eyebrowEn,
+    title: locale === "ar" ? campaign.titleAr : locale === "tr" ? campaign.titleTr : campaign.titleEn,
+    accent: locale === "ar" ? campaign.accentAr : locale === "tr" ? campaign.accentTr : campaign.accentEn,
+    description: locale === "ar" ? campaign.descriptionAr : locale === "tr" ? campaign.descriptionTr : campaign.descriptionEn,
+    cta: locale === "ar" ? campaign.ctaAr : locale === "tr" ? campaign.ctaTr : campaign.ctaEn,
+    href: campaign.targetUrl,
+    sponsored: campaign.campaignType === "sponsor",
+  }));
+  const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
   const canOpenSponsorAdmin = viewer.permissions.includes("sponsors:read");
+  const canOpenAdsAdmin = viewer.permissions.includes("ads:read");
   const sidebarIndexes = viewer.role === "super_admin"
     ? copy.sidebar.map((_, index) => index)
     : viewer.role === "sponsor_admin"
       ? [0, 1, 2, 3, 4, 5, 6, 17]
+      : viewer.role === "ad_manager"
+        ? [0, 1, 2, 3, 4, 5, 17]
       : viewer.role === "country_manager"
         ? [0, 1, 2, 3, 4, 5, 6, 12, 13, 17]
         : viewer.role === "content_editor"
@@ -809,6 +847,31 @@ export default function Home() {
       body: JSON.stringify({ sponsorId: activeSponsor.id, countryCode: country, placement, eventType }),
       keepalive: true,
     }).catch(() => undefined);
+  };
+
+  const trackAdEvent = (eventType: string, campaignId = activeHeroSlide.campaignId) => {
+    if (!campaignId) return;
+    void fetch("/api/ad-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignId, eventType, countryCode: country, cityId: city, locale, device: deviceType }),
+      keepalive: true,
+    }).catch(() => undefined);
+  };
+
+  const trackVideoProgress = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!activeHeroSlide.campaignId) return;
+    const video = event.currentTarget;
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+    const ratio = video.currentTime / video.duration;
+    const milestones: Array<[number, string]> = [[.25, "video_25"], [.5, "video_50"], [.75, "video_75"]];
+    for (const [threshold, eventType] of milestones) {
+      const key = `${activeHeroSlide.campaignId}:${eventType}`;
+      if (ratio >= threshold && !recordedAdEvents.current.has(key)) {
+        recordedAdEvents.current.add(key);
+        trackAdEvent(eventType);
+      }
+    }
   };
 
   const cancelDropdownClose = (key: "country" | "city" | "language" | "theme") => {
@@ -834,12 +897,66 @@ export default function Home() {
   }, [copy.metaTitle, direction, locale]);
 
   useEffect(() => {
+    const media = window.matchMedia("(max-width: 720px)");
+    const updateDevice = () => setDeviceType(media.matches ? "mobile" : "desktop");
+    updateDevice();
+    media.addEventListener("change", updateDevice);
+    return () => media.removeEventListener("change", updateDevice);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/ads?country=${encodeURIComponent(country)}&city=${encodeURIComponent(city)}&locale=${locale}&device=${deviceType}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((response) => response.ok ? response.json() : { campaigns: [] })
+      .then((data: { campaigns?: PublicAdCampaign[] }) => {
+        setManagedHeroAds(data.campaigns ?? []);
+        setActiveHeroIndex(0);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [country, city, locale, deviceType]);
+
+  useEffect(() => {
     if (heroPaused || heroInteracting || heroSlides.length < 2) return;
     const timer = window.setTimeout(() => {
       setActiveHeroIndex((index) => (index + 1) % heroSlides.length);
     }, 6500);
     return () => window.clearTimeout(timer);
   }, [activeHeroIndex, heroInteracting, heroPaused, heroSlides.length]);
+
+  useEffect(() => {
+    const campaignId = activeHeroSlide.campaignId;
+    const section = heroSectionRef.current;
+    if (!campaignId || !section || recordedAdEvents.current.has(`${campaignId}:impression`)) return;
+    let timer: number | undefined;
+    const record = () => {
+      const key = `${campaignId}:impression`;
+      if (recordedAdEvents.current.has(key) || document.visibilityState !== "visible") return;
+      recordedAdEvents.current.add(key);
+      void fetch("/api/ad-events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId, eventType: "impression", countryCode: country, cityId: city, locale, device: deviceType }),
+        keepalive: true,
+      }).catch(() => undefined);
+    };
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && entries[0].intersectionRatio >= .5) {
+        timer ??= window.setTimeout(record, 1000);
+      } else if (timer !== undefined) {
+        window.clearTimeout(timer);
+        timer = undefined;
+      }
+    }, { threshold: [.5] });
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [activeHeroSlide.campaignId, city, country, deviceType, locale]);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("akarpromax-theme");
@@ -936,6 +1053,7 @@ export default function Home() {
               <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
             </a>
           ))}
+          {canOpenAdsAdmin && <a className="sidebar-link sidebar-sponsor-admin" href="/admin/ads"><span className="sidebar-icon" aria-hidden="true">▣</span><span>{locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center"}</span></a>}
           {canOpenSponsorAdmin && <a className="sidebar-link sidebar-sponsor-admin" href="/admin/sponsors"><span className="sidebar-icon" aria-hidden="true">◆</span><span>{locale === "ar" ? "إدارة الرعاة" : locale === "tr" ? "Sponsor yönetimi" : "Sponsor management"}</span></a>}
         </div>
         <div className="sidebar-foot"><strong>{viewer.authenticated ? viewer.displayName : copy.brandTitle}</strong><span>{roleLabels[locale][viewer.role] ?? viewer.role} © 2026</span></div>
@@ -987,7 +1105,7 @@ export default function Home() {
               </div>
               <a className="office-tool" href="#top" aria-label={copy.officeAppAria} title={copy.officeAppAria}>▣</a>
             </div>
-            <div className="header-actions"><a className="admin-chip" href={canOpenSponsorAdmin ? "/admin/sponsors" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
+            <div className="header-actions"><a className="admin-chip" href={canOpenAdsAdmin ? "/admin/ads" : canOpenSponsorAdmin ? "/admin/sponsors" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
           </div>
         </header>
 
@@ -1000,6 +1118,7 @@ export default function Home() {
         </div>
 
         <section
+          ref={heroSectionRef}
           className={`hero-ad hero-ad-slider${heroPaused || heroInteracting ? " is-paused" : ""}`}
           aria-label={copy.heroAria}
           aria-roledescription={locale === "ar" ? "عرض شرائح إعلاني" : locale === "tr" ? "Reklam slayt gösterisi" : "Advertisement carousel"}
@@ -1022,7 +1141,7 @@ export default function Home() {
         >
           <div className="hero-ad-media" key={`${activeHeroSlide.id}-${activeHeroSlide.mediaUrl}`}>
             {activeHeroSlide.mediaType === "video"
-              ? <video className="hero-ad-asset" src={activeHeroSlide.mediaUrl} poster={activeHeroSlide.posterUrl} autoPlay muted loop playsInline preload="metadata" />
+              ? <video className="hero-ad-asset" src={activeHeroSlide.mediaUrl} poster={activeHeroSlide.posterUrl} autoPlay muted loop playsInline preload="metadata" onPlay={() => { const key = `${activeHeroSlide.campaignId}:video_start`; if (activeHeroSlide.campaignId && !recordedAdEvents.current.has(key)) { recordedAdEvents.current.add(key); trackAdEvent("video_start"); } }} onTimeUpdate={trackVideoProgress} onEnded={() => trackAdEvent("video_complete")} />
               : <img className="hero-ad-asset" src={activeHeroSlide.mediaUrl} alt="" decoding="async" fetchPriority={activeHeroIndex === 0 ? "high" : "auto"} />}
           </div>
           <div className="container hero-ad-inner">
@@ -1030,7 +1149,7 @@ export default function Home() {
               <p>{activeHeroSlide.eyebrow}</p>
               <h2>{activeHeroSlide.title}<br /><strong>{activeHeroSlide.accent}</strong></h2>
               <span>{activeHeroSlide.description}</span>
-              <a href={activeHeroSlide.href} target={activeHeroSlide.href.startsWith("http") ? "_blank" : undefined} rel={activeHeroSlide.sponsored ? "sponsored noopener" : undefined} onClick={() => { if (activeHeroSlide.sponsored) trackSponsorEvent("header", "click"); }}>{activeHeroSlide.cta} <b>{copy.arrow}</b></a>
+              <a href={activeHeroSlide.href} target={activeHeroSlide.href.startsWith("http") ? "_blank" : undefined} rel={activeHeroSlide.sponsored ? "sponsored noopener" : undefined} onClick={() => { if (activeHeroSlide.sponsored) trackSponsorEvent("header", "click"); if (activeHeroSlide.campaignId) trackAdEvent("click"); }}>{activeHeroSlide.cta} <b>{copy.arrow}</b></a>
             </div>
             <div className="hero-ad-controls" aria-label={locale === "ar" ? "التحكم في الإعلانات" : locale === "tr" ? "Reklam kontrolleri" : "Advertisement controls"}>
               <button className="hero-arrow" type="button" onClick={() => selectHeroSlide(activeHeroIndex - 1)} aria-label={locale === "ar" ? "الإعلان السابق" : locale === "tr" ? "Önceki reklam" : "Previous advertisement"}>‹</button>
