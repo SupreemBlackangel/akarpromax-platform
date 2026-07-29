@@ -49,6 +49,11 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /theme-dropdown/);
   assert.match(html, /tool-cluster location-cluster/);
   assert.match(html, /tool-cluster preference-cluster/);
+  assert.match(html, /country-sponsor/);
+  assert.match(html, /sponsor-inline/);
+  assert.match(html, /footer-sponsor/);
+  assert.match(html, /data-sponsor-country="om"/);
+  assert.match(html, /partners@akarpromax\.om/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {

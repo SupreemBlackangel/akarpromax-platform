@@ -63,6 +63,15 @@ type Translation = {
   officeStats: string[];
   adLabel: string;
   adDescription: string;
+  sponsorAria: string;
+  sponsorLabel: string;
+  sponsorOfficial: string;
+  sponsorAvailable: string;
+  sponsorDescription: string;
+  sponsorCta: string;
+  sponsorLogo: string;
+  sponsorPage: string;
+  sponsorFooter: string;
   accountKicker: string;
   accountTitle: string;
   accountAccent: string;
@@ -160,6 +169,15 @@ const currenciesByCountry: Record<string, CurrencyOption> = {
   ae: { code: "AED", symbol: "د.إ", names: { ar: "الدرهم الإماراتي", en: "UAE dirham", tr: "BAE dirhemi" } },
   ye: { code: "YER", symbol: "ر.ي", names: { ar: "الريال اليمني", en: "Yemeni rial", tr: "Yemen riyali" } },
   tr: { code: "TRY", symbol: "₺", names: { ar: "الليرة التركية", en: "Turkish lira", tr: "Türk lirası" } },
+};
+
+type SponsorTone = "gold" | "blue" | "emerald" | "crimson";
+
+const sponsorToneByCountry: Record<string, SponsorTone> = {
+  dz: "emerald", bh: "crimson", km: "emerald", dj: "blue", eg: "gold", iq: "emerald",
+  jo: "crimson", kw: "blue", lb: "crimson", ly: "emerald", mr: "gold", ma: "crimson",
+  om: "gold", ps: "emerald", qa: "crimson", sa: "emerald", so: "blue", sd: "blue",
+  sy: "crimson", tn: "crimson", ae: "gold", ye: "crimson", tr: "crimson",
 };
 
 type CityOption = {
@@ -393,6 +411,15 @@ const translations: Record<Locale, Translation> = {
     officeStats: ["أخبار", "إعلانات", "رادار"],
     adLabel: "اعلن هنا",
     adDescription: "مساحة إعلانية قابلة للإدارة",
+    sponsorAria: "راعي المنصة حسب الدولة",
+    sponsorLabel: "برنامج الرعاة المحليين",
+    sponsorOfficial: "الراعي الرسمي في",
+    sponsorAvailable: "مساحة الرعاية متاحة",
+    sponsorDescription: "تتغير هوية الراعي تلقائيًا حسب الدولة المختارة وتظهر بصورة موحّدة في صفحات المنصة.",
+    sponsorCta: "كن الراعي الرسمي",
+    sponsorLogo: "شعار الراعي",
+    sponsorPage: "شريك المنصة في",
+    sponsorFooter: "برعاية الشريك الرسمي",
     accountKicker: "ابدأ بخطوة موثقة",
     accountTitle: "حسابك هو مفتاح",
     accountAccent: "المنصة.",
@@ -479,6 +506,15 @@ const translations: Record<Locale, Translation> = {
     officeStats: ["News", "Ads", "Radar"],
     adLabel: "Advertise here",
     adDescription: "Managed advertising space",
+    sponsorAria: "Country-based platform sponsor",
+    sponsorLabel: "Local sponsor programme",
+    sponsorOfficial: "Official sponsor in",
+    sponsorAvailable: "Sponsorship available",
+    sponsorDescription: "The sponsor identity changes automatically with the selected country and appears consistently across platform pages.",
+    sponsorCta: "Become the official sponsor",
+    sponsorLogo: "Sponsor logo",
+    sponsorPage: "Platform partner in",
+    sponsorFooter: "Supported by the official partner",
     accountKicker: "Start with a verified step",
     accountTitle: "Your account is the key",
     accountAccent: "to the platform.",
@@ -565,6 +601,15 @@ const translations: Record<Locale, Translation> = {
     officeStats: ["Haberler", "İlanlar", "Radar"],
     adLabel: "Buraya reklam verin",
     adDescription: "Yönetilebilir reklam alanı",
+    sponsorAria: "Ülkeye göre platform sponsoru",
+    sponsorLabel: "Yerel sponsor programı",
+    sponsorOfficial: "Resmî sponsor:",
+    sponsorAvailable: "Sponsorluk alanı müsait",
+    sponsorDescription: "Sponsor kimliği seçilen ülkeye göre otomatik değişir ve platform sayfalarında tutarlı biçimde görünür.",
+    sponsorCta: "Resmî sponsor olun",
+    sponsorLogo: "Sponsor logosu",
+    sponsorPage: "Platform ortağı:",
+    sponsorFooter: "Resmî iş ortağının desteğiyle",
     accountKicker: "Doğrulanmış bir adımla başlayın",
     accountTitle: "Hesabınız platformun",
     accountAccent: "anahtarıdır.",
@@ -596,10 +641,6 @@ function Brand({ copy }: { copy: Translation }) {
   );
 }
 
-function AdSlot({ copy, tone = "light" }: { copy: Translation; tone?: "light" | "blue" }) {
-  return <div className={`ad-slot ad-${tone}`} aria-label={copy.adDescription}><span>{copy.adLabel}</span><small>{copy.adDescription}</small></div>;
-}
-
 function CountryFlag({ country }: { country: CountryOption }) {
   return <span className="country-flag" aria-hidden="true"><img src={`https://flagcdn.com/24x18/${country.id}.png`} alt="" decoding="async" onError={(event) => { event.currentTarget.parentElement?.classList.add("emoji-fallback"); }} /><span className="country-flag-emoji">{country.flag}</span></span>;
 }
@@ -624,6 +665,8 @@ export default function Home() {
   const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
   const selectedCity = cityOptions.find((option) => option.id === city && option.countryId === country) ?? citiesForCountry(country)[0] ?? cityOptions[0];
   const selectedCurrency = currenciesByCountry[country] ?? currenciesByCountry.om;
+  const selectedSponsorTone = sponsorToneByCountry[country] ?? "blue";
+  const sponsorContactHref = `mailto:partners@akarpromax.om?subject=${encodeURIComponent(`AkarPromax sponsor — ${selectedCountry.names.en}`)}`;
   const sidebarOpen = sidebarPinned || sidebarHovered;
 
   const cancelDropdownClose = (key: "country" | "city" | "language" | "theme") => {
@@ -762,6 +805,14 @@ export default function Home() {
         </div>
         </div>
 
+        <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
+          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone}`}>
+            <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span></div>
+            <div className="sponsor-brand-placeholder"><div className="sponsor-logo" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><small>{copy.sponsorLogo}</small><strong>{copy.sponsorAvailable}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
+            <a className="sponsor-cta" href={sponsorContactHref}>{copy.sponsorCta} <b>{copy.arrow}</b></a>
+          </div>
+        </section>
+
         <section className="hero-ad container" aria-label={copy.heroAria}>
           <div className="hero-ad-copy"><p>{copy.heroEyebrow}</p><h2>{copy.heroTitle}<br /><strong>{copy.heroAccent}</strong></h2><span>{copy.heroSub}</span><a href="#properties">{copy.heroCta} <b>{copy.arrow}</b></a></div>
           <div className="hero-ad-footer"><span>●</span><span>●</span><span className="active">●</span><span>●</span></div>
@@ -779,6 +830,7 @@ export default function Home() {
           <div className="property-grid reference-cards">
             {copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
           </div>
+          <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span><div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{copy.sponsorAvailable}</span></div><a href={sponsorContactHref}>{copy.sponsorCta} <b>{copy.arrow}</b></a></aside>
         </section>
 
         <section className="services-band" id="services" aria-labelledby="services-title">
@@ -789,11 +841,9 @@ export default function Home() {
 
         <section className="office-band" id="offices"><div className="container office-grid"><div className="office-copy"><p className="section-kicker">{copy.officeKicker}</p><h2>AkarPromax<br />Office</h2><p>{copy.officeDescription}</p><a className="button-primary" href="#account">{copy.officeCta} <b>{copy.arrow}</b></a></div><div className="office-panel"><span className="panel-orbit orbit-one" /><span className="panel-orbit orbit-two" /><div className="office-panel-label">{copy.officeSync}</div><div className="office-panel-value">24<span>/</span>7</div><div className="office-panel-foot">{copy.officeStats.map((item) => <span key={item}>{item}</span>)}</div></div></div></section>
 
-        <section className="bottom-ads container" aria-label={copy.adDescription}><AdSlot copy={copy} tone="blue" /><AdSlot copy={copy} tone="blue" /></section>
-
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div><div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}><div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div><div><small>{copy.sponsorFooter}</small><strong>{copy.sponsorOfficial} {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorContactHref}>{copy.sponsorCta}</a></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
       </div>
     </main>
