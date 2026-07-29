@@ -389,12 +389,15 @@ html[data-theme="dark"] .payments span { border-color: #304867; background: #0f1
 .admin-panel-title > span { padding: 4px 9px; border-radius: 20px; background: #edf4ff; color: #1769ff; font-size: 9px; font-weight: 900; }
 .sponsor-admin-list { display: grid; gap: 8px; }
 .sponsor-admin-list > article { display: grid; grid-template-columns: 100px minmax(180px, 1fr) 85px 100px auto; align-items: center; gap: 14px; min-height: 76px; padding: 9px; border: 1px solid #e4eaf3; border-radius: 10px; }
-.sponsor-admin-list > article > img { width: 100px; height: 58px; border-radius: 7px; object-fit: cover; }
+.admin-campaign-art { position: relative; width: 100px; height: 58px; display: grid; place-items: center; overflow: hidden; border-radius: 7px; background-color: #edf3fc; background-position: center; background-size: cover; }
+.admin-campaign-art::before { position: absolute; z-index: 0; inset: 0; background: rgba(8, 31, 73, .42); content: ""; }
+.admin-campaign-art > img { position: relative; z-index: 1; width: 46px; height: 46px; padding: 5px; border-radius: 10px; background: #fff; object-fit: contain; box-shadow: 0 7px 18px rgba(10, 34, 78, .24); }
+.admin-campaign-art > span { position: relative; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: #1769ff; color: #fff; font-size: 21px; font-weight: 900; box-shadow: 0 7px 18px rgba(10, 34, 78, .24); }
 .admin-sponsor-main { min-width: 0; display: grid; justify-items: start; }
 .admin-sponsor-main strong { overflow: hidden; max-width: 100%; margin-top: 3px; color: #152b4e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.admin-sponsor-main small, .sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions) small { color: #8a99b0; font-size: 8px; }
-.sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions) { display: flex; flex-direction: column; }
-.sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions) strong { color: #20375b; font-size: 11px; }
+.admin-sponsor-main small, .sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions):not(.admin-campaign-art) small { color: #8a99b0; font-size: 8px; }
+.sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions):not(.admin-campaign-art) { display: flex; flex-direction: column; }
+.sponsor-admin-list article > div:not(.admin-sponsor-main):not(.admin-row-actions):not(.admin-campaign-art) strong { color: #20375b; font-size: 11px; }
 .admin-status { padding: 3px 7px; border-radius: 20px; font-size: 7px; font-weight: 900; }
 .status-active { background: #e6f8ef; color: #15724c; }
 .status-draft { background: #edf1f7; color: #66758c; }
@@ -452,7 +455,12 @@ html[data-theme="dark"] .payments span { border-color: #304867; background: #0f1
 .admin-dialog legend { padding: 0 6px; color: #536781; font-size: 9px; font-weight: 900; }
 .admin-dialog fieldset label { display: flex; align-items: center; gap: 6px; color: #536781; font-size: 9px; }
 .admin-dialog fieldset input { accent-color: #1769ff; }
-.admin-banner-preview { min-height: 105px; display: flex; flex-direction: column; justify-content: center; margin-top: 12px; padding: 18px; border: 1px solid #dce5f2; border-radius: 10px; background-position: center; background-size: cover; }
+.admin-banner-preview { min-height: 125px; display: flex; align-items: center; margin-top: 12px; padding: 18px; border: 1px solid #dce5f2; border-radius: 10px; background-position: center; background-size: cover; }
+.admin-campaign-preview-brand { display: flex; align-items: center; gap: 13px; }
+.admin-campaign-preview-brand > div { display: flex; flex-direction: column; }
+.admin-campaign-preview-logo, .admin-campaign-preview-fallback { width: 68px; height: 68px; flex: 0 0 68px; border: 1px solid rgba(23, 105, 255, .18); border-radius: 14px; background: #fff; box-shadow: 0 10px 24px rgba(15, 47, 100, .18); }
+.admin-campaign-preview-logo { padding: 7px; object-fit: contain; }
+.admin-campaign-preview-fallback { display: grid; place-items: center; background: #1769ff; color: #fff; font-size: 29px; font-weight: 900; }
 .admin-banner-preview small { color: #1769ff; font-size: 8px; font-weight: 900; }
 .admin-banner-preview strong { margin-top: 3px; color: #11294d; font-size: 21px; }
 .admin-banner-preview span { color: #6b7e9a; font-size: 9px; }
@@ -505,8 +513,9 @@ html[data-theme="dark"] .admin-logo-dropcopy strong { color: #e2ebfa; }
   .admin-stat-grid { gap: 8px; }
   .admin-stat-grid article { min-height: 92px; padding: 12px; }
   .sponsor-admin-list > article { grid-template-columns: 75px 1fr auto; gap: 9px; }
-  .sponsor-admin-list > article > img { width: 75px; height: 55px; }
-  .sponsor-admin-list > article > div:not(.admin-sponsor-main):not(.admin-row-actions) { display: none; }
+  .admin-campaign-art { width: 75px; height: 55px; }
+  .admin-campaign-art > img { width: 43px; height: 43px; }
+  .sponsor-admin-list > article > div:not(.admin-sponsor-main):not(.admin-row-actions):not(.admin-campaign-art) { display: none; }
   .admin-row-actions { grid-column: 3; grid-row: 1; flex-direction: column; }
   .admin-form-grid { grid-template-columns: 1fr 1fr; }
   .admin-logo-dropzone { grid-template-columns: 58px 1fr auto; }

@@ -101,6 +101,9 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(accessApi, /access:write/);
   assert.match(sponsorAssetsApi, /MAX_LOGO_BYTES/);
   assert.match(sponsorAssetsApi, /fileSignatureMatches/);
+  assert.match(admin, /admin-campaign-art/);
+  assert.match(admin, /admin-campaign-preview-logo/);
+  assert.match(admin, /disabled=\{busy \|\| logoUploading\}/);
   assert.match(auth, /admin@localhost\.akarpromax/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS sponsors/);
   assert.match(packageJson, /"dev": "vinext dev"/);

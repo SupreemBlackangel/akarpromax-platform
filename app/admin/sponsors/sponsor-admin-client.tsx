@@ -223,6 +223,10 @@ export default function SponsorAdminClient({
 
   async function saveCampaign(event: FormEvent) {
     event.preventDefault();
+    if (logoUploading) {
+      setMessage("انتظر حتى يكتمل رفع شعار الراعي قبل حفظ الحملة.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
@@ -330,7 +334,11 @@ export default function SponsorAdminClient({
             <div className="sponsor-admin-list">
               {sponsors.map((sponsor) => (
                 <article key={sponsor.id}>
-                  <img src={sponsor.bannerUrl} alt="" />
+                  <div className="admin-campaign-art" style={{ backgroundImage: `url("${sponsor.bannerUrl}")` }}>
+                    {sponsor.logoUrl
+                      ? <img src={sponsor.logoUrl} alt={`شعار ${sponsor.nameAr}`} />
+                      : <span aria-hidden="true">{sponsor.nameAr.slice(0, 1)}</span>}
+                  </div>
                   <div className="admin-sponsor-main"><span className={`admin-status status-${sponsor.status}`}>{statusLabel(sponsor.status)}</span><strong>{sponsor.nameAr}</strong><small>{countryName(sponsor.countryCode)} • {sponsor.tier}</small></div>
                   <div><small>المواضع</small><strong>{sponsor.placements.length}</strong></div>
                   <div><small>الظهور / النقر</small><strong>{sponsor.impressions} / {sponsor.clicks}</strong></div>
@@ -413,8 +421,15 @@ export default function SponsorAdminClient({
               <label>الحالة<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="draft">مسودة</option>{canPublish && <option value="active">نشط</option>}<option value="paused">متوقف</option><option value="expired">منتهي</option></select></label>
             </div>
             <fieldset><legend>مواضع الظهور</legend>{[["header", "أسفل شريط الأخبار"], ["content", "داخل المحتوى"], ["footer", "الفوتر"]].map(([id, label]) => <label key={id}><input type="checkbox" checked={form.placements.includes(id)} onChange={() => updatePlacement(id)} />{label}</label>)}</fieldset>
-            <div className="admin-banner-preview" style={{ backgroundImage: `linear-gradient(90deg, rgba(255,255,255,.96), rgba(255,255,255,.15)), url("${form.bannerUrl}")` }}><small>معاينة الراعي</small><strong>{form.nameAr || "اسم الراعي"}</strong><span>{countryName(form.countryCode)}</span></div>
-            <div className="admin-dialog-actions"><button type="button" onClick={() => setEditing(false)}>إلغاء</button><button className="admin-primary" type="submit" disabled={busy}>{busy ? "جارٍ الحفظ..." : "حفظ الحملة"}</button></div>
+            <div className="admin-banner-preview" style={{ backgroundImage: `linear-gradient(90deg, rgba(255,255,255,.96), rgba(255,255,255,.15)), url("${form.bannerUrl}")` }}>
+              <div className="admin-campaign-preview-brand">
+                {form.logoUrl
+                  ? <img className="admin-campaign-preview-logo" src={form.logoUrl} alt={`شعار ${form.nameAr || "الراعي"}`} />
+                  : <span className="admin-campaign-preview-fallback" aria-hidden="true">{(form.nameAr || "ر").slice(0, 1)}</span>}
+                <div><small>معاينة الراعي</small><strong>{form.nameAr || "اسم الراعي"}</strong><span>{countryName(form.countryCode)}</span></div>
+              </div>
+            </div>
+            <div className="admin-dialog-actions"><button type="button" onClick={() => setEditing(false)}>إلغاء</button><button className="admin-primary" type="submit" disabled={busy || logoUploading}>{logoUploading ? "جارٍ رفع الشعار..." : busy ? "جارٍ الحفظ..." : "حفظ الحملة"}</button></div>
           </form>
         </div>
       )}
