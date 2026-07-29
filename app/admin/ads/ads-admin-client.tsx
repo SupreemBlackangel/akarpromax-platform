@@ -269,6 +269,30 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     });
   }
 
+  async function readUploadResponse<T>(response: Response): Promise<T & { error?: string }> {
+    const text = await response.text();
+    try { return JSON.parse(text) as T & { error?: string }; }
+    catch { return { error: response.status === 413 ? "حجم الملف كبير للرفع المباشر؛ أعد المحاولة وسيتم تقسيمه تلقائيًا." : (text || "تعذر الاتصال بخدمة الرفع.") } as T & { error?: string }; }
+  }
+
+  async function uploadFileInParts(file: File, duration?: number): Promise<Asset> {
+    const initResponse = await fetch("/api/ad-assets?upload=init", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size, duration }) });
+    const init = await readUploadResponse<{ id?: string; key?: string; uploadId?: string; mediaType?: "image" | "video"; contentType?: string }>(initResponse);
+    if (!initResponse.ok || !init.id || !init.key || !init.uploadId || !init.mediaType || !init.contentType) throw new Error(init.error || `تعذر بدء رفع ${file.name}`);
+    const chunkSize = 5 * 1024 * 1024;
+    const parts: Array<{ partNumber: number; etag: string }> = [];
+    for (let offset = 0, partNumber = 1; offset < file.size; offset += chunkSize, partNumber += 1) {
+      const partResponse = await fetch("/api/ad-assets?upload=part", { method: "POST", headers: { "Content-Type": "application/octet-stream", "x-ad-object-key": init.key, "x-ad-upload-id": init.uploadId, "x-ad-part-number": String(partNumber) }, body: file.slice(offset, Math.min(offset + chunkSize, file.size)) });
+      const part = await readUploadResponse<{ partNumber?: number; etag?: string }>(partResponse);
+      if (!partResponse.ok || !part.etag || !part.partNumber) throw new Error(part.error || `تعذر رفع جزء من ${file.name}`);
+      parts.push({ partNumber: part.partNumber, etag: part.etag });
+    }
+    const completeResponse = await fetch("/api/ad-assets?upload=complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: init.id, key: init.key, uploadId: init.uploadId, fileName: file.name, contentType: init.contentType, mediaType: init.mediaType, size: file.size, parts }) });
+    const complete = await readUploadResponse<{ asset?: Asset }>(completeResponse);
+    if (!completeResponse.ok || !complete.asset) throw new Error(complete.error || `تعذر حفظ ${file.name}`);
+    return complete.asset;
+  }
+
   async function uploadMedia(files: FileList | File[] | undefined) {
     const uploads = files ? Array.from(files) : [];
     if (!uploads.length) return;
@@ -285,14 +309,8 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       }
       const uploaded: Asset[] = [];
       for (const file of uploads) {
-        const payload = new FormData();
-        payload.append("file", file);
         const duration = videoDurations.get(file);
-        if (duration) payload.append("duration", String(duration));
-        const response = await fetch("/api/ad-assets", { method: "POST", body: payload });
-        const data = await response.json() as { asset?: Asset; error?: string };
-        if (!response.ok || !data.asset) throw new Error(data.error || `تعذر رفع ${file.name}`);
-        uploaded.push(data.asset);
+        uploaded.push(await uploadFileInParts(file, duration));
       }
       setAssets((items) => [...uploaded, ...items]);
       const selected = uploaded[0];

@@ -18,6 +18,17 @@ const contentTypes = {
 } as const;
 
 type SupportedContentType = keyof typeof contentTypes;
+type MultipartPart = { partNumber: number; etag: string };
+type MultipartUpload = { uploadId: string; uploadPart(partNumber: number, value: ArrayBuffer): Promise<MultipartPart>; complete(parts: MultipartPart[]): Promise<unknown> };
+type MultipartBucket = R2Bucket & { createMultipartUpload(key: string, options?: unknown): Promise<MultipartUpload>; resumeMultipartUpload(key: string, uploadId: string): MultipartUpload };
+
+function resolveDeclaredContentType(contentType: unknown, fileName: unknown): SupportedContentType | null {
+  const declared = typeof contentType === "string" ? contentType : "";
+  if (declared in contentTypes) return declared as SupportedContentType;
+  const extension = typeof fileName === "string" ? fileName.split(".").pop()?.toLowerCase() : "";
+  const byExtension: Record<string, SupportedContentType> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg", ogv: "video/ogg" };
+  return extension ? byExtension[extension] ?? null : null;
+}
 
 function resolveContentType(file: File): SupportedContentType | null {
   const declared = file.type === "image/jpg" ? "image/jpeg" : file.type;
@@ -71,7 +82,7 @@ export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key") || "";
   if (key) {
     if (!validKey(key)) return NextResponse.json({ error: "Invalid asset key" }, { status: 400 });
-    const bucket = await getSponsorAssetsBucket();
+    const bucket = await getSponsorAssetsBucket() as MultipartBucket;
     const object = await bucket.get(key);
     if (!object) return NextResponse.json({ error: "Asset not found" }, { status: 404 });
     return new Response(object.body, {
@@ -118,6 +129,52 @@ export async function POST(request: NextRequest) {
   if (!hasSponsorPermission(identity, "media:upload")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const uploadMode = request.nextUrl.searchParams.get("upload");
+  if (uploadMode === "init") {
+    const body = await request.json() as { fileName?: unknown; contentType?: unknown; size?: unknown; duration?: unknown };
+    const contentType = resolveDeclaredContentType(body.contentType, body.fileName);
+    if (!contentType) return NextResponse.json({ error: "Unsupported media type" }, { status: 415 });
+    const definition = contentTypes[contentType];
+    const size = Number(body.size);
+    const maxBytes = definition.mediaType === "video" ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (!Number.isFinite(size) || size <= 0 || size > maxBytes) return NextResponse.json({ error: "File size is not allowed" }, { status: 400 });
+    const duration = Number(body.duration);
+    if (definition.mediaType === "video" && (!Number.isFinite(duration) || duration <= 0 || duration > MAX_VIDEO_SECONDS)) return NextResponse.json({ error: "Video duration must be 15 seconds or less" }, { status: 400 });
+    const id = crypto.randomUUID();
+    const key = `ads/media/${id}.${definition.extension}`;
+    const bucket = await getSponsorAssetsBucket() as MultipartBucket;
+    const upload = await bucket.createMultipartUpload(key, { httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable", contentDisposition: "inline" } });
+    return NextResponse.json({ id, key, uploadId: upload.uploadId, mediaType: definition.mediaType, contentType, fileName: String(body.fileName || "media").slice(0, 180), size, duration: definition.mediaType === "video" ? duration : null });
+  }
+  if (uploadMode === "part") {
+    const key = request.headers.get("x-ad-object-key") || "";
+    const uploadId = request.headers.get("x-ad-upload-id") || "";
+    const partNumber = Number(request.headers.get("x-ad-part-number"));
+    const bytes = await request.arrayBuffer();
+    if (!validKey(key) || !uploadId || !Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10000 || !bytes.byteLength || bytes.byteLength > 6 * 1024 * 1024) return NextResponse.json({ error: "Invalid upload part" }, { status: 400 });
+    const bucket = await getSponsorAssetsBucket() as MultipartBucket;
+    const upload = bucket.resumeMultipartUpload(key, uploadId);
+    const part = await upload.uploadPart(partNumber, bytes);
+    return NextResponse.json({ partNumber: part.partNumber, etag: part.etag });
+  }
+  if (uploadMode === "complete") {
+    const body = await request.json() as { id?: string; key?: string; uploadId?: string; fileName?: string; contentType?: string; mediaType?: string; size?: number; parts?: Array<{ partNumber: number; etag: string }> };
+    if (!body.id || !validKey(body.key || "") || !body.uploadId || !Array.isArray(body.parts) || !body.parts.length || body.parts.length > 10000) return NextResponse.json({ error: "Invalid upload completion" }, { status: 400 });
+    const contentType = resolveDeclaredContentType(body.contentType, body.fileName);
+    const definition = contentType ? contentTypes[contentType] : null;
+    if (!definition || body.mediaType !== definition.mediaType) return NextResponse.json({ error: "Invalid media metadata" }, { status: 400 });
+    const bucket = await getSponsorAssetsBucket() as MultipartBucket;
+    const upload = bucket.resumeMultipartUpload(body.key!, body.uploadId);
+    await upload.complete(body.parts.map((part) => ({ partNumber: Number(part.partNumber), etag: String(part.etag) })));
+    const url = `/api/ad-assets?key=${encodeURIComponent(body.key!)}`;
+    const db = await getRuntimeDb();
+    await db.batch([
+      db.prepare(`INSERT INTO ad_assets (id, object_key, url, file_name, content_type, media_type, size_bytes, uploaded_by) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`).bind(body.id, body.key, url, String(body.fileName || "media").slice(0, 180), contentType, definition.mediaType, Number(body.size), identity.email),
+      db.prepare(`INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata) VALUES (?1, ?2, 'ad.asset_uploaded', 'ad_asset', ?3, ?4)`).bind(crypto.randomUUID(), identity.email, body.id, JSON.stringify({ key: body.key, size: body.size, contentType, multipart: true })),
+    ]);
+    return NextResponse.json({ asset: { id: body.id, key: body.key, url, fileName: body.fileName, contentType, mediaType: definition.mediaType, size: Number(body.size) } }, { status: 201 });
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "Media file is required" }, { status: 400 });
