@@ -352,19 +352,26 @@ html[data-theme="dark"] .footer-bottom { border-top-color: #263a5a; }
 html[data-theme="dark"] .payments span { border-color: #304867; background: #0f1d33; color: #b1c1d8; }
 
 .ads-wizard-shell { grid-column: 1 / -1; min-height: 100vh; padding: 28px; background: #f4f7fc; }
+.ads-admin-wizard-mode { display: block; background: #f4f7fc; }
+.ads-admin-wizard-mode .ads-admin-sidebar, .ads-admin-wizard-mode .ads-admin-canvas { display: none; }
+.ads-admin-wizard-mode .ads-wizard-shell { width: 100%; }
 .ads-wizard { width: min(1180px, 100%); margin: 0 auto; padding: 24px; border: 1px solid #dfe7f2; border-radius: 18px; background: #fff; box-shadow: 0 18px 55px rgba(11,37,72,.1); }
+.ads-wizard, .ads-wizard input, .ads-wizard select, .ads-wizard textarea, .ads-wizard button { font-family: "IBM Plex Sans Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif; }
 .ads-wizard-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid #e4ebf5; }
 .ads-wizard-head p { margin: 0 0 4px; color: #1769ff; font-size: 10px; font-weight: 900; }
-.ads-wizard-head h2 { margin: 0; color: #173054; font-size: 21px; }
+.ads-wizard-head h2 { margin: 0; color: #173054; font-size: 23px; font-weight: 900; letter-spacing: -.02em; }
 .ads-wizard-head > button, .ads-wizard-actions > button { padding: 10px 14px; border: 1px solid #cbd9ec; border-radius: 8px; background: #fff; color: #426080; cursor: pointer; font: 800 10px Arial, sans-serif; }
 .ads-wizard-steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 20px 0; }
-.ads-wizard-steps button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 7px; border: 1px solid #dce5f1; border-radius: 9px; background: #f8fbff; color: #6d7f97; cursor: pointer; font: 800 9px Arial, sans-serif; }
+.ads-wizard-steps button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 7px; border: 1px solid #dce5f1; border-radius: 9px; background: #f8fbff; color: #6d7f97; cursor: pointer; font-size: 11px; font-weight: 800; }
 .ads-wizard-steps button span { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: #e0e8f4; color: #5f738e; }
 .ads-wizard-steps button.active { border-color: #1769ff; background: #edf4ff; color: #1769ff; }
 .ads-wizard-steps button.active span, .ads-wizard-steps button.done span { background: #1769ff; color: #fff; }
 .ads-wizard-steps button.done { color: #2468c4; }
 .ads-wizard-message { margin-bottom: 14px; padding: 11px 13px; border: 1px solid #b9d6ff; border-radius: 9px; background: #edf5ff; color: #155dc7; font-size: 10px; font-weight: 800; }
-.ads-wizard .ads-form-section { margin-top: 0; min-height: 390px; }
+.ads-wizard .ads-form-section { margin-top: 0; min-height: 280px; padding: 26px; }
+.ads-wizard .ads-form-section h3 { font-size: 17px; font-weight: 900; }
+.ads-wizard .ads-form-grid label, .ads-wizard .ads-language-columns label, .ads-wizard .ads-wide-field { font-size: 12px; }
+.ads-wizard .ads-form-grid input, .ads-wizard .ads-form-grid select, .ads-wizard .ads-language-columns input, .ads-wizard .ads-language-columns textarea, .ads-wizard .ads-wide-field input { min-height: 46px; font-size: 13px; }
 .ads-wizard-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
 .ads-wizard-actions .primary { border-color: #1769ff; background: #1769ff; color: #fff; }
 html[data-theme="dark"] .ads-wizard-shell { background: #091426; }

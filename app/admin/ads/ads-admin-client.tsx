@@ -336,7 +336,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   }
 
   return (
-    <main className="ads-admin" dir="rtl">
+    <main className={`ads-admin${editing ? " ads-admin-wizard-mode" : ""}`} dir="rtl">
       <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files || undefined); event.currentTarget.value = ""; }} />
       <aside className="ads-admin-sidebar">
         <Link className="ads-admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Advertising Center</small></div></Link>
