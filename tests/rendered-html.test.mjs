@@ -73,12 +73,15 @@ test("does not retain the starter preview or starter metadata", async () => {
 });
 
 test("includes the country sponsor administration and generated campaign art", async () => {
-  const [page, admin, schema, sponsorApi, accessApi, ...images] = await Promise.all([
+  const [page, admin, schema, sponsorApi, accessApi, auth, runtimeDb, packageJson, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/chatgpt-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/runtime-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/sponsors/oman-gold.webp", import.meta.url)),
     stat(new URL("../public/sponsors/saudi-emerald.webp", import.meta.url)),
     stat(new URL("../public/sponsors/turkiye-crimson.webp", import.meta.url)),
@@ -94,5 +97,8 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(schema, /sponsorEvents/);
   assert.match(sponsorApi, /sponsor\.created/);
   assert.match(accessApi, /access:write/);
+  assert.match(auth, /admin@localhost\.akarpromax/);
+  assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS sponsors/);
+  assert.match(packageJson, /"dev": "vinext dev"/);
   images.forEach((image) => assert.ok(image.size > 40_000));
 });
