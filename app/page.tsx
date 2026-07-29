@@ -679,6 +679,23 @@ function CountryFlag({ country }: { country: CountryOption }) {
   return <span className="country-flag" aria-hidden="true"><img src={`https://flagcdn.com/24x18/${country.id}.png`} alt="" decoding="async" onError={(event) => { event.currentTarget.parentElement?.classList.add("emoji-fallback"); }} /><span className="country-flag-emoji">{country.flag}</span></span>;
 }
 
+function SponsorIdentity({ logoUrl, name, countryCode, compact = false }: { logoUrl: string | null; name: string; countryCode: string; compact?: boolean }) {
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
+
+  if (logoUrl && logoUrl !== failedLogoUrl) {
+    return <img className={`sponsor-logo-image${compact ? " sponsor-logo-small" : ""}`} src={logoUrl} alt={name} decoding="async" onError={() => setFailedLogoUrl(logoUrl)} />;
+  }
+
+  const initial = Array.from(name.trim())[0] || "S";
+  return (
+    <div className={`sponsor-logo sponsor-logo-fallback${compact ? " sponsor-logo-small" : ""}`} role="img" aria-label={name}>
+      <span>{initial}</span>
+      {!compact && <strong>{name}</strong>}
+      <small>{countryCode.toUpperCase()}</small>
+    </div>
+  );
+}
+
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -915,9 +932,9 @@ export default function Home() {
 
         {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
           <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`}>
-            <div className="sponsor-ribbon-visual" aria-hidden="true"><img className="sponsor-visual-backdrop" src={sponsorBannerUrl} alt="" /><img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" /><span><CountryFlag country={selectedCountry} />{copy.sponsorLabel}</span></div>
+            <div className="sponsor-ribbon-visual" aria-hidden="true"><img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" decoding="async" fetchPriority="high" /></div>
             <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span><a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></div>
-            <div className="sponsor-brand-placeholder">{sponsorLogoUrl ? <img className="sponsor-logo-image" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo" aria-hidden="true"><span>{activeSponsor ? sponsorName.slice(0, 1) : "S"}</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorLogo}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
+            <div className="sponsor-brand-placeholder"><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} /><div className="sponsor-brand-details"><small>{sponsorLogoUrl ? copy.sponsorLogo : locale === "ar" ? "هوية الراعي" : locale === "tr" ? "Sponsor kimliği" : "Sponsor identity"}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
           </div>
         </section>}
 
@@ -938,7 +955,7 @@ export default function Home() {
           <div className="property-grid reference-cards">
             {copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
           </div>
-          {sponsorPlacements.includes("content") && <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span>{sponsorLogoUrl ? <img className="sponsor-logo-image sponsor-logo-small" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{sponsorName}</span></div><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("content", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></aside>}
+          {sponsorPlacements.includes("content") && <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} compact /><div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{sponsorName}</span></div><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("content", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></aside>}
         </section>
 
         <section className="services-band" id="services" aria-labelledby="services-title">
@@ -951,7 +968,7 @@ export default function Home() {
 
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div>{sponsorPlacements.includes("footer") && <div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}>{sponsorLogoUrl ? <img className="sponsor-logo-image sponsor-logo-small" src={sponsorLogoUrl} alt={sponsorName} /> : <div className="sponsor-logo sponsor-logo-small" aria-hidden="true"><span>S</span><small>{selectedCountry.id.toUpperCase()}</small></div>}<div><small>{copy.sponsorFooter}</small><strong>{sponsorName} — {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("footer", "click")}>{sponsorActionLabel}</a></div>}<div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div>{sponsorPlacements.includes("footer") && <div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} compact /><div><small>{copy.sponsorFooter}</small><strong>{sponsorName} — {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("footer", "click")}>{sponsorActionLabel}</a></div>}<div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
       </div>
     </main>
