@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_SECONDS = 15;
 const contentTypes = {
   "image/png": { extension: "png", mediaType: "image" },
   "image/jpeg": { extension: "jpg", mediaType: "image" },
@@ -129,6 +130,10 @@ export async function POST(request: NextRequest) {
   if (file.size <= 0 || file.size > maxBytes) {
     return NextResponse.json({ error: definition.mediaType === "video" ? "Video must be smaller than 25 MB" : "Image must be smaller than 8 MB" }, { status: 400 });
   }
+  const duration = Number(formData.get("duration"));
+  if (definition.mediaType === "video" && (!Number.isFinite(duration) || duration <= 0 || duration > MAX_VIDEO_SECONDS)) {
+    return NextResponse.json({ error: "Video duration must be 15 seconds or less" }, { status: 400 });
+  }
   const buffer = await file.arrayBuffer();
   if (!signatureMatches(new Uint8Array(buffer).slice(0, 32), contentType)) {
     return NextResponse.json({ error: "The uploaded file signature is invalid" }, { status: 415 });
@@ -162,7 +167,7 @@ export async function POST(request: NextRequest) {
       db.prepare(
         `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
          VALUES (?1, ?2, 'ad.asset_uploaded', 'ad_asset', ?3, ?4)`,
-      ).bind(crypto.randomUUID(), identity.email, id, JSON.stringify({ key, size: file.size, contentType })),
+      ).bind(crypto.randomUUID(), identity.email, id, JSON.stringify({ key, size: file.size, contentType, duration: definition.mediaType === "video" ? duration : null })),
     ]);
   } catch (error) {
     await bucket.delete(key);

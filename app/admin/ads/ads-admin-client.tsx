@@ -190,6 +190,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm({
       ...emptyCampaign,
       countries: initialCountries,
+      priority: Math.min(999, Math.max(0, ...campaigns.map((item) => item.priority)) + 1),
       ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType } : {}),
     });
     setPreviewLocale("ar");
@@ -254,19 +255,46 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     }
   }
 
-  async function uploadMedia(file: File | undefined) {
-    if (!file) return;
+  async function getVideoDuration(file: File) {
+    return new Promise<number>((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(video.duration); };
+      video.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`تعذر قراءة مدة الفيديو: ${file.name}`)); };
+      video.src = url;
+    });
+  }
+
+  async function uploadMedia(files: FileList | File[] | undefined) {
+    const uploads = files ? Array.from(files) : [];
+    if (!uploads.length) return;
     setUploading(true);
     setMessage("");
     try {
-      const payload = new FormData();
-      payload.append("file", file);
-      const response = await fetch("/api/ad-assets", { method: "POST", body: payload });
-      const data = await response.json() as { asset?: Asset; error?: string };
-      if (!response.ok || !data.asset) throw new Error(data.error || "تعذر رفع الوسائط");
-      setAssets((items) => [data.asset!, ...items]);
-      setForm((current) => ({ ...current, mediaUrl: data.asset!.url, mediaType: data.asset!.mediaType }));
-      setMessage("تم رفع الملف واختياره للحملة.");
+      const videoDurations = new Map<File, number>();
+      for (const file of uploads) {
+        if (file.type.startsWith("video/")) {
+          const duration = await getVideoDuration(file);
+          if (!Number.isFinite(duration) || duration <= 0 || duration > 15) throw new Error(`الفيديو «${file.name}» أطول من 15 ثانية.`);
+          videoDurations.set(file, duration);
+        }
+      }
+      const uploaded: Asset[] = [];
+      for (const file of uploads) {
+        const payload = new FormData();
+        payload.append("file", file);
+        const duration = videoDurations.get(file);
+        if (duration) payload.append("duration", String(duration));
+        const response = await fetch("/api/ad-assets", { method: "POST", body: payload });
+        const data = await response.json() as { asset?: Asset; error?: string };
+        if (!response.ok || !data.asset) throw new Error(data.error || `تعذر رفع ${file.name}`);
+        uploaded.push(data.asset);
+      }
+      setAssets((items) => [...uploaded, ...items]);
+      const selected = uploaded[0];
+      if (selected) setForm((current) => ({ ...current, mediaUrl: selected.url, mediaType: selected.mediaType }));
+      setMessage(uploaded.length === 1 ? "تم رفع الملف واختياره للحملة." : `تم رفع ${uploaded.length} ملفات إلى المكتبة، واختير أول ملف للحملة.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر رفع الوسائط");
     } finally {
@@ -305,7 +333,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
   return (
     <main className="ads-admin" dir="rtl">
-      <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+      <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files || undefined); event.currentTarget.value = ""; }} />
       <aside className="ads-admin-sidebar">
         <Link className="ads-admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Advertising Center</small></div></Link>
         <nav aria-label="مركز الإعلانات">
@@ -340,6 +368,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <div className="ads-campaign-main"><span className={`ads-status ads-status-${campaign.status}`}>{statusLabel(campaign.status)}</span><strong>{campaign.internalName}</strong><small>{campaign.advertiserName} • {campaignTypeLabel(campaign.campaignType)}</small></div>
               <div><small>الاستهداف</small><strong>{campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
               <div><small>الظهور / النقر</small><strong>{campaign.impressions.toLocaleString("ar")} / {campaign.clicks.toLocaleString("ar")}</strong></div>
+              <div><small>ترتيب الظهور</small><strong>#{campaign.priority}</strong></div>
               <div className="ads-row-actions">{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}</div>
             </article>)}
             {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والاستهداف والجدولة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
@@ -348,7 +377,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
         {activeView === "media" && <section className="ads-panel">
           <div className="ads-panel-title"><div><p>التخزين</p><h2>مكتبة الصور والفيديو</h2></div>{canUpload && <button type="button" onClick={() => fileInputRef.current?.click()}>رفع ملف</button>}</div>
-          {canUpload && <div className={`ads-upload-zone${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files[0]); }}><span>⬆</span><div><strong>{uploading ? "جارٍ رفع الملف..." : "اسحب الصورة أو الفيديو وأفلته هنا"}</strong><small>PNG / JPG / WebP حتى 8MB — MP4 / WebM / OGG حتى 25MB</small></div><button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار من الكمبيوتر</button></div>}
+          {canUpload && <div className={`ads-upload-zone${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files); }}><span>⬆</span><div><strong>{uploading ? "جارٍ رفع الملفات..." : "اسحب الصور والفيديوهات وأفلتها هنا"}</strong><small>رفع متعدد: صور حتى 8MB وفيديو حتى 25MB وبحد أقصى 15 ثانية.</small></div><button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار ملفات</button></div>}
           <div className="ads-media-grid">{assets.map((asset) => <article key={asset.id}><div>{asset.mediaType === "video" ? <video src={asset.url} muted controls preload="metadata" /> : <img src={asset.url} alt={asset.fileName} />}</div><strong title={asset.fileName}>{asset.fileName}</strong><small>{asset.mediaType === "video" ? "فيديو" : "صورة"} • {formatSize(asset.size)}</small><footer>{canEdit && <button type="button" onClick={() => startCreate(asset)}>إنشاء حملة</button>}{canEdit && <button className="danger" type="button" onClick={() => deleteAsset(asset)}>حذف</button>}</footer></article>)}</div>
           {!assets.length && <div className="ads-empty"><span>▧</span><strong>مكتبة الوسائط فارغة</strong><p>ارفع أول صورة أو فيديو لاستخدامه في الحملات.</p></div>}
         </section>}
@@ -375,10 +404,10 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           </div></section>
 
           <section className="ads-form-section"><div><span>2</span><h3>الصورة أو الفيديو</h3></div>
-            <div className={`ads-dialog-upload${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files[0]); }}>
+            <div className={`ads-dialog-upload${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files); }}>
               <div className="ads-dialog-media-preview">{form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} muted controls preload="metadata" /> : <img src={form.mediaUrl} alt="معاينة الوسائط" />}</div>
-              <div><strong>{uploading ? "جارٍ الرفع..." : "اسحب ملف الإعلان هنا"}</strong><small>صورة أو فيديو، وسيتم اكتشاف النوع تلقائيًا</small></div>
-              {canUpload && <button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار ملف</button>}
+              <div><strong>{uploading ? "جارٍ رفع الملفات..." : "اسحب الصور والفيديوهات هنا"}</strong><small>ارفع عدة ملفات معًا؛ الفيديو لا يتجاوز 15 ثانية، ويُختار أول ملف للحملة.</small></div>
+              {canUpload && <button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار ملفات</button>}
             </div>
             <div className="ads-form-grid">
               <label>نوع الوسائط<select value={form.mediaType} onChange={(event) => setForm({ ...form, mediaType: event.target.value as "image" | "video" })}><option value="image">صورة</option><option value="video">فيديو</option></select></label>
@@ -416,7 +445,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <section className="ads-form-section"><div><span>5</span><h3>الجدولة والنشر</h3></div><div className="ads-form-grid">
             <label>البداية<input type="datetime-local" value={(form.startAt || "").slice(0, 16)} onChange={(event) => setForm({ ...form, startAt: event.target.value || null })} /></label>
             <label>النهاية<input type="datetime-local" value={(form.endAt || "").slice(0, 16)} onChange={(event) => setForm({ ...form, endAt: event.target.value || null })} /></label>
-            <label>الأولوية<input type="number" min="1" max="999" value={form.priority} onChange={(event) => setForm({ ...form, priority: Number(event.target.value) })} /></label>
+            <label>ترتيب الظهور<input type="number" min="1" max="999" value={form.priority} onChange={(event) => setForm({ ...form, priority: Number(event.target.value) })} /><small>1 يظهر أولاً، ثم 2 وهكذا.</small></label>
             <label>وزن التكرار<input type="number" min="1" max="100" value={form.weight} onChange={(event) => setForm({ ...form, weight: Number(event.target.value) })} /></label>
             <label>الحالة<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="draft">مسودة</option>{canPublish && <option value="active">نشطة</option>}<option value="paused">متوقفة</option><option value="expired">منتهية</option></select></label>
           </div></section>
