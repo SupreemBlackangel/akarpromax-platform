@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Locale = "ar" | "en" | "tr";
 type CountryId = string;
@@ -118,6 +118,38 @@ const countryOptions: CountryOption[] = [
   { id: "ye", flag: "🇾🇪", names: { ar: "اليمن", en: "Yemen", tr: "Yemen" }, timeZones: ["Asia/Aden"], localeCodes: ["ar-ye"] },
   { id: "tr", flag: "🇹🇷", names: { ar: "تركيا", en: "Türkiye", tr: "Türkiye" }, timeZones: ["Europe/Istanbul"], localeCodes: ["tr-tr", "tr"] },
 ];
+
+type CurrencyOption = {
+  code: string;
+  symbol: string;
+  names: Record<Locale, string>;
+};
+
+const currenciesByCountry: Record<string, CurrencyOption> = {
+  dz: { code: "DZD", symbol: "د.ج", names: { ar: "الدينار الجزائري", en: "Algerian dinar", tr: "Cezayir dinarı" } },
+  bh: { code: "BHD", symbol: "د.ب", names: { ar: "الدينار البحريني", en: "Bahraini dinar", tr: "Bahreyn dinarı" } },
+  km: { code: "KMF", symbol: "CF", names: { ar: "الفرنك القمري", en: "Comorian franc", tr: "Komor frangı" } },
+  dj: { code: "DJF", symbol: "Fdj", names: { ar: "الفرنك الجيبوتي", en: "Djiboutian franc", tr: "Cibuti frangı" } },
+  eg: { code: "EGP", symbol: "ج.م", names: { ar: "الجنيه المصري", en: "Egyptian pound", tr: "Mısır lirası" } },
+  iq: { code: "IQD", symbol: "ع.د", names: { ar: "الدينار العراقي", en: "Iraqi dinar", tr: "Irak dinarı" } },
+  jo: { code: "JOD", symbol: "د.أ", names: { ar: "الدينار الأردني", en: "Jordanian dinar", tr: "Ürdün dinarı" } },
+  kw: { code: "KWD", symbol: "د.ك", names: { ar: "الدينار الكويتي", en: "Kuwaiti dinar", tr: "Kuveyt dinarı" } },
+  lb: { code: "LBP", symbol: "ل.ل", names: { ar: "الليرة اللبنانية", en: "Lebanese pound", tr: "Lübnan lirası" } },
+  ly: { code: "LYD", symbol: "ل.د", names: { ar: "الدينار الليبي", en: "Libyan dinar", tr: "Libya dinarı" } },
+  mr: { code: "MRU", symbol: "UM", names: { ar: "الأوقية الموريتانية", en: "Mauritanian ouguiya", tr: "Moritanya ugiyası" } },
+  ma: { code: "MAD", symbol: "د.م.", names: { ar: "الدرهم المغربي", en: "Moroccan dirham", tr: "Fas dirhemi" } },
+  om: { code: "OMR", symbol: "ر.ع.", names: { ar: "الريال العُماني", en: "Omani rial", tr: "Umman riyali" } },
+  ps: { code: "ILS", symbol: "₪", names: { ar: "الشيكل الجديد", en: "New Israeli shekel", tr: "Yeni İsrail şekeli" } },
+  qa: { code: "QAR", symbol: "ر.ق", names: { ar: "الريال القطري", en: "Qatari riyal", tr: "Katar riyali" } },
+  sa: { code: "SAR", symbol: "ر.س", names: { ar: "الريال السعودي", en: "Saudi riyal", tr: "Suudi riyali" } },
+  so: { code: "SOS", symbol: "Sh.So.", names: { ar: "الشلن الصومالي", en: "Somali shilling", tr: "Somali şilini" } },
+  sd: { code: "SDG", symbol: "ج.س.", names: { ar: "الجنيه السوداني", en: "Sudanese pound", tr: "Sudan lirası" } },
+  sy: { code: "SYP", symbol: "ل.س", names: { ar: "الليرة السورية", en: "Syrian pound", tr: "Suriye lirası" } },
+  tn: { code: "TND", symbol: "د.ت", names: { ar: "الدينار التونسي", en: "Tunisian dinar", tr: "Tunus dinarı" } },
+  ae: { code: "AED", symbol: "د.إ", names: { ar: "الدرهم الإماراتي", en: "UAE dirham", tr: "BAE dirhemi" } },
+  ye: { code: "YER", symbol: "ر.ي", names: { ar: "الريال اليمني", en: "Yemeni rial", tr: "Yemen riyali" } },
+  tr: { code: "TRY", symbol: "₺", names: { ar: "الليرة التركية", en: "Turkish lira", tr: "Türk lirası" } },
+};
 
 type CityOption = {
   id: string;
@@ -558,12 +590,30 @@ export default function Home() {
   const [cityOpen, setCityOpen] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language", number>>>({});
   const copy = translations[locale];
   const direction = locale === "ar" ? "rtl" : "ltr";
   const selectedLanguage = languageOptions.find((option) => option.id === locale) ?? languageOptions[0];
   const selectedCountry = countryOptions.find((option) => option.id === country) ?? countryOptions.find((option) => option.id === "om")!;
   const selectedCity = cityOptions.find((option) => option.id === city && option.countryId === country) ?? citiesForCountry(country)[0] ?? cityOptions[0];
+  const selectedCurrency = currenciesByCountry[country] ?? currenciesByCountry.om;
   const sidebarOpen = sidebarPinned || sidebarHovered;
+
+  const cancelDropdownClose = (key: "country" | "city" | "language") => {
+    const timer = dropdownCloseTimers.current[key];
+    if (timer !== undefined) {
+      window.clearTimeout(timer);
+      delete dropdownCloseTimers.current[key];
+    }
+  };
+
+  const scheduleDropdownClose = (key: "country" | "city" | "language", close: () => void) => {
+    cancelDropdownClose(key);
+    dropdownCloseTimers.current[key] = window.setTimeout(() => {
+      close();
+      delete dropdownCloseTimers.current[key];
+    }, 120);
+  };
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -587,6 +637,12 @@ export default function Home() {
     }
   }, [country, city]);
 
+  useEffect(() => () => {
+    Object.values(dropdownCloseTimers.current).forEach((timer) => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    });
+  }, []);
+
   return (
     <main className="reference-app" id="top" dir={direction} data-locale={locale}>
       <aside id="right-sidebar" className={sidebarOpen ? "right-sidebar sidebar-open" : "right-sidebar"} aria-label={copy.sidebarAria} onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
@@ -608,25 +664,25 @@ export default function Home() {
             <button className="menu-trigger" type="button" aria-label={sidebarPinned ? copy.closeMenu : copy.showMenu} aria-controls="right-sidebar" aria-expanded={sidebarPinned} onClick={() => { setSidebarPinned((pinned) => !pinned); setSidebarHovered(false); }}>☰</button>
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
-              <div className="country-switcher" aria-label={copy.countryAria}>
-                <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => setCountryOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
+              <div className="country-switcher" aria-label={copy.countryAria} onMouseEnter={() => cancelDropdownClose("country")} onMouseLeave={() => scheduleDropdownClose("country", () => setCountryOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("country"); setCountryOpen(false); } }}>
+                <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => { setCountryOpen((open) => !open); setCityOpen(false); setLanguageOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
                   {countryOptions.map((option) => <button key={option.id} type="button" role="menuitem" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-pressed={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
                 </div>
               </div>
-              <div className="city-switcher" aria-label={copy.cityAria}>
-                <button className="city-trigger" type="button" aria-haspopup="menu" aria-expanded={cityOpen} onClick={() => setCityOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setCityOpen(false); }}>
+              <div className="city-switcher" aria-label={copy.cityAria} onMouseEnter={() => cancelDropdownClose("city")} onMouseLeave={() => scheduleDropdownClose("city", () => setCityOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("city"); setCityOpen(false); } }}>
+                <button className="city-trigger" type="button" aria-haspopup="menu" aria-expanded={cityOpen} onClick={() => { setCityOpen((open) => !open); setCountryOpen(false); setLanguageOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCityOpen(false); }}>
                   <span className="city-pin" aria-hidden="true">⌖</span><span>{selectedCity.names[locale]}</span><span className="city-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="city-dropdown" role="menu" hidden={!cityOpen}>
                   {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitem" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-pressed={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
                 </div>
               </div>
-              <a href="#top" aria-label={copy.currencyAria}>{copy.currency}</a>
-              <div className="language-switcher" aria-label={copy.languageAria}>
-                <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((open) => !open)} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
+              <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>
+              <div className="language-switcher" aria-label={copy.languageAria} onMouseEnter={() => cancelDropdownClose("language")} onMouseLeave={() => scheduleDropdownClose("language", () => setLanguageOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("language"); setLanguageOpen(false); } }}>
+                <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setCountryOpen(false); setCityOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
                   <span className="language-symbol" aria-hidden="true">{selectedLanguage.symbol}</span><span>{selectedLanguage.short}</span><span className="language-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="language-dropdown" role="menu" hidden={!languageOpen}>
