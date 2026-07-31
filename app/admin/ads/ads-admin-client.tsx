@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 type Identity = {
   authenticated: boolean;
@@ -30,6 +31,10 @@ type Campaign = {
   targetUrl: string;
   countries: string[];
   cities: string[];
+  governorates: string[];
+  villages: string[];
+  districts: string[];
+  streets: string[];
   languages: string[];
   devices: string[];
   priority: number;
@@ -105,6 +110,10 @@ const emptyCampaign: CampaignForm = {
   targetUrl: "#properties",
   countries: ["om"],
   cities: [],
+  governorates: [],
+  villages: [],
+  districts: [],
+  streets: [],
   languages: ["ar", "en", "tr"],
   devices: ["desktop", "mobile"],
   priority: 100,
@@ -151,10 +160,10 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const canEdit = identity.permissions.includes("ads:edit");
-  const canPublish = identity.permissions.includes("ads:publish");
-  const canUpload = identity.permissions.includes("media:upload");
-  const canAnalytics = identity.permissions.includes("ads:analytics");
+  const canEdit = identity.permissions.includes(PERMISSIONS.ADS_CREATE) || identity.permissions.includes(PERMISSIONS.ADS_UPDATE);
+  const canPublish = identity.permissions.includes(PERMISSIONS.ADS_PUBLISH);
+  const canUpload = identity.permissions.includes(PERMISSIONS.MEDIA_UPLOAD);
+  const canAnalytics = identity.permissions.includes(PERMISSIONS.ADS_ANALYTICS);
 
   async function loadCampaigns() {
     const response = await fetch("/api/ads?admin=1", { cache: "no-store" });
@@ -352,7 +361,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     cta: previewLocale === "ar" ? form.ctaAr : previewLocale === "tr" ? form.ctaTr : form.ctaEn,
   };
 
-  if (!busy && !identity.permissions.includes("ads:read")) {
+  if (!busy && !identity.permissions.includes(PERMISSIONS.ADS_VIEW)) {
     return <main className="ads-admin-denied" dir="rtl"><div><span>⌁</span><h1>لا توجد صلاحية لمركز الإعلانات</h1><p>اطلب من المدير العام منحك دور مدير الإعلانات أو صلاحية المشاهدة.</p><Link href="/">العودة إلى المنصة</Link></div></main>;
   }
 
@@ -463,6 +472,14 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <section className="ads-form-section" hidden={wizardStep !== 4}><div><span>4</span><h3>الاستهداف</h3></div>
             <fieldset className="ads-choice-fieldset"><legend>الدول — عدم تحديد دولة يعني جميع الدول</legend><div>{countries.map(([id, label]) => <label key={id}><input type="checkbox" disabled={Boolean(identity.countryCode && identity.countryCode.toLowerCase() !== id)} checked={form.countries.includes(id)} onChange={() => toggleList("countries", id)} />{label}</label>)}</div></fieldset>
             <label className="ads-wide-field">المدن (اختياري — اكتب معرّفات المدن مفصولة بفاصلة)<input dir="ltr" placeholder="om-muscat, sa-riyadh" value={form.cities.join(", ")} onChange={(event) => setForm({ ...form, cities: event.target.value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean) })} /></label>
+            <details className="ads-target-details"><summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">فلترة الموقع المتقدم ▼</summary>
+            <div className="ads-target-grid">
+              <label className="ads-wide-field">المحافظات (فاصلة)<input dir="ltr" placeholder="مسقط, الظاهرة" value={form.governorates.join(", ")} onChange={(event) => setForm({ ...form, governorates: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} /></label>
+              <label className="ads-wide-field">القرى (فاصلة)<input dir="ltr" placeholder="الحمراء, نزوى" value={form.villages.join(", ")} onChange={(event) => setForm({ ...form, villages: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} /></label>
+              <label className="ads-wide-field">الأحياء (فاصلة)<input dir="ltr" placeholder="الخوير, الغبرة" value={form.districts.join(", ")} onChange={(event) => setForm({ ...form, districts: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} /></label>
+              <label className="ads-wide-field">الشوارع (فاصلة)<input dir="ltr" placeholder="السلطان قابوس, 23 يوليو" value={form.streets.join(", ")} onChange={(event) => setForm({ ...form, streets: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) })} /></label>
+            </div>
+            </details>
             <div className="ads-target-grid">
               <fieldset className="ads-choice-fieldset"><legend>اللغات</legend><div>{[["ar", "العربية"], ["en", "English"], ["tr", "Türkçe"]].map(([id, label]) => <label key={id}><input type="checkbox" checked={form.languages.includes(id)} onChange={() => toggleList("languages", id)} />{label}</label>)}</div></fieldset>
               <fieldset className="ads-choice-fieldset"><legend>الأجهزة</legend><div>{[["desktop", "كمبيوتر"], ["mobile", "هاتف"]].map(([id, label]) => <label key={id}><input type="checkbox" checked={form.devices.includes(id)} onChange={() => toggleList("devices", id)} />{label}</label>)}</div></fieldset>

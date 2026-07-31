@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission, type SponsorIdentity } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -245,7 +246,7 @@ export async function GET(request: NextRequest) {
 
   if (adminMode) {
     const identity = await getSponsorIdentity();
-    if (!hasSponsorPermission(identity, "ads:read")) {
+    if (!hasSponsorPermission(identity, PERMISSIONS.ADS_VIEW)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const rows = await db.prepare(
@@ -289,7 +290,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "ads:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.ADS_CREATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = (await request.json()) as Record<string, unknown>;
@@ -297,7 +298,7 @@ export async function POST(request: NextRequest) {
   if (!validatePayload(payload) || !canManageTargets(identity, payload.countries)) {
     return NextResponse.json({ error: "Invalid campaign data or targeting scope" }, { status: 400 });
   }
-  if (payload.status === "active" && !hasSponsorPermission(identity, "ads:publish")) {
+  if (payload.status === "active" && !hasSponsorPermission(identity, PERMISSIONS.ADS_PUBLISH)) {
     payload.status = "draft";
   }
   const id = crypto.randomUUID();
@@ -332,7 +333,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "ads:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.ADS_UPDATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = (await request.json()) as Record<string, unknown>;
@@ -341,7 +342,7 @@ export async function PATCH(request: NextRequest) {
   if (!id || !validatePayload(payload) || !canManageTargets(identity, payload.countries)) {
     return NextResponse.json({ error: "Invalid campaign data or targeting scope" }, { status: 400 });
   }
-  if (payload.status === "active" && !hasSponsorPermission(identity, "ads:publish")) {
+  if (payload.status === "active" && !hasSponsorPermission(identity, PERMISSIONS.ADS_PUBLISH)) {
     return NextResponse.json({ error: "Publishing permission required" }, { status: 403 });
   }
   const db = await getRuntimeDb();
@@ -385,7 +386,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "ads:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.ADS_DELETE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const id = clean(request.nextUrl.searchParams.get("id"), 80);

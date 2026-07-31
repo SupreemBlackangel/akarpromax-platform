@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManageCountry, getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getSponsorAssetsBucket } from "@/lib/runtime-assets";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_UPDATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_DELETE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

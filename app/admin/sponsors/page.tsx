@@ -1,11 +1,11 @@
 import { requireChatGPTUser } from "@/app/chatgpt-auth";
-import SponsorAdminClient from "./sponsor-admin-client";
+import SponsorsListView from "./_components/SponsorsListView";
 
 export const dynamic = "force-dynamic";
 
 async function SponsorAdminGate() {
   const user = await requireChatGPTUser("/admin/sponsors");
-  return <SponsorAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />;
+  return <SponsorsListView />;
 }
 
 export default function SponsorAdminPage() {

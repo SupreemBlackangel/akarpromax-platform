@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getSponsorAssetsBucket } from "@/lib/runtime-assets";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
   }
 
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "ads:read")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.ADS_VIEW)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const db = await getRuntimeDb();
@@ -238,7 +239,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "ads:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.ADS_DELETE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const key = request.nextUrl.searchParams.get("key") || "";

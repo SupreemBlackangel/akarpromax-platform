@@ -3,6 +3,7 @@
 
 import { type DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 type Identity = {
   email: string | null;
@@ -100,8 +101,10 @@ function statusLabel(status: string) {
 
 export default function SponsorAdminClient({
   initialUser,
+  initialAction,
 }: {
   initialUser: { email: string; displayName: string };
+  initialAction?: "new" | "edit";
 }) {
   const [identity, setIdentity] = useState<Identity>({
     email: initialUser.email,
@@ -128,10 +131,10 @@ export default function SponsorAdminClient({
     status: "active",
   });
 
-  const canEdit = identity.permissions.includes("sponsors:edit");
-  const canPublish = identity.permissions.includes("sponsors:publish");
-  const canReadAccess = identity.permissions.includes("access:read");
-  const canWriteAccess = identity.permissions.includes("access:write");
+  const canEdit = identity.permissions.includes(PERMISSIONS.SPONSORS_CREATE) || identity.permissions.includes(PERMISSIONS.SPONSORS_UPDATE);
+  const canPublish = identity.permissions.includes(PERMISSIONS.SPONSORS_APPROVE);
+  const canReadAccess = identity.permissions.includes(PERMISSIONS.USERS_VIEW);
+  const canWriteAccess = identity.permissions.includes(PERMISSIONS.USERS_CREATE);
 
   const loadSponsors = useCallback(async () => {
     const response = await fetch("/api/sponsors?admin=1", { cache: "no-store" });
@@ -151,11 +154,14 @@ export default function SponsorAdminClient({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void Promise.all([loadSponsors(), loadAccess()])
+        .then(() => {
+          if (initialAction === "new" && canEdit) startCreate();
+        })
         .catch((error) => setMessage(error instanceof Error ? error.message : "حدث خطأ غير متوقع"))
         .finally(() => setBusy(false));
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [loadAccess, loadSponsors]);
+  }, [loadAccess, loadSponsors, initialAction]);
 
   const totals = useMemo(() => ({
     active: sponsors.filter((item) => item.status === "active").length,
@@ -296,11 +302,11 @@ export default function SponsorAdminClient({
 
   const availableViews = [
     { id: "campaigns" as const, icon: "▣", label: "حملات الرعاة", show: true },
-    { id: "analytics" as const, icon: "↗", label: "الأداء والتقارير", show: identity.permissions.includes("analytics:read") },
+    { id: "analytics" as const, icon: "↗", label: "الأداء والتقارير", show: identity.permissions.includes(PERMISSIONS.REPORTS_VIEW) },
     { id: "access" as const, icon: "♙", label: "المستخدمون والصلاحيات", show: canReadAccess },
   ].filter((item) => item.show);
 
-  if (!busy && !identity.permissions.includes("sponsors:read")) {
+  if (!busy && !identity.permissions.includes(PERMISSIONS.SPONSORS_VIEW)) {
     return (
       <main className="sponsor-admin-denied" dir="rtl">
         <div><span>⚿</span><h1>لا توجد صلاحية للدخول</h1><p>حسابك مسجل، لكن لم يتم منحه دورًا في نظام الرعاة.</p><Link href="/">العودة إلى المنصة</Link></div>

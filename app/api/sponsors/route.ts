@@ -5,6 +5,7 @@ import {
   hasSponsorPermission,
 } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
   }
 
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:read")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_VIEW)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -165,7 +166,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_CREATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
 
   const requestedStatus = normaliseChoice(body.status, allowedStatuses, "draft");
   const status =
-    requestedStatus === "active" && !hasSponsorPermission(identity, "sponsors:publish")
+    requestedStatus === "active" && !hasSponsorPermission(identity, PERMISSIONS.SPONSORS_APPROVE)
       ? "draft"
       : requestedStatus;
   const id = crypto.randomUUID();
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_UPDATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -247,7 +248,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const requestedStatus = normaliseChoice(body.status, allowedStatuses, "draft");
-  if (requestedStatus === "active" && !hasSponsorPermission(identity, "sponsors:publish")) {
+  if (requestedStatus === "active" && !hasSponsorPermission(identity, PERMISSIONS.SPONSORS_APPROVE)) {
     return NextResponse.json({ error: "Publishing permission required" }, { status: 403 });
   }
   const placements = Array.isArray(body.placements)
@@ -288,7 +289,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "sponsors:edit")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.SPONSORS_DELETE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

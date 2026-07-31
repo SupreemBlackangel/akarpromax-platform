@@ -267,3 +267,275 @@ export const adEvents = sqliteTable(
     index("ad_events_country_date_idx").on(table.countryCode, table.occurredAt),
   ],
 );
+
+export const sponsorProfiles = sqliteTable(
+  "sponsor_profiles",
+  {
+    id: text("id").primaryKey(),
+    sponsorCode: text("sponsor_code").notNull(),
+    companyNameAr: text("company_name_ar").notNull(),
+    companyNameEn: text("company_name_en").notNull(),
+    logoUrl: text("logo_url"),
+    coverUrl: text("cover_url"),
+    commercialRegistration: text("commercial_registration"),
+    taxNumber: text("tax_number"),
+    countryCode: text("country_code").notNull().default("OM"),
+    cityId: text("city_id"),
+    districtId: text("district_id"),
+    governorate: text("governorate"),
+    village: text("village"),
+    street: text("street"),
+    addressAr: text("address_ar"),
+    addressEn: text("address_en"),
+    contactName: text("contact_name"),
+    email: text("email"),
+    phone: text("phone"),
+    website: text("website"),
+    status: text("status").notNull().default("draft"),
+    verifiedAt: text("verified_at"),
+    approvedAt: text("approved_at"),
+    suspendedAt: text("suspended_at"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_profiles_code_unique").on(table.sponsorCode),
+    index("sponsor_profiles_country_status_idx").on(table.countryCode, table.status),
+  ],
+);
+
+export const sponsorUsers = sqliteTable(
+  "sponsor_users",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    userId: text("user_id"),
+    email: text("email").notNull(),
+    displayName: text("display_name"),
+    role: text("role").notNull().default("viewer"),
+    phone: text("phone"),
+    status: text("status").notNull().default("active"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_users_email_unique").on(table.sponsorId, table.email),
+    index("sponsor_users_sponsor_idx").on(table.sponsorId),
+  ],
+);
+
+export const sponsorBranches = sqliteTable(
+  "sponsor_branches",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    nameAr: text("name_ar").notNull(),
+    nameEn: text("name_en").notNull(),
+    countryCode: text("country_code").notNull(),
+    cityId: text("city_id").notNull(),
+    districtId: text("district_id"),
+    governorate: text("governorate"),
+    village: text("village"),
+    street: text("street"),
+    addressAr: text("address_ar"),
+    addressEn: text("address_en"),
+    phone: text("phone"),
+    email: text("email"),
+    lat: text("lat"),
+    lng: text("lng"),
+    status: text("status").notNull().default("active"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_branches_sponsor_idx").on(table.sponsorId),
+    index("sponsor_branches_location_idx").on(table.countryCode, table.cityId),
+  ],
+);
+
+export const sponsorPlans = sqliteTable(
+  "sponsor_plans",
+  {
+    id: text("id").primaryKey(),
+    nameAr: text("name_ar").notNull(),
+    nameEn: text("name_en").notNull(),
+    code: text("code").notNull(),
+    priceMonthly: integer("price_monthly").notNull().default(0),
+    priceYearly: integer("price_yearly").notNull().default(0),
+    currency: text("currency").notNull().default("OMR"),
+    maxBranches: integer("max_branches").notNull().default(0),
+    maxUsers: integer("max_users").notNull().default(0),
+    maxProperties: integer("max_properties").notNull().default(0),
+    maxAds: integer("max_ads").notNull().default(0),
+    features: text("features").notNull().default("[]"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_plans_code_unique").on(table.code),
+  ],
+);
+
+export const sponsorSubscriptions = sqliteTable(
+  "sponsor_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    planId: text("plan_id").notNull(),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    status: text("status").notNull().default("trial"),
+    autoRenew: integer("auto_renew", { mode: "boolean" }).notNull().default(true),
+    paymentMethod: text("payment_method"),
+    notes: text("notes"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_subscriptions_sponsor_idx").on(table.sponsorId),
+    index("sponsor_subscriptions_dates_idx").on(table.startDate, table.endDate),
+  ],
+);
+
+export const sponsorContracts = sqliteTable(
+  "sponsor_contracts",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    contractNumber: text("contract_number").notNull(),
+    titleAr: text("title_ar").notNull(),
+    titleEn: text("title_en").notNull(),
+    fileUrl: text("file_url"),
+    signedAt: text("signed_at"),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    value: integer("value").notNull().default(0),
+    currency: text("currency").notNull().default("OMR"),
+    status: text("status").notNull().default("draft"),
+    notes: text("notes"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_contracts_number_unique").on(table.contractNumber),
+    index("sponsor_contracts_sponsor_idx").on(table.sponsorId),
+  ],
+);
+
+export const sponsorDocuments = sqliteTable(
+  "sponsor_documents",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    type: text("type").notNull(),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url").notNull(),
+    fileSize: integer("file_size").notNull().default(0),
+    mimeType: text("mime_type").notNull(),
+    notes: text("notes"),
+    uploadedBy: text("uploaded_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_documents_sponsor_idx").on(table.sponsorId),
+    index("sponsor_documents_type_idx").on(table.sponsorId, table.type),
+  ],
+);
+
+export const sponsorPayments = sqliteTable(
+  "sponsor_payments",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    subscriptionId: text("subscription_id"),
+    invoiceId: text("invoice_id"),
+    amount: integer("amount").notNull().default(0),
+    currency: text("currency").notNull().default("OMR"),
+    method: text("method").notNull(),
+    referenceNumber: text("reference_number"),
+    status: text("status").notNull().default("pending"),
+    paidAt: text("paid_at"),
+    notes: text("notes"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_payments_sponsor_idx").on(table.sponsorId),
+    index("sponsor_payments_status_idx").on(table.status, table.paidAt),
+  ],
+);
+
+export const sponsorInvoices = sqliteTable(
+  "sponsor_invoices",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    invoiceNumber: text("invoice_number").notNull(),
+    subscriptionId: text("subscription_id"),
+    contractId: text("contract_id"),
+    amount: integer("amount").notNull().default(0),
+    taxAmount: integer("tax_amount").notNull().default(0),
+    totalAmount: integer("total_amount").notNull().default(0),
+    currency: text("currency").notNull().default("OMR"),
+    status: text("status").notNull().default("draft"),
+    dueDate: text("due_date").notNull(),
+    paidAt: text("paid_at"),
+    fileUrl: text("file_url"),
+    notes: text("notes"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("sponsor_invoices_number_unique").on(table.invoiceNumber),
+    index("sponsor_invoices_sponsor_idx").on(table.sponsorId),
+  ],
+);
+
+export const sponsorActivityLogs = sqliteTable(
+  "sponsor_activity_logs",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id"),
+    oldValues: text("old_values"),
+    newValues: text("new_values"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdBy: text("created_by"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("sponsor_activity_sponsor_idx").on(table.sponsorId),
+    index("sponsor_activity_action_idx").on(table.action, table.createdAt),
+  ],
+);
+
+export const officeLinks = sqliteTable(
+  "office_links",
+  {
+    id: text("id").primaryKey(),
+    sponsorId: text("sponsor_id").notNull(),
+    officeId: text("office_id"),
+    deviceId: text("device_id"),
+    licenseKey: text("license_key").notNull(),
+    applicationVersion: text("application_version"),
+    lastSyncAt: text("last_sync_at"),
+    lastIp: text("last_ip"),
+    status: text("status").notNull().default("active"),
+    activatedAt: text("activated_at"),
+    revokedAt: text("revoked_at"),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("office_links_license_key_unique").on(table.licenseKey),
+    index("office_links_sponsor_idx").on(table.sponsorId),
+  ],
+);
