@@ -11,10 +11,13 @@
     "start": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:generate:mysql": "drizzle-kit generate --config drizzle.mysql.config.ts",
+    "db:migrate:mysql": "drizzle-kit migrate --config drizzle.mysql.config.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
+    "mysql2": "^3.23.2",
     "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"
