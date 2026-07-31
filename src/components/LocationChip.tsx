@@ -127,13 +127,21 @@ export default function LocationChip({
   const [open, setOpen] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState("");
-  const [fields, setFields] = useState<LocationFields>(() => {
-    const cached = getCachedLocation();
-    if (cached) return toFields(cached);
-    return { countryCode, governorate: "", city: cityName, village: "", district: "", street: "" };
-  });
+  const [fields, setFields] = useState<LocationFields>(() => ({
+    countryCode,
+    governorate: "",
+    city: cityName,
+    village: "",
+    district: "",
+    street: "",
+  }));
   const mountedRef = useRef(true);
   const closeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const cached = getCachedLocation();
+    if (cached) setFields(toFields(cached));
+  }, []);
 
   useEffect(() => {
     return () => {
