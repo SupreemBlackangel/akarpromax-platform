@@ -360,21 +360,6 @@ export default function Home() {
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
               <div className="tool-cluster location-cluster">
-              <LocationChip
-                locale={locale}
-                countryCode={country}
-                countryName={selectedCountry.names[locale]}
-                cityName={selectedCity.names[locale]}
-                onApply={(fields) => {
-                  setActiveSponsor(null);
-                  setCountry(fields.countryCode);
-                  setCity(detectCity(fields.countryCode));
-                  setCountryOpen(false);
-                  setCityOpen(false);
-                  window.localStorage.setItem("akarpromax-country", fields.countryCode);
-                  window.localStorage.setItem("akarpromax-city", detectCity(fields.countryCode));
-                }}
-              />
               <div className="country-switcher" aria-label={copy.countryAria} onMouseEnter={() => cancelDropdownClose("country")} onMouseLeave={() => scheduleDropdownClose("country", () => setCountryOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("country"); setCountryOpen(false); } }}>
                 <button className="country-trigger" type="button" aria-haspopup="menu" aria-expanded={countryOpen} onClick={() => { setCountryOpen((open) => !open); setCityOpen(false); setLanguageOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCountryOpen(false); }}>
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
@@ -391,9 +376,24 @@ export default function Home() {
                   {citiesForCountry(country).map((option) => <button key={option.id} type="button" role="menuitemradio" className={city === option.id ? "city-option active" : "city-option"} aria-label={option.names[locale]} aria-checked={city === option.id} onClick={() => { setCity(option.id); setCityOpen(false); window.localStorage.setItem("akarpromax-city", option.id); }}><span className="city-pin" aria-hidden="true">⌖</span><span>{option.names[locale]}</span></button>)}
                 </div>
               </div>
+              <LocationChip
+                locale={locale}
+                countryCode={country}
+                countryName={selectedCountry.names[locale]}
+                cityName={selectedCity.names[locale]}
+                onApply={(fields) => {
+                  setActiveSponsor(null);
+                  setCountry(fields.countryCode);
+                  setCity(detectCity(fields.countryCode));
+                  setCountryOpen(false);
+                  setCityOpen(false);
+                  window.localStorage.setItem("akarpromax-country", fields.countryCode);
+                  window.localStorage.setItem("akarpromax-city", detectCity(fields.countryCode));
+                }}
+              />
+              <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>
               </div>
               <div className="tool-cluster preference-cluster">
-              <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>
               <div className="language-switcher" aria-label={copy.languageAria} onMouseEnter={() => cancelDropdownClose("language")} onMouseLeave={() => scheduleDropdownClose("language", () => setLanguageOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("language"); setLanguageOpen(false); } }}>
                 <button className="language-trigger" type="button" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setCountryOpen(false); setCityOpen(false); setThemeOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setLanguageOpen(false); }}>
                   <span className="language-symbol" aria-hidden="true">{selectedLanguage.symbol}</span><span>{selectedLanguage.short}</span><span className="language-chevron" aria-hidden="true">⌄</span>
