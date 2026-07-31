@@ -5,6 +5,6 @@ export default defineConfig({
   schema: "./db/mysql/schema.ts",
   dialect: "mysql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "mysql://root@localhost:3306/akarpromax",
+    url: process.env.DATABASE_URL ?? "mysql://root:root@localhost:3306/akarpromax",
   },
 });
