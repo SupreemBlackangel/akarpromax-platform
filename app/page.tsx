@@ -14,6 +14,7 @@ import {
   countryOptions,
   currenciesByCountry,
   detectCity,
+  detectCityByName,
   detectCountry,
   isVideoAsset,
   selectedCityOf,
@@ -389,6 +390,12 @@ export default function Home() {
                   setCityOpen(false);
                   window.localStorage.setItem("akarpromax-country", fields.countryCode);
                   window.localStorage.setItem("akarpromax-city", detectCity(fields.countryCode));
+                }}
+                onDetected={(fields) => {
+                  setCountry(fields.countryCode);
+                  setCity(detectCityByName(fields.countryCode, fields.city));
+                  window.localStorage.setItem("akarpromax-country", fields.countryCode);
+                  window.localStorage.setItem("akarpromax-city", detectCityByName(fields.countryCode, fields.city));
                 }}
               />
               <a className="currency-chip" href="#top" dir="auto" aria-label={`${copy.currencyAria}: ${selectedCurrency.names[locale]} (${selectedCurrency.code})`} title={selectedCurrency.names[locale]}>{selectedCurrency.symbol} {selectedCurrency.code}</a>

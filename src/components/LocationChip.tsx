@@ -17,6 +17,7 @@ type Props = {
   countryName?: string;
   cityName?: string;
   onApply?: (fields: LocationFields) => void;
+  onDetected?: (fields: LocationFields) => void;
 };
 
 const FALLBACK_COUNTRY = "om";
@@ -124,6 +125,7 @@ export default function LocationChip({
   countryName = "",
   cityName = "",
   onApply,
+  onDetected,
 }: Props) {
   const labels = LABELS[locale];
   const dialogId = useId();
@@ -154,7 +156,12 @@ export default function LocationChip({
 
   useEffect(() => {
     const cached = getCachedLocation();
-    if (cached) setFields(toFields(cached));
+    if (cached) {
+      const next = toFields(cached);
+      setFields(next);
+      onDetected?.(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -204,7 +211,8 @@ export default function LocationChip({
     }
     setCachedLocation({ ...info, country: next.countryCode, countryCode: next.countryCode }, lat, lng);
     setFields(next);
-  }, []);
+    onDetected?.(next);
+  }, [onDetected]);
 
   const handleDetect = useCallback(async () => {
     setDetecting(true);

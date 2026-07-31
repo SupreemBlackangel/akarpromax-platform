@@ -210,6 +210,16 @@ export function detectCity(countryId: CountryId): string {
   }
 }
 
+export function detectCityByName(countryId: CountryId, cityName?: string): string {
+  if (!cityName) return detectCity(countryId);
+  const normalized = cityName.trim().toLowerCase();
+  const availableCities = citiesForCountry(countryId);
+  const match = availableCities.find((city) =>
+    Object.values(city.names).some((name) => name.trim().toLowerCase() === normalized),
+  );
+  return match?.id ?? detectCity(countryId);
+}
+
 export function detectCountry(): CountryId {
   if (typeof window === "undefined") return "om";
   try {
