@@ -22,26 +22,55 @@ export type LocationFields = {
 
 const LOCATION_CACHE_KEY = "akarpromax-location";
 const LOCATION_CACHE_TTL = 86_400_000;
+const LOCATION_CACHE_MAX = 10;
 
-export function getCachedLocation(): LocationInfo | null {
+type LocationCacheEntry = { key: string; data: LocationInfo; timestamp: number };
+
+function locationCacheKey(lat: number, lng: number): string {
+  return `${lat.toFixed(2)},${lng.toFixed(2)}`;
+}
+
+function readCache(): LocationCacheEntry[] | null {
   try {
     const raw = localStorage.getItem(LOCATION_CACHE_KEY);
     if (!raw) return null;
-    const entry = JSON.parse(raw);
-    if (Date.now() - entry.timestamp > LOCATION_CACHE_TTL) {
-      localStorage.removeItem(LOCATION_CACHE_KEY);
-      return null;
-    }
-    return entry.data as LocationInfo;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as LocationCacheEntry[]) : null;
   } catch {
     return null;
   }
 }
 
-export function setCachedLocation(info: LocationInfo): void {
+function writeCache(entries: LocationCacheEntry[]): void {
   try {
-    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({ data: info, timestamp: Date.now() }));
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(entries.slice(0, LOCATION_CACHE_MAX)));
   } catch {}
+}
+
+function freshEntries(entries: LocationCacheEntry[]): LocationCacheEntry[] {
+  const now = Date.now();
+  const fresh = entries.filter((entry) => now - entry.timestamp <= LOCATION_CACHE_TTL);
+  if (fresh.length !== entries.length) writeCache(fresh);
+  return fresh;
+}
+
+export function getCachedLocation(lat?: number, lng?: number): LocationInfo | null {
+  const entries = freshEntries(readCache() ?? []);
+  if (!entries.length) return null;
+  if (lat !== undefined && lng !== undefined) {
+    const key = locationCacheKey(lat, lng);
+    const hit = entries.find((entry) => entry.key === key);
+    return hit ? hit.data : null;
+  }
+  const latest = [...entries].sort((a, b) => b.timestamp - a.timestamp)[0];
+  return latest ? latest.data : null;
+}
+
+export function setCachedLocation(info: LocationInfo, lat?: number, lng?: number): void {
+  const entries = readCache() ?? [];
+  const key = lat !== undefined && lng !== undefined ? locationCacheKey(lat, lng) : "manual";
+  const next = [...entries.filter((entry) => entry.key !== key), { key, data: info, timestamp: Date.now() }];
+  writeCache(next);
 }
 
 export function detectCountryByTimezone(): string {

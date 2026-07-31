@@ -73,9 +73,10 @@ test("does not retain the starter preview or starter metadata", async () => {
 });
 
 test("includes the country sponsor administration and generated campaign art", async () => {
-  const [page, admin, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
+  const [page, admin, sponsorIdentity, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/SponsorIdentity.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
@@ -99,7 +100,7 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(page, /sponsor-ribbon-visual/);
   assert.match(page, /sponsor-visual-image/);
   assert.match(page, /SponsorIdentity/);
-  assert.match(page, /sponsor-logo-fallback/);
+  assert.match(sponsorIdentity, /sponsor-logo-fallback/);
   assert.match(page, /sidebar-sponsor-admin/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);
@@ -145,7 +146,7 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(admin, /مركز إعلانات hero-ad-media/);
   assert.match(admin, /image\/png,image\/jpeg,image\/webp,video\/mp4,video\/webm,video\/ogg/);
   assert.match(admin, /مكتبة الصور والفيديو/);
-  assert.match(adsApi, /ads:publish/);
+  assert.match(adsApi, /PERMISSIONS\.ADS_PUBLISH/);
   assert.match(adsApi, /countries/);
   assert.match(assetsApi, /MAX_VIDEO_BYTES/);
   assert.match(assetsApi, /signatureMatches/);
@@ -155,7 +156,7 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(schema, /adEvents/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS ad_campaigns/);
   assert.match(permissions, /ad_manager/);
-  assert.match(permissions, /media:upload/);
+  assert.match(permissions, /PERMISSIONS\.MEDIA_UPLOAD/);
   assert.match(migration, /CREATE TABLE `ad_campaigns`/);
   assert.match(styles, /\.ads-admin/);
   assert.match(styles, /\.ads-live-preview/);
