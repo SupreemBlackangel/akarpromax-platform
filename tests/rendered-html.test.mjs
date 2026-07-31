@@ -107,7 +107,7 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(schema, /sponsorAccess/);
   assert.match(schema, /sponsorEvents/);
   assert.match(sponsorApi, /sponsor\.created/);
-  assert.match(accessApi, /access:write/);
+  assert.match(accessApi, /PERMISSIONS\.USERS_CREATE/);
   assert.match(sponsorAssetsApi, /MAX_LOGO_BYTES/);
   assert.match(sponsorAssetsApi, /fileSignatureMatches/);
   assert.match(sponsorAssetsApi, /sponsor\.logo_uploaded/);
@@ -156,8 +156,76 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(schema, /adEvents/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS ad_campaigns/);
   assert.match(permissions, /ad_manager/);
-  assert.match(permissions, /PERMISSIONS\.MEDIA_UPLOAD/);
+  assert.match(permissions, /ROLE_CATALOG/);
+  assert.match(permissions, /permissionsByRole/);
   assert.match(migration, /CREATE TABLE `ad_campaigns`/);
   assert.match(styles, /\.ads-admin/);
   assert.match(styles, /\.ads-live-preview/);
+});
+
+test("includes the expanded admin dashboard, users, roles, reports and settings suite", async () => {
+  const [dashboardPage, dashboard, usersPage, users, rolesPage, roles, reportsPage, reports, settingsPage, settings, statsApi, analyticsApi, accessApi, rolesConstants, permissions, styles] = await Promise.all([
+    readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/dashboard-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/users/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/users-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/roles/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/roles-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/reports/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/reports-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/settings/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/settings-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/admin/stats/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/admin/analytics/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/constants/roles.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(dashboardPage, /DashboardAdminClient/);
+  assert.match(dashboard, /\/api\/admin\/stats/);
+  assert.match(dashboard, /admin-stat-grid/);
+  assert.match(dashboard, /admin-dashboard-grid/);
+  assert.match(dashboard, /الرعاة النشطون/);
+  assert.match(dashboard, /لوحة الإحصاءات/);
+
+  assert.match(usersPage, /UsersAdminClient/);
+  assert.match(users, /\/api\/sponsor-access/);
+  assert.match(users, /إدارة المستخدمين/);
+  assert.match(users, /USERS_DELETE/);
+
+  assert.match(rolesPage, /RolesAdminClient/);
+  assert.match(roles, /ROLE_CATALOG/);
+  assert.match(roles, /roles-matrix/);
+  assert.match(roles, /الأدوار والصلاحيات/);
+
+  assert.match(reportsPage, /ReportsAdminClient/);
+  assert.match(reports, /\/api\/admin\/analytics/);
+  assert.match(reports, /reports-chart/);
+  assert.match(reports, /التقارير والإحصاءات/);
+
+  assert.match(settingsPage, /SettingsAdminClient/);
+  assert.match(settings, /\/api\/sponsor-plans/);
+  assert.match(settings, /خطط اشتراك الرعاة/);
+  assert.match(settings, /maxAds/);
+
+  assert.match(statsApi, /ADMIN_DASHBOARD_VIEW/);
+  assert.match(statsApi, /GROUP BY/);
+  assert.match(statsApi, /audit_logs/);
+  assert.match(analyticsApi, /REPORTS_VIEW/);
+  assert.match(analyticsApi, /sponsor_events/);
+  assert.match(analyticsApi, /ad_events/);
+
+  assert.match(accessApi, /PERMISSIONS\.USERS_VIEW/);
+  assert.match(accessApi, /PERMISSIONS\.USERS_DELETE/);
+  assert.match(accessApi, /sponsor.access.deleted/);
+  assert.match(rolesConstants, /super_admin/);
+  assert.match(rolesConstants, /ROLE_CATALOG/);
+  assert.match(permissions, /ADMIN_DASHBOARD_VIEW/);
+
+  assert.match(styles, /\.admin-dashboard-grid/);
+  assert.match(styles, /\.roles-matrix/);
+  assert.match(styles, /\.reports-chart/);
+  assert.match(styles, /\.admin-plans-list/);
 });

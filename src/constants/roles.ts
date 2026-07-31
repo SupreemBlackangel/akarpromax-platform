@@ -1,0 +1,110 @@
+import { PERMISSIONS } from "@/src/constants/permissions";
+
+export type SponsorRole =
+  | "guest"
+  | "viewer"
+  | "analyst"
+  | "content_editor"
+  | "country_manager"
+  | "ad_manager"
+  | "sponsor_admin"
+  | "sponsor_manager"
+  | "super_admin";
+
+export type RoleCatalogEntry = {
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string;
+  permissions: string[];
+};
+
+export const ROLE_CATALOG: Record<SponsorRole, RoleCatalogEntry> = {
+  guest: {
+    nameAr: "زائر",
+    nameEn: "Guest",
+    descriptionAr: "زائر غير مسجل في المنصة",
+    permissions: [],
+  },
+  viewer: {
+    nameAr: "مستخدم مشاهدة",
+    nameEn: "Viewer",
+    descriptionAr: "يستطيع مشاهدة المحتوى العام فقط",
+    permissions: [],
+  },
+  analyst: {
+    nameAr: "محلل التقارير",
+    nameEn: "Analyst",
+    descriptionAr: "يطلع على بيانات الرعاة والإعلانات والتقارير",
+    permissions: [PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.REPORTS_VIEW],
+  },
+  content_editor: {
+    nameAr: "محرر الرعاة",
+    nameEn: "Content Editor",
+    descriptionAr: "ينشئ ويعدّل الرعاة والإعلانات ويرفع الوسائط",
+    permissions: [PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE, PERMISSIONS.MEDIA_UPLOAD],
+  },
+  country_manager: {
+    nameAr: "مدير دولة",
+    nameEn: "Country Manager",
+    descriptionAr: "يدير الرعاة والإعلانات في دولته مع الموافقة على الإصدار",
+    permissions: [PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE, PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE, PERMISSIONS.ADS_PUBLISH, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.MEDIA_UPLOAD, PERMISSIONS.REPORTS_VIEW],
+  },
+  ad_manager: {
+    nameAr: "مدير الإعلانات",
+    nameEn: "Ad Manager",
+    descriptionAr: "يدير حملات الإعلانات وينشرها ويشرف على التحليلات",
+    permissions: [PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE, PERMISSIONS.ADS_PUBLISH, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.MEDIA_UPLOAD, PERMISSIONS.USERS_VIEW],
+  },
+  sponsor_admin: {
+    nameAr: "مدير الرعاة",
+    nameEn: "Sponsor Admin",
+    descriptionAr: "يشرف على برنامج الرعاة والتقارير",
+    permissions: [PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE, PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.REPORTS_VIEW, PERMISSIONS.USERS_VIEW],
+  },
+  sponsor_manager: {
+    nameAr: "مدير الرعاة التنفيذي",
+    nameEn: "Sponsor Manager",
+    descriptionAr: "صلاحيات كاملة على برنامج الرعاة والعقود والمدفوعات",
+    permissions: [PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE, PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.SPONSORS_REJECT, PERMISSIONS.SPONSORS_SUSPEND, PERMISSIONS.SPONSORS_ACTIVATE, PERMISSIONS.SPONSORS_DELETE, PERMISSIONS.SPONSOR_USERS_MANAGE, PERMISSIONS.SPONSOR_BRANCHES_MANAGE, PERMISSIONS.SPONSOR_CONTRACTS_MANAGE, PERMISSIONS.SPONSOR_SUBSCRIPTIONS_MANAGE, PERMISSIONS.SPONSOR_PAYMENTS_MANAGE, PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_UPDATE, PERMISSIONS.OFFICE_LINK, PERMISSIONS.OFFICE_UNLINK, PERMISSIONS.REPORTS_VIEW],
+  },
+  super_admin: {
+    nameAr: "المدير العام",
+    nameEn: "Super Admin",
+    descriptionAr: "صلاحيات شاملة على كل أنظمة المنصة",
+    permissions: [
+      PERMISSIONS.ADMIN_DASHBOARD_VIEW,
+      PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE, PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.SPONSORS_REJECT, PERMISSIONS.SPONSORS_SUSPEND, PERMISSIONS.SPONSORS_ACTIVATE, PERMISSIONS.SPONSORS_DELETE,
+      PERMISSIONS.SPONSOR_USERS_MANAGE, PERMISSIONS.SPONSOR_BRANCHES_MANAGE, PERMISSIONS.SPONSOR_CONTRACTS_MANAGE, PERMISSIONS.SPONSOR_SUBSCRIPTIONS_MANAGE, PERMISSIONS.SPONSOR_PAYMENTS_MANAGE,
+      PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE, PERMISSIONS.ADS_PUBLISH, PERMISSIONS.ADS_DELETE, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.MEDIA_UPLOAD,
+      PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_UPDATE, PERMISSIONS.USERS_DELETE,
+      PERMISSIONS.ROLES_VIEW, PERMISSIONS.ROLES_MANAGE,
+      PERMISSIONS.PROPERTIES_VIEW, PERMISSIONS.PROPERTIES_MANAGE,
+      PERMISSIONS.OFFICE_LINK, PERMISSIONS.OFFICE_UNLINK,
+      PERMISSIONS.REPORTS_VIEW, PERMISSIONS.SETTINGS_MANAGE,
+    ],
+  },
+};
+
+export const ROLE_ORDER: SponsorRole[] = [
+  "guest",
+  "viewer",
+  "analyst",
+  "content_editor",
+  "country_manager",
+  "ad_manager",
+  "sponsor_admin",
+  "sponsor_manager",
+  "super_admin",
+];
+
+export function roleNameAr(role: string): string {
+  return ROLE_CATALOG[role as SponsorRole]?.nameAr ?? role;
+}
+
+export function roleNameEn(role: string): string {
+  return ROLE_CATALOG[role as SponsorRole]?.nameEn ?? role;
+}
+
+export function permissionsForRole(role: string): string[] {
+  return ROLE_CATALOG[role as SponsorRole]?.permissions ?? [];
+}

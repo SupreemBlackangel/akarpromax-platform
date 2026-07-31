@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission, type SponsorRole } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ const assignableRoles: SponsorRole[] = [
   "country_manager",
   "ad_manager",
   "sponsor_admin",
+  "sponsor_manager",
   "super_admin",
 ];
 
@@ -31,7 +33,7 @@ function clean(value: unknown, maxLength: number) {
 
 export async function GET() {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "access:read")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.USERS_VIEW)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -60,7 +62,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, "access:write")) {
+  if (!hasSponsorPermission(identity, PERMISSIONS.USERS_CREATE) && !hasSponsorPermission(identity, PERMISSIONS.USERS_UPDATE)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -116,4 +118,45 @@ export async function POST(request: NextRequest) {
     .run();
 
   return NextResponse.json({ id });
+}
+
+export async function DELETE(request: NextRequest) {
+  const identity = await getSponsorIdentity();
+  if (!hasSponsorPermission(identity, PERMISSIONS.USERS_DELETE)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const id = clean(request.nextUrl.searchParams.get("id"), 80);
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const db = await getRuntimeDb();
+  const existing = await db.prepare(
+    "SELECT id, email, role FROM sponsor_access WHERE id = ?1 LIMIT 1",
+  )
+    .bind(id)
+    .first<{ id: string; email: string; role: SponsorRole }>();
+
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (existing.role === "super_admin") {
+    const count = await db.prepare(
+      "SELECT COUNT(*) AS total FROM sponsor_access WHERE role = 'super_admin' AND status = 'active'",
+    ).first<{ total: number }>();
+    if (Number(count?.total ?? 0) <= 1) {
+      return NextResponse.json({ error: "At least one active super administrator is required" }, { status: 409 });
+    }
+  }
+
+  await db.prepare("DELETE FROM sponsor_access WHERE id = ?1").bind(id).run();
+  await db.prepare(
+    `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
+     VALUES (?1, ?2, 'sponsor.access.deleted', 'sponsor_access', ?3, ?4)`,
+  )
+    .bind(crypto.randomUUID(), identity.email, id, JSON.stringify({ email: existing.email }))
+    .run();
+
+  return new NextResponse(null, { status: 204 });
 }
