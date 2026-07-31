@@ -213,6 +213,7 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
   assert.match(statsApi, /ADMIN_DASHBOARD_VIEW/);
   assert.match(statsApi, /GROUP BY/);
   assert.match(statsApi, /audit_logs/);
+  assert.match(statsApi, /sponsor_users/);
   assert.match(analyticsApi, /REPORTS_VIEW/);
   assert.match(analyticsApi, /sponsor_events/);
   assert.match(analyticsApi, /ad_events/);

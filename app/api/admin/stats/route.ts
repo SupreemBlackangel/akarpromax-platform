@@ -51,7 +51,7 @@ export async function GET() {
     countsBy(db, "ad_campaigns", "status"),
     countsBy(db, "ad_campaigns", "campaign_type"),
     countsBy(db, "sponsor_access", "role"),
-    countsBy(db, "users", "status"),
+    countsBy(db, "sponsor_users", "status"),
     db.prepare(
       `SELECT country_code, COALESCE(SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END), 0) AS impressions,
               COALESCE(SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END), 0) AS clicks
