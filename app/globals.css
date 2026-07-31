@@ -87,14 +87,16 @@ button, input, select { font: inherit; }
 .location-trigger:hover { border-color: #9ec2ff; background: #eef5ff; }
 .location-pin { display: inline-grid; place-items: center; min-width: 15px; color: var(--blue); font-size: 14px; line-height: 1; }
 .location-chevron { margin-inline-start: auto; color: #7d8eaa; font-size: 12px; }
-.location-dropdown { position: absolute; z-index: 36; top: calc(100% + 7px); right: 0; width: 330px; max-width: min(80vw, 330px); padding: 12px; border: 1px solid #d9e5f8; border-radius: 12px; background: #fff; box-shadow: 0 16px 30px rgba(25,64,123,.18); }
+.location-dropdown { position: absolute; z-index: 36; top: calc(100% + 7px); right: 0; width: 330px; max-width: min(80vw, 330px); padding: 12px; border: 1px solid #d9e5f8; border-radius: 12px; background: #fff; box-shadow: 0 16px 30px rgba(25,64,123,.18); animation: location-pop .16s ease-out; }
+@keyframes location-pop { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 .location-dropdown-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.location-dropdown-title { margin-inline-end: auto; color: #0b214c; font: 800 12px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif; }
 .location-detect { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: 1px solid #cbdcff; border-radius: 8px; background: #e7efff; color: #1459c7; font: 800 10px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif; cursor: pointer; }
 .location-detect:hover { background: #dceaff; }
 .location-detect:disabled { opacity: .6; cursor: default; }
 .location-spinner { width: 12px; height: 12px; border: 2px solid #6ea1ff; border-top-color: transparent; border-radius: 50%; animation: location-spin .7s linear infinite; }
 @keyframes location-spin { to { transform: rotate(360deg); } }
-.location-detect-error { color: #d4382c; font: 800 9px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif; }
+.location-detect-error { margin: 0 0 10px; color: #d4382c; font: 800 9px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif; }
 .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .location-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .location-field-wide { grid-column: span 2; }
@@ -338,8 +340,10 @@ html[data-theme="dark"] .location-dropdown { border-color: #304867; background: 
 html[data-theme="dark"] .location-field label { color: #8ea2c1; }
 html[data-theme="dark"] .location-field input, html[data-theme="dark"] .location-field select { border-color: #304867; background: #0f1d33; color: #e0e8f6; }
 html[data-theme="dark"] .location-field input:focus, html[data-theme="dark"] .location-field select:focus { outline-color: #2a4c7f; border-color: #5f88c7; }
+html[data-theme="dark"] .location-detect-error { color: #ff8a80; }
 html[data-theme="dark"] .location-detect { border-color: #345c96; background: #152a4b; color: #9fc0ff; }
 html[data-theme="dark"] .location-detect:hover { background: #182d50; }
+html[data-theme="dark"] .location-dropdown-title { color: #e0e8f6; }
 html[data-theme="dark"] .location-cancel { border-color: #304867; background: #0f1d33; color: #bdcbe0; }
 html[data-theme="dark"] .location-cancel:hover { background: #162a49; }
 

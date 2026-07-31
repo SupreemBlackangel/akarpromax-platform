@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   getCachedLocation,
   setCachedLocation,
   detectCountryByTimezone,
   detectCountryByLanguage,
 } from "@/src/location-utils";
+import { countryOptions } from "@/src/data/locations";
+import type { Locale } from "@/src/types/site";
 import type { LocationFields, LocationInfo } from "@/src/location-utils";
-
-type Locale = "ar" | "en" | "tr";
 
 type Props = {
   locale?: Locale;
@@ -19,30 +19,17 @@ type Props = {
   onApply?: (fields: LocationFields) => void;
 };
 
-const COUNTRY_LIST: Array<[string, string, string]> = [
-  ["om", "عُمان", "Oman"], ["sa", "السعودية", "Saudi Arabia"], ["ae", "الإمارات", "UAE"],
-  ["qa", "قطر", "Qatar"], ["kw", "الكويت", "Kuwait"], ["bh", "البحرين", "Bahrain"],
-  ["eg", "مصر", "Egypt"], ["jo", "الأردن", "Jordan"], ["iq", "العراق", "Iraq"],
-  ["lb", "لبنان", "Lebanon"], ["ps", "فلسطين", "Palestine"], ["sy", "سوريا", "Syria"],
-  ["ye", "اليمن", "Yemen"], ["ma", "المغرب", "Morocco"], ["dz", "الجزائر", "Algeria"],
-  ["tn", "تونس", "Tunisia"], ["ly", "ليبيا", "Libya"], ["sd", "السودان", "Sudan"],
-  ["so", "الصومال", "Somalia"], ["dj", "جيبوتي", "Djibouti"], ["mr", "موريتانيا", "Mauritania"],
-  ["km", "جزر القمر", "Comoros"], ["tr", "تركيا", "Türkiye"],
-];
-
-function countryLabel(code: string, locale: Locale): string {
-  const idx = locale === "en" || locale === "tr" ? 2 : 1;
-  const found = COUNTRY_LIST.find((c) => c[0] === code);
-  return found ? found[idx] : code.toUpperCase();
-}
+const FALLBACK_COUNTRY = "om";
 
 const LABELS: Record<Locale, {
-  aria: string; empty: string; country: string; governorate: string; city: string;
-  village: string; district: string; street: string; countryPlaceholder: string;
-  detect: string; detecting: string; save: string; cancel: string; error: string;
+  aria: string; title: string; empty: string; country: string; governorate: string;
+  city: string; village: string; district: string; street: string;
+  countryPlaceholder: string; detect: string; detecting: string;
+  save: string; cancel: string; error: string;
 }> = {
   ar: {
     aria: "العنوان الجغرافي",
+    title: "حدّد موقعك",
     empty: "الموقع",
     country: "الدولة",
     governorate: "المحافظة",
@@ -59,6 +46,7 @@ const LABELS: Record<Locale, {
   },
   en: {
     aria: "Geographic address",
+    title: "Set your location",
     empty: "Location",
     country: "Country",
     governorate: "Governorate",
@@ -75,6 +63,7 @@ const LABELS: Record<Locale, {
   },
   tr: {
     aria: "Coğrafi adres",
+    title: "Konumunuzu ayarlayın",
     empty: "Konum",
     country: "Ülke",
     governorate: "Valilik",
@@ -91,15 +80,28 @@ const LABELS: Record<Locale, {
   },
 };
 
+const DEPTH_KEYS: Array<"governorate" | "city" | "village" | "district" | "street"> = [
+  "governorate",
+  "city",
+  "village",
+  "district",
+  "street",
+];
+
 function toFields(info: LocationInfo): LocationFields {
   return {
-    countryCode: info.countryCode || info.country.toLowerCase() || "om",
+    countryCode: info.countryCode || info.country.toLowerCase() || FALLBACK_COUNTRY,
     governorate: info.governorate || "",
     city: info.city || "",
     village: info.village || "",
     district: info.district || "",
     street: info.street || "",
   };
+}
+
+function countryLabel(code: string, locale: Locale): string {
+  const found = countryOptions.find((country) => country.id === code);
+  return found ? found.names[locale] : code.toUpperCase();
 }
 
 function currentPosition(): Promise<GeolocationPosition> {
@@ -124,19 +126,31 @@ export default function LocationChip({
   onApply,
 }: Props) {
   const labels = LABELS[locale];
+  const dialogId = useId();
+  const countryFieldId = `${dialogId}-country`;
   const [open, setOpen] = useState(false);
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState("");
   const [fields, setFields] = useState<LocationFields>(() => ({
-    countryCode,
+    countryCode: countryCode || FALLBACK_COUNTRY,
     governorate: "",
-    city: cityName,
+    city: cityName || "",
     village: "",
     district: "",
     street: "",
   }));
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const countrySelectRef = useRef<HTMLSelectElement | null>(null);
   const mountedRef = useRef(true);
-  const closeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const cached = getCachedLocation();
@@ -144,11 +158,40 @@ export default function LocationChip({
   }, []);
 
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      if (closeTimer.current !== undefined) window.clearTimeout(closeTimer.current);
+    if (open) return;
+    setFields((prev) => ({
+      ...prev,
+      countryCode: countryCode || prev.countryCode,
+      city: cityName || prev.city,
+    }));
+  }, [countryCode, cityName, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const focusTarget = countrySelectRef.current ?? dialogRef.current;
+    focusTarget?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
     };
-  }, []);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const updateField = useCallback((key: keyof LocationFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -157,7 +200,7 @@ export default function LocationChip({
   const applyInfo = useCallback((info: LocationInfo, lat?: number, lng?: number) => {
     const next = toFields(info);
     if (!next.countryCode) {
-      next.countryCode = detectCountryByTimezone() || detectCountryByLanguage() || "om";
+      next.countryCode = detectCountryByTimezone() || detectCountryByLanguage() || FALLBACK_COUNTRY;
     }
     setCachedLocation({ ...info, country: next.countryCode, countryCode: next.countryCode }, lat, lng);
     setFields(next);
@@ -191,6 +234,11 @@ export default function LocationChip({
     }
   }, [applyInfo, labels.error]);
 
+  const closeDialog = useCallback((restoreFocus = false) => {
+    setOpen(false);
+    if (restoreFocus) triggerRef.current?.focus();
+  }, []);
+
   const handleSave = () => {
     const info: LocationInfo = {
       ...fields,
@@ -202,64 +250,42 @@ export default function LocationChip({
     };
     setCachedLocation(info);
     onApply?.(fields);
-    setOpen(false);
     setDetectError("");
+    closeDialog(true);
   };
 
-  const scheduleClose = () => {
-    if (closeTimer.current !== undefined) window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
-  };
-  const cancelClose = () => {
-    if (closeTimer.current !== undefined) window.clearTimeout(closeTimer.current);
-    closeTimer.current = undefined;
-  };
-
-  const toggle = () => {
-    cancelClose();
-    setOpen((prev) => !prev);
-  };
-
-  const depthFields: Array<[keyof LocationFields, string, string]> = [
-    ["governorate", labels.governorate, "◈"],
-    ["city", labels.city, "⌖"],
-    ["village", labels.village, "⊞"],
-    ["district", labels.district, "▣"],
-    ["street", labels.street, "⛩"],
-  ];
-  const filled = depthFields.map(([key]) => fields[key]).filter((value) => value.trim());
+  const filled = DEPTH_KEYS.map((key) => fields[key]).filter((value) => value.trim());
   const summary =
     filled.length >= 2
       ? [filled[filled.length - 2], filled[filled.length - 1]].join(" · ")
-      : filled[0] || countryName || labels.empty;
+      : filled[0] || countryLabel(fields.countryCode, locale) || countryName || labels.empty;
 
   return (
-    <div
-      className="location-switcher"
-      aria-label={labels.aria}
-      onMouseEnter={cancelClose}
-      onMouseLeave={() => scheduleClose()}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          cancelClose();
-          setOpen(false);
-        }
-      }}
-    >
+    <div className="location-switcher" ref={rootRef}>
       <button
+        ref={triggerRef}
         className="location-trigger"
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={toggle}
-        onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}
+        aria-controls={dialogId}
+        aria-label={labels.aria}
+        onClick={() => setOpen((prev) => !prev)}
       >
         <span className="location-pin" aria-hidden="true">⌖</span>
         <span>{summary}</span>
         <span className="location-chevron" aria-hidden="true">⌄</span>
       </button>
-      <div className="location-dropdown" role="dialog" hidden={!open}>
+      <div
+        ref={dialogRef}
+        id={dialogId}
+        className="location-dropdown"
+        role="dialog"
+        aria-labelledby={`${dialogId}-title`}
+        hidden={!open}
+      >
         <div className="location-dropdown-head">
+          <span id={`${dialogId}-title`} className="location-dropdown-title">{labels.title}</span>
           <button
             className="location-detect"
             type="button"
@@ -273,38 +299,41 @@ export default function LocationChip({
             )}
             {detecting ? labels.detecting : labels.detect}
           </button>
-          {detectError && <span className="location-detect-error">{detectError}</span>}
         </div>
+        {detectError && (
+          <p className="location-detect-error" role="alert">{detectError}</p>
+        )}
         <div className="location-grid">
           <div className="location-field location-field-wide">
-            <label htmlFor="location-chip-country"><span aria-hidden="true">⚑</span> {labels.country}</label>
+            <label htmlFor={countryFieldId}><span aria-hidden="true">⚑</span> {labels.country}</label>
             <select
-              id="location-chip-country"
+              id={countryFieldId}
+              ref={countrySelectRef}
               name="countryCode"
               value={fields.countryCode}
-              onChange={(e) => updateField("countryCode", e.target.value)}
+              onChange={(event) => updateField("countryCode", event.target.value)}
             >
               <option value="">{labels.countryPlaceholder}</option>
-              {COUNTRY_LIST.map(([code]) => (
-                <option key={code} value={code}>{countryLabel(code, locale)}</option>
+              {countryOptions.map((country) => (
+                <option key={country.id} value={country.id}>{country.names[locale]}</option>
               ))}
             </select>
           </div>
-          {depthFields.map(([key, label, icon]) => (
+          {DEPTH_KEYS.map((key) => (
             <div className="location-field" key={key}>
-              <label htmlFor={`location-chip-${key}`}><span aria-hidden="true">{icon}</span> {label}</label>
+              <label htmlFor={`${dialogId}-${key}`}>{labels[key]}</label>
               <input
-                id={`location-chip-${key}`}
+                id={`${dialogId}-${key}`}
                 name={key}
                 value={fields[key]}
-                onChange={(e) => updateField(key, e.target.value)}
-                placeholder={label}
+                onChange={(event) => updateField(key, event.target.value)}
+                placeholder={labels[key]}
               />
             </div>
           ))}
         </div>
         <div className="location-actions">
-          <button className="location-cancel" type="button" onClick={() => setOpen(false)}>{labels.cancel}</button>
+          <button className="location-cancel" type="button" onClick={() => closeDialog(true)}>{labels.cancel}</button>
           <button className="location-save" type="button" onClick={handleSave}>{labels.save}</button>
         </div>
       </div>
