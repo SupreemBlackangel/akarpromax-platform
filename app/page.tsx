@@ -3,10 +3,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import LocationChip from "@/src/components/LocationChip";
+import AccountDialog from "@/src/components/AccountDialog";
 import Brand from "@/src/components/Brand";
 import CountryFlag from "@/src/components/CountryFlag";
 import SponsorIdentity from "@/src/components/SponsorIdentity";
 import NewsTicker from "@/src/components/NewsTicker";
+import AdSlot from "@/src/components/AdSlot";
+import AdRequestDialog from "@/src/components/AdRequestDialog";
 import type { HeroAdSlide, Locale, PublicAdCampaign, PublicSponsor, ThemeMode, ViewerContext } from "@/src/types/site";
 import {
   cityOptions,
@@ -23,6 +26,7 @@ import {
   sponsorToneByCountry,
 } from "@/src/data/locations";
 import { languageOptions, roleLabels, themeOptions, translations } from "@/src/data/translations";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
@@ -42,7 +46,11 @@ export default function Home() {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [heroPaused, setHeroPaused] = useState(false);
   const [heroInteracting, setHeroInteracting] = useState(false);
-  const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+  const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountMode, setAccountMode] = useState<"login" | "register">("login");
+  const [adRequestOpen, setAdRequestOpen] = useState(false);
+  const [adRequestPlacement, setAdRequestPlacement] = useState("side_left");
   const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
   const heroTouchStartX = useRef<number | null>(null);
   const heroSectionRef = useRef<HTMLElement | null>(null);
@@ -115,8 +123,19 @@ export default function Home() {
   })));
   const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
-  const canOpenSponsorAdmin = viewer.permissions.includes("sponsors:read");
-  const canOpenAdsAdmin = viewer.permissions.includes("ads:read");
+  const adminNav = [
+    { href: "/admin", icon: "⌂", label: locale === "ar" ? "لوحة الإدارة" : locale === "tr" ? "Yönetim paneli" : "Admin dashboard", show: viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW) },
+    { href: "/admin/news", icon: "➤", label: locale === "ar" ? "مركز الشريط الإخباري" : locale === "tr" ? "Haber merkezi" : "News center", show: viewer.permissions.includes(PERMISSIONS.NEWS_VIEW) },
+    { href: "/admin/ads", icon: "▤", label: locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center", show: viewer.permissions.includes(PERMISSIONS.ADS_VIEW) },
+    { href: "/admin/sponsors", icon: "▣", label: locale === "ar" ? "نظام الرعاة" : locale === "tr" ? "Sponsor sistemi" : "Sponsor system", show: viewer.permissions.includes(PERMISSIONS.SPONSORS_VIEW) },
+    { href: "/admin/users", icon: "♙", label: locale === "ar" ? "المستخدمون" : locale === "tr" ? "Kullanıcılar" : "Users", show: viewer.permissions.includes(PERMISSIONS.USERS_VIEW) },
+    { href: "/admin/roles", icon: "♛", label: locale === "ar" ? "الأدوار والصلاحيات" : locale === "tr" ? "Roller ve izinler" : "Roles & permissions", show: viewer.permissions.includes(PERMISSIONS.ROLES_VIEW) },
+    { href: "/admin/reports", icon: "↗", label: locale === "ar" ? "التقارير" : locale === "tr" ? "Raporlar" : "Reports", show: viewer.permissions.includes(PERMISSIONS.REPORTS_VIEW) },
+    { href: "/admin/settings", icon: "⚙", label: locale === "ar" ? "الإعدادات" : locale === "tr" ? "Ayarlar" : "Settings", show: viewer.permissions.includes(PERMISSIONS.SETTINGS_MANAGE) },
+    { href: "/services", icon: "✦", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services marketplace", show: true },
+    { href: "/admin/i18n", icon: "🔤", label: locale === "ar" ? "إدارة الترجمات" : locale === "tr" ? "Çeviri yönetimi" : "Translation admin", show: viewer.permissions.includes(PERMISSIONS.I18N_VIEW) },
+  ].filter((item) => item.show);
+  const canOpenAdminPanel = adminNav.some((item) => item.href.startsWith("/admin"));
   const sidebarIndexes = viewer.role === "super_admin"
     ? copy.sidebar.map((_, index) => index)
     : viewer.role === "sponsor_admin"
@@ -347,8 +366,12 @@ export default function Home() {
               <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
             </a>
           ))}
-          {canOpenAdsAdmin && <a className="sidebar-link sidebar-sponsor-admin" href="/admin/ads"><span className="sidebar-icon" aria-hidden="true">▣</span><span>{locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center"}</span></a>}
-          {canOpenSponsorAdmin && <a className="sidebar-link sidebar-sponsor-admin" href="/admin/sponsors"><span className="sidebar-icon" aria-hidden="true">◆</span><span>{locale === "ar" ? "إدارة الرعاة" : locale === "tr" ? "Sponsor yönetimi" : "Sponsor management"}</span></a>}
+          {adminNav.length > 0 && <div className="sidebar-admin-head">{locale === "ar" ? "الإدارة" : locale === "tr" ? "Yönetim" : "Admin"}</div>}
+          {adminNav.map(({ href, icon, label }) => (
+            <a className="sidebar-link sidebar-sponsor-admin" href={href} key={href}>
+              <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
+            </a>
+          ))}
         </div>
         <div className="sidebar-foot"><strong>{viewer.authenticated ? viewer.displayName : copy.brandTitle}</strong><span>{roleLabels[locale][viewer.role] ?? viewer.role} © 2026</span></div>
       </aside>
@@ -420,12 +443,15 @@ export default function Home() {
               </div>
               <a className="office-tool" href="#top" aria-label={copy.officeAppAria} title={copy.officeAppAria}>▣</a>
             </div>
-            <div className="header-actions"><a className="admin-chip" href={canOpenAdsAdmin ? "/admin/ads" : canOpenSponsorAdmin ? "/admin/sponsors" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a><a className="header-login" href="#account">{copy.login}</a><a className="header-register" href="#account">{copy.register}</a></div>
+            <div className="header-actions"><a className="admin-chip" href={canOpenAdminPanel ? "/admin" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a>{viewer.authenticated ? <button type="button" className="header-login header-account" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{viewer.displayName}</button> : <><button type="button" className="header-login" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{copy.login}</button><button type="button" className="header-register" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.register}</button></>}</div>
           </div>
         </header>
 
-        <NewsTicker copy={copy} locale={locale} />
+        <NewsTicker copy={copy} locale={locale} country={country} city={city} />
         </div>
+
+        {deviceType === "desktop" && <AdSlot placement="side_left" locale={locale} country={country} city={city} deviceType={deviceType} path="/" variant="vertical" className="side-rail-ad side-rail-left" requestable onRequestAd={() => { setAdRequestPlacement("side_left"); setAdRequestOpen(true); }} />}
+        {deviceType === "desktop" && <AdSlot placement="side_right" locale={locale} country={country} city={city} deviceType={deviceType} path="/" variant="vertical" className="side-rail-ad side-rail-right" requestable onRequestAd={() => { setAdRequestPlacement("side_right"); setAdRequestOpen(true); }} />}
 
         <section
           ref={heroSectionRef}
@@ -482,7 +508,7 @@ export default function Home() {
 
         <section className="welcome-band" id="about">
           <div className="container welcome-grid">
-            <div className="welcome-copy"><p className="section-kicker">{copy.welcomeKicker}</p><h1>{copy.welcomeTitle}<br /><em>{copy.welcomeAccent}</em></h1><p>{copy.welcomeDescription}</p><div className="welcome-actions"><a className="button-primary" href="#properties">{copy.browse} <b>{copy.arrow}</b></a><a className="button-quiet" href="#account">{copy.join}</a></div></div>
+            <div className="welcome-copy"><p className="section-kicker">{copy.welcomeKicker}</p><h1>{copy.welcomeTitle}<br /><em>{copy.welcomeAccent}</em></h1><p>{copy.welcomeDescription}</p><div className="welcome-actions"><a className="button-primary" href="#properties">{copy.browse} <b>{copy.arrow}</b></a><button type="button" className="button-quiet" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.join}</button></div></div>
             <div className="welcome-visual" aria-label={copy.visualAria}><div className="visual-ring" /><div className="visual-card"><span>{copy.visualTag}</span><strong>OM</strong><small>{copy.visualSmall}</small></div></div>
           </div>
         </section>
@@ -492,7 +518,9 @@ export default function Home() {
           <div className="property-grid reference-cards">
             {copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
           </div>
-          {sponsorPlacements.includes("content") && <aside className={`sponsor-inline sponsor-tone-${selectedSponsorTone}`} aria-label={copy.sponsorAria}><span className="sponsor-inline-label">{copy.sponsorFooter}</span><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} compact /><div><strong>{copy.sponsorPage} {selectedCountry.names[locale]}</strong><span>{sponsorName}</span></div><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("content", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></aside>}
+          <div className="ad-slot-container-vertical" aria-label={copy.sponsorAria}>
+            <AdSlot placement="between_sections" locale={locale} country={country} city={city} deviceType={deviceType} path="/" variant="horizontal" />
+          </div>
         </section>
 
         <section className="services-band" id="services" aria-labelledby="services-title">
@@ -505,8 +533,11 @@ export default function Home() {
 
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div>{sponsorPlacements.includes("footer") && <div className={`container footer-sponsor sponsor-tone-${selectedSponsorTone}`}><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} compact /><div><small>{copy.sponsorFooter}</small><strong>{sponsorName} — {selectedCountry.names[locale]}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span><a href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("footer", "click")}>{sponsorActionLabel}</a></div>}<div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#top" aria-label="Facebook">f</a><a href="#top" aria-label="X">𝕏</a><a href="#top" aria-label="Instagram">◎</a><a href="#top" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#top" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#top" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#top">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#top">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        {deviceType === "mobile" && <AdSlot placement="floating_bottom" locale={locale} country={country} city={city} deviceType={deviceType} path="/" variant="floating" />}
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
+        <AccountDialog locale={locale} open={accountOpen} initialMode={accountMode} viewer={viewer} onClose={() => setAccountOpen(false)} onAuthenticated={setViewer} />
+        <AdRequestDialog locale={locale} open={adRequestOpen} placement={adRequestPlacement} countryCode={country} onClose={() => setAdRequestOpen(false)} />
       </div>
     </main>
   );

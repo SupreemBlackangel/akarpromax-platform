@@ -14,7 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase,
     title: "عقار بروماكس | منصة العقار الذكية في عُمان",
     description: "اكتشف العقارات والمكاتب والخدمات المهنية في عُمان عبر منصة عقار بروماكس.",
-    icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    icons: {
+      icon: [
+        { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+        { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+      ],
+      shortcut: "/favicon-32.png",
+      apple: "/apple-touch-icon.png",
+    },
+    manifest: "/manifest.json",
     openGraph: {
       title: "عقار بروماكس | قرارك العقاري يبدأ بوضوح",
       description: "منصة عقارية عُمانية تجمع العقارات والمكاتب والخدمات في تجربة واحدة موثوقة.",

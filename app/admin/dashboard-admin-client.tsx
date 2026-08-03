@@ -91,6 +91,9 @@ export default function DashboardAdminClient({
   const sections = [
     { href: "/admin/sponsors", icon: "▣", label: "نظام الرعاة", show: can(PERMISSIONS.SPONSORS_VIEW) },
     { href: "/admin/ads", icon: "▤", label: "مركز الإعلانات", show: can(PERMISSIONS.ADS_VIEW) },
+    { href: "/admin/news", icon: "➤", label: "إدارة الأخبار", show: can(PERMISSIONS.NEWS_VIEW) },
+    { href: "/admin/i18n", icon: "🔤", label: "إدارة الترجمات", show: can(PERMISSIONS.I18N_VIEW) },
+    { href: "/services", icon: "✦", label: "سوق الخدمات", show: true },
     { href: "/admin/users", icon: "♙", label: "المستخدمون", show: can(PERMISSIONS.USERS_VIEW) },
     { href: "/admin/roles", icon: "♛", label: "الأدوار والصلاحيات", show: can(PERMISSIONS.ROLES_VIEW) },
     { href: "/admin/reports", icon: "↗", label: "التقارير", show: can(PERMISSIONS.REPORTS_VIEW) },

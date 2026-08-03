@@ -510,6 +510,30 @@ export const sponsorActivityLogs = mysqlTable(
   ],
 );
 
+export const news = mysqlTable(
+  "news",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    scope: varchar("scope", { length: 16 }).notNull().default("global"),
+    countryCode: varchar("country_code", { length: 2 }),
+    cityId: varchar("city_id", { length: 100 }),
+    titleAr: varchar("title_ar", { length: 255 }).notNull(),
+    titleEn: varchar("title_en", { length: 255 }).notNull(),
+    titleTr: varchar("title_tr", { length: 255 }).notNull(),
+    linkUrl: varchar("link_url", { length: 1024 }),
+    status: varchar("status", { length: 16 }).notNull().default("draft"),
+    priority: int("priority").notNull().default(100),
+    startAt: timestamp("start_at", { mode: "string" }),
+    endAt: timestamp("end_at", { mode: "string" }),
+    createdBy: varchar("created_by", { length: 36 }),
+    createdAt: timestamp("created_at", { mode: "string" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).notNull().defaultNow().onUpdateNow(),
+  },
+  (table) => [
+    index("news_scope_country_idx").on(table.status, table.scope, table.countryCode),
+  ],
+);
+
 export const officeLinks = mysqlTable(
   "office_links",
   {
@@ -532,3 +556,6 @@ export const officeLinks = mysqlTable(
     index("office_links_sponsor_idx").on(table.sponsorId),
   ],
 );
+
+export * from "@/db/mysql/i18n-schema";
+export * from "@/db/mysql/services-schema";

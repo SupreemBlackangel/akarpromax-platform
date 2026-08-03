@@ -20,9 +20,16 @@ export const PERMISSIONS = {
   ADS_CREATE: "ads.create",
   ADS_UPDATE: "ads.update",
   ADS_PUBLISH: "ads.publish",
+  ADS_APPROVE: "ads.approve",
   ADS_DELETE: "ads.delete",
   ADS_ANALYTICS: "ads.analytics",
   MEDIA_UPLOAD: "media.upload",
+
+  NEWS_VIEW: "news.view",
+  NEWS_CREATE: "news.create",
+  NEWS_UPDATE: "news.update",
+  NEWS_PUBLISH: "news.publish",
+  NEWS_DELETE: "news.delete",
 
   USERS_VIEW: "users.view",
   USERS_CREATE: "users.create",
@@ -37,6 +44,19 @@ export const PERMISSIONS = {
 
   OFFICE_LINK: "office.link",
   OFFICE_UNLINK: "office.unlink",
+
+  SERVICES_VIEW: "services.view",
+  SERVICES_CREATE: "services.create",
+  SERVICES_UPDATE: "services.update",
+  SERVICES_DELETE: "services.delete",
+  SERVICES_APPROVE: "services.approve",
+  SERVICES_REVIEW_MODERATE: "services.moderate_reviews",
+  SERVICES_DISPUTE_RESOLVE: "services.resolve_disputes",
+
+  I18N_VIEW: "i18n.view",
+  I18N_EDIT: "i18n.edit",
+  I18N_PUBLISH: "i18n.publish",
+  I18N_MANAGE_NAMESPACES: "i18n.manage_namespaces",
 
   REPORTS_VIEW: "reports.view",
   SETTINGS_MANAGE: "settings.manage",

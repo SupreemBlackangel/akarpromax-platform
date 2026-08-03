@@ -34,12 +34,19 @@ const ARABIC_COUNTRY_TO_CODE: Record<string, string> = {
   "تركيا": "tr", "Türkiye": "tr",
 };
 
+const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g;
+
+function stripDiacritics(value: string): string {
+  return value.replace(ARABIC_DIACRITICS, "");
+}
+
 function extractCountryCode(countryName: string): string {
   const trimmed = countryName.trim();
+  const normalized = stripDiacritics(trimmed);
   for (const [key, code] of Object.entries(ARABIC_COUNTRY_TO_CODE)) {
-    if (trimmed.includes(key) || trimmed === key) return code;
+    if (normalized.includes(stripDiacritics(key))) return code;
   }
-  const firstTwo = trimmed.toLowerCase().slice(0, 2);
+  const firstTwo = normalized.toLowerCase().slice(0, 2);
   if (firstTwo >= "aa" && firstTwo <= "zz") return firstTwo;
   return "";
 }

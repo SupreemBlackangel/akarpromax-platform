@@ -8,7 +8,7 @@ let pool: mysql.Pool | null = null;
 function getPool(): mysql.Pool {
   if (pool) return pool;
   const url =
-    process.env.DATABASE_URL ??
+    process.env.MYSQL_URL ??
     "mysql://root:root@localhost:3306/akarpromax?charset=utf8mb4";
   pool = mysql.createPool({
     uri: url,

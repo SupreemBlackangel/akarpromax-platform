@@ -1,5 +1,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+
+import { getSession, getSessionUser } from "@/lib/auth/session";
+import { users as pgUsers } from "@/lib/db/schema";
+import { getDb } from "@/lib/db";
 
 export type ChatGPTUser = {
   displayName: string;
@@ -17,7 +22,29 @@ const SIGN_OUT_PATH = "/signout-with-chatgpt";
 const CALLBACK_PATH = "/callback";
 
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
+  const sessionUser = await userFromSession();
+  if (sessionUser) return sessionUser;
+
   const requestHeaders = await headers();
+  const authorization = requestHeaders.get("authorization");
+  if (authorization?.toLowerCase().startsWith("bearer ")) {
+    const token = authorization.slice(7).trim();
+    if (token) {
+      try {
+        const sessionUser = await getSessionUser(token);
+        if (sessionUser?.email) {
+          return {
+            displayName: sessionUser.fullName || sessionUser.email,
+            email: sessionUser.email,
+            fullName: sessionUser.fullName || null,
+          };
+        }
+      } catch {
+        // MySQL unreachable: fall through to header-based identity.
+      }
+    }
+  }
+
   const email = requestHeaders.get(USER_EMAIL_HEADER);
   if (!email) {
     const host = requestHeaders.get("host")?.split(":")[0]?.toLowerCase();
@@ -43,6 +70,39 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
     email,
     fullName,
   };
+}
+
+async function userFromSession(): Promise<ChatGPTUser | null> {
+  let session;
+  try {
+    session = await getSession();
+  } catch {
+    return null;
+  }
+  if (!session?.userId) return null;
+
+  try {
+    const { db, end } = getDb();
+    let user: { email: string | null; name: string | null } | undefined;
+    try {
+      const rows = await db
+        .select({ email: pgUsers.email, name: pgUsers.name })
+        .from(pgUsers)
+        .where(eq(pgUsers.id, session.userId))
+        .limit(1);
+      user = rows[0];
+    } finally {
+      await end();
+    }
+    if (!user?.email) return null;
+    return {
+      displayName: user.name || user.email,
+      email: user.email,
+      fullName: user.name || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireChatGPTUser(

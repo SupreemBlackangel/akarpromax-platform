@@ -26,6 +26,7 @@ export type Translation = {
   tickerAria: string;
   tickerLabel: string;
   tickerPause: string;
+  tickerPlay: string;
   ticker: string[];
   heroAria: string;
   heroEyebrow: string;
@@ -158,6 +159,7 @@ export type PublicAdCampaign = {
 
 export type ViewerContext = {
   authenticated: boolean;
+  email: string | null;
   displayName: string;
   role: string;
   countryCode: string | null;

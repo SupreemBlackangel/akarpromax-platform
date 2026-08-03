@@ -1,5 +1,13 @@
+import { sql, eq } from "drizzle-orm";
+
 import { getChatGPTUser } from "@/app/chatgpt-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { getMySqlDb } from "@/lib/mysql-db";
+import { users as mysqlUsers } from "@/db/mysql/schema";
+import { users as pgUsers } from "@/lib/db/schema";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/auth/session";
+import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
 import { ROLE_CATALOG, type SponsorRole } from "@/src/constants/roles";
 
 export type { SponsorRole } from "@/src/constants/roles";
@@ -26,6 +34,9 @@ type AccessRow = {
 };
 
 export async function getSponsorIdentity(): Promise<SponsorIdentity> {
+  const sessionIdentity = await identityFromSession();
+  if (sessionIdentity) return sessionIdentity;
+
   const user = await getChatGPTUser();
   if (!user) {
     return {
@@ -74,7 +85,21 @@ export async function getSponsorIdentity(): Promise<SponsorIdentity> {
     }
   }
 
-  const role = access?.status === "active" ? access.role : "viewer";
+  let role: SponsorRole = access?.status === "active" ? access.role : "viewer";
+
+  if (role === "viewer") {
+    try {
+      const mysqlUser = await getMySqlDb()
+        .select({ roleId: mysqlUsers.roleId })
+        .from(mysqlUsers)
+        .where(sql`lower(${mysqlUsers.email}) = ${email}`)
+        .limit(1);
+      if (mysqlUser[0]?.roleId === "admin") role = "super_admin";
+    } catch {
+      // MySQL unreachable: keep sponsor_access-based role.
+    }
+  }
+
   return {
     authenticated: true,
     email,
@@ -85,8 +110,53 @@ export async function getSponsorIdentity(): Promise<SponsorIdentity> {
   };
 }
 
+async function identityFromSession(): Promise<SponsorIdentity | null> {
+  let session;
+  try {
+    session = await getSession();
+  } catch {
+    return null;
+  }
+  if (!session?.userId) return null;
+
+  try {
+    const { db, end } = getDb();
+    let user: { email: string | null; name: string | null } | undefined;
+    try {
+      const rows = await db
+        .select({ email: pgUsers.email, name: pgUsers.name })
+        .from(pgUsers)
+        .where(eq(pgUsers.id, session.userId))
+        .limit(1);
+      user = rows[0];
+    } finally {
+      await end();
+    }
+    if (!user?.email) return null;
+
+    const role = mapSessionRole(session.role);
+    return {
+      authenticated: true,
+      email: user.email.trim().toLowerCase(),
+      displayName: user.name || user.email,
+      role,
+      countryCode: null,
+      permissions: permissionsForSessionRole(session.role),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function hasSponsorPermission(identity: SponsorIdentity, permission: string): boolean {
   return identity.permissions.includes(permission);
+}
+
+export function requireAuthenticatedEmail(identity: SponsorIdentity): string {
+  if (!identity.authenticated || !identity.email) {
+    throw new Error("AUTH_REQUIRED");
+  }
+  return identity.email;
 }
 
 export function canManageCountry(identity: SponsorIdentity, countryCode: string): boolean {

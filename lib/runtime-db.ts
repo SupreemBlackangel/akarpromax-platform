@@ -1,12 +1,28 @@
+import { getMysqlRuntimeDb } from "@/lib/mysql-runtime";
+import { ensureAdSchema } from "@/lib/ad-schema";
+import { ensureI18nSchema } from "@/lib/i18n-schema";
+import { ensureServicesSchema } from "@/lib/services-schema";
+
 let sponsorSchemaReady: Promise<void> | null = null;
+let d1InitLogged = false;
 
 export async function getRuntimeDb(): Promise<D1Database> {
-  const runtime = await import("cloudflare:workers");
-  if (!runtime.env.DB) throw new Error("Database binding is unavailable");
-  const db = runtime.env.DB;
-  sponsorSchemaReady ??= ensureSponsorSchema(db);
-  await sponsorSchemaReady;
-  return db;
+  try {
+    const runtime = await import("cloudflare:workers");
+    if (runtime.env.DB) {
+      const db = runtime.env.DB;
+      sponsorSchemaReady ??= ensureSponsorSchema(db);
+      await sponsorSchemaReady;
+      return db;
+    }
+  } catch (error) {
+    if (!d1InitLogged) {
+      d1InitLogged = true;
+      console.error("[runtime-db] D1 init failed:", error);
+    }
+    // D1 binding is unavailable (production preview): fall back to MySQL.
+  }
+  return getMysqlRuntimeDb();
 }
 
 async function ensureSponsorSchema(db: D1Database) {
@@ -81,6 +97,7 @@ async function ensureSponsorSchema(db: D1Database) {
       media_type TEXT NOT NULL DEFAULT 'image',
       media_url TEXT NOT NULL,
       mobile_media_url TEXT,
+      tablet_media_url TEXT,
       poster_url TEXT,
       eyebrow_ar TEXT NOT NULL,
       eyebrow_en TEXT NOT NULL,
@@ -108,7 +125,53 @@ async function ensureSponsorSchema(db: D1Database) {
       end_at TEXT,
       created_by TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      section_scopes TEXT,
+      page_types TEXT,
+      placements TEXT,
+      region_ids TEXT,
+      district_ids TEXT,
+      latitude REAL,
+      longitude REAL,
+      radius_km REAL,
+      target_all_countries INTEGER NOT NULL DEFAULT 0,
+      target_all_regions INTEGER NOT NULL DEFAULT 0,
+      target_all_cities INTEGER NOT NULL DEFAULT 0,
+      target_all_districts INTEGER NOT NULL DEFAULT 0,
+      entity_type TEXT,
+      entity_ids TEXT,
+      category_ids TEXT,
+      property_types TEXT,
+      service_categories TEXT,
+      office_types TEXT,
+      tool_categories TEXT,
+      operating_systems TEXT,
+      daily_start_time TEXT,
+      daily_end_time TEXT,
+      days_of_week TEXT,
+      rotation_group TEXT,
+      pricing_model TEXT NOT NULL DEFAULT 'fixed',
+      price INTEGER NOT NULL DEFAULT 0,
+      budget INTEGER NOT NULL DEFAULT 0,
+      daily_budget INTEGER NOT NULL DEFAULT 0,
+      spent_amount INTEGER NOT NULL DEFAULT 0,
+      max_impressions INTEGER NOT NULL DEFAULT 0,
+      max_clicks INTEGER NOT NULL DEFAULT 0,
+      frequency_cap_per_user INTEGER NOT NULL DEFAULT 0,
+      frequency_cap_period TEXT NOT NULL DEFAULT 'day',
+      approval_status TEXT NOT NULL DEFAULT 'approved',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      is_sponsored INTEGER NOT NULL DEFAULT 0,
+      is_featured INTEGER NOT NULL DEFAULT 0,
+      is_fallback INTEGER NOT NULL DEFAULT 0,
+      is_global INTEGER NOT NULL DEFAULT 0,
+      total_impressions INTEGER NOT NULL DEFAULT 0,
+      total_unique_impressions INTEGER NOT NULL DEFAULT 0,
+      total_clicks INTEGER NOT NULL DEFAULT 0,
+      total_unique_clicks INTEGER NOT NULL DEFAULT 0,
+      total_conversions INTEGER NOT NULL DEFAULT 0,
+      approved_by TEXT,
+      deleted_at TEXT
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS ad_events (
       id TEXT PRIMARY KEY NOT NULL,
@@ -360,9 +423,86 @@ async function ensureSponsorSchema(db: D1Database) {
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`),
     db.prepare("CREATE INDEX IF NOT EXISTS office_links_sponsor_idx ON office_links (sponsor_id)"),
+    db.prepare(`CREATE TABLE IF NOT EXISTS news (
+      id TEXT PRIMARY KEY NOT NULL,
+      scope TEXT NOT NULL DEFAULT 'global',
+      country_code TEXT,
+      city_id TEXT,
+      title_ar TEXT NOT NULL,
+      title_en TEXT NOT NULL,
+      title_tr TEXT NOT NULL,
+      link_url TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      priority INTEGER NOT NULL DEFAULT 100,
+      start_at TEXT,
+      end_at TEXT,
+      created_by TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    db.prepare("CREATE INDEX IF NOT EXISTS news_scope_country_idx ON news (status, scope, country_code)"),
   ]);
 
+  await ensureAdSchema(db);
+  await ensureI18nSchema(db);
+  await ensureServicesSchema(db);
   await seedSponsorPlans(db);
+  await seedNews(db);
+}
+
+async function seedNews(db: D1Database) {
+  const existing = await db.prepare("SELECT COUNT(*) AS count FROM news WHERE status = 'active'").first<{ count: number }>();
+  if (existing && existing.count > 0) return;
+
+  const items = [
+    {
+      scope: "global", countryCode: null, cityId: null,
+      titleAr: "منصة عقار بروماكس تستعد لإطلاق تجربة عقارية أوضح في عُمان", titleEn: "AkarPromax is preparing a clearer real estate experience in Oman", titleTr: "AkarPromax, Umman'da daha anlaşılır bir gayrimenkul deneyimi hazırlıyor",
+      linkUrl: null, priority: 100,
+    },
+    {
+      scope: "global", countryCode: null, cityId: null,
+      titleAr: "تحديثات السوق والخدمات العقارية أولًا بأول", titleEn: "Market and property-service updates, one step at a time", titleTr: "Pazar ve gayrimenkul hizmeti güncellemeleri anında",
+      linkUrl: null, priority: 200,
+    },
+    {
+      scope: "global", countryCode: null, cityId: null,
+      titleAr: "تطبيق AkarPromax Office متصل بالمنصة", titleEn: "AkarPromax Office is connected to the platform", titleTr: "AkarPromax Office platforma bağlı",
+      linkUrl: null, priority: 300,
+    },
+    {
+      scope: "country", countryCode: "om", cityId: null,
+      titleAr: "سوق مسقط العقاري يشهد إقبالًا متزايدًا على الوحدات السكنية الحديثة", titleEn: "Muscat's property market sees rising demand for modern residential units", titleTr: "Maskat gayrimenkul piyasasında modern konutlara talep artıyor",
+      linkUrl: null, priority: 100,
+    },
+    {
+      scope: "country", countryCode: "sa", cityId: null,
+      titleAr: "السعودية تطلق مبادرات جديدة لتطوير القطاع العقاري", titleEn: "Saudi Arabia launches new initiatives to develop the real estate sector", titleTr: "Suudi Arabistan gayrimenkul sektörünü geliştirmek için yeni girişimler başlattı",
+      linkUrl: null, priority: 100,
+    },
+    {
+      scope: "city", countryCode: "om", cityId: "om-muscat",
+      titleAr: "مسقط: إطلاق مشروع تطوير ضواحي العاصمة الجديدة", titleEn: "Muscat: new capital suburbs development project launched", titleTr: "Maskat: yeni başkent banliyö geliştirme projesi başlatıldı",
+      linkUrl: null, priority: 100,
+    },
+    {
+      scope: "city", countryCode: "ae", cityId: "ae-dubai",
+      titleAr: "دبي: طلب قوي على العقارات الفاخرة خلال الربع الجاري", titleEn: "Dubai: strong demand for luxury properties this quarter", titleTr: "Dubai: bu çeyrekte lüks gayrimenkullere güçlü talep",
+      linkUrl: null, priority: 100,
+    },
+  ];
+
+  const statements = items.map((item) =>
+    db.prepare(
+      `INSERT OR IGNORE INTO news
+        (id, scope, country_code, city_id, title_ar, title_en, title_tr, link_url, status, priority)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'active', ?9)`
+    ).bind(
+      crypto.randomUUID(), item.scope, item.countryCode, item.cityId,
+      item.titleAr, item.titleEn, item.titleTr, item.linkUrl, item.priority,
+    )
+  );
+  await db.batch(statements);
 }
 
 async function seedSponsorPlans(db: D1Database) {

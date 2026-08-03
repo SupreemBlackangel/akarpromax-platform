@@ -50,8 +50,9 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /tool-cluster location-cluster/);
   assert.match(html, /tool-cluster preference-cluster/);
   assert.match(html, /country-sponsor/);
-  assert.match(html, /sponsor-inline/);
-  assert.match(html, /footer-sponsor/);
+  assert.doesNotMatch(html, /sponsor-inline/);
+  assert.doesNotMatch(html, /footer-sponsor/);
+  assert.match(html, /side-rail-ad/);
   assert.match(html, /data-sponsor-country="om"/);
   assert.match(html, /partners@akarpromax\.om/);
 });
@@ -143,7 +144,7 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(page, /\/api\/ad-events/);
   assert.match(page, /campaignId/);
   assert.match(page, /IntersectionObserver/);
-  assert.match(admin, /مركز إعلانات hero-ad-media/);
+  assert.match(admin, /إعداد حملة المحرك الذكي/);
   assert.match(admin, /image\/png,image\/jpeg,image\/webp,video\/mp4,video\/webm,video\/ogg/);
   assert.match(admin, /مكتبة الصور والفيديو/);
   assert.match(adsApi, /PERMISSIONS\.ADS_PUBLISH/);
@@ -161,6 +162,52 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(migration, /CREATE TABLE `ad_campaigns`/);
   assert.match(styles, /\.ads-admin/);
   assert.match(styles, /\.ads-live-preview/);
+});
+
+test("includes the region-filtered news ticker, management API and admin panel", async () => {
+  const [page, ticker, newsApi, runtimeDb, permissions, adminPage, adminClient, mysqlSchema, migration, styles, translations] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/NewsTicker.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/news/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/runtime-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/news/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/news/news-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../db/mysql/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle-mysql/0001_news_table.sql", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/data/translations.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /<NewsTicker copy=\{copy\} locale=\{locale\} country=\{country\} city=\{city\} \/>/);
+  assert.match(page, /adminNav/);
+  assert.match(page, /sidebar-admin-head/);
+  assert.match(page, /PERMISSIONS/);
+  assert.match(page, /مركز الشريط الإخباري/);
+  assert.match(page, /مركز الإعلانات/);
+  assert.match(ticker, /api\/news\?/);
+  assert.match(ticker, /ticker-marquee/);
+  assert.match(ticker, /animationDuration/);
+  assert.match(ticker, /tickerPause/);
+  assert.match(ticker, /tickerPlay/);
+  assert.match(ticker, /className="ticker-item"/);
+  assert.doesNotMatch(ticker, /ticker-link/);
+  assert.doesNotMatch(ticker, /_blank/);
+  assert.doesNotMatch(ticker, /isExternalLink/);
+  assert.doesNotMatch(ticker, /href=\{item\.linkUrl\}/);
+  assert.match(newsApi, /scope = 'global' OR \(scope = 'country' AND lower\(country_code\) = \?1\)/);
+  assert.match(newsApi, /scope = 'city'/);
+  assert.match(newsApi, /NEWS_PUBLISH/);
+  assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS news/);
+  assert.match(permissions, /NEWS_VIEW/);
+  assert.match(permissions, /NEWS_DELETE/);
+  assert.match(adminPage, /requireChatGPTUser\("\/admin\/news"\)/);
+  assert.match(adminClient, /scope === "global"/);
+  assert.match(adminClient, /PERMISSIONS.NEWS_PUBLISH/);
+  assert.match(mysqlSchema, /export const news = mysqlTable/);
+  assert.match(migration, /CREATE TABLE `news`/);
+  assert.match(styles, /ticker-scroll/);
+  assert.match(translations, /tickerPlay/);
 });
 
 test("includes the expanded admin dashboard, users, roles, reports and settings suite", async () => {
