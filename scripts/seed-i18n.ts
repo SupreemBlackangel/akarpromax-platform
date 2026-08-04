@@ -35,6 +35,26 @@ const SERVICES_KEYS: Array<{ key: string; value: Record<Locale, string> }> = [
   { key: "services.cancel", value: { ar: "إلغاء", en: "Cancel", tr: "İptal" } },
 ];
 
+const TOOLS_KEYS: Array<{ key: string; value: Record<Locale, string> }> = [
+  { key: "tools.pageTitle", value: { ar: "الأدوات الهندسية", en: "Engineering Tools", tr: "Mühendislik Araçları" } },
+  { key: "tools.pageSubtitle", value: { ar: "أدوات احترافية للمهندسين والمساحين", en: "Professional tools for engineers and surveyors", tr: "Mühendisler ve ölçüm uzmanları için profesyonel araçlar" } },
+  { key: "tools.land.title", value: { ar: "حدد أرضك", en: "Map My Land", tr: "Arazimi Belirle" } },
+  { key: "tools.land.subtitle", value: { ar: "ارفع صورة/PDF الصك واستخرج الإحداثيات", en: "Upload deed image/PDF and extract coordinates", tr: "Tapu görselini/PDF yükleyin ve koordinatları çıkarın" } },
+  { key: "tools.coords.title", value: { ar: "تحويل الإحداثيات", en: "Coordinate Converter", tr: "Koordinat Dönüştürücü" } },
+  { key: "tools.coords.subtitle", value: { ar: "تحويل بين DD و DMS و DDM و UTM", en: "Convert between DD / DMS / DDM / UTM", tr: "DD / DMS / DDM / UTM arası dönüşüm" } },
+  { key: "tools.area.title", value: { ar: "حساب المساحة", en: "Area Calculator", tr: "Alan Hesaplama" } },
+  { key: "tools.area.subtitle", value: { ar: "حساب مساحة المضلعات والمثلثات والدوائر", en: "Calculate area of polygons, triangles, circles", tr: "Çokgenler, üçgenler, daireler alanı hesaplama" } },
+  { key: "tools.pointsDxf.title", value: { ar: "نقاط ← DXF", en: "Points → DXF", tr: "Noktalar → DXF" } },
+  { key: "tools.pointsDxf.subtitle", value: { ar: "ارفع ملف TXT وحوله إلى DXF", en: "Upload TXT file and convert to DXF", tr: "TXT dosyası yükleyin ve DXF'e dönüştürün" } },
+  { key: "tools.pdfWord.title", value: { ar: "PDF ← Word", en: "PDF → Word", tr: "PDF → Word" } },
+  { key: "tools.pdfWord.subtitle", value: { ar: "ارفع PDF أو صورة واحصل على مستند Word", en: "Upload PDF or image and get Word document", tr: "PDF veya görsel yükleyin ve Word belgesi alın" } },
+  { key: "tools.calc.title", value: { ar: "الآلة الحاسبة", en: "Calculator", tr: "Hesap Makinesi" } },
+  { key: "tools.calc.subtitle", value: { ar: "آلة حاسبة علمية مع سجل وذاكرة", en: "Scientific calculator with history and memory", tr: "Geçmiş ve hafızalı bilimsel hesap makinesi" } },
+  { key: "tools.gate.loginRequired", value: { ar: "تسجيل الدخول مطلوب", en: "Login required", tr: "Giriş gerekli" } },
+  { key: "tools.gate.forbidden", value: { ar: "ليس لديك صلاحية", en: "Access denied", tr: "Erişim reddedildi" } },
+  { key: "tools.free", value: { ar: "مجاني", en: "Free", tr: "Ücretsiz" } },
+];
+
 async function main() {
   const entries: Array<{ key: string; locale: Locale; value: string }> = [];
 
@@ -47,6 +67,12 @@ async function main() {
   }
 
   for (const item of SERVICES_KEYS) {
+    for (const locale of LOCALES) {
+      entries.push({ key: item.key, locale, value: item.value[locale] });
+    }
+  }
+
+  for (const item of TOOLS_KEYS) {
     for (const locale of LOCALES) {
       entries.push({ key: item.key, locale, value: item.value[locale] });
     }

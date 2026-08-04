@@ -11,5 +11,5 @@ export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 // أدوار افتراضية أساسية فقط في هذه المرحلة (لا تخترع أدوارًا إضافية الآن)
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   super_admin: ["*"],
-  user: [PERMISSIONS.PROPERTIES_VIEW],
+  user: [PERMISSIONS.PROPERTIES_VIEW, "tools.use"],
 };

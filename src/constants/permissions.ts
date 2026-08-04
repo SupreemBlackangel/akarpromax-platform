@@ -53,6 +53,8 @@ export const PERMISSIONS = {
   SERVICES_REVIEW_MODERATE: "services.moderate_reviews",
   SERVICES_DISPUTE_RESOLVE: "services.resolve_disputes",
 
+  TOOLS_USE: "tools.use",
+
   I18N_VIEW: "i18n.view",
   I18N_EDIT: "i18n.edit",
   I18N_PUBLISH: "i18n.publish",
