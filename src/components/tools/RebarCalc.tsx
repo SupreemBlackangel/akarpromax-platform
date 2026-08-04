@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { calcRebar, type RebarInput } from "@/src/lib/tools/engineering";
 import { usePersistedState, useUrlShare } from "@/src/lib/tools/hooks";
+import { NumInput } from "./NumInput";
 
 type Props = { locale: string };
 
@@ -22,11 +23,7 @@ export function RebarCalc({ locale }: Props) {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
   }, [result, input]);
 
-  const loadExample = () => setInput({ barDiameter: 16, barLength: 12, count: 50 });
-  const set = (field: keyof RebarInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseFloat(e.target.value);
-    setInput({ ...input, [field]: isNaN(v) ? 0 : v });
-  };
+  const set = (field: keyof RebarInput) => (v: number) => setInput({ ...input, [field]: v });
 
   const t = (k: string) => {
     const m: Record<string, string> = {
@@ -51,24 +48,18 @@ export function RebarCalc({ locale }: Props) {
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t("title")}</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t("subtitle")} — <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">{t("formula")}</code></p>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <form className="grid grid-cols-3 gap-3 mb-4" onSubmit={(e) => e.preventDefault()}>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t("diameter")}</label>
-          <select value={input.barDiameter} onChange={(e) => setInput({ ...input, barDiameter: Number(e.target.value) })} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono">
+          <select value={input.barDiameter} onChange={(e) => setInput({ ...input, barDiameter: Number(e.target.value) })} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
             {BAR_SIZES.map((d) => <option key={d} value={d}>Ø{d}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t("length")}</label>
-          <input type="number" step="0.5" value={input.barLength || ""} onChange={set("barLength")} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t("count")}</label>
-          <input type="number" step="1" value={input.count || ""} onChange={set("count")} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-        </div>
-      </div>
+        <NumInput label={t("length")} step="0.5" value={input.barLength} onChange={set("barLength")} />
+        <NumInput label={t("count")} step="1" value={input.count} onChange={set("count")} />
+      </form>
 
-      <button onClick={loadExample} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
+      <button type="button" onClick={() => setInput({ barDiameter: 16, barLength: 12, count: 50 })} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
 
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
         <div className="grid grid-cols-3 gap-3 mb-3">
@@ -84,8 +75,8 @@ export function RebarCalc({ locale }: Props) {
           ))}
         </div>
         <div className="flex gap-2">
-          <button onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
-          <button onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
+          <button type="button" onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
+          <button type="button" onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
         </div>
       </div>
     </div>

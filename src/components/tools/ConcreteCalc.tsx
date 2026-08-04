@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { calcConcrete, type ConcreteInput } from "@/src/lib/tools/engineering";
 import { usePersistedState, useUrlShare } from "@/src/lib/tools/hooks";
+import { NumInput } from "./NumInput";
 
 type Props = { locale: string };
 
@@ -33,11 +34,7 @@ export function ConcreteCalc({ locale }: Props) {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "concrete-result.txt"; a.click();
   }, [result, input]);
 
-  const loadExample = () => setInput(EXAMPLE);
-  const set = (field: keyof ConcreteInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseFloat(e.target.value);
-    setInput({ ...input, [field]: isNaN(v) ? 0 : v });
-  };
+  const set = (field: keyof ConcreteInput) => (v: number) => setInput({ ...input, [field]: v });
 
   const labels = {
     title: locale === "ar" ? "حاسبة الخرسانة المسلحة" : "Reinforced Concrete Calculator",
@@ -61,23 +58,14 @@ export function ConcreteCalc({ locale }: Props) {
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{labels.title}</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{labels.subtitle}</p>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{labels.length}</label>
-          <input type="number" step="0.01" value={input.length || ""} onChange={set("length")} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{labels.width}</label>
-          <input type="number" step="0.01" value={input.width || ""} onChange={set("width")} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{labels.thickness}</label>
-          <input type="number" step="0.01" value={input.thickness || ""} onChange={set("thickness")} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-        </div>
-      </div>
+      <form className="grid grid-cols-3 gap-3 mb-4" onSubmit={(e) => e.preventDefault()}>
+        <NumInput label={labels.length} step="0.01" value={input.length} onChange={set("length")} />
+        <NumInput label={labels.width} step="0.01" value={input.width} onChange={set("width")} />
+        <NumInput label={labels.thickness} step="0.01" value={input.thickness} onChange={set("thickness")} />
+      </form>
 
       <div className="flex gap-2 mb-4">
-        <button onClick={loadExample} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">{labels.example}</button>
+        <button type="button" onClick={() => setInput(EXAMPLE)} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">{labels.example}</button>
       </div>
 
       {result && (
@@ -97,9 +85,9 @@ export function ConcreteCalc({ locale }: Props) {
             ))}
           </div>
           <div className="flex gap-2 pt-2">
-            <button onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : labels.copy}</button>
-            <button onClick={downloadTxt} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{labels.download}</button>
-            <button onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{labels.share}</button>
+            <button type="button" onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : labels.copy}</button>
+            <button type="button" onClick={downloadTxt} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{labels.download}</button>
+            <button type="button" onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{labels.share}</button>
           </div>
         </div>
       )}

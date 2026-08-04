@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { calcTile, type TileInput } from "@/src/lib/tools/engineering";
 import { usePersistedState, useUrlShare } from "@/src/lib/tools/hooks";
+import { NumInput } from "./NumInput";
 
 type Props = { locale: string };
 
@@ -24,11 +25,7 @@ export function TileCalc({ locale }: Props) {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
   }, [result]);
 
-  const loadExample = () => setInput({ roomLength: 4, roomWidth: 3, tileLength: 600, tileWidth: 600, wastePercent: 7 });
-  const set = (field: keyof TileInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseFloat(e.target.value);
-    setInput({ ...input, [field]: isNaN(v) ? 0 : v });
-  };
+  const set = (field: keyof TileInput) => (v: number) => setInput({ ...input, [field]: v });
 
   const t = (k: string) => {
     const m: Record<string, string> = {
@@ -55,16 +52,15 @@ export function TileCalc({ locale }: Props) {
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t("title")}</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t("subtitle")}</p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-        {([["roomLength", t("rl")], ["roomWidth", t("rw")], ["tileLength", t("tl")], ["tileWidth", t("tw")], ["wastePercent", t("waste")]] as const).map(([field, label]) => (
-          <div key={field}>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</label>
-            <input type="number" step="0.01" value={input[field] || ""} onChange={set(field)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-          </div>
-        ))}
-      </div>
+      <form className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4" onSubmit={(e) => e.preventDefault()}>
+        <NumInput label={t("rl")} step="0.01" value={input.roomLength} onChange={set("roomLength")} />
+        <NumInput label={t("rw")} step="0.01" value={input.roomWidth} onChange={set("roomWidth")} />
+        <NumInput label={t("tl")} step="1" value={input.tileLength} onChange={set("tileLength")} />
+        <NumInput label={t("tw")} step="1" value={input.tileWidth} onChange={set("tileWidth")} />
+        <NumInput label={t("waste")} step="1" value={input.wastePercent} onChange={set("wastePercent")} />
+      </form>
 
-      <button onClick={loadExample} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
+      <button type="button" onClick={() => setInput({ roomLength: 4, roomWidth: 3, tileLength: 600, tileWidth: 600, wastePercent: 7 })} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
 
       {result && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
@@ -82,8 +78,8 @@ export function TileCalc({ locale }: Props) {
             ))}
           </div>
           <div className="flex gap-2">
-            <button onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
-            <button onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
+            <button type="button" onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
+            <button type="button" onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
           </div>
         </div>
       )}

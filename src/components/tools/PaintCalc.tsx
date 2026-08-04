@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { calcPaint, type PaintInput } from "@/src/lib/tools/engineering";
 import { usePersistedState, useUrlShare } from "@/src/lib/tools/hooks";
+import { NumInput } from "./NumInput";
 
 type Props = { locale: string };
 
@@ -24,11 +25,7 @@ export function PaintCalc({ locale }: Props) {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
   }, [result]);
 
-  const loadExample = () => setInput({ wallArea: 45, ceilingArea: 15, coats: 2, coveragePerLiter: 10 });
-  const set = (field: keyof PaintInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseFloat(e.target.value);
-    setInput({ ...input, [field]: isNaN(v) ? 0 : v });
-  };
+  const set = (field: keyof PaintInput) => (v: number) => setInput({ ...input, [field]: v });
 
   const t = (k: string) => {
     const m: Record<string, string> = {
@@ -53,16 +50,14 @@ export function PaintCalc({ locale }: Props) {
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t("title")}</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t("subtitle")}</p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        {([["wallArea", t("wallArea")], ["ceilingArea", t("ceilingArea")], ["coats", t("coats")], ["coveragePerLiter", t("coverage")]] as const).map(([field, label]) => (
-          <div key={field}>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</label>
-            <input type="number" step="0.01" value={input[field] || ""} onChange={set(field)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-          </div>
-        ))}
-      </div>
+      <form className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4" onSubmit={(e) => e.preventDefault()}>
+        <NumInput label={t("wallArea")} step="0.01" value={input.wallArea} onChange={set("wallArea")} />
+        <NumInput label={t("ceilingArea")} step="0.01" value={input.ceilingArea} onChange={set("ceilingArea")} />
+        <NumInput label={t("coats")} step="1" value={input.coats} onChange={set("coats")} />
+        <NumInput label={t("coverage")} step="0.1" value={input.coveragePerLiter} onChange={set("coveragePerLiter")} />
+      </form>
 
-      <button onClick={loadExample} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
+      <button type="button" onClick={() => setInput({ wallArea: 45, ceilingArea: 15, coats: 2, coveragePerLiter: 10 })} className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mb-4">{t("example")}</button>
 
       {result && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
@@ -79,8 +74,8 @@ export function PaintCalc({ locale }: Props) {
             ))}
           </div>
           <div className="flex gap-2">
-            <button onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
-            <button onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
+            <button type="button" onClick={copyResult} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{copied ? "✓" : t("copy")}</button>
+            <button type="button" onClick={share} className="px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors">{t("share")}</button>
           </div>
         </div>
       )}
