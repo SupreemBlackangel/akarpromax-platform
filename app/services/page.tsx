@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { translations } from "@/src/data/translations";
-import type { Locale } from "@/src/types/site";
+import type { Locale, ViewerContext } from "@/src/types/site";
+import PublicPageShell from "@/src/components/PublicPageShell";
 
 type Listing = {
   id: string;
@@ -55,6 +56,9 @@ export default function ServicesPage() {
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [viewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+  const [country] = useState("om");
+  const [city] = useState("om-muscat");
 
   const t = useCallback(
     (key: string): string => {
@@ -151,29 +155,16 @@ export default function ServicesPage() {
   }
 
   return (
-    <div dir={direction} className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("services.marketplaceTitle")}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.marketplaceSubtitle")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={locale}
-            onChange={(event) => setLocale(event.target.value as Locale)}
-            className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-          >
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
-            <option value="tr">Türkçe</option>
-          </select>
-          <Link href="/" className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
-            {t("home.brandTitle")}
-          </Link>
-        </div>
-      </header>
-
-      <main className="p-6 max-w-6xl mx-auto">
+    <PublicPageShell
+      locale={locale}
+      copy={translations[locale]}
+      viewer={viewer}
+      country={country}
+      city={city}
+      onLogin={() => {}}
+      onLogout={() => {}}
+    >
+      <div dir={direction} className="p-6 max-w-6xl mx-auto">
         {message && <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">{message}</div>}
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -313,7 +304,7 @@ export default function ServicesPage() {
             )}
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </PublicPageShell>
   );
 }

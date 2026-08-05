@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { translations } from "@/src/data/translations";
-import type { Locale } from "@/src/types/site";
+import type { Locale, ViewerContext } from "@/src/types/site";
+import PublicPageShell from "@/src/components/PublicPageShell";
 import { ToolsGate } from "@/src/components/tools/ToolsGate";
 import { ConcreteCalc } from "@/src/components/tools/ConcreteCalc";
 import { BeamCalc } from "@/src/components/tools/BeamCalc";
@@ -30,6 +31,9 @@ const TOOLS: Array<{ id: ToolId; icon: string; ar: string; en: string; tr: strin
 export function ToolsPageClient() {
   const [locale, setLocale] = useState<Locale>("ar");
   const [activeTool, setActiveTool] = useState<ToolId>("concrete");
+  const [viewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+  const [country] = useState("om");
+  const [city] = useState("om-muscat");
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   const t = (key: string): string => {
@@ -40,25 +44,16 @@ export function ToolsPageClient() {
   const toolLabel = (tool: typeof TOOLS[0]) => locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
 
   return (
-    <div dir={dir} className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">🛠️ {locale === "ar" ? "الأدوات الهندسية" : "Engineering Tools"}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{locale === "ar" ? "أدوات احترافية للمهندسين والمقاولين" : "Professional tools for engineers & contractors"}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)} className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
-            <option value="tr">Türkçe</option>
-          </select>
-          <Link href="/" className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
-            {t("home.brandTitle")}
-          </Link>
-        </div>
-      </header>
-
-      <main className="p-6 max-w-6xl mx-auto">
+    <PublicPageShell
+      locale={locale}
+      copy={translations[locale]}
+      viewer={viewer}
+      country={country}
+      city={city}
+      onLogin={() => {}}
+      onLogout={() => {}}
+    >
+      <div dir={dir} className="p-6 max-w-6xl mx-auto">
         <ToolsGate locale={locale}>
           {/* Card Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
@@ -92,7 +87,7 @@ export function ToolsPageClient() {
             {activeTool === "mix" && <MixRatioCalc locale={locale} />}
           </div>
         </ToolsGate>
-      </main>
-    </div>
+      </div>
+    </PublicPageShell>
   );
 }

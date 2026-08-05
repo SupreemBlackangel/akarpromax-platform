@@ -95,57 +95,41 @@
       "id": "ARCH-LEGACY-012",
       "rule": "ARCH-008",
       "path": "app/page.tsx",
-      "reason": "Page not using PublicPageShell",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
-    },
-    {
-      "id": "ARCH-LEGACY-013",
-      "rule": "ARCH-008",
-      "path": "app/services/page.tsx",
-      "reason": "Page not using PublicPageShell",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
-    },
-    {
-      "id": "ARCH-LEGACY-014",
-      "rule": "ARCH-008",
-      "path": "app/properties/[id]/page.tsx",
-      "reason": "Page not using PublicPageShell",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
+      "reason": "Page not using PublicPageShell (complex header with state management)",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
     },
     {
       "id": "ARCH-LEGACY-015",
       "rule": "ARCH-009",
       "path": "app/page.tsx",
-      "reason": "Hardcoded ad images",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
+      "reason": "Hardcoded ad images (hero fallback slides)",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
     },
     {
       "id": "ARCH-LEGACY-016",
       "rule": "ARCH-009",
       "path": "app/properties/[id]/page.tsx",
-      "reason": "Hardcoded ad images",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
+      "reason": "Hardcoded ad images (property image fallback)",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
     },
     {
       "id": "ARCH-LEGACY-017",
       "rule": "ARCH-005",
       "path": "app/page.tsx",
-      "reason": "Page imports admin navigation components",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
+      "reason": "Page imports admin navigation components (sidebar with admin links)",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
     },
     {
       "id": "ARCH-LEGACY-018",
       "rule": "ARCH-009",
       "path": "app/admin/sponsors/banner/page.tsx",
       "reason": "Hardcoded ad banner without AdSlot",
-      "targetPhase": "Phase 2",
-      "expiresAfterPhase": 2
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
     },
     {
       "id": "ARCH-LEGACY-019",

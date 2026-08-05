@@ -3,7 +3,10 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import AdSlot from "@/src/components/AdSlot";
+import PublicPageShell from "@/src/components/PublicPageShell";
+import { translations } from "@/src/data/translations";
 import { detectCountry, detectCity, selectedCountryOf, selectedCityOf } from "@/src/data/locations";
+import type { ViewerContext } from "@/src/types/site";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -60,6 +63,7 @@ export default function PropertyDemoPage({ params }: Props) {
   const [country, setCountry] = useState("om");
   const [city, setCity] = useState("om-muscat");
   const [deviceType, setDeviceType] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [viewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
 
   useEffect(() => {
     void (async () => {
@@ -78,17 +82,16 @@ export default function PropertyDemoPage({ params }: Props) {
   const imageUrl = `/og.png`;
 
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]" dir={locale === "ar" ? "rtl" : "ltr"}>
-      <header className="border-b border-[var(--line)] bg-white">
-        <div className="container flex h-[64px] items-center justify-between">
-          <Link href="/" className="brand"><span className="brand-mark">A</span><span className="brand-copy"><strong>AkarPromax</strong><small>REAL ESTATE</small></span></Link>
-          <div className="flex items-center gap-3 text-xs font-extrabold text-[var(--blue)]">
-            <span className="flex h-9 items-center gap-1 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-3"><span aria-hidden="true">⌖</span>{cityMeta.names[locale]}</span>
-            <button type="button" className="flex h-9 items-center gap-1 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-3" onClick={() => { const next: Locale = locale === "ar" ? "en" : locale === "en" ? "tr" : "ar"; setLocale(next); window.localStorage.setItem("akarpromax-locale", next); }}>{locale.toUpperCase()}</button>
-          </div>
-        </div>
-      </header>
-
+    <PublicPageShell
+      locale={locale}
+      copy={translations[locale]}
+      viewer={viewer}
+      country={country}
+      city={city}
+      deviceType={deviceType}
+      onLogin={() => {}}
+      onLogout={() => {}}
+    >
       <div className="container grid grid-cols-1 gap-8 py-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
           <Link href="/" className="text-xs font-bold text-[var(--blue)]">← {t.back}</Link>
@@ -163,10 +166,6 @@ export default function PropertyDemoPage({ params }: Props) {
           </div>
         </div>
       </section>
-
-      <footer className="border-t border-[var(--line)] py-6">
-        <p className="container text-center text-[11px] font-bold text-[var(--muted)]">AkarPromax © 2026 — Demo property #{id}</p>
-      </footer>
-    </main>
+    </PublicPageShell>
   );
 }
