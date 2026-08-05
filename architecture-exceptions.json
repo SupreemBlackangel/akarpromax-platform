@@ -1,0 +1,191 @@
+{
+  "version": "1.0",
+  "generated": "2026-08-05",
+  "description": "Architecture exceptions for legacy code. Each exception must have a clear target phase for removal.",
+  "exceptions": [
+    {
+      "id": "ARCH-LEGACY-001",
+      "rule": "ARCH-012",
+      "path": "app/chatgpt-auth.ts",
+      "reason": "Localhost auto-admin fallback for development",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-002",
+      "rule": "ARCH-012",
+      "path": "lib/mysql-runtime.ts",
+      "reason": "Hardcoded admin email in seed function",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-003",
+      "rule": "ARCH-012",
+      "path": "scripts/seed-services.ts",
+      "reason": "Hardcoded admin email in seed script",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-004",
+      "rule": "ARCH-011",
+      "path": "app/chatgpt-auth.ts",
+      "reason": "ChatGPT header-based identity system",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-005",
+      "rule": "ARCH-013",
+      "path": "lib/mysql-runtime.ts",
+      "reason": "MySQL runtime data layer",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-006",
+      "rule": "ARCH-013",
+      "path": "lib/mysql-db.ts",
+      "reason": "MySQL database connection",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-007",
+      "rule": "ARCH-013",
+      "path": "db/mysql",
+      "reason": "MySQL schema definitions",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-008",
+      "rule": "ARCH-013",
+      "path": "lib/runtime-db.ts",
+      "reason": "D1/SQLite runtime content layer",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-009",
+      "rule": "ARCH-013",
+      "path": "db/index.ts",
+      "reason": "D1 database binding import",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-010",
+      "rule": "ARCH-004",
+      "path": "lib/sponsor-auth.ts",
+      "reason": "Cross-module DB access to sponsor_access",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-011",
+      "rule": "ARCH-004",
+      "path": "app/api/sponsor-access/route.ts",
+      "reason": "Cross-module DB access to sponsor_access",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-012",
+      "rule": "ARCH-008",
+      "path": "app/page.tsx",
+      "reason": "Page not using PublicPageShell",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-013",
+      "rule": "ARCH-008",
+      "path": "app/services/page.tsx",
+      "reason": "Page not using PublicPageShell",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-014",
+      "rule": "ARCH-008",
+      "path": "app/properties/[id]/page.tsx",
+      "reason": "Page not using PublicPageShell",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-015",
+      "rule": "ARCH-009",
+      "path": "app/page.tsx",
+      "reason": "Hardcoded ad images",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-016",
+      "rule": "ARCH-009",
+      "path": "app/properties/[id]/page.tsx",
+      "reason": "Hardcoded ad images",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-017",
+      "rule": "ARCH-005",
+      "path": "app/page.tsx",
+      "reason": "Page imports admin navigation components",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-018",
+      "rule": "ARCH-009",
+      "path": "app/admin/sponsors/banner/page.tsx",
+      "reason": "Hardcoded ad banner without AdSlot",
+      "targetPhase": "Phase 2",
+      "expiresAfterPhase": 2
+    },
+    {
+      "id": "ARCH-LEGACY-019",
+      "rule": "ARCH-010",
+      "path": "src/components/AccountDialog.tsx",
+      "reason": "localStorage token usage (legacy auth system)",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-020",
+      "rule": "ARCH-022",
+      "path": "app/api/services",
+      "reason": "Services API routes use lib/services internal imports",
+      "targetPhase": "Phase 4",
+      "expiresAfterPhase": 4
+    },
+    {
+      "id": "ARCH-LEGACY-021",
+      "rule": "ARCH-022",
+      "path": "lib/mysql-runtime.ts",
+      "reason": "MySQL runtime imports services-schema",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-022",
+      "rule": "ARCH-022",
+      "path": "lib/runtime-db.ts",
+      "reason": "D1 runtime imports services-schema",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "ARCH-LEGACY-023",
+      "rule": "ARCH-022",
+      "path": "lib/services",
+      "reason": "Services module internal imports (not yet modularized)",
+      "targetPhase": "Phase 4",
+      "expiresAfterPhase": 4
+    }
+  ]
+}
