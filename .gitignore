@@ -49,3 +49,6 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local backup (refactor protection)
+.local-backup/
