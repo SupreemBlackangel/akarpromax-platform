@@ -6,6 +6,8 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
 import { apiFetch, nameFor } from "@services-client";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
 
 type Props = { code: string };
 
@@ -55,7 +57,7 @@ export default function CategoryDetailPage({ code }: Props) {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8">
+      <PageContainer dir={dir} className="py-8">
         <div className="mb-6">
           <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "دليل الخدمات"}</Link>
           <div className="mt-3 flex items-center gap-4">
@@ -82,24 +84,24 @@ export default function CategoryDetailPage({ code }: Props) {
 
         <section>
           <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.providers") ?? "مقدمو الخدمات"}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Grid columns={3}>
             {providers.map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
             {!loading && providers.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty")}</p>
             )}
-          </div>
+          </Grid>
         </section>
 
         <section className="mt-10">
           <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.requests") ?? "الطلبات المنشورة"}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Grid columns={3}>
             {requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
             {!loading && requests.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty")}</p>
             )}
-          </div>
+          </Grid>
         </section>
-      </div>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

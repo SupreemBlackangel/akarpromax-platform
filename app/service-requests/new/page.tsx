@@ -5,6 +5,10 @@ import Link from "next/link";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { apiFetch } from "@services-client";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
+import Button from "@/src/components/ui/Button";
+import AdFrame from "@/src/components/ui/AdFrame";
 import type { CategoryRow } from "@services-ui/ServiceCards";
 import AdSlot from "@/src/components/AdSlot";
 
@@ -70,19 +74,15 @@ export default function NewServiceRequestPage() {
         onLogin={() => openLogin("login")}
         onLogout={handleLogout}
       >
-        <div dir={dir} className="container py-24 max-w-md text-center">
+        <PageContainer dir={dir} className="py-24 max-w-md text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToPost") ?? "سجّل الدخول لنشر طلب"}</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("services.loginToPostSub") ?? "أنشئ حساباً أو سجّل دخولك لتتمكن من نشر طلبات الخدمات واستقبال العروض."}</p>
           <div className="mt-6 flex justify-center gap-3">
-            <button onClick={() => openLogin("login")} className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
-              {t("services.login") ?? "تسجيل الدخول"}
-            </button>
-            <button onClick={() => openLogin("register")} className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition">
-              {t("services.register") ?? "إنشاء حساب"}
-            </button>
+            <Button variant="primary" onClick={() => openLogin("login")}>{t("services.login") ?? "تسجيل الدخول"}</Button>
+            <Button variant="secondary" onClick={() => openLogin("register")}>{t("services.register") ?? "إنشاء حساب"}</Button>
           </div>
-        </div>
+        </PageContainer>
         {AccountDialog}
       </PublicPageShell>
     );
@@ -165,7 +165,7 @@ export default function NewServiceRequestPage() {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8 max-w-3xl">
+      <PageContainer dir={dir} className="py-8">
         <Link href="/services" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
         <h1 className="mt-3 text-3xl font-black text-gray-900 dark:text-white">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.wizardSub") ?? "املأ التفاصيل وسيتولى سوق الخدمات العثور على مقدمي الخدمات المناسبين."}</p>
@@ -173,7 +173,7 @@ export default function NewServiceRequestPage() {
         {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
         <div className="mt-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 space-y-5">
-          <div className="grid sm:grid-cols-2 gap-4">
+          <Grid columns={2}>
             <div className="sm:col-span-2">
               <label className={labelCls}>{t("services.category") ?? "التصنيف"} *</label>
               <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputCls}>
@@ -232,12 +232,12 @@ export default function NewServiceRequestPage() {
               <input type="checkbox" checked={needsVisit} onChange={(e) => setNeedsVisit(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
               {t("services.needsVisit") ?? "يتطلب معاينة الموقع"}
             </label>
-          </div>
+          </Grid>
 
           {dynamicFields.length > 0 && (
             <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
               <h2 className="text-sm font-black text-gray-900 dark:text-white mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <Grid columns={2}>
                 {dynamicFields.map((field) => {
                   const label = field.label ?? field.label_ar ?? field.label_en ?? field.key;
                   const type = field.type ?? "text";
@@ -266,7 +266,7 @@ export default function NewServiceRequestPage() {
                     </div>
                   );
                 })}
-              </div>
+              </Grid>
             </div>
           )}
 
@@ -295,17 +295,20 @@ export default function NewServiceRequestPage() {
             {t("services.publishNow") ?? "نشر الطلب فوراً (سيتم عرضه لمقدمي الخدمات)"}
           </label>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => void submit()}
+            loading={submitting}
             disabled={submitting}
-            className="w-full px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-black transition"
           >
             {submitting ? t("services.submitting") ?? "جارٍ الإرسال..." : publishNow ? t("services.publish") ?? "نشر الطلب" : t("services.saveDraft") ?? "حفظ كمسودة"}
-          </button>
+          </Button>
         </div>
 
-        <AdSlot placement="request_wizard_bottom" locale={locale} country={country} city={city} path="/service-requests/new" entityType="services" variant="horizontal" className="mt-6" />
-      </div>
+        <AdFrame label={copy?.adLabel ?? (locale === "ar" ? "إعلان" : locale === "tr" ? "Reklam" : "Advertisement")} variant="horizontal" className="mt-6">
+          <AdSlot placement="request_wizard_bottom" locale={locale} country={country} city={city} path="/service-requests/new" entityType="services" variant="horizontal" />
+        </AdFrame>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

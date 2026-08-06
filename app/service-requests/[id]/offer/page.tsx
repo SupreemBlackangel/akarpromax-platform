@@ -7,6 +7,9 @@ import { useServicesPage } from "@services-ui/useServicesPage";
 import { type RequestRow } from "@services-ui/ServiceCards";
 import { RequestStatusPill } from "@services-ui/ServiceStatusBadges";
 import { apiFetch, formatMoney, nameFor } from "@services-client";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
+import Button from "@/src/components/ui/Button";
 
 type Props = { id: string };
 
@@ -46,14 +49,14 @@ export default function NewOfferPage({ id }: Props) {
   if (!viewer.authenticated) {
     return (
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
-        <div dir={dir} className="container py-24 max-w-md text-center">
+        <PageContainer dir={dir} className="py-24 max-w-md text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
           <div className="mt-6 flex justify-center gap-3">
-            <button onClick={() => openLogin("login")} className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">{t("services.login") ?? "تسجيل الدخول"}</button>
-            <button onClick={() => openLogin("register")} className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition">{t("services.register") ?? "إنشاء حساب"}</button>
+            <Button variant="primary" onClick={() => openLogin("login")}>{t("services.login") ?? "تسجيل الدخول"}</Button>
+            <Button variant="secondary" onClick={() => openLogin("register")}>{t("services.register") ?? "إنشاء حساب"}</Button>
           </div>
-        </div>
+        </PageContainer>
         {AccountDialog}
       </PublicPageShell>
     );
@@ -107,7 +110,7 @@ export default function NewOfferPage({ id }: Props) {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8 max-w-3xl">
+      <PageContainer dir={dir} className="py-8">
         <Link href={`/service-requests/${id}`} className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للطلب"}</Link>
         <h1 className="mt-3 text-3xl font-black text-gray-900 dark:text-white">{t("services.makeOffer") ?? "تقديم عرض"}</h1>
 
@@ -137,7 +140,7 @@ export default function NewOfferPage({ id }: Props) {
             {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
             <div className="mt-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 space-y-5">
-              <div className="grid sm:grid-cols-2 gap-4">
+              <Grid columns={2}>
                 <div>
                   <label className={labelCls}>{t("services.offerPrice") ?? "السعر (ر.ع)"} *</label>
                   <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} />
@@ -189,19 +192,20 @@ export default function NewOfferPage({ id }: Props) {
                   <label className={labelCls}>{t("services.terms") ?? "الشروط والأحكام"}</label>
                   <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={3} className={inputCls} />
                 </div>
-              </div>
+              </Grid>
 
-              <button
+              <Button
+                variant="primary"
                 onClick={() => void submit()}
+                loading={submitting}
                 disabled={submitting}
-                className="w-full px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-black transition"
               >
                 {submitting ? t("services.submitting") ?? "جارٍ الإرسال..." : t("services.submitOffer") ?? "إرسال العرض"}
-              </button>
+              </Button>
             </div>
           </>
         )}
-      </div>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

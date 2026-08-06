@@ -6,6 +6,8 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { RequestCard, type CategoryRow, type RequestRow } from "@services-ui/ServiceCards";
 import { apiFetch } from "@services-client";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
 
 export default function ServiceRequestsListPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -45,7 +47,7 @@ export default function ServiceRequestsListPage() {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8">
+      <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-gray-900 dark:text-white">{t("services.requests") ?? "طلبات الخدمات"}</h1>
@@ -73,15 +75,15 @@ export default function ServiceRequestsListPage() {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Grid columns={3}>
           {loading
             ? Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
             : filtered.map((request) => <RequestCard key={request.id} request={request} locale={locale} categoryMap={categoryMap} />)}
           {!loading && filtered.length === 0 && (
             <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-16">{t("services.empty")}</p>
           )}
-        </div>
-      </div>
+        </Grid>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

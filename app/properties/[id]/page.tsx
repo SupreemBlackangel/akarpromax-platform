@@ -9,6 +9,9 @@ import { translations } from "@/src/data/translations";
 import { detectCountry, detectCity, selectedCountryOf } from "@/src/data/locations";
 import type { ViewerContext } from "@/src/types/site";
 import type { PublicProperty } from "@/lib/properties-format";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Button from "@/src/components/ui/Button";
+import AdFrame from "@/src/components/ui/AdFrame";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -107,97 +110,113 @@ export default function PropertyPage({ params }: Props) {
       onLogout={() => {}}
     >
       {loading && (
-        <div className="container grid min-h-[60vh] place-items-center py-8">
-          <p className="text-xs font-bold text-[var(--muted)]">{t.loading}</p>
-        </div>
+        <PageContainer className="grid min-h-[60vh] place-items-center py-8">
+          <p className="text-xs font-bold text-[color:var(--color-text-muted)]">{t.loading}</p>
+        </PageContainer>
       )}
 
       {!loading && !property && (
-        <div className="container grid min-h-[60vh] place-items-center py-8">
+        <PageContainer className="grid min-h-[60vh] place-items-center py-8">
           <div className="text-center max-w-sm">
             <div className="text-5xl mb-4 opacity-40">🏚️</div>
-            <h1 className="text-xl font-black text-[var(--ink)] mb-2">{t.notFoundTitle}</h1>
-            <p className="text-sm font-bold text-[var(--muted)] mb-5">{t.notFoundDesc}</p>
-            <Link href="/" className="inline-block rounded-lg bg-[var(--blue)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
+            <h1 className="text-xl font-black text-[color:var(--color-text-primary)] mb-2">{t.notFoundTitle}</h1>
+            <p className="text-sm font-bold text-[color:var(--color-text-muted)] mb-5">{t.notFoundDesc}</p>
+            <Link href="/" className="inline-block rounded-lg bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
           </div>
-        </div>
+        </PageContainer>
       )}
 
       {!loading && property && (
         <>
-        <div className="container grid grid-cols-1 gap-8 py-8 lg:grid-cols-3">
+         <PageContainer className="py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <Link href="/" className="text-xs font-bold text-[var(--blue)]">← {t.back}</Link>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-sm">
-            <div className="relative aspect-[16/9] bg-[var(--sky)]">
+          <Link href="/" className="text-xs font-bold text-[color:var(--color-primary)]">← {t.back}</Link>
+          <div className="mt-4 overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-white shadow-sm">
+            <div className="relative aspect-[16/9] bg-[color:var(--color-surface-soft)]">
               <img src={imageUrl} alt={property.title[locale]} className="h-full w-full object-cover" decoding="async" />
-              {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[var(--gold)] px-3 py-1 text-[10px] font-black text-[var(--ink)]">{t.badge}</span>}
+              {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[color:var(--color-accent)] px-3 py-1 text-[10px] font-black text-[color:var(--color-text-primary)]">{t.badge}</span>}
             </div>
           </div>
 
-          <AdSlot placement="property_after_gallery" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" className="mt-5" />
+          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
+            <AdSlot placement="property_after_gallery" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
+          </AdFrame>
 
-          <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.details}</p>
+          <div className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.details}</p>
             <h1 className="mt-1 text-2xl font-black">{property.title[locale]}</h1>
-            <p className="mt-1 text-xs font-bold text-[var(--muted)]">⌖ {property.area[locale] ?? property.title[locale]} — {countryMeta.names[locale]}</p>
+            <p className="mt-1 text-xs font-bold text-[color:var(--color-text-muted)]">⌖ {property.area[locale] ?? property.title[locale]} — {countryMeta.names[locale]}</p>
             <div className="mt-4 flex items-end gap-2">
-              <strong className="text-3xl font-black text-[var(--blue)]">{localePrice}</strong>
-              <span className="mb-1 text-sm font-extrabold text-[var(--muted)]">{property.currency}</span>
+              <strong className="text-3xl font-black text-[color:var(--color-primary)]">{localePrice}</strong>
+              <span className="mb-1 text-sm font-extrabold text-[color:var(--color-text-muted)]">{property.currency}</span>
             </div>
-            <span className="mt-1 inline-block text-[10px] font-bold text-[var(--muted)]">{t.priceLabel}</span>
+            <span className="mt-1 inline-block text-[10px] font-bold text-[color:var(--color-text-muted)]">{t.priceLabel}</span>
           </div>
 
-          <AdSlot placement="property_below_price" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" className="mt-5" />
+          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
+            <AdSlot placement="property_below_price" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
+          </AdFrame>
 
-          <section className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.descriptionLabel}</p>
-            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{property.description[locale]}</p>
+          <section className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.descriptionLabel}</p>
+            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">{property.description[locale]}</p>
           </section>
 
-          <AdSlot placement="property_after_description" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" className="mt-5" />
+          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
+            <AdSlot placement="property_after_description" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
+          </AdFrame>
 
-          <section className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.featuresLabel}</p>
+          <section className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.featuresLabel}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {property.features[locale].map((feature) => <span key={feature} className="rounded-xl border border-[var(--line)] bg-[var(--sky)] px-3 py-2 text-center text-[11px] font-bold text-[var(--ink)]">{feature}</span>)}
+              {property.features[locale].map((feature) => <span key={feature} className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-soft)] px-3 py-2 text-center text-[11px] font-bold text-[color:var(--color-text-primary)]">{feature}</span>)}
             </div>
           </section>
 
-          <section className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.mapLabel}</p>
-            <div className="mt-3 grid h-48 place-items-center rounded-xl border border-dashed border-[var(--line)] bg-[var(--paper)] text-xs font-bold text-[var(--muted)]">{property.area[locale] ?? property.title[locale]}</div>
+          <section className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.mapLabel}</p>
+            <div className="mt-3 grid h-48 place-items-center rounded-xl border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-background)] text-xs font-bold text-[color:var(--color-text-muted)]">{property.area[locale] ?? property.title[locale]}</div>
           </section>
 
-          <AdSlot placement="property_before_similar" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" className="mt-5" />
+          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
+            <AdSlot placement="property_before_similar" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
+          </AdFrame>
         </section>
 
         <aside className="flex flex-col gap-5">
-          <div className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.ask}</p>
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.ask}</p>
             <div className="mt-3 flex flex-col gap-2">
-              <input className="h-10 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-3 text-xs font-bold outline-none focus:border-[#9ec2ff]" placeholder="name@example.com" aria-label="Email" />
-              <button type="button" className="h-10 rounded-lg bg-[var(--blue)] text-xs font-black text-white">{t.ask}</button>
+              <input className="h-10 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-background)] px-3 text-xs font-bold outline-none focus:border-[color:var(--color-border-focus)]" placeholder="name@example.com" aria-label="Email" />
+              <Button type="button" size="sm">{t.ask}</Button>
             </div>
           </div>
-          <AdSlot placement="property_sidebar_top" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
-          <AdSlot placement="property_sidebar_middle" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
-          <AdSlot placement="property_sidebar_bottom" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
+          <AdFrame label={translations[locale].adLabel} variant="vertical">
+            <AdSlot placement="property_sidebar_top" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
+          </AdFrame>
+          <AdFrame label={translations[locale].adLabel} variant="vertical">
+            <AdSlot placement="property_sidebar_middle" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
+          </AdFrame>
+          <AdFrame label={translations[locale].adLabel} variant="vertical">
+            <AdSlot placement="property_sidebar_bottom" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
+          </AdFrame>
         </aside>
       </div>
+      </PageContainer>
 
-      <section className="border-t border-[var(--line)] bg-white">
-        <div className="container py-8">
-          <p className="text-[10px] font-black uppercase tracking-wider text-[var(--blue)]">{t.similarLabel}</p>
+      <section className="border-t border-[color:var(--color-border)] bg-white">
+        <PageContainer className="py-8">
+          <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.similarLabel}</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {similar.map((item) => (
-              <Link key={item.id} href={`/properties/${item.slug || item.id}`} className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-sm">
-                <div className="h-36 bg-[var(--sky)]" style={{ backgroundImage: `url(${item.imageUrl || "/og.png"})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-                <div className="p-4"><strong className="text-sm font-black">{item.title[locale]}</strong><p className="mt-1 text-xs font-bold text-[var(--muted)]">{item.area[locale] ?? item.title[locale]}</p></div>
+              <Link key={item.id} href={`/properties/${item.slug || item.id}`} className="overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-white shadow-sm">
+                <div className="h-36 bg-[color:var(--color-surface-soft)]" style={{ backgroundImage: `url(${item.imageUrl || "/og.png"})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+                <div className="p-4"><strong className="text-sm font-black">{item.title[locale]}</strong><p className="mt-1 text-xs font-bold text-[color:var(--color-text-muted)]">{item.area[locale] ?? item.title[locale]}</p></div>
               </Link>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
       </>
       )}

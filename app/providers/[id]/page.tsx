@@ -8,6 +8,9 @@ import Avatar from "@services-ui/Avatar";
 import { RatingStars } from "@services-ui/ServiceCards";
 import { apiFetch, formatDate, nameFor } from "@services-client";
 import type { ProviderRow } from "@services-ui/ServiceCards";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
+import Button from "@/src/components/ui/Button";
 
 type ReviewRow = Record<string, unknown> & {
   id: string;
@@ -57,7 +60,7 @@ export default function ProviderProfilePage({ id }: Props) {
   if (loading) {
     return (
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
-        <div dir={dir} className="container py-8"><div className="h-72 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" /></div>
+        <PageContainer className="py-8" dir={dir}><div className="h-72 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" /></PageContainer>
       </PublicPageShell>
     );
   }
@@ -65,7 +68,7 @@ export default function ProviderProfilePage({ id }: Props) {
   if (!profile) {
     return (
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
-        <div dir={dir} className="container py-24 text-center text-gray-500 dark:text-gray-400">{error || t("services.empty")}</div>
+        <PageContainer className="py-24 text-center text-gray-500 dark:text-gray-400" dir={dir}>{error || t("services.empty")}</PageContainer>
       </PublicPageShell>
     );
   }
@@ -91,7 +94,7 @@ export default function ProviderProfilePage({ id }: Props) {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8">
+      <PageContainer className="py-8" dir={dir}>
         <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "دليل الخدمات"}</Link>
 
         <div className="mt-4 relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
@@ -115,12 +118,9 @@ export default function ProviderProfilePage({ id }: Props) {
                   <RatingStars value={profile.rating_avg} count={profile.rating_count} locale={locale} />
                 </div>
               </div>
-              <button
-                onClick={requestOffer}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition"
-              >
+              <Button onClick={requestOffer}>
                 {t("services.requestService") ?? "اطلب خدمة"}
-              </button>
+              </Button>
             </div>
             <div className="mt-5 flex flex-wrap gap-3 text-sm">
               <span className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">{profile.jobs_completed ?? 0} {t("services.jobsDone") ?? "أعمال منجزة"}</span>
@@ -156,7 +156,7 @@ export default function ProviderProfilePage({ id }: Props) {
         {portfolio.length > 0 && (
           <section className="mt-8">
             <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.portfolio") ?? "أعمال سابقة"}</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Grid columns={3}>
               {portfolio.map((item) => {
                 const p = item as Record<string, unknown>;
                 return (
@@ -172,7 +172,7 @@ export default function ProviderProfilePage({ id }: Props) {
                   </div>
                 );
               })}
-            </div>
+            </Grid>
           </section>
         )}
 
@@ -200,7 +200,7 @@ export default function ProviderProfilePage({ id }: Props) {
             </div>
           )}
         </section>
-      </div>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

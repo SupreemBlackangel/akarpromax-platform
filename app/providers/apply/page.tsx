@@ -3,6 +3,8 @@
 import Link from "next/link";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Button from "@/src/components/ui/Button";
 
 export default function ProviderApplyPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -25,7 +27,7 @@ export default function ProviderApplyPage() {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-12 max-w-2xl">
+      <PageContainer className="py-12" size="narrow" dir={dir}>
         <Link href="/services" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
         <div className="mt-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-8 md:p-10 text-center">
           <div className="text-5xl mb-4">👨‍🔧</div>
@@ -39,12 +41,12 @@ export default function ProviderApplyPage() {
             <li className="flex items-center gap-2"><span>✅</span> تقييمات وثقة من العملاء</li>
             <li className="flex items-center gap-2"><span>✅</span> بدون رسوم اشتراك</li>
           </ul>
-          <button onClick={start} className="mt-8 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black shadow-lg shadow-blue-600/20 transition">
+          <Button onClick={start} className="mt-8">
             {t("services.startApplication") ?? "ابدأ الآن"}
-          </button>
+          </Button>
           {!viewer.authenticated && <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t("services.loginToOffer") ?? "سجّل دخولك أو أنشئ حساباً للاستمرار."}</p>}
         </div>
-      </div>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );

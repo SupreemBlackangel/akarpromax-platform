@@ -6,6 +6,7 @@ import type { Locale, ViewerContext } from "@/src/types/site";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import AccountDialog from "@/src/components/AccountDialog";
 import AdSlot from "@/src/components/AdSlot";
+import AdFrame from "@/src/components/ui/AdFrame";
 import { ToolsGate, type ToolsGateState } from "@/src/components/tools/ToolsGate";
 import { ToolCard } from "@/src/components/tools/ToolCard";
 import { ToolsEmptyState } from "@/src/components/tools/ToolsEmptyState";
@@ -248,14 +249,16 @@ export function ToolsPageClient() {
       <div dir={dir} className="tc-page">
         {/* Hero Ad */}
         <section className="tc-hero-ad container" aria-label={locale === "ar" ? "إعلان مميز" : locale === "tr" ? "Öne çıkan reklam" : "Featured advertisement"}>
-          <AdSlot
-            placement="tools_hero"
-            locale={locale}
-            country={country}
-            city={city}
-            variant="horizontal"
-            className="tc-hero-ad-slot"
-          />
+          <AdFrame label={locale === "ar" ? "إعلان مميز" : locale === "tr" ? "Öne çıkan reklam" : "Featured advertisement"} variant="horizontal">
+            <AdSlot
+              placement="tools_hero"
+              locale={locale}
+              country={country}
+              city={city}
+              variant="horizontal"
+              className="tc-hero-ad-slot"
+            />
+          </AdFrame>
         </section>
 
         <ToolsGate locale={locale} state={gateState} onRequestLogin={() => requestLogin("login")}>
