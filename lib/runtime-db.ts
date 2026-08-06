@@ -5,27 +5,110 @@ import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
+import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { logSecurityEvent } from "@/lib/security/audit";
 
-let sponsorSchemaReady: Promise<void> | null = null;
-let d1InitLogged = false;
+export type SchemaMode = "uninitialized" | "d1" | "mysql-fallback" | "failed";
+
+export class SchemaModeError extends Error {
+  constructor(reason: string) {
+    super(`Schema mode selection failed: ${reason}`);
+    this.name = "SchemaModeError";
+  }
+}
+
+export type SchemaSelectionInput = {
+  d1Available: boolean;
+  d1InitSucceeded: boolean;
+  allowMysqlFallback: boolean;
+  mysqlConfigured: boolean;
+};
+
+export function decideSchemaMode(input: SchemaSelectionInput): "d1" | "mysql-fallback" {
+  if (input.d1Available) {
+    if (input.d1InitSucceeded) return "d1";
+    if (!input.allowMysqlFallback) {
+      throw new SchemaModeError("D1 schema init failed and MySQL fallback is not explicitly allowed");
+    }
+    if (!input.mysqlConfigured) {
+      throw new SchemaModeError("D1 schema init failed and no MySQL URL is configured");
+    }
+    return "mysql-fallback";
+  }
+  if (input.mysqlConfigured) return "mysql-fallback";
+  throw new SchemaModeError("no database schema backend available (D1 binding missing and MySQL not configured)");
+}
+
+type SchemaSelection = { mode: "d1" | "mysql-fallback"; db: D1Database };
+
+let schemaMode: SchemaMode = "uninitialized";
+let schemaSelectionPromise: Promise<SchemaSelection> | null = null;
+let schemaSelectionError: Error | null = null;
+let schemaModeLogged = false;
+
+function logSchemaMode(mode: SchemaMode): void {
+  if (schemaModeLogged) return;
+  schemaModeLogged = true;
+  console.info(`[runtime-db] schema mode: ${mode}`);
+}
+
+export function getSchemaStatus(): { mode: SchemaMode; ready: boolean } {
+  return { mode: schemaMode, ready: schemaMode === "d1" || schemaMode === "mysql-fallback" };
+}
+
+export function selectSchemaMode(): Promise<SchemaSelection> {
+  if (!schemaSelectionPromise) {
+    schemaSelectionPromise = (async () => {
+      let d1Available = false;
+      let d1InitSucceeded = false;
+      let db: D1Database | null = null;
+      try {
+        const runtime = await import("cloudflare:workers");
+        if (runtime.env.DB) {
+          d1Available = true;
+          db = runtime.env.DB;
+          await ensureSponsorSchema(db);
+          d1InitSucceeded = true;
+        }
+      } catch (error) {
+        schemaSelectionError = error instanceof Error ? error : new Error(String(error));
+        console.error("[runtime-db] D1 init failed:", schemaSelectionError);
+      }
+
+      const allowMysqlFallback = process.env.ALLOW_MYSQL_FALLBACK === "true";
+      const mysqlConfigured = Boolean(getRuntimeEnv().mysqlUrl);
+
+      try {
+        const mode = decideSchemaMode({
+          d1Available,
+          d1InitSucceeded,
+          allowMysqlFallback,
+          mysqlConfigured,
+        });
+        if (mode === "mysql-fallback") {
+          if (d1Available) {
+            logSecurityEvent("DATABASE_SCHEMA_MISMATCH", {
+              reason: "D1 init failed; explicit MySQL fallback enabled",
+            });
+          }
+          db = await getMysqlRuntimeDb();
+        }
+        schemaMode = mode;
+        logSchemaMode(mode);
+        return { mode, db: db as D1Database };
+      } catch (error) {
+        schemaMode = "failed";
+        logSecurityEvent("DATABASE_SCHEMA_MISMATCH", {});
+        throw error instanceof SchemaModeError ? error : (schemaSelectionError ?? error);
+      }
+    })();
+  }
+  return schemaSelectionPromise;
+}
 
 export async function getRuntimeDb(): Promise<D1Database> {
-  try {
-    const runtime = await import("cloudflare:workers");
-    if (runtime.env.DB) {
-      const db = runtime.env.DB;
-      sponsorSchemaReady ??= ensureSponsorSchema(db);
-      await sponsorSchemaReady;
-      return db;
-    }
-  } catch (error) {
-    if (!d1InitLogged) {
-      d1InitLogged = true;
-      console.error("[runtime-db] D1 init failed:", error);
-    }
-    // D1 binding is unavailable (production preview): fall back to MySQL.
-  }
-  return getMysqlRuntimeDb();
+  const selection = await selectSchemaMode();
+  return selection.db;
 }
 
 async function ensureSponsorSchema(db: D1Database) {
