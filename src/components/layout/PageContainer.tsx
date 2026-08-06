@@ -15,6 +15,7 @@ type PageContainerProps = {
   padding?: boolean;
   className?: string;
   id?: string;
+  dir?: string;
   style?: CSSProperties;
   children: ReactNode;
 };
@@ -25,12 +26,14 @@ export default function PageContainer({
   padding = true,
   className = "",
   id,
+  dir,
   style,
   children,
 }: PageContainerProps) {
   return (
     <Tag
       id={id}
+      dir={dir}
       style={style}
       className={`mx-auto w-full ${SIZES[size]} ${padding ? "px-[var(--space-5)] sm:px-[var(--space-8)]" : ""} ${className}`.trim()}
     >

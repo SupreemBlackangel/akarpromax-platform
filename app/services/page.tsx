@@ -7,6 +7,9 @@ import { useServicesPage } from "@services-ui/useServicesPage";
 import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
 import { apiFetch } from "@services-client";
 import AdSlot from "@/src/components/AdSlot";
+import PageContainer from "@/src/components/layout/PageContainer";
+import Grid from "@/src/components/layout/Grid";
+import AdFrame from "@/src/components/ui/AdFrame";
 
 export default function ServicesHubPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -49,7 +52,7 @@ export default function ServicesHubPage() {
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
-      <div dir={dir} className="container py-8">
+      <PageContainer className="py-8" dir={dir}>
         {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
         <section className="rounded-2xl border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-blue-950/40 dark:via-gray-900 dark:to-emerald-950/30 p-8 md:p-12 text-center">
@@ -70,16 +73,17 @@ export default function ServicesHubPage() {
           </div>
         </section>
 
-        <AdSlot
-          placement="services_hub_mid"
-          locale={locale}
-          country={country}
-          city={city}
-          path="/services"
-          entityType="services"
-          variant="horizontal"
-          className="mt-8"
-        />
+        <AdFrame label={copy.adLabel} variant="horizontal" className="mt-8">
+          <AdSlot
+            placement="services_hub_mid"
+            locale={locale}
+            country={country}
+            city={city}
+            path="/services"
+            entityType="services"
+            variant="horizontal"
+          />
+        </AdFrame>
 
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
@@ -91,7 +95,7 @@ export default function ServicesHubPage() {
               {t("services.viewAll") ?? "عرض الكل"} ←
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Grid columns={3}>
             {dataLoading
               ? Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-40 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
@@ -100,7 +104,7 @@ export default function ServicesHubPage() {
             {!dataLoading && categories.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
-          </div>
+          </Grid>
         </section>
 
         <section className="mt-10">
@@ -113,14 +117,14 @@ export default function ServicesHubPage() {
               {t("services.viewAll") ?? "عرض الكل"} ←
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Grid columns={3}>
             {dataLoading
               ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
               : providers.map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
             {!dataLoading && providers.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
-          </div>
+          </Grid>
         </section>
 
         <section className="mt-10">
@@ -133,14 +137,14 @@ export default function ServicesHubPage() {
               {t("services.viewAll") ?? "عرض الكل"} ←
             </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Grid columns={3}>
             {dataLoading
               ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
               : requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
             {!dataLoading && requests.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
-          </div>
+          </Grid>
         </section>
 
         <section className="mt-12 rounded-2xl bg-gray-900 dark:bg-gray-950 p-8 md:p-12 text-center text-white">
@@ -152,7 +156,7 @@ export default function ServicesHubPage() {
             {t("services.applyProvider") ?? "قدم الآن"}
           </Link>
         </section>
-      </div>
+      </PageContainer>
       {AccountDialog}
     </PublicPageShell>
   );
