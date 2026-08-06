@@ -87,7 +87,31 @@ export type Translation = {
   footerTagline: string;
   chatAria: string;
   arrow: string;
+  navHome: string;
+  navServices: string;
+  navCatalog: string;
+  navRequests: string;
+  navTools: string;
+  navApply: string;
+  navMore: string;
+  logout: string;
+  searchAria: string;
+  skipToContent: string;
+  mainNavAria: string;
+  breadcrumbAria: string;
+  toastAria: string;
+  footerLegalTitle: string;
+  cookieTitle: string;
+  cookieDescription: string;
+  cookieAccept: string;
+  cookieReject: string;
+  cookieManage: string;
 };
+
+/** Subset of Translation keys whose values are plain strings (safe for nav/footer labels). */
+export type TranslationStringKey = {
+  [K in keyof Translation]: Translation[K] extends string ? K : never;
+}[keyof Translation];
 
 export type CountryOption = {
   id: CountryId;
