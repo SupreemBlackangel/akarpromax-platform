@@ -21,7 +21,7 @@ entries were added.
 | `GUEST_IDENTITY` | Constant guest identity with `role: "guest"`, empty `permissions`. |
 | `setSessionIdentityResolverForTests(resolver \| null)` | Test-only seam. Injects a fabricated `SponsorIdentity` for deterministic tests; passing `null` clears it. |
 | `hasSponsorPermission(identity, permission)` | Returns true when `identity.permissions` includes the permission or the `"*"` super-admin wildcard. |
-| `getSponsorIdentity()` | **Retained only for the sponsor module** (non-services). Uses the session first, then the ChatGPT identity fallback. The services module has zero references to it (enforced by `tests/services-marketplace.test.mjs` "session-only identity" test). |
+| `getSponsorIdentity()` | **Session-only alias** of `getSessionIdentity()` (retained for the sponsor module; non-services). The services module has zero references to it (enforced by `tests/services-marketplace.test.mjs` "session-only identity" test). |
 
 ## Enforcement layers
 

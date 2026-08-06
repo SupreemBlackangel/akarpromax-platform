@@ -1,4 +1,4 @@
-import { requireChatGPTUser } from "@/app/chatgpt-auth";
+import { requireSessionUser } from "@/lib/sponsor-auth";
 import { PermissionGuard } from "@/src/components/PermissionGuard";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import RolesAdminClient from "../roles-admin-client";
@@ -6,7 +6,7 @@ import RolesAdminClient from "../roles-admin-client";
 export const dynamic = "force-dynamic";
 
 async function RolesGate() {
-  const user = await requireChatGPTUser("/admin/roles");
+  const user = await requireSessionUser("/admin/roles");
   return (
     <PermissionGuard requiredPermissions={[PERMISSIONS.ROLES_VIEW]}>
       <RolesAdminClient />

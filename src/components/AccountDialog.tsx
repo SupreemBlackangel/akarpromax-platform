@@ -478,13 +478,6 @@ export default function AccountDialog({
         return setFieldError("genericError");
       }
       if (data.user) {
-        if (data.token) {
-          try {
-            localStorage.setItem("akar_token", data.token);
-          } catch {
-            // Private mode: session cookie still covers authentication.
-          }
-        }
         onAuthenticated(toViewer(data.user));
       }
       onClose();
@@ -503,11 +496,6 @@ export default function AccountDialog({
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
       // Session cookie is cleared by the server route; still reset locally.
-    }
-    try {
-      localStorage.removeItem("akar_token");
-    } catch {
-      // Private mode: nothing to clear.
     }
     onAuthenticated({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
     onClose();

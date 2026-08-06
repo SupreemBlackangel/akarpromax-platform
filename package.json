@@ -16,7 +16,8 @@
     "db:migrate:mysql": "drizzle-kit migrate --config drizzle.mysql.config.ts",
     "seed:i18n": "tsx scripts/seed-i18n.ts",
     "seed:services": "tsx scripts/seed-services.ts",
-    "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts"
+    "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts",
+    "seed:auth:admin": "tsx scripts/seed-auth-admin.ts"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",

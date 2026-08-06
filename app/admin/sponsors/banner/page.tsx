@@ -1,10 +1,10 @@
-import { requireChatGPTUser } from "@/app/chatgpt-auth";
+import { requireSessionUser } from "@/lib/sponsor-auth";
 import SponsorAdminClient from "../sponsor-admin-client";
 
 export const dynamic = "force-dynamic";
 
 async function BannerGate() {
-  const user = await requireChatGPTUser("/admin/sponsors/banner");
+  const user = await requireSessionUser("/admin/sponsors/banner");
   return <SponsorAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />;
 }
 

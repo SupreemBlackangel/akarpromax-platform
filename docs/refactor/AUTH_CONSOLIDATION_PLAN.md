@@ -1,5 +1,13 @@
 # AUTH CONSOLIDATION PLAN
 
+> **Phase 5 status (2026-08-06):** Execution-order items 5-8 are complete.
+> `app/chatgpt-auth.ts` was deleted; all 15 admin gates use `requireSessionUser()`
+> from `lib/sponsor-auth.ts` (session-only, no ChatGPT headers, no bearer, no
+> localhost fallback); `AccountDialog.tsx` no longer touches `localStorage`;
+> `getSponsorIdentity()` resolves from the `akar_session` cookie only. Remaining
+> items (email verification, OTP, RBAC migration of `sponsor_access`, first-login
+> welcome, audit log) are tracked separately.
+
 ## Target Identity Model
 - The only production identity provider is **AkarProMax Identity**.
 - The only production session transport is **secure HttpOnly cookies**.

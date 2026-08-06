@@ -4,14 +4,6 @@
   "description": "Architecture exceptions for legacy code. Each exception must have a clear target phase for removal.",
   "exceptions": [
     {
-      "id": "ARCH-LEGACY-001",
-      "rule": "ARCH-012",
-      "path": "app/chatgpt-auth.ts",
-      "reason": "Localhost auto-admin fallback for development",
-      "targetPhase": "Phase 3",
-      "expiresAfterPhase": 3
-    },
-    {
       "id": "ARCH-LEGACY-002",
       "rule": "ARCH-012",
       "path": "lib/mysql-runtime.ts",
@@ -24,14 +16,6 @@
       "rule": "ARCH-012",
       "path": "scripts/seed-services.ts",
       "reason": "Hardcoded admin email in seed script",
-      "targetPhase": "Phase 3",
-      "expiresAfterPhase": 3
-    },
-    {
-      "id": "ARCH-LEGACY-004",
-      "rule": "ARCH-011",
-      "path": "app/chatgpt-auth.ts",
-      "reason": "ChatGPT header-based identity system",
       "targetPhase": "Phase 3",
       "expiresAfterPhase": 3
     },
@@ -72,14 +56,6 @@
       "rule": "ARCH-013",
       "path": "db/index.ts",
       "reason": "D1 database binding import",
-      "targetPhase": "Phase 5",
-      "expiresAfterPhase": 5
-    },
-    {
-      "id": "ARCH-LEGACY-010",
-      "rule": "ARCH-004",
-      "path": "lib/sponsor-auth.ts",
-      "reason": "Cross-module DB access to sponsor_access",
       "targetPhase": "Phase 5",
       "expiresAfterPhase": 5
     },
@@ -128,14 +104,6 @@
       "rule": "ARCH-009",
       "path": "app/admin/sponsors/banner/page.tsx",
       "reason": "Hardcoded ad banner without AdSlot",
-      "targetPhase": "Phase 3",
-      "expiresAfterPhase": 3
-    },
-    {
-      "id": "ARCH-LEGACY-019",
-      "rule": "ARCH-010",
-      "path": "src/components/AccountDialog.tsx",
-      "reason": "localStorage token usage (legacy auth system)",
       "targetPhase": "Phase 3",
       "expiresAfterPhase": 3
     },

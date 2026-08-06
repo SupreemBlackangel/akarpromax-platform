@@ -1,4 +1,4 @@
-import { requireChatGPTUser } from "@/app/chatgpt-auth";
+import { requireSessionUser } from "@/lib/sponsor-auth";
 import { PermissionGuard } from "@/src/components/PermissionGuard";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import SettingsAdminClient from "../settings-admin-client";
@@ -6,7 +6,7 @@ import SettingsAdminClient from "../settings-admin-client";
 export const dynamic = "force-dynamic";
 
 async function SettingsGate() {
-  const user = await requireChatGPTUser("/admin/settings");
+  const user = await requireSessionUser("/admin/settings");
   return (
     <PermissionGuard requiredPermissions={[PERMISSIONS.SETTINGS_MANAGE]}>
       <SettingsAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />

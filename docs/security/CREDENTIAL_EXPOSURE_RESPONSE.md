@@ -17,7 +17,6 @@ The exposure is limited to hardcoded email addresses used as dev/seed identities
 
 | File | Line | Tracked | Risk |
 |------|------|---------|------|
-| `app/chatgpt-auth.ts` | 54 | YES | Hardcoded localhost fallback identity with `super_admin` role |
 | `lib/mysql-runtime.ts` | 561 | YES | Seed function inserts this email with `super_admin` role |
 | `scripts/seed-services.ts` | 6 | YES | Seed script uses this email as admin identity |
 
@@ -45,7 +44,7 @@ The `.env.example` contains only placeholder values (empty or
 
 | Email | Reason | Action |
 |-------|--------|--------|
-| `admin@localhost.akarpromax` | Dev-only localhost fallback; no real password stored in code | Rotate if used in any real database; remove localhost fallback in Phase 2 |
+| `admin@localhost.akarpromax` | Dev-only localhost seed identity (runtime + services seed); no real password stored in code | Rotate if used in any real database; replace with the seeded PostgreSQL super-admin (`npm run seed:auth:admin`) |
 | `admin@akarpromax.com` | Referenced in conversation history only; not in source | Verify if real account exists in production DB; rotate immediately if so |
 | `test@example.com` | Referenced in conversation history only; not in source | Verify if real account exists in production DB; rotate immediately if so |
 
@@ -58,9 +57,11 @@ The `.env.example` contains only placeholder values (empty or
 
 ## Files Requiring Change (deferred to Phase 2+)
 
-- `app/chatgpt-auth.ts:54` — Remove localhost auto-admin fallback
 - `lib/mysql-runtime.ts:561` — Replace hardcoded email with env variable
 - `scripts/seed-services.ts:6` — Replace hardcoded email with env variable
+
+> The `app/chatgpt-auth.ts` localhost fallback (previously line 54) was removed in
+> Phase 5 along with ChatGPT header identity and browser bearer-token auth.
 
 ## Secrets Exposure Status
 
@@ -72,6 +73,8 @@ The `.env.example` contains only placeholder values (empty or
 ## Conclusion
 
 No passwords were leaked in source code. The hardcoded email
-`admin@localhost.akarpromax` is a dev convenience that should be removed
-in a future phase. Real credentials (if they exist in production databases)
+`admin@localhost.akarpromax` is a dev-only seed identity. The runtime localhost
+auto-admin fallback and ChatGPT/header identity were removed in Phase 5; the
+remaining references live in seed/runtime MySQL code targeted for removal in
+later phases. Real credentials (if they exist in production databases)
 should be rotated immediately through a secure process outside this codebase.

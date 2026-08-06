@@ -82,7 +82,7 @@ test("includes the country sponsor administration and generated campaign art", a
     readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsor-assets/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/chatgpt-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/sponsor-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/runtime-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
@@ -119,7 +119,9 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(admin, /payload\.append\("sponsorId", form\.id\)/);
   assert.match(admin, /admin-dialog-message/);
   assert.match(admin, /disabled=\{busy \|\| logoUploading\}/);
-  assert.match(auth, /admin@localhost\.akarpromax/);
+  assert.doesNotMatch(auth, /admin@localhost\.akarpromax/);
+  assert.doesNotMatch(auth, /getChatGPTUser|oai-authenticated-user/);
+  assert.match(auth, /getSessionIdentity/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS sponsors/);
   assert.match(packageJson, /"dev": "vinext dev"/);
   assert.match(hosting, /"r2": "SPONSOR_ASSETS"/);
@@ -127,7 +129,7 @@ test("includes the country sponsor administration and generated campaign art", a
 });
 
 test("includes the managed advertising center, media storage and targeted hero delivery", async () => {
-  const [page, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, migration, styles] = await Promise.all([
+  const [page, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, roles, migration, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/ads/ads-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ads/route.ts", import.meta.url), "utf8"),
@@ -135,7 +137,8 @@ test("includes the managed advertising center, media storage and targeted hero d
     readFile(new URL("../app/api/ad-events/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/runtime-db.ts", import.meta.url), "utf8"),
-    readFile(new URL("../lib/sponsor-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/constants/roles.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0001_stormy_anita_blake.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
@@ -156,9 +159,9 @@ test("includes the managed advertising center, media storage and targeted hero d
   assert.match(schema, /adAssets/);
   assert.match(schema, /adEvents/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS ad_campaigns/);
-  assert.match(permissions, /ad_manager/);
-  assert.match(permissions, /ROLE_CATALOG/);
-  assert.match(permissions, /permissionsByRole/);
+  assert.match(roles, /ad_manager/);
+  assert.match(roles, /ROLE_CATALOG/);
+  assert.match(permissions, /ADS_PUBLISH/);
   assert.match(migration, /CREATE TABLE `ad_campaigns`/);
   assert.match(styles, /\.ads-admin/);
   assert.match(styles, /\.ads-live-preview/);
@@ -201,7 +204,7 @@ test("includes the region-filtered news ticker, management API and admin panel",
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS news/);
   assert.match(permissions, /NEWS_VIEW/);
   assert.match(permissions, /NEWS_DELETE/);
-  assert.match(adminPage, /requireChatGPTUser\("\/admin\/news"\)/);
+  assert.match(adminPage, /requireSessionUser\("\/admin\/news"\)/);
   assert.match(adminClient, /scope === "global"/);
   assert.match(adminClient, /PERMISSIONS.NEWS_PUBLISH/);
   assert.match(mysqlSchema, /export const news = mysqlTable/);

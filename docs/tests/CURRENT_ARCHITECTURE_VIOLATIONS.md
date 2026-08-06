@@ -4,9 +4,9 @@ Generated: 2026-08-05
 
 ## Summary
 
-- Total violations: 47
+- Total violations: 44
 - Blocking violations: 0 (all have legacy exceptions)
-- Legacy exceptions: 47
+- Legacy exceptions: 44
 - New violations: 0
 
 ## Violations List
@@ -15,21 +15,11 @@ Generated: 2026-08-05
 
 | Violation ID | Rule | File | Line | Severity | Blocking | Legacy | Target Phase |
 |--------------|------|------|------|----------|----------|--------|--------------|
-| AUTH-001-001 | ARCH-012 | app/chatgpt-auth.ts | 54 | HIGH | NO | YES | Phase 3 |
 | AUTH-001-002 | ARCH-012 | lib/mysql-runtime.ts | 561 | HIGH | NO | YES | Phase 3 |
 | AUTH-001-003 | ARCH-012 | scripts/seed-services.ts | 6 | MEDIUM | NO | YES | Phase 3 |
 
 **Description:** Hardcoded localhost admin fallback identity
 **Removal:** Replace with env variable or remove fallback entirely
-
-### AUTH-002: OpenAI/ChatGPT Header Identity
-
-| Violation ID | Rule | File | Line | Severity | Blocking | Legacy | Target Phase |
-|--------------|------|------|------|----------|----------|--------|--------------|
-| AUTH-002-001 | ARCH-011 | app/chatgpt-auth.ts | 15-60 | HIGH | NO | YES | Phase 3 |
-
-**Description:** ChatGPT header-based identity system
-**Removal:** Disable in production, remove in Phase 3
 
 ### DB-001: MySQL Usage
 
@@ -56,7 +46,6 @@ Generated: 2026-08-05
 
 | Violation ID | Rule | File | Line | Severity | Blocking | Legacy | Target Phase |
 |--------------|------|------|------|----------|----------|--------|--------------|
-| DB-003-001 | ARCH-004 | lib/sponsor-auth.ts | 72 | HIGH | NO | YES | Phase 5 |
 | DB-003-002 | ARCH-004 | app/api/sponsor-access/route.ts | 44 | HIGH | NO | YES | Phase 5 |
 
 **Description:** Direct access to sponsor_access table from multiple modules
@@ -111,8 +100,7 @@ None. All violations have legacy exceptions until their target phase.
 |-------|--------|-------------------|
 | Phase 2 | Implement PublicPageShell | UI-001, UI-002 |
 | Phase 2 | Replace hardcoded ads with AdSlot | UI-003 |
-| Phase 3 | Remove ChatGPT auth | AUTH-002 |
-| Phase 3 | Remove localhost fallback | AUTH-001 |
+| Phase 3 | Remove localhost fallback (remaining seeds) | AUTH-001 |
 | Phase 5 | Migrate MySQL to PostgreSQL | DB-001 |
 | Phase 5 | Migrate D1 to PostgreSQL | DB-002 |
 | Phase 5 | Consolidate sponsor_access | DB-003 |

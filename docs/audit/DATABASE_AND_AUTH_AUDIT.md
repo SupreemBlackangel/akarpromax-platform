@@ -20,39 +20,38 @@
   - `jose` signed JWT stored in `akar_session` cookie.
   - Backed by PostgreSQL `lib/db/schema.ts` `users` table.
 
-### 2. Bearer Token Fallback in Browser Storage
+### 2. Bearer Token Fallback in Browser Storage (REMOVED)
 - Files:
   - `src/components/AccountDialog.tsx`
-  - `app/chatgpt-auth.ts`
-- Mechanism:
-  - `AccountDialog` reads/writes `localStorage["akar_token"]`.
-  - `chatgpt-auth.ts` accepts `Authorization: Bearer ...` and resolves user via `getSessionUser()`.
-- Observation:
-  - Login route currently returns `user`, not a guaranteed `token`, so this path is only partially active.
+  - `app/chatgpt-auth.ts` (deleted in Phase 5)
+- Status:
+  - Removed in Phase 5. `AccountDialog` no longer writes/reads `localStorage["akar_token"]`; login uses the HttpOnly cookie only.
+  - `getSessionUser(token)` in `lib/auth/session.ts` remains only as an unused library export.
 
-### 3. OpenAI/ChatGPT Header-Based Identity
-- File: `app/chatgpt-auth.ts`
-- Mechanism:
-  - Reads `oai-authenticated-user-email` and related headers.
-  - Used by admin route gates via `requireChatGPTUser()`.
+### 3. OpenAI/ChatGPT Header-Based Identity (REMOVED)
+- File: `app/chatgpt-auth.ts` (deleted in Phase 5)
+- Status:
+  - Removed in Phase 5. Admin route gates now use `requireSessionUser()` from `lib/sponsor-auth.ts`.
 
-### 4. Localhost Auto-Admin Fallback
-- File: `app/chatgpt-auth.ts`
-- Mechanism:
-  - If host is localhost and no auth header exists, returns `admin@localhost.akarpromax`.
-- Risk:
-  - Useful for local development, but it is a separate identity source and bypass path.
+### 4. Localhost Auto-Admin Fallback (REMOVED from runtime)
+- File: `app/chatgpt-auth.ts` (deleted in Phase 5)
+- Status:
+  - Removed in Phase 5. Remaining `admin@localhost.akarpromax` references are dev/seed-only:
+    - `lib/mysql-runtime.ts` seed function
+    - `scripts/seed-services.ts`
 
-### 5. Identity Augmentation Through Sponsor Access
+### 5. Identity Resolution Through Session (Phase 5)
 - File: `lib/sponsor-auth.ts`
 - Mechanism:
-  - Builds final UI identity from session first, then ChatGPT/header identity, then runtime `sponsor_access`, then optional MySQL admin-role promotion.
+  - Resolves identity strictly from the HttpOnly `akar_session` cookie (`getSessionIdentity()`).
+  - Scoped permissions come from PostgreSQL-backed RBAC via `lib/auth/identity-map.ts`.
+- Status:
+  - ChatGPT/header identity, runtime `sponsor_access`, and MySQL admin-role promotion paths were removed in Phase 5.
 
 ## Auth Findings
-- The project does not use one auth system; it uses at least four identity sources.
-- Admin pages are gated by `requireChatGPTUser()` plus optional `PermissionGuard`.
+- Admin pages are gated by `requireSessionUser()` (session-only) plus optional `PermissionGuard`.
 - Public/workspace gates use `/api/user-context` and `ToolsGate`/`AccountDialog`.
-- Auth storage is split between cookie session and optional browser token storage.
+- Auth storage is the HttpOnly `akar_session` cookie only; browser token storage was removed in Phase 5.
 
 ## Database Systems
 
@@ -128,8 +127,7 @@
   - `_e2e_seed.mjs`
   - `_e2e_clean.mjs`
   - `_e2e_ads.mjs`
-- Localhost admin identity fallback appears in:
-  - `app/chatgpt-auth.ts`
+- Localhost admin identity seed appears in:
   - `scripts/seed-services.ts`
   - tests referencing `admin@localhost.akarpromax`
 
@@ -160,9 +158,9 @@
 - No `*.map` files were found in the repository root tree scan.
 
 ## Architectural Risks
-- The codebase violates the "one auth system" and "one database" target state.
+- The codebase still violates the "one database" target state.
 - Session/auth behavior differs between `vinext dev` and `vinext start` per `AGENTS.md`.
-- Admin identity resolution can come from session cookie, bearer token, header-based identity, or localhost fallback.
+- Admin identity resolution is session-cookie-only since Phase 5.
 - Content/runtime data can come from D1 or MySQL depending on environment.
 - Auth users come from PostgreSQL, while verification and many operational tables live elsewhere.
 

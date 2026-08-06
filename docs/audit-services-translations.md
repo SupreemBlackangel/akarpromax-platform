@@ -17,7 +17,7 @@
 | ORM | `drizzle-orm 0.45.2` (مخطط static) + طبقة SQL يدوية عبر `lib/mysql-runtime.ts` |
 | قاعدتا بيانات | (1) SQLite/D1 عبر `db/schema.ts` + `drizzle/` (تطوير/منتج)، (2) MySQL عبر `db/mysql/schema.ts` + `drizzle-mysql/` + `lib/mysql-runtime.ts` (الفعلية في localhost) |
 | Frontend | React SPA داخل `app/page.tsx` (ملف رئيسي 542 سطرًا) + Tailwind 4.2.1 |
-| Auth | `app/chatgpt-auth.ts` (هيدر OpenAI) + `lib/auth/session.ts` (جلسات MySQL) + fallback localhost |
+| Auth | `lib/auth/session.ts` (جلسات كوكي HttpOnly `akar_session`) + `lib/sponsor-auth.ts` (بوابة `requireSessionUser`) |
 | المنصة | 23 دولة عربية + تركيا، 3 لغات (ar/en/tr) |
 
 ### 1.2 بنية قاعدة البيانات الفعلية (MySQL — `akarpromax`)
@@ -28,7 +28,7 @@
 
 ### 1.3 الملفات الحاسمة
 - `app/page.tsx` — الواجهة الرئيسية أحادية الصفحة (RTL/LTR، قضبان جانبية، شرائح إعلانية، أخبار، خدمات دعائية، رعاة، حساب)
-- `app/chatgpt-auth.ts` — بوابة المصادقة
+- `lib/sponsor-auth.ts` — بوابة المصادقة (جلسة فقط)
 - `lib/sponsor-auth.ts` — تحويل الهوية إلى SponsorIdentity
 - `lib/mysql-runtime.ts` — محاكي D1 فوق MySQL (translateSql + schema auto-create + seeds)
 - `lib/runtime-db.ts` — اختيار D1 أو MySQL تلقائيًا

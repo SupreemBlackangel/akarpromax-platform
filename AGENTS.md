@@ -40,9 +40,10 @@ local state; session persistence across a full page reload is still blocked.
 ## Auth chain (PG `lib/db`) — fixed for `vinext dev`
 Login/register/me now return `name`, `role` (mapped via `lib/auth/identity-map.ts`
 `mapSessionRole`) and `permissions` (from the frontend `ROLE_CATALOG`), and the
-cookie session is the primary identity for `/api/user-context` and every
-`getSponsorIdentity()`/`getChatGPTUser()` gate (header/`admin@localhost.*`
-fallback kept). `lib/auth/session.ts::readSessionCookieValue` reads the raw
+cookie session is the **only** identity source for `/api/user-context` and every
+`getSponsorIdentity()`/`requireSessionUser()` gate. ChatGPT header identity,
+`localStorage` bearer tokens, and the `admin@localhost.*` fallback are removed
+(`app/chatgpt-auth.ts` deleted). `lib/auth/session.ts::readSessionCookieValue` reads the raw
 `Cookie` header via `headers()` first, then `cookies()` — so it also works under
 `vinext start` *if* PG itself loads there (it does not, see below).
 
@@ -52,7 +53,7 @@ pool cannot be reused across requests inside vinext dev's Workers runtime
 and Drizzle's prepared-statement cache makes it worse). `lib/db/index.ts` now
 exports `getDb()` → `{ db, end }` (fresh postgres client per call, `prepare: false`),
 and ALL auth routes/helpers (`login`, `register`, `me`, `lib/auth/session.ts`,
-`lib/sponsor-auth.ts`, `app/chatgpt-auth.ts`) open/close one client per request.
+`lib/sponsor-auth.ts`) open/close one client per request.
 **When adding PG queries in dev, use `getDb()` + `finally { end() }`, never the
 singleton `db` export.**
 

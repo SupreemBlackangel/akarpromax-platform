@@ -1,10 +1,10 @@
-import { requireChatGPTUser } from "@/app/chatgpt-auth";
+import { requireSessionUser } from "@/lib/sponsor-auth";
 import NewsAdminClient from "./news-admin-client";
 
 export const dynamic = "force-dynamic";
 
 async function NewsAdminGate() {
-  const user = await requireChatGPTUser("/admin/news");
+  const user = await requireSessionUser("/admin/news");
   return <NewsAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />;
 }
 
