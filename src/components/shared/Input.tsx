@@ -32,6 +32,8 @@ export default function Input({
     .filter(Boolean)
     .join(" ");
 
+  const errorId = inputId ? `${inputId}-error` : undefined;
+
   return (
     <div className="input-wrapper">
       {label && (
@@ -39,8 +41,18 @@ export default function Input({
           {label}
         </label>
       )}
-      <input id={inputId} className={inputClasses} {...props} />
-      {error && <span className="input-error-text">{error}</span>}
+      <input
+        id={inputId}
+        className={inputClasses}
+        {...props}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+      />
+      {error && (
+        <span id={errorId} role="alert" className="input-error-text">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

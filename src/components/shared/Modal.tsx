@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
+import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
 
 type Props = {
   open: boolean;
@@ -17,23 +18,34 @@ export default function Modal({
   children,
   className,
 }: Props) {
+  const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (dialogRef.current) trapFocusKeydown(event, dialogRef.current);
     },
     [onClose],
   );
 
   useEffect(() => {
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
-    }
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+    const timer = window.setTimeout(() => {
+      dialogRef.current?.focus();
+    }, 0);
     return () => {
+      window.clearTimeout(timer);
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
+      previouslyFocusedRef.current?.focus();
     };
   }, [open, handleKeyDown]);
 
@@ -43,15 +55,16 @@ export default function Modal({
     <div className="modal-backdrop" onClick={onClose}>
       <div
         ref={dialogRef}
+        tabIndex={-1}
         className={`modal-content ${className || ""}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? "modal-title" : undefined}
+        aria-labelledby={title ? titleId : undefined}
       >
         {title && (
           <div className="modal-header">
-            <h2 id="modal-title" className="modal-title">
+            <h2 id={titleId} className="modal-title">
               {title}
             </h2>
             <button

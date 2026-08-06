@@ -10,6 +10,7 @@ import {
 } from "@/src/location-utils";
 import type { LocationInfo } from "@/src/location-utils";
 import type { Locale, ViewerContext } from "@/src/types/site";
+import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
 
 type Props = {
   locale: Locale;
@@ -299,6 +300,7 @@ export default function AccountDialog({
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
   const mountedRef = useRef(true);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const [prevOpen, setPrevOpen] = useState(open);
 
   const cities = citiesForCountry(countryCode);
@@ -328,6 +330,7 @@ export default function AccountDialog({
 
   useEffect(() => {
     if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     const onPointerDown = (event: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
         onClose();
@@ -336,13 +339,16 @@ export default function AccountDialog({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
+        return;
       }
+      if (rootRef.current) trapFocusKeydown(event, rootRef.current);
     };
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      previouslyFocusedRef.current?.focus();
     };
   }, [open, onClose]);
 
@@ -598,6 +604,8 @@ export default function AccountDialog({
                     value={identifier}
                     onChange={(event) => setIdentifier(event.target.value)}
                     placeholder={labels.identifierHint}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${dialogId}-error` : undefined}
                   />
                 </div>
                 <div className="account-field">
@@ -608,9 +616,11 @@ export default function AccountDialog({
                     autoComplete="current-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${dialogId}-error` : undefined}
                   />
                 </div>
-                {error && <p className="account-error" role="alert">{error}</p>}
+                {error && <p id={`${dialogId}-error`} className="account-error" role="alert">{error}</p>}
                 <button className="account-submit account-submit-wide" type="submit" disabled={loading}>
                   {loading ? "…" : labels.loginSubmit}
                 </button>
@@ -636,6 +646,8 @@ export default function AccountDialog({
                     autoComplete="name"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${dialogId}-error` : undefined}
                   />
                 </div>
                 <div className="account-grid">
@@ -647,6 +659,8 @@ export default function AccountDialog({
                       autoComplete="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
+                      aria-invalid={error ? true : undefined}
+                      aria-describedby={error ? `${dialogId}-error` : undefined}
                     />
                   </div>
                   <div className="account-field">
@@ -658,6 +672,8 @@ export default function AccountDialog({
                       inputMode="tel"
                       value={phone}
                       onChange={(event) => setPhone(event.target.value)}
+                      aria-invalid={error ? true : undefined}
+                      aria-describedby={error ? `${dialogId}-error` : undefined}
                     />
                   </div>
                 </div>
@@ -669,9 +685,11 @@ export default function AccountDialog({
                     autoComplete="new-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${dialogId}-error` : undefined}
                   />
                 </div>
-                {error && <p className="account-error" role="alert">{error}</p>}
+                {error && <p id={`${dialogId}-error`} className="account-error" role="alert">{error}</p>}
                 <div className="account-actions account-actions-end">
                   <button className="account-submit" type="submit">
                     {labels.next}
@@ -719,6 +737,8 @@ export default function AccountDialog({
                         setCity("");
                         setLocationDetected(false);
                       }}
+                      aria-invalid={error ? true : undefined}
+                      aria-describedby={error ? `${dialogId}-error` : undefined}
                     >
                       {countryOptions.map((option) => (
                         <option key={option.id} value={option.id}>{option.names[locale]}</option>
@@ -734,6 +754,8 @@ export default function AccountDialog({
                         setCity(event.target.value);
                         setLocationDetected(false);
                       }}
+                      aria-invalid={error ? true : undefined}
+                      aria-describedby={error ? `${dialogId}-error` : undefined}
                     >
                       <option value="">{labels.cityPlaceholder}</option>
                       {cities.map((option) => (
@@ -742,7 +764,7 @@ export default function AccountDialog({
                     </select>
                   </div>
                 </div>
-                {error && <p className="account-error" role="alert">{error}</p>}
+                {error && <p id={`${dialogId}-error`} className="account-error" role="alert">{error}</p>}
                 <div className="account-actions">
                   <button className="account-cancel" type="button" onClick={() => setRegisterStep(0)}>
                     {labels.back}

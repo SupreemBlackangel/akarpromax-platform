@@ -40,7 +40,7 @@ export default function PublicPageShell({
         onLogout={onLogout}
       />
       <NewsTicker copy={copy} locale={locale} country={country} city={city} />
-      <main className="public-main">
+      <main id="main-content" className="public-main">
         <AdSlot
           placement="global_header"
           locale={locale}
