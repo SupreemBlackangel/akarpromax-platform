@@ -1,310 +1,159 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { translations } from "@/src/data/translations";
-import type { Locale, ViewerContext } from "@/src/types/site";
+import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
+import { useServicesPage } from "@/src/components/services/useServicesPage";
+import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@/src/components/services/ServiceCards";
+import { apiFetch } from "@/src/lib/services-client";
+import AdSlot from "@/src/components/AdSlot";
 
-type Listing = {
-  id: string;
-  provider_user_id: string;
-  category_id: string;
-  titleKey: string | null;
-  descriptionKey: string | null;
-  price: number;
-  currency: string;
-  unit: string;
-  status: string;
-  city_id: string;
-  country_code: string;
-};
-
-type RequestRow = {
-  id: string;
-  category_id: string;
-  customer_user_id: string;
-  titleKey: string | null;
-  descriptionKey: string | null;
-  budget_min: number | null;
-  budget_max: number | null;
-  currency: string;
-  status: string;
-};
-
-type Category = { id: string; code: string; country_code: string };
-
-type Flat = Record<string, string>;
-
-async function fetchJson(url: string): Promise<Record<string, unknown>> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as Record<string, unknown>;
-}
-
-export default function ServicesPage() {
-  const [locale, setLocale] = useState<Locale>("ar");
-  const [flat, setFlat] = useState<Flat>({});
-  const [listings, setListings] = useState<Listing[]>([]);
+export default function ServicesHubPage() {
+  const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"browse" | "requests" | "new-request">("browse");
-  const [message, setMessage] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [budgetMin, setBudgetMin] = useState("");
-  const [budgetMax, setBudgetMax] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [viewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
-  const [country] = useState("om");
-  const [city] = useState("om-muscat");
-
-  const t = useCallback(
-    (key: string): string => {
-      const value = flat[key] ?? translations[locale][key as keyof typeof translations["ar"]] ?? key;
-      return typeof value === "string" ? value : key;
-    },
-    [flat, locale],
-  );
-  const direction = locale === "ar" ? "rtl" : "ltr";
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
       try {
-        const [bundle, listingsData, requestsData, categoriesData] = await Promise.all([
-          fetchJson(`/api/i18n/${locale}`),
-          fetchJson("/api/services/listings"),
-          fetchJson("/api/services/requests"),
-          fetchJson("/api/services/categories"),
+        const [categoriesData, providersData, requestsData] = await Promise.all([
+          apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM"),
+          apiFetch<{ providers: ProviderRow[] }>("/api/service-providers?status=approved&limit=6"),
+          apiFetch<{ requests: RequestRow[] }>("/api/service-requests?status=published&limit=6"),
         ]);
         if (controller.signal.aborted) return;
-        setFlat((bundle.translations as Flat) ?? {});
-        setListings(Array.isArray(listingsData.listings) ? (listingsData.listings as Listing[]) : []);
-        setRequests(Array.isArray(requestsData.requests) ? (requestsData.requests as RequestRow[]) : []);
-        setCategories(Array.isArray(categoriesData.categories) ? (categoriesData.categories as Category[]) : []);
+        setCategories(categoriesData.categories ?? []);
+        setProviders(providersData.providers ?? []);
+        setRequests(requestsData.requests ?? []);
       } catch {
-        if (!controller.signal.aborted) setMessage(t("services.error"));
+        if (!controller.signal.aborted) setError(t("services.error"));
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setDataLoading(false);
       }
     })();
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
-  const categoryName = useCallback(
-    (categoryId: string) => {
-      const category = categories.find((item) => item.id === categoryId);
-      if (!category) return "";
-      return t(`services.category.${category.code}`);
-    },
-    [categories, t],
-  );
-
-  const listingLabel = useCallback(
-    (key: string | null, fallbackCode: string): string => {
-      const value = key ? t(key) : "";
-      return value !== key ? value : t(`services.category.${fallbackCode}`);
-    },
-    [t],
-  );
-
-  const activeListings = useMemo(() => listings.filter((item) => item.status === "active"), [listings]);
-  const openRequests = useMemo(() => requests.filter((item) => item.status === "open"), [requests]);
-
-  async function submitRequest() {
-    if (!categoryId || !title.trim()) {
-      setMessage(t("services.error"));
-      return;
-    }
-    setMessage("");
-    try {
-      const res = await fetch("/api/services/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          categoryId,
-          countryCode: "OM",
-          cityId: "om-muscat",
-          titleKey: null,
-          descriptionKey: null,
-          budgetMin: budgetMin ? Number(budgetMin) : null,
-          budgetMax: budgetMax ? Number(budgetMax) : null,
-          currency: "OMR",
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(data.error === "services.unauthorized" ? t("services.error") : (data.error ?? t("services.error")));
-        return;
-      }
-      setMessage(t("services.save"));
-      setTitle("");
-      setDescription("");
-      setBudgetMin("");
-      setBudgetMax("");
-      setCategoryId("");
-      setTab("requests");
-      const refreshed = await fetchJson("/api/services/requests");
-      setRequests(Array.isArray(refreshed.requests) ? (refreshed.requests as RequestRow[]) : []);
-    } catch {
-      setMessage(t("services.error"));
-    }
-  }
-
   return (
     <PublicPageShell
       locale={locale}
-      copy={translations[locale]}
+      copy={copy}
       viewer={viewer}
       country={country}
       city={city}
-      onLogin={() => {}}
-      onLogout={() => {}}
+      onLogin={() => openLogin("login")}
+      onLogout={handleLogout}
     >
-      <div dir={direction} className="p-6 max-w-6xl mx-auto">
-        {message && <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">{message}</div>}
+      <div dir={dir} className="container py-8">
+        {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          {(["browse", "requests", "new-request"] as const).map((item) => (
-            <button
-              key={item}
-              onClick={() => setTab(item)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                tab === item ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"
-              }`}
-            >
-              {item === "browse" ? t("services.browseListings") : item === "requests" ? t("services.requests") : t("services.postRequest")}
-            </button>
-          ))}
-        </div>
+        <section className="rounded-2xl border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-blue-950/40 dark:via-gray-900 dark:to-emerald-950/30 p-8 md:p-12 text-center">
+          <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
+            ✨ {t("services.kicker") ?? "سوق الخدمات"}
+          </p>
+          <h1 className="mt-4 text-3xl md:text-4xl font-black text-gray-900 dark:text-white">{t("services.title") ?? "اختر خدمة أو اطلبها بسهولة"}</h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+            {t("services.subtitle") ?? "استعرض مقدمي الخدمات الموثوقين، أو انشر طلبك واستقبل عروضاً مخصصة."}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/service-requests/new" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition">
+              ➕ {t("services.postRequest") ?? "انشر طلباً"}
+            </Link>
+            <Link href="/providers/apply" className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition hover:border-blue-300">
+              👨‍🔧 {t("services.becomeProvider") ?? "انضم كمقدم خدمة"}
+            </Link>
+          </div>
+        </section>
 
-        {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-12">{t("services.loading")}</p>
-        ) : (
-          <>
-            {tab === "browse" && (
-              <div>
-                {activeListings.length === 0 ? (
-                  <p className="text-center text-gray-500 dark:text-gray-400 py-12">{t("services.empty")}</p>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {activeListings.map((listing) => (
-                      <div key={listing.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                        <h3 className="font-bold text-gray-900 dark:text-white">{listingLabel(listing.titleKey, listing.category_id)}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                          {listing.descriptionKey ? t(listing.descriptionKey) : ""}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                            {listing.price} {listing.currency}
-                          </span>
-                          <span className="px-2 py-1 text-xs rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                            {categoryName(listing.category_id) || listing.unit}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+        <AdSlot
+          placement="services_hub_mid"
+          locale={locale}
+          country={country}
+          city={city}
+          path="/services"
+          entityType="services"
+          variant="horizontal"
+          className="mt-8"
+        />
+
+        <section className="mt-10">
+          <div className="flex items-end justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.categories") ?? "التصنيفات"}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.browseByCategory") ?? "تصفح حسب التصنيف"}</h2>
+            </div>
+            <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+              {t("services.viewAll") ?? "عرض الكل"} ←
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dataLoading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-40 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                ))
+              : categories.slice(0, 6).map((category) => <CategoryCard key={category.id} category={category} locale={locale} />)}
+            {!dataLoading && categories.length === 0 && (
+              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
+          </div>
+        </section>
 
-            {tab === "requests" && (
-              <div>
-                {openRequests.length === 0 ? (
-                  <p className="text-center text-gray-500 dark:text-gray-400 py-12">{t("services.empty")}</p>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {openRequests.map((request) => (
-                      <div key={request.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                        <h3 className="font-bold text-gray-900 dark:text-white">{request.titleKey ? t(request.titleKey) : "—"}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                          {request.descriptionKey ? t(request.descriptionKey) : ""}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                            {request.budget_min ?? "—"}–{request.budget_max ?? "—"} {request.currency}
-                          </span>
-                          <span className="px-2 py-1 text-xs rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                            {request.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+        <section className="mt-10">
+          <div className="flex items-end justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.providers") ?? "مقدمو الخدمات"}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.featuredProviders") ?? "مقدمو خدمات موثوقون"}</h2>
+            </div>
+            <Link href="/providers" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+              {t("services.viewAll") ?? "عرض الكل"} ←
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dataLoading
+              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
+              : providers.map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
+            {!dataLoading && providers.length === 0 && (
+              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
+          </div>
+        </section>
 
-            {tab === "new-request" && (
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 max-w-xl">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t("services.postRequest")}</h2>
-                <label className="block mb-3">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("services.category")}</span>
-                  <select
-                    value={categoryId}
-                    onChange={(event) => setCategoryId(event.target.value)}
-                    className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-                  >
-                    <option value="">—</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {t(`services.category.${category.code}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block mb-3">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("services.title")}</span>
-                  <input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-                  />
-                </label>
-                <label className="block mb-3">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{t("services.description")}</span>
-                  <textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    rows={3}
-                    className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-                  />
-                </label>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <label className="block">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{t("services.budget")} (min)</span>
-                    <input
-                      type="number"
-                      value={budgetMin}
-                      onChange={(event) => setBudgetMin(event.target.value)}
-                      className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{t("services.budget")} (max)</span>
-                    <input
-                      type="number"
-                      value={budgetMax}
-                      onChange={(event) => setBudgetMax(event.target.value)}
-                      className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-                    />
-                  </label>
-                </div>
-                <button
-                  onClick={submitRequest}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
-                >
-                  {t("services.save")}
-                </button>
-              </div>
+        <section className="mt-10">
+          <div className="flex items-end justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.requests") ?? "الطلبات"}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.recentRequests") ?? "أحدث الطلبات"}</h2>
+            </div>
+            <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+              {t("services.viewAll") ?? "عرض الكل"} ←
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dataLoading
+              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
+              : requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
+            {!dataLoading && requests.length === 0 && (
+              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{t("services.empty")}</p>
             )}
-          </>
-        )}
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-2xl bg-gray-900 dark:bg-gray-950 p-8 md:p-12 text-center text-white">
+          <h2 className="text-2xl md:text-3xl font-black">{t("services.providerCta") ?? "هل أنت مقدم خدمة محترف؟"}</h2>
+          <p className="mx-auto mt-3 max-w-lg text-sm text-gray-300">
+            {t("services.providerCtaSub") ?? "أنشئ ملفك الشخصي، واستقبل طلبات مناسبة لمنطقتك، وواصل النمو مع عقار بروماكس."}
+          </p>
+          <Link href="/providers/apply" className="mt-6 inline-block px-6 py-3 rounded-xl bg-white text-gray-900 text-sm font-bold transition hover:bg-amber-300">
+            {t("services.applyProvider") ?? "قدم الآن"}
+          </Link>
+        </section>
       </div>
+      {AccountDialog}
     </PublicPageShell>
   );
 }

@@ -1,11 +1,9 @@
-import { getRuntimeDb } from "@/lib/runtime-db";
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
-import { insertRow } from "@/lib/services/db";
+import { insertRow, getServicesDb } from "@/lib/services/db";
 import { writeAudit } from "@/lib/services/audit";
 import {
   isListingStatus,
   isOrderStatus,
-  isRequestStatus,
   canTransition,
   REQUEST_STATUS,
   ORDER_STATUS,
@@ -38,7 +36,7 @@ export type NewCategory = {
 };
 
 export async function createCategory(input: NewCategory, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const exists = await db
     .prepare("SELECT id FROM service_categories WHERE country_code = ?1 AND code = ?2")
     .bind(input.countryCode.toUpperCase(), input.code.trim().toLowerCase())
@@ -62,7 +60,7 @@ export async function createCategory(input: NewCategory, actor?: ActorContext): 
 }
 
 export async function listCategories(countryCode?: string, includeInactive = false): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   let sql = "SELECT * FROM service_categories";
   const params: unknown[] = [];
   const clauses: string[] = [];
@@ -97,7 +95,7 @@ export type NewListing = {
 };
 
 export async function createListing(input: NewListing, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const id = await insertRow(
     db,
     `INSERT INTO service_listings
@@ -128,7 +126,7 @@ export async function createListing(input: NewListing, actor?: ActorContext): Pr
 }
 
 export async function updateListingStatus(listingId: string, status: string, actor?: ActorContext): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   if (!isListingStatus(status)) throw new Error("ORDER_STATUS_INVALID");
   const res = await db
     .prepare("UPDATE service_listings SET status = ?1, updated_at = ?2 WHERE id = ?3")
@@ -148,7 +146,7 @@ export async function listListings(query: {
   radiusKm?: number;
   limit?: number;
 }): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const clauses: string[] = [];
   const params: unknown[] = [];
   if (query.categoryId) {
@@ -208,7 +206,7 @@ export type NewRequest = {
 };
 
 export async function createRequest(input: NewRequest, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const id = await insertRow(
     db,
     `INSERT INTO service_requests
@@ -237,13 +235,13 @@ export async function createRequest(input: NewRequest, actor?: ActorContext): Pr
 }
 
 export async function getRequest(requestId: string): Promise<Record<string, unknown> | null> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const row = await db.prepare("SELECT * FROM service_requests WHERE id = ?1").bind(requestId).first<Record<string, unknown>>();
   return row ?? null;
 }
 
 export async function cancelRequest(requestId: string, byUserId: string, actor?: ActorContext): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const request = await getRequest(requestId);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
   if (request.customer_user_id !== byUserId) throw new Error("ONLY_CUSTOMER");
@@ -263,7 +261,7 @@ export async function listRequests(query: {
   customerUserId?: string;
   limit?: number;
 }): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const clauses: string[] = [];
   const params: unknown[] = [];
   if (query.countryCode) {
@@ -312,7 +310,7 @@ export type NewOffer = {
 };
 
 export async function createOffer(input: NewOffer, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const request = await getRequest(input.requestId);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
   if (request.status !== REQUEST_STATUS.OPEN) throw new Error("REQUEST_NOT_OPEN");
@@ -347,7 +345,7 @@ export async function createOffer(input: NewOffer, actor?: ActorContext): Promis
 }
 
 export async function listOffers(requestId: string): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const result = await db.prepare("SELECT * FROM service_offers WHERE request_id = ?1 AND status != 'withdrawn' ORDER BY price ASC").bind(requestId).all<Record<string, unknown>>();
   return result.results ?? [];
 }
@@ -355,7 +353,7 @@ export async function listOffers(requestId: string): Promise<Array<Record<string
 /* ---------- Orders ---------- */
 
 export async function acceptOffer(offerId: string, byUserId: string, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const offer = await db.prepare("SELECT * FROM service_offers WHERE id = ?1").bind(offerId).first<Record<string, unknown>>();
   if (!offer) throw new Error("OFFER_NOT_FOUND");
   const request = await getRequest(String(offer.request_id));
@@ -397,7 +395,7 @@ export async function acceptOffer(offerId: string, byUserId: string, actor?: Act
 }
 
 export async function updateOrderStatus(orderId: string, to: OrderStatus, byUserId: string, actor?: ActorContext): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   if (!isOrderStatus(to)) throw new Error("ORDER_STATUS_INVALID");
   const order = await db.prepare("SELECT * FROM service_orders WHERE id = ?1").bind(orderId).first<Record<string, unknown>>();
   if (!order) throw new Error("ORDER_NOT_FOUND");
@@ -429,7 +427,7 @@ export async function addReview(input: {
   rating: number;
   comment?: string | null;
 }, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) throw new Error("RATING_INVALID");
   const order = await db.prepare("SELECT * FROM service_orders WHERE id = ?1").bind(input.orderId).first<Record<string, unknown>>();
   if (!order) throw new Error("ORDER_NOT_FOUND");
@@ -449,13 +447,13 @@ export async function addReview(input: {
 }
 
 export async function reviewsForReviewee(revieweeUserId: string): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const result = await db.prepare("SELECT * FROM service_reviews WHERE reviewee_user_id = ?1 ORDER BY created_at DESC").bind(revieweeUserId).all<Record<string, unknown>>();
   return result.results ?? [];
 }
 
 export async function providerAverageRating(providerUserId: string): Promise<{ avg: number; count: number }> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const row = await db
     .prepare("SELECT COALESCE(AVG(rating), 0) AS avg, COUNT(*) AS count FROM service_reviews WHERE reviewee_user_id = ?1")
     .bind(providerUserId)
@@ -471,7 +469,7 @@ export async function openDispute(input: {
   reason: string;
   description?: string | null;
 }, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const order = await db.prepare("SELECT * FROM service_orders WHERE id = ?1").bind(input.orderId).first<Record<string, unknown>>();
   if (!order) throw new Error("ORDER_NOT_FOUND");
   if (order.customer_user_id !== input.openedByUserId && order.provider_user_id !== input.openedByUserId) {
@@ -491,7 +489,7 @@ export async function openDispute(input: {
 }
 
 export async function resolveDispute(disputeId: string, resolutionNote: string, actor?: ActorContext): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const dispute = await db.prepare("SELECT * FROM service_disputes WHERE id = ?1").bind(disputeId).first<Record<string, unknown>>();
   if (!dispute) throw new Error("DISPUTE_NOT_FOUND");
   await db
@@ -509,7 +507,7 @@ export async function sendMessage(input: {
   senderUserId: string;
   body: string;
 }, actor?: ActorContext): Promise<string> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   if (!input.body.trim()) throw new Error("INVALID_BODY");
   const id = await insertRow(
     db,
@@ -522,7 +520,7 @@ export async function sendMessage(input: {
 }
 
 export async function threadMessages(threadType: "request" | "order", threadId: string): Promise<Array<Record<string, unknown>>> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   const result = await db
     .prepare("SELECT * FROM service_messages WHERE thread_type = ?1 AND thread_id = ?2 ORDER BY created_at ASC LIMIT 200")
     .bind(threadType, threadId)

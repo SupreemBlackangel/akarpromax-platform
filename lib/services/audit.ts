@@ -1,6 +1,5 @@
-import { getRuntimeDb } from "@/lib/runtime-db";
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
-import { insertRow } from "@/lib/services/db";
+import { insertRow, getServicesDb } from "@/lib/services/db";
 
 export type AuditEntry = {
   action: string;
@@ -12,7 +11,7 @@ export type AuditEntry = {
 };
 
 export async function writeAudit(entry: AuditEntry): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   await db
     .prepare(
       `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata, ip_address, created_at)
@@ -39,7 +38,7 @@ export async function writeSponsorActivity(entry: {
   newValues?: Record<string, unknown>;
   actor?: { userId?: string | null; ip?: string | null };
 }): Promise<void> {
-  const db = await getRuntimeDb();
+  const db = await getServicesDb();
   await db
     .prepare(
       `INSERT INTO sponsor_activity_logs

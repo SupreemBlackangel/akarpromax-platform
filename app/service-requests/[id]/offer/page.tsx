@@ -1,0 +1,208 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import PublicPageShell from "@/src/components/PublicPageShell";
+import { useServicesPage } from "@/src/components/services/useServicesPage";
+import { type RequestRow } from "@/src/components/services/ServiceCards";
+import { RequestStatusPill } from "@/src/components/services/ServiceStatusBadges";
+import { apiFetch, formatMoney, nameFor } from "@/src/lib/services-client";
+
+type Props = { id: string };
+
+export default function NewOfferPage({ id }: Props) {
+  const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const [request, setRequest] = useState<RequestRow | null>(null);
+  const [price, setPrice] = useState("");
+  const [currency, setCurrency] = useState("OMR");
+  const [durationText, setDurationText] = useState("");
+  const [materialsIncluded, setMaterialsIncluded] = useState(false);
+  const [materialCost, setMaterialCost] = useState("");
+  const [laborCost, setLaborCost] = useState("");
+  const [visitFee, setVisitFee] = useState("");
+  const [nearestDate, setNearestDate] = useState("");
+  const [offerNotes, setOfferNotes] = useState("");
+  const [terms, setTerms] = useState("");
+  const [needsVisit, setNeedsVisit] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    apiFetch<{ request: RequestRow }>(`/api/service-requests/${encodeURIComponent(id)}`)
+      .then((data) => {
+        if (!controller.signal.aborted) setRequest(data.request);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [id]);
+
+  const isOpen = request && ["published", "receiving_offers"].includes(request.status);
+
+  if (!viewer.authenticated) {
+    return (
+      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
+        <div dir={dir} className="container py-24 max-w-md text-center">
+          <div className="text-5xl mb-4">🔒</div>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
+          <div className="mt-6 flex justify-center gap-3">
+            <button onClick={() => openLogin("login")} className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">{t("services.login") ?? "تسجيل الدخول"}</button>
+            <button onClick={() => openLogin("register")} className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition">{t("services.register") ?? "إنشاء حساب"}</button>
+          </div>
+        </div>
+        {AccountDialog}
+      </PublicPageShell>
+    );
+  }
+
+  const submit = async () => {
+    const priceNum = price ? Number(price) : null;
+    if (!priceNum || priceNum <= 0) {
+      setError(t("services.offerPriceRequired") ?? "أدخل سعراً صحيحاً");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const body: Record<string, unknown> = {
+        requestId: id,
+        price: priceNum,
+        currency,
+        durationText: durationText.trim() || null,
+        materialsIncluded,
+        materialCost: materialCost ? Number(materialCost) : null,
+        laborCost: laborCost ? Number(laborCost) : null,
+        visitFee: visitFee ? Number(visitFee) : null,
+        nearestDate: nearestDate || null,
+        offerNotes: offerNotes.trim() || null,
+        terms: terms.trim() || null,
+        needsVisit,
+      };
+      if (materialsIncluded && materialCost && priceNum) {
+        body.totalPrice = Math.round((priceNum + Number(materialCost)) * 100) / 100;
+      }
+      const data = await apiFetch<{ ok: boolean; id: string }>("/api/service-offers", { method: "POST", body: JSON.stringify(body) });
+      window.location.href = `/service-requests/${id}?offer=${data.id}&sent=1`;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("services.error"));
+      setSubmitting(false);
+    }
+  };
+
+  const inputCls =
+    "w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400";
+  const labelCls = "block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1";
+
+  return (
+    <PublicPageShell
+      locale={locale}
+      copy={copy}
+      viewer={viewer}
+      country={country}
+      city={city}
+      onLogin={() => openLogin("login")}
+      onLogout={handleLogout}
+    >
+      <div dir={dir} className="container py-8 max-w-3xl">
+        <Link href={`/service-requests/${id}`} className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للطلب"}</Link>
+        <h1 className="mt-3 text-3xl font-black text-gray-900 dark:text-white">{t("services.makeOffer") ?? "تقديم عرض"}</h1>
+
+        {loading ? (
+          <div className="mt-6 h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+        ) : !request ? (
+          <p className="mt-6 text-gray-500 dark:text-gray-400">{t("services.empty")}</p>
+        ) : !isOpen ? (
+          <div className="mt-6 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-amber-700 dark:text-amber-300">
+            {t("services.requestClosed") ?? "هذا الطلب لم يعد متاحاً لاستقبال العروض."}
+          </div>
+        ) : (
+          <>
+            <div className="mt-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-bold text-gray-900 dark:text-white">{request.title || request.reference_number}</h2>
+                <RequestStatusPill status={request.status} locale={locale} />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {request.category ? nameFor(locale, (request.category as Record<string, unknown>).name_ar, (request.category as Record<string, unknown>).name_en, (request.category as Record<string, unknown>).name_tr, "") : ""}</p>
+              {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-3">{request.description}</p>}
+              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                <span className="px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
+                {request.urgency && <span className="px-3 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">إلحاح: {request.urgency}</span>}
+              </div>
+            </div>
+
+            {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+
+            <div className="mt-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 space-y-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>{t("services.offerPrice") ?? "السعر (ر.ع)"} *</label>
+                  <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.currency") ?? "العملة"}</label>
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}>
+                    <option value="OMR">OMR</option>
+                    <option value="SAR">SAR</option>
+                    <option value="AED">AED</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.durationText") ?? "مدة التنفيذ"}</label>
+                  <input value={durationText} onChange={(e) => setDurationText(e.target.value)} className={inputCls} placeholder="مثال: 3 أيام عمل" />
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.nearestDate") ?? "أقرب موعد متاح"}</label>
+                  <input type="date" value={nearestDate} onChange={(e) => setNearestDate(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.materialCost") ?? "تكلفة المواد"}</label>
+                  <input type="number" min={0} value={materialCost} onChange={(e) => setMaterialCost(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.laborCost") ?? "تكلفة العمل"}</label>
+                  <input type="number" min={0} value={laborCost} onChange={(e) => setLaborCost(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>{t("services.visitFee") ?? "رسوم المعاينة"}</label>
+                  <input type="number" min={0} value={visitFee} onChange={(e) => setVisitFee(e.target.value)} className={inputCls} />
+                </div>
+                <div className="flex flex-col justify-end gap-2 pb-1">
+                  <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+                    <input type="checkbox" checked={materialsIncluded} onChange={(e) => setMaterialsIncluded(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    {t("services.materialsIncluded") ?? "المواد متضمنة في السعر"}
+                  </label>
+                  <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+                    <input type="checkbox" checked={needsVisit} onChange={(e) => setNeedsVisit(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    {t("services.visitRequired") ?? "يتطلب معاينة أولاً"}
+                  </label>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>{t("services.offerNotes") ?? "تفاصيل العرض"}</label>
+                  <textarea value={offerNotes} onChange={(e) => setOfferNotes(e.target.value)} rows={4} className={inputCls} placeholder="اشرح ما يشمل العرض..." />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>{t("services.terms") ?? "الشروط والأحكام"}</label>
+                  <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={3} className={inputCls} />
+                </div>
+              </div>
+
+              <button
+                onClick={() => void submit()}
+                disabled={submitting}
+                className="w-full px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-black transition"
+              >
+                {submitting ? t("services.submitting") ?? "جارٍ الإرسال..." : t("services.submitOffer") ?? "إرسال العرض"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+      {AccountDialog}
+    </PublicPageShell>
+  );
+}
