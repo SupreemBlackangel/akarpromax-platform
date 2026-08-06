@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { roleNameAr } from "@/src/constants/roles";
 
 type Identity = {
   email: string | null;
@@ -35,18 +34,7 @@ const statusLabels: Record<string, string> = {
   active: "نشط", draft: "مسودة", paused: "متوقف", expired: "منتهي", archived: "مؤرشف",
 };
 
-export default function ReportsAdminClient({
-  initialUser,
-}: {
-  initialUser: { email: string; displayName: string };
-}) {
-  const [identity, setIdentity] = useState<Identity>({
-    email: initialUser.email,
-    displayName: initialUser.displayName,
-    role: "viewer",
-    countryCode: null,
-    permissions: [],
-  });
+export default function ReportsAdminClient() {
   const [data, setData] = useState<Analytics | null>(null);
   const [error, setError] = useState("");
 
@@ -58,7 +46,6 @@ export default function ReportsAdminClient({
         return response.json();
       })
       .then((result: Analytics) => {
-        setIdentity(result.identity);
         setData(result);
       })
       .catch((err) => {
@@ -81,23 +68,11 @@ export default function ReportsAdminClient({
   const maxDaily = data ? Math.max(1, ...data.timeline.map((entry) => Math.max(entry.sponsorImpressions, entry.adImpressions))) : 1;
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/admin"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
-        <nav aria-label="لوحة التحكم">
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 11, minHeight: 42, padding: "9px 12px", borderRadius: 9, color: "#6b7b93", textDecoration: "none" }}><span style={{ width: 20, color: "#1769ff", fontSize: 16, textAlign: "center" }}>≡</span>لوحة الإحصاءات</Link>
-        </nav>
-        <div className="admin-user-card">
-          <span>{identity.displayName.slice(0, 1).toUpperCase()}</span>
-          <div><strong>{identity.displayName}</strong><small>{roleNameAr(identity.role)}</small></div>
-        </div>
-      </aside>
-
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
-          <div><p>تحليلات الأداء</p><h1>التقارير والإحصاءات</h1></div>
-          <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
-        </header>
+    <>
+      <header className="sponsor-admin-header">
+        <div><p>تحليلات الأداء</p><h1>التقارير والإحصاءات</h1></div>
+        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+      </header>
 
         {error && <div className="admin-message" role="status">{error}</div>}
 
@@ -172,7 +147,6 @@ export default function ReportsAdminClient({
             </div>
           </>
         )}
-      </section>
-    </main>
+    </>
   );
 }

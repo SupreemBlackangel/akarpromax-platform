@@ -98,20 +98,11 @@ export default function RolesAdminClient() {
   const allPermissions = useMemo(() => permissionGroups.flatMap((group) => group.permissions), []);
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/admin"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
-        <nav aria-label="لوحة التحكم">
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 11, minHeight: 42, padding: "9px 12px", borderRadius: 9, color: "#6b7b93", textDecoration: "none" }}><span style={{ width: 20, color: "#1769ff", fontSize: 16, textAlign: "center" }}>≡</span>لوحة الإحصاءات</Link>
-        </nav>
-        <div className="admin-user-card"><span>♛</span><div><strong>مصفوفة الصلاحيات</strong><small>RBAC</small></div></div>
-      </aside>
-
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
-          <div><p>نظام الصلاحيات</p><h1>الأدوار والصلاحيات</h1></div>
-          <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
-        </header>
+    <>
+      <header className="sponsor-admin-header">
+        <div><p>نظام الصلاحيات</p><h1>الأدوار والصلاحيات</h1></div>
+        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+      </header>
 
         <section className="admin-panel">
           <div className="admin-panel-title"><div><p>المصفوفة</p><h2>صلاحيات الأدوار</h2></div><span>{visibleRoles.size} أدوار</span></div>
@@ -168,7 +159,6 @@ export default function RolesAdminClient() {
             ))}
           </div>
         </section>
-      </section>
-    </main>
+    </>
   );
 }

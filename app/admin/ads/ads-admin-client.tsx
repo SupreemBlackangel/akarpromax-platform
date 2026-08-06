@@ -177,18 +177,6 @@ const countries: [string, string][] = [
   ["mr", "موريتانيا"], ["km", "جزر القمر"], ["tr", "تركيا"],
 ];
 
-const roleLabels: Record<string, string> = {
-  viewer: "مشاهد",
-  analyst: "محلل",
-  content_editor: "محرر محتوى",
-  service_provider: "مزود خدمات",
-  service_supervisor: "مشرف خدمات",
-  country_manager: "مدير دولة",
-  ad_manager: "مدير الإعلانات",
-  sponsor_admin: "مدير الرعاة",
-  super_admin: "المدير العام",
-};
-
 const sectionLabels = Object.fromEntries(
   Object.values(PLATFORM_SECTIONS_REGISTRY).map((meta) => [meta.key, meta.label.ar]),
 );
@@ -709,30 +697,24 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   };
 
   if (!busy && !identity.permissions.includes(PERMISSIONS.ADS_VIEW)) {
-    return <main className="ads-admin-denied" dir="rtl"><div><span>⌁</span><h1>لا توجد صلاحية لمركز الإعلانات</h1><p>اطلب من المدير العام منحك دور مدير الإعلانات أو صلاحية المشاهدة.</p><Link href="/">العودة إلى المنصة</Link></div></main>;
+    return <div className="ads-admin-denied" dir="rtl"><div><span>⌁</span><h1>لا توجد صلاحية لمركز الإعلانات</h1><p>اطلب من المدير العام منحك دور مدير الإعلانات أو صلاحية المشاهدة.</p><Link href="/">العودة إلى المنصة</Link></div></div>;
   }
 
   return (
-    <main className={`ads-admin${editing ? " ads-admin-wizard-mode" : ""}`} dir="rtl">
+    <>
       <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files || undefined); event.currentTarget.value = ""; }} />
-      <aside className="ads-admin-sidebar">
-        <Link className="ads-admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Advertising Center</small></div></Link>
-        <nav aria-label="مركز الإعلانات">
-          <button className={activeView === "campaigns" ? "active" : ""} type="button" onClick={() => setActiveView("campaigns")}><span>▣</span>الحملات</button>
-          <button className={activeView === "media" ? "active" : ""} type="button" onClick={() => setActiveView("media")}><span>▧</span>مكتبة الوسائط</button>
-          {canAnalytics && <button className={activeView === "analytics" ? "active" : ""} type="button" onClick={() => setActiveView("analytics")}><span>↗</span>التحليلات</button>}
-        </nav>
-        <div className="ads-admin-links"><Link href="/admin/sponsors">إدارة الرعاة</Link><Link href="/" target="_blank">معاينة المنصة ↗</Link></div>
-        <div className="ads-admin-user"><span>{identity.displayName.slice(0, 1).toUpperCase()}</span><div><strong>{identity.displayName}</strong><small>{roleLabels[identity.role] ?? identity.role}{identity.countryCode ? ` • ${countryName(identity.countryCode)}` : ""}</small></div></div>
-      </aside>
-
-      <section className="ads-admin-canvas">
-        <header className="ads-admin-header">
-          <div><p>محرك الإعلانات الذكي</p><h1>مركز إدارة الحملات</h1></div>
-          <div><Link href="/" target="_blank">المعاينة المباشرة</Link>{canEdit && <button type="button" onClick={() => startCreate()}>+ حملة جديدة</button>}</div>
-        </header>
-
-        {message && <div className="ads-admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
+      {!editing && (
+        <>
+          <header className="ads-admin-header">
+            <div><p>محرك الإعلانات الذكي</p><h1>مركز إدارة الحملات</h1></div>
+            <div><Link href="/" target="_blank">المعاينة المباشرة</Link>{canEdit && <button type="button" onClick={() => startCreate()}>+ حملة جديدة</button>}</div>
+          </header>
+          <nav className="admin-subnav" aria-label="مركز الإعلانات">
+            <button className={activeView === "campaigns" ? "active" : ""} type="button" onClick={() => setActiveView("campaigns")}><span aria-hidden="true">▣</span>الحملات</button>
+            <button className={activeView === "media" ? "active" : ""} type="button" onClick={() => setActiveView("media")}><span aria-hidden="true">▧</span>مكتبة الوسائط</button>
+            {canAnalytics && <button className={activeView === "analytics" ? "active" : ""} type="button" onClick={() => setActiveView("analytics")}><span aria-hidden="true">↗</span>التحليلات</button>}
+          </nav>
+          {message && <div className="ads-admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
 
         <div className="ads-stat-grid">
           <article><span>الحملات النشطة</span><strong>{totals.active}</strong><small>حملة منشورة</small></article>
@@ -764,7 +746,8 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
         </section>}
 
         {activeView === "analytics" && canAnalytics && <AnalyticsPanel />}
-      </section>
+        </>
+      )}
 
       {editing && <section className="ads-wizard-shell">
         <form className="ads-wizard" onSubmit={saveCampaign}>
@@ -890,7 +873,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <footer className="ads-wizard-actions"><button type="button" onClick={() => wizardStep === 1 ? setEditing(false) : setWizardStep((step) => step - 1)}>{wizardStep === 1 ? "إلغاء" : "السابق"}</button>{wizardStep < 7 ? <button className="primary" type="button" onClick={() => setWizardStep((step) => step + 1)}>التالي</button> : <button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button>}</footer>
         </form>
       </section>}
-    </main>
+    </>
   );
 }
 

@@ -2,15 +2,6 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { roleNameAr } from "@/src/constants/roles";
-
-type Identity = {
-  email: string | null;
-  displayName: string;
-  role: string;
-  countryCode: string | null;
-  permissions: string[];
-};
 
 type Plan = {
   id: string;
@@ -45,18 +36,7 @@ const emptyPlan = {
   sortOrder: 0,
 };
 
-export default function SettingsAdminClient({
-  initialUser,
-}: {
-  initialUser: { email: string; displayName: string };
-}) {
-  const [identity, setIdentity] = useState<Identity>({
-    email: initialUser.email,
-    displayName: initialUser.displayName,
-    role: "viewer",
-    countryCode: null,
-    permissions: [],
-  });
+export default function SettingsAdminClient() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [form, setForm] = useState(emptyPlan);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,14 +44,9 @@ export default function SettingsAdminClient({
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
-    const [contextResponse, plansResponse] = await Promise.all([
-      fetch("/api/user-context", { cache: "no-store" }),
-      fetch("/api/sponsor-plans", { cache: "no-store" }),
-    ]);
+    const plansResponse = await fetch("/api/sponsor-plans", { cache: "no-store" });
     if (!plansResponse.ok) throw new Error("تعذر تحميل الخطط");
-    const context = await contextResponse.json();
     const data = await plansResponse.json();
-    setIdentity(context);
     setPlans(Array.isArray(data) ? data : []);
   }, []);
 
@@ -179,23 +154,11 @@ export default function SettingsAdminClient({
   }
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/admin"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
-        <nav aria-label="لوحة التحكم">
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 11, minHeight: 42, padding: "9px 12px", borderRadius: 9, color: "#6b7b93", textDecoration: "none" }}><span style={{ width: 20, color: "#1769ff", fontSize: 16, textAlign: "center" }}>≡</span>لوحة الإحصاءات</Link>
-        </nav>
-        <div className="admin-user-card">
-          <span>{identity.displayName.slice(0, 1).toUpperCase()}</span>
-          <div><strong>{identity.displayName}</strong><small>{roleNameAr(identity.role)}</small></div>
-        </div>
-      </aside>
-
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
-          <div><p>إعدادات النظام</p><h1>خطط الاشتراك</h1></div>
-          <div className="admin-header-actions"><button type="button" onClick={startCreate}>+ خطة جديدة</button><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
-        </header>
+    <>
+      <header className="sponsor-admin-header">
+        <div><p>إعدادات النظام</p><h1>خطط الاشتراك</h1></div>
+        <div className="admin-header-actions"><button type="button" onClick={startCreate}>+ خطة جديدة</button><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+      </header>
 
         {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
 
@@ -257,7 +220,6 @@ export default function SettingsAdminClient({
             <button className="admin-primary" type="submit" disabled={busy}>{editingId ? "حفظ التعديلات" : "إنشاء الخطة"}</button>
           </form>
         </div>
-      </section>
-    </main>
+    </>
   );
 }

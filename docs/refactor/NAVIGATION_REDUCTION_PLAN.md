@@ -1,14 +1,21 @@
 # NAVIGATION REDUCTION PLAN
 
-> **Status — Phase 4 (navigation reduction) partially done.** Public landing nav is now
+> **Status — Phase 4 (navigation reduction) largely done.** Public landing nav is
 > admin-free: `adminNav`, `sidebarIndexes`, the header admin chip, and all admin sidebar
 > links were removed from `app/page.tsx`; `translations.sidebar` (mixed public/admin) was
 > deleted from every locale and from `SiteCopy`; the public sidebar is a text-led
 > `publicNav` (Home / Properties / Services / Offices & companies / About / Join us)
 > targeting real section anchors; lucide usage in `app/page.tsx` is reduced to `Wrench`.
-> Remaining work: retire the duplicated admin sidebars (dashboard/client modules), decide
-> the المزادات / المنتدى / المزيد public items once those routes exist, and consolidate
-> admin pages under the group routes below.
+> Admin now has a **single shared layout**: `app/admin/layout.tsx` (server) fetches
+> `getSessionIdentity()` and renders one `AdminSidebar` (`app/admin/admin-sidebar.tsx`)
+> with six grouped nav groups (see below) around a `sponsor-admin-canvas`. All
+> per-client duplicated sidebars/shells were retired — dashboard, users, roles, reports,
+> settings, sponsors and ads clients now render only their page header + panels inside
+> the shared canvas; sponsors/ads keep their internal sub-views as page-level
+> `admin-subnav` tabs instead of sidebars.
+> Remaining work: decide the المزادات / المنتدى / المزيد public items once those routes
+> exist, and consolidate admin pages under the group routes below
+> (`/admin/organizations`, `/admin/content`), which is deferred.
 
 ## Principles
 - Public navigation and admin navigation must be fully separated.
@@ -56,14 +63,14 @@
 - Workspace navigation is role-specific and must stay out of the public top-level navigation.
 - Deferred tools and professional modules are entered from workspace context, not from the primary public menu.
 
-## Admin Navigation Groups
-1. الإدارة العامة.
-2. المستخدمون والصلاحيات.
-3. العقارات والمزادات.
-4. الخدمات والمنظمات.
-5. المحتوى والقانون.
-6. الإعلانات والتقارير.
-7. إعدادات النظام.
+## Admin Navigation Groups (current shared sidebar)
+1. الإدارة العامة — لوحة الإحصاءات.
+2. المستخدمون والصلاحيات — المستخدمون، الأدوار والصلاحيات.
+3. الخدمات والمنظمات — سوق الخدمات، نظام الرعاة، طلبات الرعاة، شريط الرعاة.
+4. المحتوى والقانون — إدارة الأخبار، إدارة الترجمات.
+5. الإعلانات والتقارير — مركز الإعلانات، التقارير.
+6. إعدادات النظام — الإعدادات.
+(مجموعة «العقارات والمزادات» لا تظهر بعد لغياب المسارات المقابلة.)
 
 ## Admin Group-to-Route Mapping
 | Group | Final Routes |
@@ -84,9 +91,9 @@
 - All emoji and ad hoc Unicode nav icons must be retired.
 
 ## Current Navigation Structures To Retire
-- `translations.sidebar` as a mixed public/admin navigation structure
-- public landing page `adminNav` embedded in `app/page.tsx`
-- duplicated admin sidebar definitions in multiple admin clients
+- `translations.sidebar` as a mixed public/admin navigation structure — DONE
+- public landing page `adminNav` embedded in `app/page.tsx` — DONE
+- duplicated admin sidebar definitions in multiple admin clients — DONE (single `app/admin/admin-sidebar.tsx`)
 - tools-local emoji navigation in primary app surfaces
 
 ## Breadcrumb Rule

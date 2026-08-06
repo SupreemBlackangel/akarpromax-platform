@@ -310,34 +310,26 @@ export default function SponsorAdminClient({
 
   if (!busy && !identity.permissions.includes(PERMISSIONS.SPONSORS_VIEW)) {
     return (
-      <main className="sponsor-admin-denied" dir="rtl">
+      <div className="sponsor-admin-denied" dir="rtl">
         <div><span>⚿</span><h1>لا توجد صلاحية للدخول</h1><p>حسابك مسجل، لكن لم يتم منحه دورًا في نظام الرعاة.</p><Link href="/">العودة إلى المنصة</Link></div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Sponsor Control</small></div></Link>
-        <nav aria-label="إدارة الرعاة">
-          {availableViews.map((item) => (
-            <button className={activeView === item.id ? "active" : ""} type="button" onClick={() => setActiveView(item.id)} key={item.id}>
-              <span>{item.icon}</span>{item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="admin-user-card">
-          <span>{identity.displayName.slice(0, 1).toUpperCase()}</span>
-          <div><strong>{identity.displayName}</strong><small>{roleLabels[identity.role] ?? identity.role}{identity.countryCode ? ` • ${countryName(identity.countryCode)}` : ""}</small></div>
-        </div>
-      </aside>
+    <>
+      <header className="sponsor-admin-header">
+        <div><p>إدارة الشراكات التجارية</p><h1>نظام الرعاة حسب الدولة</h1></div>
+        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link>{canEdit && <button type="button" onClick={startCreate}>+ راعٍ جديد</button>}</div>
+      </header>
 
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
-          <div><p>إدارة الشراكات التجارية</p><h1>نظام الرعاة حسب الدولة</h1></div>
-          <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link>{canEdit && <button type="button" onClick={startCreate}>+ راعٍ جديد</button>}</div>
-        </header>
+      <nav className="admin-subnav" aria-label="أقسام نظام الرعاة">
+        {availableViews.map((item) => (
+          <button className={activeView === item.id ? "active" : ""} type="button" onClick={() => setActiveView(item.id)} key={item.id}>
+            <span aria-hidden="true">{item.icon}</span>{item.label}
+          </button>
+        ))}
+      </nav>
 
         {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
 
@@ -401,7 +393,6 @@ export default function SponsorAdminClient({
             )}
           </section>
         )}
-      </section>
 
       {editing && (
         <div className="admin-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setEditing(false); }}>
@@ -454,6 +445,6 @@ export default function SponsorAdminClient({
           </form>
         </div>
       )}
-    </main>
+    </>
   );
 }

@@ -6,10 +6,10 @@ import ReportsAdminClient from "../reports-admin-client";
 export const dynamic = "force-dynamic";
 
 async function ReportsGate() {
-  const user = await requireSessionUser("/admin/reports");
+  await requireSessionUser("/admin/reports");
   return (
     <PermissionGuard requiredPermissions={[PERMISSIONS.REPORTS_VIEW]}>
-      <ReportsAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />
+      <ReportsAdminClient />
     </PermissionGuard>
   );
 }

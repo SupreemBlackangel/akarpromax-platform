@@ -24,32 +24,35 @@
 ### 2. Admin Dashboard Module Links
 - File: `app/admin/dashboard-admin-client.tsx`
 - Definition:
-  - Local `sections` array with links to sponsors, ads, news, i18n, services, users, roles, reports, settings.
-- Icons:
-  - Unicode symbols (`▣`, `▤`, `➤`, `🔤`, `✦`, `♙`, `♛`, `↗`, `⚙`).
+  - Header + stat/content panels only; no local sidebar (shared `app/admin/layout.tsx`
+    provides navigation).
 
-### 3. Repeated Inline Admin Sidebar Links
-- Files:
-  - `app/admin/users-admin-client.tsx`
-  - `app/admin/roles-admin-client.tsx`
-  - `app/admin/reports-admin-client.tsx`
-  - `app/admin/settings-admin-client.tsx`
+### 3. Shared Admin Sidebar (new)
+- File: `app/admin/admin-sidebar.tsx` + `app/admin/layout.tsx`
 - Definition:
-  - Each page defines a minimal one-link sidebar back to `/admin`.
+  - One client `AdminSidebar` rendered by the server `app/admin/layout.tsx` (fetches
+    `getSessionIdentity()`, wraps pages in `.sponsor-admin` + `.sponsor-admin-canvas`).
+  - Six grouped nav groups (`admin-nav-group`): الإدارة العامة، المستخدمون والصلاحيات،
+    الخدمات والمنظمات، المحتوى والقانون، الإعلانات والتقارير، إعدادات النظام — each item
+    permission-gated via `PERMISSIONS` / `SERVICE_PERMISSIONS`.
+  - Page-level sub-views (sponsors campaigns/analytics/access, ads campaigns/media/analytics)
+    now render as `admin-subnav` tabs inside each page instead of a second sidebar.
 - Icons:
-  - Unicode `≡` marker.
+  - Unicode symbols (`▦`, `♙`, `♛`, `✦`, `▣`, `✉`, `◈`, `➤`, `🔤`, `▤`, `↗`, `⚙`).
 
 ### 4. Sponsor Admin Local Navigation
 - File: `app/admin/sponsors/sponsor-admin-client.tsx`
 - Definition:
-  - `availableViews` array for `campaigns`, `analytics`, `access`.
+  - `availableViews` array for `campaigns`, `analytics`, `access`, rendered as
+    `admin-subnav` page tabs (sidebar removed).
 - Icons:
   - Unicode (`▣`, `↗`, `♙`).
 
 ### 5. Ads Admin Local Navigation
 - File: `app/admin/ads/ads-admin-client.tsx`
 - Definition:
-  - Local sidebar links plus internal wizard-step navigation.
+  - Internal campaign/media/analytics tabs (now `admin-subnav`) plus internal
+    wizard-step navigation. The old ads sidebar/brand/user shell was removed.
 - Icons:
   - No shared icon system; mixed text, letters, and wizard-step numbers.
 
@@ -99,8 +102,11 @@
 - No breadcrumb component, hook, or page metadata was found.
 - This is a gap rather than duplication.
 
-### Admin Shell Navigation Is Repeated, Not Shared
-- Multiple admin pages duplicate sidebar/header markup instead of consuming a shared layout.
+### Admin Shell Navigation Is Repeated, Not Shared — RESOLVED
+- Multiple admin pages previously duplicated sidebar/header markup.
+- Status: Fixed in Phase 4. `app/admin/layout.tsx` + `app/admin/admin-sidebar.tsx` provide
+  the single shared admin shell; dashboard, users, roles, reports, settings, sponsors and
+  ads clients render only content inside the shared canvas.
 
 ## Footer and Ancillary Navigation
 - `src/data/translations.ts`

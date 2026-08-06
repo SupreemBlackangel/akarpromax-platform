@@ -125,23 +125,11 @@ export default function UsersAdminClient({
   }
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/admin"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
-        <nav aria-label="لوحة التحكم">
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 11, minHeight: 42, padding: "9px 12px", borderRadius: 9, color: "#6b7b93", textDecoration: "none" }}><span style={{ width: 20, color: "#1769ff", fontSize: 16, textAlign: "center" }}>≡</span>لوحة الإحصاءات</Link>
-        </nav>
-        <div className="admin-user-card">
-          <span>{identity.displayName.slice(0, 1).toUpperCase()}</span>
-          <div><strong>{identity.displayName}</strong><small>{roleNameAr(identity.role)}</small></div>
-        </div>
-      </aside>
-
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
-          <div><p>الوصول والصلاحيات</p><h1>إدارة المستخدمين</h1></div>
-          <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
-        </header>
+    <>
+      <header className="sponsor-admin-header">
+        <div><p>الوصول والصلاحيات</p><h1>إدارة المستخدمين</h1></div>
+        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+      </header>
 
         {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
 
@@ -190,7 +178,6 @@ export default function UsersAdminClient({
             </form>
           )}
         </div>
-      </section>
-    </main>
+    </>
   );
 }

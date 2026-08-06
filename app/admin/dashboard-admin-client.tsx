@@ -2,19 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PERMISSIONS } from "@/src/constants/permissions";
-import { roleNameAr } from "@/src/constants/roles";
-
-type Identity = {
-  email: string | null;
-  displayName: string;
-  role: string;
-  countryCode: string | null;
-  permissions: string[];
-};
 
 type Stats = {
-  identity: Identity;
   sponsors: {
     total: number;
     byStatus: Record<string, number>;
@@ -54,18 +43,7 @@ const actionLabels: Record<string, string> = {
   "campaign.archived": "أرشفة حملة",
 };
 
-export default function DashboardAdminClient({
-  initialUser,
-}: {
-  initialUser: { email: string; displayName: string };
-}) {
-  const [identity, setIdentity] = useState<Identity>({
-    email: initialUser.email,
-    displayName: initialUser.displayName,
-    role: "viewer",
-    countryCode: null,
-    permissions: [],
-  });
+export default function DashboardAdminClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState("");
 
@@ -77,7 +55,6 @@ export default function DashboardAdminClient({
         return response.json();
       })
       .then((data: Stats) => {
-        setIdentity(data.identity);
         setStats(data);
       })
       .catch((err) => {
@@ -87,25 +64,8 @@ export default function DashboardAdminClient({
     return () => controller.abort();
   }, []);
 
-  const can = (permission: string) => identity.permissions.includes(permission);
-  const sections = [
-    { href: "/admin/sponsors", icon: "▣", label: "نظام الرعاة", show: can(PERMISSIONS.SPONSORS_VIEW) },
-    { href: "/admin/ads", icon: "▤", label: "مركز الإعلانات", show: can(PERMISSIONS.ADS_VIEW) },
-    { href: "/admin/news", icon: "➤", label: "إدارة الأخبار", show: can(PERMISSIONS.NEWS_VIEW) },
-    { href: "/admin/i18n", icon: "🔤", label: "إدارة الترجمات", show: can(PERMISSIONS.I18N_VIEW) },
-    { href: "/services", icon: "✦", label: "سوق الخدمات", show: true },
-    { href: "/admin/users", icon: "♙", label: "المستخدمون", show: can(PERMISSIONS.USERS_VIEW) },
-    { href: "/admin/roles", icon: "♛", label: "الأدوار والصلاحيات", show: can(PERMISSIONS.ROLES_VIEW) },
-    { href: "/admin/reports", icon: "↗", label: "التقارير", show: can(PERMISSIONS.REPORTS_VIEW) },
-    { href: "/admin/settings", icon: "⚙", label: "الإعدادات", show: can(PERMISSIONS.SETTINGS_MANAGE) },
-  ].filter((item) => item.show);
-
   if (error) {
-    return (
-      <main className="sponsor-admin" dir="rtl">
-        <div style={{ margin: "auto", padding: 48, color: "#b34351" }}>{error}</div>
-      </main>
-    );
+    return <div style={{ padding: 48, color: "#b34351" }}>{error}</div>;
   }
 
   const totals = stats ? [
@@ -116,24 +76,8 @@ export default function DashboardAdminClient({
   ] : [];
 
   return (
-    <main className="sponsor-admin" dir="rtl">
-      <aside className="sponsor-admin-sidebar">
-        <Link className="admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
-        <nav aria-label="لوحة التحكم">
-          {sections.map((item) => (
-            <Link key={item.href} href={item.href} style={{ display: "flex", alignItems: "center", gap: 11, minHeight: 42, padding: "9px 12px", borderRadius: 9, color: "#6b7b93", textDecoration: "none" }}>
-              <span style={{ width: 20, color: "#1769ff", fontSize: 16, textAlign: "center" }}>{item.icon}</span>{item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="admin-user-card">
-          <span>{identity.displayName.slice(0, 1).toUpperCase()}</span>
-          <div><strong>{identity.displayName}</strong><small>{roleNameAr(identity.role)}{identity.countryCode ? ` • ${countries[identity.countryCode.toLowerCase()] ?? identity.countryCode.toUpperCase()}` : ""}</small></div>
-        </div>
-      </aside>
-
-      <section className="sponsor-admin-canvas">
-        <header className="sponsor-admin-header">
+    <>
+      <header className="sponsor-admin-header">
           <div><p>نظرة عامة على الأنظمة</p><h1>لوحة الإحصاءات</h1></div>
           <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
         </header>
@@ -239,7 +183,6 @@ export default function DashboardAdminClient({
             </div>
           </>
         )}
-      </section>
-    </main>
+    </>
   );
 }

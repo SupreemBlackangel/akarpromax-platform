@@ -6,10 +6,10 @@ import SettingsAdminClient from "../settings-admin-client";
 export const dynamic = "force-dynamic";
 
 async function SettingsGate() {
-  const user = await requireSessionUser("/admin/settings");
+  await requireSessionUser("/admin/settings");
   return (
     <PermissionGuard requiredPermissions={[PERMISSIONS.SETTINGS_MANAGE]}>
-      <SettingsAdminClient initialUser={{ email: user.email, displayName: user.displayName }} />
+      <SettingsAdminClient />
     </PermissionGuard>
   );
 }

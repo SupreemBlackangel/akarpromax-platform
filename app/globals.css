@@ -435,10 +435,7 @@ html[data-theme="dark"] .socials a { background: #172943; color: #b0c2dd; }
 html[data-theme="dark"] .footer-bottom { border-top-color: #263a5a; }
 html[data-theme="dark"] .payments span { border-color: #304867; background: #0f1d33; color: #b1c1d8; }
 
-.ads-wizard-shell { grid-column: 1 / -1; min-height: 100vh; padding: 28px; background: #f4f7fc; }
-.ads-admin-wizard-mode { display: block; background: #f4f7fc; }
-.ads-admin-wizard-mode .ads-admin-sidebar, .ads-admin-wizard-mode .ads-admin-canvas { display: none; }
-.ads-admin-wizard-mode .ads-wizard-shell { width: 100%; }
+.ads-wizard-shell { min-height: 100vh; padding: 28px; background: #f4f7fc; margin: -28px -34px; }
 .ads-wizard { width: min(1180px, 100%); margin: 0 auto; padding: 24px; border: 1px solid #dfe7f2; border-radius: 18px; background: #fff; box-shadow: 0 18px 55px rgba(11,37,72,.1); }
 .ads-wizard, .ads-wizard input, .ads-wizard select, .ads-wizard textarea, .ads-wizard button { font-family: "IBM Plex Sans Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif; }
 .ads-wizard-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid #e4ebf5; }
@@ -538,10 +535,16 @@ html[data-theme="dark"] .ads-wizard-steps button.active { background: #143b70; c
 .admin-brand div { display: flex; flex-direction: column; }
 .admin-brand strong { color: #10264c; font-size: 13px; }
 .admin-brand small { color: #1769ff; font: 700 7px Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.sponsor-admin-sidebar nav { display: grid; gap: 5px; margin-top: 20px; }
-.sponsor-admin-sidebar nav button { display: flex; align-items: center; gap: 11px; min-height: 42px; padding: 9px 12px; border: 0; border-radius: 9px; background: transparent; color: #6b7b93; cursor: pointer; text-align: right; }
-.sponsor-admin-sidebar nav button span { width: 20px; color: #1769ff; font-size: 16px; text-align: center; }
-.sponsor-admin-sidebar nav button:hover, .sponsor-admin-sidebar nav button.active { background: #edf4ff; color: #1769ff; font-weight: 900; }
+.admin-nav { display: flex; flex-direction: column; gap: 17px; margin-top: 20px; overflow-y: auto; }
+.admin-nav-group { display: grid; gap: 3px; }
+.admin-nav-group-head { padding: 0 12px 4px; color: #9aabbf; font-size: 8px; font-weight: 900; letter-spacing: .04em; }
+.admin-nav-link { display: flex; align-items: center; gap: 11px; min-height: 38px; padding: 8px 12px; border-radius: 9px; color: #6b7b93; text-decoration: none; }
+.admin-nav-link span { width: 20px; color: #1769ff; font-size: 15px; text-align: center; }
+.admin-nav-link:hover, .admin-nav-link.active { background: #edf4ff; color: #1769ff; font-weight: 900; }
+.admin-subnav { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.admin-subnav button { min-height: 38px; display: inline-flex; align-items: center; gap: 9px; padding: 8px 15px; border: 1px solid #d4e0f1; border-radius: 9px; background: #fff; color: #4f6483; cursor: pointer; font-size: 10px; font-weight: 900; }
+.admin-subnav button span { width: 16px; color: #1769ff; font-size: 14px; text-align: center; }
+.admin-subnav button:hover, .admin-subnav button.active { border-color: #1769ff; background: #edf4ff; color: #1769ff; }
 .admin-user-card { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 9px; margin-top: auto; padding: 13px 10px; border: 1px solid #dfe8f5; border-radius: 11px; background: #f8faff; }
 .admin-user-card > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #1769ff; color: #fff; font-weight: 900; }
 .admin-user-card div { min-width: 0; display: flex; flex-direction: column; }
@@ -823,26 +826,6 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
 }
 
 /* Advertising control center */
-.ads-admin { min-height: 100vh; display: flex; background: #f3f6fb; color: #10264c; font-family: "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif; }
-.ads-admin button, .ads-admin input, .ads-admin select, .ads-admin textarea { font: inherit; }
-.ads-admin-sidebar { position: sticky; top: 0; width: 250px; height: 100vh; display: flex; flex: 0 0 250px; flex-direction: column; padding: 22px 15px; border-left: 1px solid #dce5f2; background: #fff; box-shadow: -7px 0 24px rgba(25,57,104,.04); }
-.ads-admin-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 21px; border-bottom: 1px solid #e7edf6; }
-.ads-admin-brand > span { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px 12px 3px 12px; background: linear-gradient(145deg, #1769ff, #0d4ab6); color: #fff; font: 900 23px Georgia, serif; }
-.ads-admin-brand div, .ads-admin-user div { min-width: 0; display: flex; flex-direction: column; }
-.ads-admin-brand strong { color: #10264c; font-size: 13px; }
-.ads-admin-brand small { color: #1769ff; font: 700 7px Arial, sans-serif; letter-spacing: .13em; text-transform: uppercase; }
-.ads-admin-sidebar nav { display: grid; gap: 5px; margin-top: 20px; }
-.ads-admin-sidebar nav button { min-height: 42px; display: flex; align-items: center; gap: 11px; padding: 9px 12px; border: 0; border-radius: 9px; background: transparent; color: #6b7b93; cursor: pointer; text-align: right; }
-.ads-admin-sidebar nav button span { width: 20px; color: #1769ff; font-size: 16px; text-align: center; }
-.ads-admin-sidebar nav button:hover, .ads-admin-sidebar nav button.active { background: #edf4ff; color: #1769ff; font-weight: 800; }
-.ads-admin-links { display: grid; gap: 7px; margin-top: 22px; padding-top: 17px; border-top: 1px solid #e7edf6; }
-.ads-admin-links a { padding: 7px 10px; border-radius: 7px; color: #647690; font-size: 9px; font-weight: 700; }
-.ads-admin-links a:hover { background: #f0f5fd; color: #1769ff; }
-.ads-admin-user { display: grid; grid-template-columns: 39px 1fr; align-items: center; gap: 9px; margin-top: auto; padding: 12px 10px; border: 1px solid #dfe8f5; border-radius: 11px; background: #f8faff; }
-.ads-admin-user > span { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 50%; background: #1769ff; color: #fff; font-weight: 900; }
-.ads-admin-user strong { overflow: hidden; color: #172b4d; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.ads-admin-user small { margin-top: 2px; color: #7c8da7; font-size: 8px; }
-.ads-admin-canvas { width: calc(100% - 250px); max-width: 1550px; margin: 0 auto; padding: 28px 34px 58px; }
 .ads-admin-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .ads-admin-header p, .ads-panel-title p, .ads-dialog-head p { color: #1769ff; font-size: 9px; font-weight: 900; }
 .ads-admin-header h1 { margin-top: 3px; color: #10264c; font-size: clamp(25px, 3vw, 37px); line-height: 1.25; letter-spacing: -.03em; }
@@ -981,24 +964,16 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
 .ads-admin-denied p { color: #74849c; font-size: 11px; }
 .ads-admin-denied a { display: inline-block; margin-top: 17px; padding: 9px 14px; border-radius: 7px; background: #1769ff; color: #fff; font-size: 10px; font-weight: 900; }
 
-html[data-theme="dark"] .ads-admin, html[data-theme="dark"] .ads-admin-denied { background: #07101f; color: #e8efff; }
-html[data-theme="dark"] .ads-admin-sidebar, html[data-theme="dark"] .ads-panel, html[data-theme="dark"] .ads-stat-grid article, html[data-theme="dark"] .ads-dialog, html[data-theme="dark"] .ads-form-section, html[data-theme="dark"] .ads-admin-denied > div { border-color: #263a5a; background: #0d182b; }
-html[data-theme="dark"] .ads-admin-brand, html[data-theme="dark"] .ads-admin-links, html[data-theme="dark"] .ads-dialog-head { border-color: #263a5a; }
+html[data-theme="dark"] .ads-admin-denied { background: #07101f; color: #e8efff; }
+html[data-theme="dark"] .ads-panel, html[data-theme="dark"] .ads-stat-grid article, html[data-theme="dark"] .ads-dialog, html[data-theme="dark"] .ads-form-section, html[data-theme="dark"] .ads-admin-denied > div { border-color: #263a5a; background: #0d182b; }
+html[data-theme="dark"] .ads-dialog-head { border-color: #263a5a; }
 html[data-theme="dark"] .ads-dialog-head { background: rgba(13,24,43,.96); }
-html[data-theme="dark"] .ads-admin-brand strong, html[data-theme="dark"] .ads-admin-header h1, html[data-theme="dark"] .ads-stat-grid strong, html[data-theme="dark"] .ads-panel-title h2, html[data-theme="dark"] .ads-dialog-head h2, html[data-theme="dark"] .ads-campaign-main strong, html[data-theme="dark"] .ads-analytics-list article strong, html[data-theme="dark"] .ads-form-section h3, html[data-theme="dark"] .ads-empty strong, html[data-theme="dark"] .ads-admin-denied h1 { color: #e8efff; }
-html[data-theme="dark"] .ads-admin-user, html[data-theme="dark"] .ads-campaign-list > article, html[data-theme="dark"] .ads-media-grid article, html[data-theme="dark"] .ads-language-columns fieldset, html[data-theme="dark"] .ads-choice-fieldset { border-color: #2a4162; background: #0f1d33; }
+html[data-theme="dark"] .ads-admin-header h1, html[data-theme="dark"] .ads-stat-grid strong, html[data-theme="dark"] .ads-panel-title h2, html[data-theme="dark"] .ads-dialog-head h2, html[data-theme="dark"] .ads-campaign-main strong, html[data-theme="dark"] .ads-analytics-list article strong, html[data-theme="dark"] .ads-form-section h3, html[data-theme="dark"] .ads-empty strong, html[data-theme="dark"] .ads-admin-denied h1 { color: #e8efff; }
+html[data-theme="dark"] .ads-campaign-list > article, html[data-theme="dark"] .ads-media-grid article, html[data-theme="dark"] .ads-language-columns fieldset, html[data-theme="dark"] .ads-choice-fieldset { border-color: #2a4162; background: #0f1d33; }
 html[data-theme="dark"] .ads-upload-zone, html[data-theme="dark"] .ads-dialog-upload { border-color: #3b5577; background: #0f1d33; }
 html[data-theme="dark"] .ads-form-grid input, html[data-theme="dark"] .ads-form-grid select, html[data-theme="dark"] .ads-language-columns input, html[data-theme="dark"] .ads-language-columns textarea, html[data-theme="dark"] .ads-wide-field input { border-color: #304867; background: #0b172a; color: #c0cee2; }
 
 @media (max-width: 1100px) {
-  .ads-admin-sidebar { width: 88px; flex-basis: 88px; padding-inline: 10px; }
-  .ads-admin-brand { justify-content: center; padding-inline: 0; }
-  .ads-admin-brand div, .ads-admin-links, .ads-admin-user div { display: none; }
-  .ads-admin-sidebar nav button { justify-content: center; padding-inline: 0; font-size: 0; }
-  .ads-admin-sidebar nav button span { font-size: 17px; }
-  .ads-admin-user { grid-template-columns: 1fr; padding: 8px; }
-  .ads-admin-user > span { margin: auto; }
-  .ads-admin-canvas { width: calc(100% - 88px); }
   .ads-stat-grid { grid-template-columns: repeat(2, 1fr); }
   .ads-media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ads-campaign-list > article { grid-template-columns: 100px minmax(170px, 1fr) 100px auto; }
@@ -1006,18 +981,11 @@ html[data-theme="dark"] .ads-form-grid input, html[data-theme="dark"] .ads-form-
 }
 
 @media (max-width: 780px) {
-  .ads-wizard-shell { padding: 12px; }
+  .ads-wizard-shell { padding: 12px; margin: -19px -14px; }
   .ads-wizard { padding: 15px; border-radius: 12px; }
   .ads-wizard-head h2 { font-size: 16px; }
   .ads-wizard-steps { grid-template-columns: repeat(3, 1fr); }
   .ads-wizard .ads-form-section { min-height: 0; }
-  .ads-admin { display: block; padding-bottom: 72px; }
-  .ads-admin-sidebar { position: fixed; z-index: 50; top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: 64px; display: block; padding: 7px 10px; border-top: 1px solid #dce5f2; }
-  .ads-admin-brand, .ads-admin-links, .ads-admin-user { display: none; }
-  .ads-admin-sidebar nav { grid-template-columns: repeat(3, 1fr); margin: 0; }
-  .ads-admin-sidebar nav button { flex-direction: column; gap: 1px; min-height: 49px; padding: 4px; font-size: 7px; }
-  .ads-admin-sidebar nav button span { font-size: 15px; }
-  .ads-admin-canvas { width: 100%; padding: 19px 14px 36px; }
   .ads-admin-header { align-items: flex-start; flex-direction: column; }
   .ads-admin-header > div:last-child { width: 100%; }
   .ads-admin-header a, .ads-admin-header button { flex: 1; text-align: center; }

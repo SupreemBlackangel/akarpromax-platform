@@ -6,7 +6,7 @@ import EditSponsorForm from "../../_components/EditSponsorForm";
 export const dynamic = "force-dynamic";
 
 async function EditSponsorGate() {
-  const user = await requireSessionUser("/admin/sponsors");
+  await requireSessionUser("/admin/sponsors");
   return (
     <PermissionGuard requiredPermissions={[PERMISSIONS.SPONSORS_UPDATE]}>
       <EditSponsorForm />
