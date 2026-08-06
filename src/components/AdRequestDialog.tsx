@@ -158,7 +158,7 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
 
   useEffect(() => {
     if (!open) return;
-    reset();
+    window.queueMicrotask(() => reset());
     const previous = document.activeElement as HTMLElement | null;
     rootRef.current?.querySelector<HTMLInputElement>("input")?.focus();
     const handleKey = (event: KeyboardEvent) => {

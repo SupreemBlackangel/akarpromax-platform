@@ -22,6 +22,7 @@ export type ResolvedAdContext = {
   hour?: number;
   dayOfWeek?: number;
   path?: string;
+  domain?: string;
 };
 
 export type AdEngineRow = {
@@ -62,6 +63,7 @@ export type AdEngineRow = {
   section_scopes: string | null;
   page_types: string | null;
   placements: string | null;
+  domains: string | null;
   region_ids: string | null;
   district_ids: string | null;
   latitude: number | null;
@@ -134,6 +136,7 @@ export type ParsedAd = {
   sectionScopes: string[];
   pageTypes: string[];
   placements: string[];
+  domains: string[];
   regionIds: string[];
   districtIds: string[];
   latitude: number | null;

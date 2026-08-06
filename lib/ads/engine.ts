@@ -59,6 +59,7 @@ export function parseAd(row: AdEngineRow): ParsedAd {
     sectionScopes: parseList(row.section_scopes),
     pageTypes: parseList(row.page_types),
     placements: parseList(row.placements),
+    domains: parseList(row.domains).map((item) => item.toLowerCase()),
     regionIds: parseList(row.region_ids),
     districtIds: parseList(row.district_ids),
     latitude: row.latitude == null ? null : Number(row.latitude),
@@ -110,7 +111,7 @@ export async function loadActiveAds(db: D1Database, now = new Date()): Promise<P
               accent_ar, accent_en, accent_tr, description_ar, description_en, description_tr,
               cta_ar, cta_en, cta_tr, target_url,
               countries, cities, languages, devices, priority, weight, start_at, end_at,
-              section_scopes, page_types, placements, region_ids, district_ids,
+              section_scopes, page_types, placements, domains, region_ids, district_ids,
               latitude, longitude, radius_km,
               target_all_countries, target_all_regions, target_all_cities, target_all_districts,
               entity_type, entity_ids, category_ids,
@@ -203,6 +204,15 @@ function isPlacementMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; 
 function isPageTypeMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
   if (ad.pageTypes.length === 0) return { ok: true, score: 30 };
   if (ad.pageTypes.includes(ctx.pageType)) return { ok: true, score: 50 };
+  return { ok: false, score: 0 };
+}
+
+function isDomainMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
+  if (ad.domains.length === 0) return { ok: true, score: 0 };
+  const domain = (ctx.domain ?? "").toLowerCase();
+  if (!domain) return { ok: false, score: 0 };
+  const match = ad.domains.find((target) => target === domain || domain.endsWith(`.${target}`) || target.endsWith(`.${domain}`));
+  if (match) return { ok: true, score: 60 };
   return { ok: false, score: 0 };
 }
 
@@ -358,6 +368,8 @@ export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?:
   if (!section.ok) return null;
   const placement = isPlacementMatch(ad, ctx);
   if (!placement.ok) return null;
+  const domain = isDomainMatch(ad, ctx);
+  if (!domain.ok) return null;
   const pageType = isPageTypeMatch(ad, ctx);
   if (!pageType.ok) return null;
   const device = isDeviceMatch(ad, ctx);
@@ -374,6 +386,7 @@ export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?:
   let score =
     section.score +
     placement.score +
+    domain.score +
     pageType.score +
     device.score +
     language.score +

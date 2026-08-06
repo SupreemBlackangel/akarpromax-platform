@@ -129,6 +129,7 @@ export default function AdSlot({
           body: JSON.stringify({
             placement,
             path,
+            domain: typeof window !== "undefined" ? window.location.hostname : undefined,
             countryCode: country,
             cityId: city,
             language: locale,

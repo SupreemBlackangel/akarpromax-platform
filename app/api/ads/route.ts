@@ -209,6 +209,7 @@ function normalisePayload(body: Record<string, unknown>, identity: SponsorIdenti
     cities: cleanList(body.cities, /^[a-z0-9-]{2,100}$/, 120),
     languages: cleanList(body.languages, /^(?:ar|en|tr)$/, 3),
     devices: cleanList(body.devices, /^(?:desktop|mobile)$/, 2),
+    domains: cleanList(body.domains, /^[a-z0-9.-]{1,255}$/, 40),
     priority: Math.max(1, Math.min(999, Number(body.priority) || 100)),
     weight: Math.max(1, Math.min(100, Number(body.weight) || 100)),
     startAt: clean(body.startAt, 40) || null,
@@ -310,10 +311,11 @@ export async function POST(request: NextRequest) {
        eyebrow_ar, eyebrow_en, eyebrow_tr, title_ar, title_en, title_tr,
        accent_ar, accent_en, accent_tr, description_ar, description_en, description_tr,
        cta_ar, cta_en, cta_tr, target_url, countries, cities, languages, devices,
+       domains,
        priority, weight, start_at, end_at, created_by)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
              ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28,
-             ?29, ?30, ?31, ?32, ?33, ?34)`,
+             ?29, ?30, ?31, ?32, ?33, ?34, ?35)`,
   ).bind(
     id, payload.internalName, payload.advertiserName, payload.campaignType, payload.status,
     payload.mediaType, payload.mediaUrl, payload.mobileMediaUrl, payload.posterUrl,
@@ -324,6 +326,7 @@ export async function POST(request: NextRequest) {
     payload.ctaAr, payload.ctaEn, payload.ctaTr, payload.targetUrl,
     JSON.stringify(payload.countries), JSON.stringify(payload.cities),
     JSON.stringify(payload.languages), JSON.stringify(payload.devices),
+    JSON.stringify(payload.domains),
     payload.priority, payload.weight, payload.startAt, payload.endAt, identity.email,
   ).run();
   if (payload.creatives.length) await db.batch(payload.creatives.map((creative) => db.prepare(`INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, poster_url, position, duration_seconds) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds)));
@@ -363,7 +366,7 @@ export async function PATCH(request: NextRequest) {
        description_ar = ?19, description_en = ?20, description_tr = ?21,
        cta_ar = ?22, cta_en = ?23, cta_tr = ?24, target_url = ?25,
        countries = ?26, cities = ?27, languages = ?28, devices = ?29,
-       priority = ?30, weight = ?31, start_at = ?32, end_at = ?33,
+       domains = ?30, priority = ?31, weight = ?32, start_at = ?33, end_at = ?34,
        updated_at = CURRENT_TIMESTAMP
      WHERE id = ?1`,
   ).bind(
@@ -376,6 +379,7 @@ export async function PATCH(request: NextRequest) {
     payload.ctaAr, payload.ctaEn, payload.ctaTr, payload.targetUrl,
     JSON.stringify(payload.countries), JSON.stringify(payload.cities),
     JSON.stringify(payload.languages), JSON.stringify(payload.devices),
+    JSON.stringify(payload.domains),
     payload.priority, payload.weight, payload.startAt, payload.endAt,
   ).run();
   await db.prepare("DELETE FROM ad_creatives WHERE campaign_id = ?1").bind(id).run();

@@ -27,6 +27,7 @@ export type MatchRequest = {
   sessionId?: string;
   userId?: string;
   count?: number;
+  domain?: string;
 };
 
 function cleanString(value: unknown, maxLength: number): string {
@@ -88,6 +89,7 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
     hour: cleanNumber(input.hour),
     dayOfWeek: cleanNumber(input.dayOfWeek),
     path: path || undefined,
+    domain: cleanString(input.domain, 300) || undefined,
   };
 }
 

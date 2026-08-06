@@ -4,6 +4,7 @@ export const AD_CAMPAIGN_NEW_COLUMNS: string[] = [
   `ADD COLUMN section_scopes TEXT NULL`,
   `ADD COLUMN page_types TEXT NULL`,
   `ADD COLUMN placements TEXT NULL`,
+  `ADD COLUMN domains TEXT NULL`,
   `ADD COLUMN region_ids TEXT NULL`,
   `ADD COLUMN district_ids TEXT NULL`,
   `ADD COLUMN latitude REAL NULL`,

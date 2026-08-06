@@ -105,6 +105,7 @@ export type CampaignPayload = {
   sectionScopes: string[];
   pageTypes: string[];
   placements: string[];
+  domains: string[];
   regionIds: string[];
   districtIds: string[];
   latitude: number | null;
@@ -191,6 +192,7 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
     sectionScopes,
     pageTypes: cleanList(body.pageTypes, /^[a-z0-9-]+$/, 20).filter((item) => PAGE_TYPES_LIST.includes(item as never)),
     placements,
+    domains: cleanList(body.domains, /^[a-z0-9.-]{1,255}$/, 40),
     regionIds: cleanList(body.regionIds, /^[a-z0-9-]{2,100}$/, 60),
     districtIds: cleanList(body.districtIds, /^[a-z0-9-]{2,100}$/, 60),
     latitude: cleanLatLng(body.latitude, -90, 90),
@@ -275,7 +277,7 @@ export const ADMIN_CAMPAIGN_SELECT = `
          a.accent_ar, a.accent_en, a.accent_tr, a.description_ar, a.description_en, a.description_tr,
          a.cta_ar, a.cta_en, a.cta_tr, a.target_url,
          a.countries, a.cities, a.languages, a.devices, a.priority, a.weight, a.start_at, a.end_at,
-         a.section_scopes, a.page_types, a.placements, a.region_ids, a.district_ids,
+         a.section_scopes, a.page_types, a.placements, a.domains, a.region_ids, a.district_ids,
          a.latitude, a.longitude, a.radius_km,
          a.target_all_countries, a.target_all_regions, a.target_all_cities, a.target_all_districts,
          a.entity_type, a.entity_ids, a.category_ids,
@@ -328,6 +330,7 @@ type AdminRow = {
   section_scopes: string | null;
   page_types: string | null;
   placements: string | null;
+  domains: string | null;
   region_ids: string | null;
   district_ids: string | null;
   latitude: number | null;
@@ -425,6 +428,7 @@ export function serialiseCampaign(row: AdminRow) {
     sectionScopes: parseList(row.section_scopes),
     pageTypes: parseList(row.page_types),
     placements: parseList(row.placements),
+    domains: parseList(row.domains),
     regionIds: parseList(row.region_ids),
     districtIds: parseList(row.district_ids),
     latitude: row.latitude == null ? null : Number(row.latitude),
