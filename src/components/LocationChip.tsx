@@ -158,19 +158,23 @@ export default function LocationChip({
     const cached = getCachedLocation();
     if (cached) {
       const next = toFields(cached);
-      setFields(next);
-      onDetected?.(next);
+      window.queueMicrotask(() => {
+        setFields(next);
+        onDetected?.(next);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (open) return;
-    setFields((prev) => ({
-      ...prev,
-      countryCode: countryCode || prev.countryCode,
-      city: cityName || prev.city,
-    }));
+    window.queueMicrotask(() => {
+      setFields((prev) => ({
+        ...prev,
+        countryCode: countryCode || prev.countryCode,
+        city: cityName || prev.city,
+      }));
+    });
   }, [countryCode, cityName, open]);
 
   useEffect(() => {

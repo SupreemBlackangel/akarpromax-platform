@@ -145,7 +145,7 @@ export default function LocationPicker({
       const next = { ...fields, ...info };
       setFields(next);
       onChange?.(next);
-    } catch (err) {
+    } catch {
       if (!mountedRef.current) return;
       setDetectError(names.error);
       const tzCountry = detectCountryByTimezone();
@@ -161,7 +161,7 @@ export default function LocationPicker({
 
   useEffect(() => {
     if (autoDetect && !defaultValues?.countryCode && !defaultValues?.governorate && !defaultValues?.city) {
-      handleDetect();
+      window.queueMicrotask(() => handleDetect());
     }
   }, []);
 

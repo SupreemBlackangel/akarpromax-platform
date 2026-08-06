@@ -52,7 +52,7 @@ export type Translation = {
   servicesTitle: string;
   servicesAccent: string;
   servicesNote: string;
-  services: Array<{ title: string; description: string }>;
+  services: Array<{ title: string; description: string; href?: string; shortDescription?: string; ariaLabel?: string; iconAlt?: string }>;
   officeKicker: string;
   officeDescription: string;
   officeCta: string;

@@ -2,6 +2,14 @@
 /* eslint-disable @next/next/no-img-element -- Sponsor logos and country flags are runtime-managed URLs. */
 
 import { useEffect, useRef, useState } from "react";
+import React from "react";
+import Link from "next/link";
+import {
+  Home as HomeIcon, Library, Megaphone, MapPin, Phone, HelpCircle,
+  LayoutDashboard, UserCheck, Newspaper, Wallet, Building2,
+  Hammer, ShieldCheck, Shield, Key, CreditCard, Tag, BarChart3,
+  Settings, Users, Briefcase, Languages, Wrench,
+} from "lucide-react";
 import LocationChip from "@/src/components/LocationChip";
 import AccountDialog from "@/src/components/AccountDialog";
 import Brand from "@/src/components/Brand";
@@ -12,7 +20,6 @@ import AdSlot from "@/src/components/AdSlot";
 import AdRequestDialog from "@/src/components/AdRequestDialog";
 import type { HeroAdSlide, Locale, PublicAdCampaign, PublicSponsor, ThemeMode, ViewerContext } from "@/src/types/site";
 import {
-  cityOptions,
   citiesForCountry,
   countryOptions,
   currenciesByCountry,
@@ -27,6 +34,14 @@ import {
 } from "@/src/data/locations";
 import { languageOptions, roleLabels, themeOptions, translations } from "@/src/data/translations";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import type { PublicProperty } from "@/lib/properties-format";
+
+const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  Home: HomeIcon, Library, Megaphone, MapPin, Phone, HelpCircle,
+  LayoutDashboard, UserCheck, Newspaper, Wallet, Building2,
+  Hammer, ShieldCheck, Shield, Key, CreditCard, Tag, BarChart3,
+  Settings, Users, Briefcase, Languages,
+};
 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
@@ -42,6 +57,7 @@ export default function Home() {
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
   const [managedHeroAds, setManagedHeroAds] = useState<PublicAdCampaign[]>([]);
+  const [featuredProperties, setFeaturedProperties] = useState<PublicProperty[]>([]);
   const [deviceType, setDeviceType] = useState<"desktop" | "mobile">("desktop");
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [heroPaused, setHeroPaused] = useState(false);
@@ -124,16 +140,16 @@ export default function Home() {
   const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
   const adminNav = [
-    { href: "/admin", icon: "⌂", label: locale === "ar" ? "لوحة الإدارة" : locale === "tr" ? "Yönetim paneli" : "Admin dashboard", show: viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW) },
-    { href: "/admin/news", icon: "➤", label: locale === "ar" ? "مركز الشريط الإخباري" : locale === "tr" ? "Haber merkezi" : "News center", show: viewer.permissions.includes(PERMISSIONS.NEWS_VIEW) },
-    { href: "/admin/ads", icon: "▤", label: locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center", show: viewer.permissions.includes(PERMISSIONS.ADS_VIEW) },
-    { href: "/admin/sponsors", icon: "▣", label: locale === "ar" ? "نظام الرعاة" : locale === "tr" ? "Sponsor sistemi" : "Sponsor system", show: viewer.permissions.includes(PERMISSIONS.SPONSORS_VIEW) },
-    { href: "/admin/users", icon: "♙", label: locale === "ar" ? "المستخدمون" : locale === "tr" ? "Kullanıcılar" : "Users", show: viewer.permissions.includes(PERMISSIONS.USERS_VIEW) },
-    { href: "/admin/roles", icon: "♛", label: locale === "ar" ? "الأدوار والصلاحيات" : locale === "tr" ? "Roller ve izinler" : "Roles & permissions", show: viewer.permissions.includes(PERMISSIONS.ROLES_VIEW) },
-    { href: "/admin/reports", icon: "↗", label: locale === "ar" ? "التقارير" : locale === "tr" ? "Raporlar" : "Reports", show: viewer.permissions.includes(PERMISSIONS.REPORTS_VIEW) },
-    { href: "/admin/settings", icon: "⚙", label: locale === "ar" ? "الإعدادات" : locale === "tr" ? "Ayarlar" : "Settings", show: viewer.permissions.includes(PERMISSIONS.SETTINGS_MANAGE) },
-    { href: "/services", icon: "✦", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services marketplace", show: true },
-    { href: "/admin/i18n", icon: "🔤", label: locale === "ar" ? "إدارة الترجمات" : locale === "tr" ? "Çeviri yönetimi" : "Translation admin", show: viewer.permissions.includes(PERMISSIONS.I18N_VIEW) },
+    { href: "/admin", icon: "LayoutDashboard", label: locale === "ar" ? "لوحة الإدارة" : locale === "tr" ? "Yönetim paneli" : "Admin dashboard", show: viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW) },
+    { href: "/admin/news", icon: "Newspaper", label: locale === "ar" ? "مركز الشريط الإخباري" : locale === "tr" ? "Haber merkezi" : "News center", show: viewer.permissions.includes(PERMISSIONS.NEWS_VIEW) },
+    { href: "/admin/ads", icon: "Megaphone", label: locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center", show: viewer.permissions.includes(PERMISSIONS.ADS_VIEW) },
+    { href: "/admin/sponsors", icon: "Shield", label: locale === "ar" ? "نظام الرعاة" : locale === "tr" ? "Sponsor sistemi" : "Sponsor system", show: viewer.permissions.includes(PERMISSIONS.SPONSORS_VIEW) },
+    { href: "/admin/users", icon: "Users", label: locale === "ar" ? "المستخدمون" : locale === "tr" ? "Kullanıcılar" : "Users", show: viewer.permissions.includes(PERMISSIONS.USERS_VIEW) },
+    { href: "/admin/roles", icon: "ShieldCheck", label: locale === "ar" ? "الأدوار والصلاحيات" : locale === "tr" ? "Roller ve izinler" : "Roles & permissions", show: viewer.permissions.includes(PERMISSIONS.ROLES_VIEW) },
+    { href: "/admin/reports", icon: "BarChart3", label: locale === "ar" ? "التقارير" : locale === "tr" ? "Raporlar" : "Reports", show: viewer.permissions.includes(PERMISSIONS.REPORTS_VIEW) },
+    { href: "/admin/settings", icon: "Settings", label: locale === "ar" ? "الإعدادات" : locale === "tr" ? "Ayarlar" : "Settings", show: viewer.permissions.includes(PERMISSIONS.SETTINGS_MANAGE) },
+    { href: "/services", icon: "Briefcase", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services marketplace", show: true },
+    { href: "/admin/i18n", icon: "Languages", label: locale === "ar" ? "إدارة الترجمات" : locale === "tr" ? "Çeviri yönetimi" : "Translation admin", show: viewer.permissions.includes(PERMISSIONS.I18N_VIEW) },
   ].filter((item) => item.show);
   const canOpenAdminPanel = adminNav.some((item) => item.href.startsWith("/admin"));
   const sidebarIndexes = viewer.role === "super_admin"
@@ -338,6 +354,15 @@ export default function Home() {
   }, [country]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/properties?country=${encodeURIComponent(country)}&featured=1&limit=3`, { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : { properties: [] })
+      .then((data: { properties?: PublicProperty[] }) => setFeaturedProperties(data.properties ?? []))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [country]);
+
+  useEffect(() => {
     if (!activeSponsor) return;
     activeSponsor.placements.forEach((placement) => {
       if (!["header", "content", "footer"].includes(placement)) return;
@@ -363,13 +388,13 @@ export default function Home() {
         <div className="sidebar-scroll">
           {copy.sidebar.map(([icon, label], index) => ({ icon, label, index })).filter((item) => sidebarIndexes.includes(item.index)).map(({ icon, label, index }) => (
             <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={index === 0 ? "#top" : `#module-${index}`} key={`${locale}-${index}-${label}`}>
-              <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
+              <span className="sidebar-icon" aria-hidden="true">{React.createElement(iconMap[icon] ?? HelpCircle, { size: 18 })}</span><span>{label}</span>
             </a>
           ))}
           {adminNav.length > 0 && <div className="sidebar-admin-head">{locale === "ar" ? "الإدارة" : locale === "tr" ? "Yönetim" : "Admin"}</div>}
           {adminNav.map(({ href, icon, label }) => (
             <a className="sidebar-link sidebar-sponsor-admin" href={href} key={href}>
-              <span className="sidebar-icon" aria-hidden="true">{icon}</span><span>{label}</span>
+              <span className="sidebar-icon" aria-hidden="true">{React.createElement(iconMap[icon] ?? HelpCircle, { size: 18 })}</span><span>{label}</span>
             </a>
           ))}
         </div>
@@ -516,7 +541,24 @@ export default function Home() {
         <section className="content-section container" id="properties" aria-labelledby="property-title">
           <div className="section-title-row"><div><p className="section-kicker">{copy.propertiesKicker}</p><h2 id="property-title">{copy.propertiesTitle}<br />{copy.propertiesAccent}</h2></div><a className="section-link" href="#account">{copy.viewAll} <b>{copy.arrow}</b></a></div>
           <div className="property-grid reference-cards">
-            {copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
+            {featuredProperties.length > 0
+              ? featuredProperties.map((p, index) => (
+                  <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={p.id}>
+                    <div className="card-image" style={{ backgroundImage: `url(${p.imageUrl || "/og.png"})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+                      <span>{p.isFeatured
+                        ? (locale === "ar" ? "مميز" : locale === "tr" ? "Öne çıkan" : "Featured")
+                        : p.listingType === "for-rent"
+                          ? (locale === "ar" ? "إيجار" : locale === "tr" ? "Kiralık" : "For rent")
+                          : (locale === "ar" ? "بيع" : locale === "tr" ? "Satılık" : "For sale")}</span>
+                    </div>
+                    <div className="card-body">
+                      <p>{p.area[locale] ?? p.title[locale]}</p>
+                      <h3>{p.title[locale]}</h3>
+                      <Link href={`/properties/${p.slug || p.id}`}>{locale === "ar" ? "التفاصيل" : locale === "tr" ? "Detaylar" : "Details"} <b>{copy.arrow}</b></Link>
+                    </div>
+                  </article>
+                ))
+              : copy.propertyCards.map((card, index) => <article className={index === 0 ? "reference-card feature-card" : "reference-card"} key={`${locale}-card-${index}`}><div className={`card-image card-${index === 0 ? "house" : index === 1 ? "map" : "coast"}`}><span>{card.tag}</span></div><div className="card-body"><p>{card.meta}</p><h3>{card.title}</h3>{card.link && <a href="#account">{card.link} <b>{copy.arrow}</b></a>}</div></article>)}
           </div>
           <div className="ad-slot-container-vertical" aria-label={copy.sponsorAria}>
             <AdSlot placement="between_sections" locale={locale} country={country} city={city} deviceType={deviceType} path="/" variant="horizontal" />
@@ -525,7 +567,17 @@ export default function Home() {
 
         <section className="services-band" id="services" aria-labelledby="services-title">
           <div className="container"><div className="section-title-row"><div><p className="section-kicker">{copy.servicesKicker}</p><h2 id="services-title">{copy.servicesTitle}<br />{copy.servicesAccent}</h2></div><span className="muted-note">{copy.servicesNote.split("\n").map((line) => <span key={line}>{line}<br /></span>)}</span></div>
-            <div className="service-grid">{copy.services.map((service, index) => <article id={`module-${index + 1}`} key={`${locale}-service-${index}`}><span className="service-number">{String(index + 1).padStart(2, "0")}</span><div><h3>{service.title}</h3><p>{service.description}</p></div><b>↗</b></article>)}</div>
+            <div className="service-grid">{copy.services.map((service, index) => service.href ? (
+              <article className="service-tools-card" id={`module-${index + 1}`} key={`${locale}-service-${index}`}>
+                <Link href={service.href} className="service-tools-link" aria-label={service.ariaLabel} title={service.description}>
+                  <span className="service-tools-icon" title={service.iconAlt} aria-hidden="true"><Wrench size={22} strokeWidth={2.2} /></span>
+                  <div><h3>{service.title}</h3><p>{service.shortDescription}</p></div>
+                  <b aria-hidden="true">{copy.arrow}</b>
+                </Link>
+              </article>
+            ) : (
+              <article id={`module-${index + 1}`} key={`${locale}-service-${index}`}><span className="service-number">{String(index + 1).padStart(2, "0")}</span><div><h3>{service.title}</h3><p>{service.description}</p></div><b>↗</b></article>
+            ))}</div>
           </div>
         </section>
 

@@ -1,47 +1,238 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { translations } from "@/src/data/translations";
+import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
+import { languageOptions, translations } from "@/src/data/translations";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { ToolsGate } from "@/src/components/tools/ToolsGate";
-import { ConcreteCalc } from "@/src/components/tools/ConcreteCalc";
-import { BeamCalc } from "@/src/components/tools/BeamCalc";
-import { TileCalc } from "@/src/components/tools/TileCalc";
-import { BrickCalc } from "@/src/components/tools/BrickCalc";
-import { RebarCalc } from "@/src/components/tools/RebarCalc";
-import { PaintCalc } from "@/src/components/tools/PaintCalc";
-import { SlopeCalc } from "@/src/components/tools/SlopeCalc";
-import { MixRatioCalc } from "@/src/components/tools/MixRatioCalc";
+import AccountDialog from "@/src/components/AccountDialog";
+import AdSlot from "@/src/components/AdSlot";
+import { ToolsGate, type ToolsGateState } from "@/src/components/tools/ToolsGate";
+import { ToolCard } from "@/src/components/tools/ToolCard";
+import { ToolsEmptyState } from "@/src/components/tools/ToolsEmptyState";
+import { TOOLS_DATA, type ToolCategory } from "@/src/data/toolsData";
 
-type ToolId = "concrete" | "beam" | "tile" | "brick" | "rebar" | "paint" | "slope" | "mix";
+type ToolId = string;
 
-const TOOLS: Array<{ id: ToolId; icon: string; ar: string; en: string; tr: string }> = [
-  { id: "concrete", icon: "🧱", ar: "خرسانة مسلحة", en: "Concrete", tr: "Beton" },
-  { id: "beam", icon: "🏗️", ar: "كمرات/جسور", en: "Beams", tr: "Kirişler" },
-  { id: "tile", icon: "🪨", ar: "بلاط", en: "Tiles", tr: "Fayans" },
-  { id: "brick", icon: "🧱", ar: "طوب/طابوق", en: "Bricks", tr: "Tuğla" },
-  { id: "rebar", icon: "🔩", ar: "حديد تسليح", en: "Rebar", tr: "Demir" },
-  { id: "paint", icon: "🎨", ar: "دهان", en: "Paint", tr: "Boya" },
-  { id: "slope", icon: "📐", ar: "ميل/انحدار", en: "Slope", tr: "Eğim" },
-  { id: "mix", icon: "⚗️", ar: "نسب الخلطة", en: "Mix Ratio", tr: "Karışım" },
-];
+const CATEGORY_LABELS: Record<ToolCategory, Record<string, string>> = {
+  engineering: { ar: "هندسية", en: "Engineering", tr: "Mühendislik" },
+  surveying: { ar: "مساحية", en: "Surveying", tr: "Ölçüm" },
+  document: { ar: "مستندات", en: "Documents", tr: "Belgeler" },
+  general: { ar: "عامة", en: "General", tr: "Genel" },
+};
+
+const SORT_OPTIONS = ["default", "az", "za", "newest"] as const;
+type SortOption = typeof SORT_OPTIONS[number];
+
+const SORT_LABELS: Record<SortOption, Record<string, string>> = {
+  default: { ar: "الترتيب الافتراضي", en: "Default", tr: "Varsayılan sıralama" },
+  az: { ar: "أبجدي ↑", en: "A–Z", tr: "A-Z" },
+  za: { ar: "أبجدي ↓", en: "Z–A", tr: "Z-A" },
+  newest: { ar: "الأحدث أولاً", en: "Newest first", tr: "En yeni" },
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lazy components have varying prop types
+const TOOL_COMPONENTS: Record<string, React.ComponentType<any>> = {
+  concrete: lazy(() => import("@/src/components/tools/ConcreteCalc").then((m) => ({ default: m.ConcreteCalc }))),
+  beam: lazy(() => import("@/src/components/tools/BeamCalc").then((m) => ({ default: m.BeamCalc }))),
+  tile: lazy(() => import("@/src/components/tools/TileCalc").then((m) => ({ default: m.TileCalc }))),
+  brick: lazy(() => import("@/src/components/tools/BrickCalc").then((m) => ({ default: m.BrickCalc }))),
+  rebar: lazy(() => import("@/src/components/tools/RebarCalc").then((m) => ({ default: m.RebarCalc }))),
+  paint: lazy(() => import("@/src/components/tools/PaintCalc").then((m) => ({ default: m.PaintCalc }))),
+  slope: lazy(() => import("@/src/components/tools/SlopeCalc").then((m) => ({ default: m.SlopeCalc }))),
+  mix: lazy(() => import("@/src/components/tools/MixRatioCalc").then((m) => ({ default: m.MixRatioCalc }))),
+  area: lazy(() => import("@/src/components/tools/AreaCalculator").then((m) => ({ default: m.AreaCalculator }))),
+  calculator: lazy(() => import("@/src/components/tools/Calculator").then((m) => ({ default: m.Calculator }))),
+  coordinate: lazy(() => import("@/src/components/tools/CoordinateConverter").then((m) => ({ default: m.CoordinateConverter }))),
+  points2dxf: lazy(() => import("@/src/components/tools/PointsToDxf").then((m) => ({ default: m.PointsToDxf }))),
+  pdf2word: lazy(() => import("@/src/components/tools/PdfToWord").then((m) => ({ default: m.PdfToWord }))),
+  landmapper: lazy(() => import("@/src/components/tools/LandMapper").then((m) => ({ default: m.LandMapper }))),
+};
+
+function ToolLoader({ toolId, locale }: { toolId: string; locale: string }) {
+  const Comp = TOOL_COMPONENTS[toolId];
+  if (!Comp) return null;
+  return (
+    <Suspense fallback={<div className="tc-tool-loading">{locale === "ar" ? "جارٍ التحميل..." : locale === "tr" ? "Yükleniyor..." : "Loading..."}</div>}>
+      <Comp locale={locale} />
+    </Suspense>
+  );
+}
+
+function detectDeviceType(): "desktop" | "tablet" | "mobile" {
+  if (typeof window === "undefined") return "desktop";
+  if (window.matchMedia("(max-width: 720px)").matches) return "mobile";
+  if (window.matchMedia("(min-width: 721px) and (max-width: 1024px)").matches) return "tablet";
+  return "desktop";
+}
+
+function readActiveToolParam(): string | null {
+  if (typeof window === "undefined") return null;
+  const tool = new URLSearchParams(window.location.search).get("tool");
+  return tool && TOOLS_DATA.some((t) => t.id === tool) ? tool : null;
+}
 
 export function ToolsPageClient() {
-  const [locale, setLocale] = useState<Locale>("ar");
-  const [activeTool, setActiveTool] = useState<ToolId>("concrete");
-  const [viewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window === "undefined") return "ar";
+    const stored = window.localStorage.getItem("akarpromax-locale");
+    return stored === "en" || stored === "tr" ? stored : "ar";
+  });
+  const [gateState, setGateState] = useState<ToolsGateState>("loading");
+  const [showLogin, setShowLogin] = useState(false);
+  const [accountMode, setAccountMode] = useState<"login" | "register">("login");
+  const [activeTool, setActiveTool] = useState<ToolId | null>(() => readActiveToolParam());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<ToolCategory | "all">("all");
+  const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [viewer, setViewer] = useState<ViewerContext>({
+    authenticated: false,
+    email: null,
+    displayName: "Guest",
+    role: "guest",
+    countryCode: null,
+    permissions: [],
+  });
   const [country] = useState("om");
   const [city] = useState("om-muscat");
+  const [deviceType] = useState<"desktop" | "tablet" | "mobile">(() => detectDeviceType());
   const dir = locale === "ar" ? "rtl" : "ltr";
+  const toolAreaRef = useRef<HTMLDivElement>(null);
 
-  const t = (key: string): string => {
-    const val = translations[locale][key as keyof typeof translations["ar"]];
-    return typeof val === "string" ? val : key;
-  };
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = dir;
+    window.localStorage.setItem("akarpromax-locale", locale);
+  }, [dir, locale]);
 
-  const toolLabel = (tool: typeof TOOLS[0]) => locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/user-context", { cache: "no-store", signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: ViewerContext & { permissions: string[] }) => {
+        setViewer(data);
+        if (!data.authenticated) {
+          setGateState("unauthenticated");
+          return;
+        }
+        setGateState(data.permissions.includes("tools.use") ? "granted" : "forbidden");
+      })
+      .catch(() => {
+        setGateState("unauthenticated");
+      });
+    return () => controller.abort();
+  }, []);
+
+  const handleAuthenticated = useCallback((v: ViewerContext) => {
+    setViewer(v);
+    if (v.authenticated) {
+      setGateState(v.permissions.includes("tools.use") ? "granted" : "forbidden");
+    } else {
+      setGateState("unauthenticated");
+    }
+    setShowLogin(false);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
+    setViewer({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+    setGateState("unauthenticated");
+  }, []);
+
+  const requestLogin = useCallback((mode: "login" | "register" = "login") => {
+    setAccountMode(mode);
+    setShowLogin(true);
+  }, []);
+
+  const getToolName = useCallback(
+    (id: string) => {
+      const tool = TOOLS_DATA.find((t) => t.id === id);
+      if (!tool) return id;
+      return locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
+    },
+    [locale],
+  );
+
+  const getToolNameForSearch = useCallback(
+    (tool: typeof TOOLS_DATA[number]) => {
+      return [tool.ar, tool.en, tool.tr, tool.descAr, tool.descEn, tool.descTr].join(" ").toLowerCase();
+    },
+    [],
+  );
+
+  const filteredTools = useMemo(() => {
+    let result = [...TOOLS_DATA];
+
+    if (selectedCategory !== "all") {
+      result = result.filter((t) => t.category === selectedCategory);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((t) => getToolNameForSearch(t).includes(q));
+    }
+
+    switch (sortBy) {
+      case "az":
+        result.sort((a, b) => {
+          const nameA = locale === "ar" ? a.ar : locale === "tr" ? a.tr : a.en;
+          const nameB = locale === "ar" ? b.ar : locale === "tr" ? b.tr : b.en;
+          return nameA.localeCompare(nameB, locale === "ar" ? "ar" : locale === "tr" ? "tr" : "en");
+        });
+        break;
+      case "za":
+        result.sort((a, b) => {
+          const nameA = locale === "ar" ? a.ar : locale === "tr" ? a.tr : a.en;
+          const nameB = locale === "ar" ? b.ar : locale === "tr" ? b.tr : b.en;
+          return nameB.localeCompare(nameA, locale === "ar" ? "ar" : locale === "tr" ? "tr" : "en");
+        });
+        break;
+      case "newest":
+        result.sort((a, b) => {
+          const statusOrder: Record<string, number> = { new: 0, beta: 1, available: 2, coming_soon: 3 };
+          return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
+        });
+        break;
+    }
+
+    return result;
+  }, [searchQuery, selectedCategory, sortBy, locale, getToolNameForSearch]);
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSortBy("default");
+  }, []);
+
+  const handleSelectTool = useCallback((id: string) => {
+    setActiveTool(id);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tool", id);
+      window.history.replaceState(null, "", url.toString());
+    } catch {}
+    setTimeout(() => {
+      toolAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }, []);
+
+  const handleCloseTool = useCallback(() => {
+    setActiveTool(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("tool");
+      window.history.replaceState(null, "", url.toString());
+    } catch {}
+  }, []);
+
+  const categories = useMemo(() => {
+    const cats = new Set(TOOLS_DATA.map((t) => t.category));
+    return Array.from(cats);
+  }, []);
 
   return (
     <PublicPageShell
@@ -50,44 +241,147 @@ export function ToolsPageClient() {
       viewer={viewer}
       country={country}
       city={city}
-      onLogin={() => {}}
-      onLogout={() => {}}
+      deviceType={deviceType}
+      onLogin={() => requestLogin("login")}
+      onLogout={handleLogout}
     >
-      <div dir={dir} className="p-6 max-w-6xl mx-auto">
-        <ToolsGate locale={locale}>
-          {/* Card Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-            {TOOLS.map((tool) => (
-              <button
-                key={tool.id}
-                onClick={() => setActiveTool(tool.id)}
-                className={`p-4 rounded-xl text-center transition-all border ${
-                  activeTool === tool.id
-                    ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20"
-                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
-                }`}
-              >
-                <div className="text-2xl mb-2">{tool.icon}</div>
-                <div className={`text-sm font-semibold ${activeTool === tool.id ? "text-white" : "text-gray-900 dark:text-white"}`}>
-                  {toolLabel(tool)}
-                </div>
-              </button>
-            ))}
-          </div>
+      <div dir={dir} className="tc-page">
+        {/* Hero Ad */}
+        <section className="tc-hero-ad container" aria-label={locale === "ar" ? "إعلان مميز" : locale === "tr" ? "Öne çıkan reklam" : "Featured advertisement"}>
+          <AdSlot
+            placement="tools_hero"
+            locale={locale}
+            country={country}
+            city={city}
+            variant="horizontal"
+            className="tc-hero-ad-slot"
+          />
+        </section>
 
-          {/* Active Tool */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-            {activeTool === "concrete" && <ConcreteCalc locale={locale} />}
-            {activeTool === "beam" && <BeamCalc locale={locale} />}
-            {activeTool === "tile" && <TileCalc locale={locale} />}
-            {activeTool === "brick" && <BrickCalc locale={locale} />}
-            {activeTool === "rebar" && <RebarCalc locale={locale} />}
-            {activeTool === "paint" && <PaintCalc locale={locale} />}
-            {activeTool === "slope" && <SlopeCalc locale={locale} />}
-            {activeTool === "mix" && <MixRatioCalc locale={locale} />}
+        <ToolsGate locale={locale} state={gateState} onRequestLogin={() => requestLogin("login")}>
+          <div className="container">
+            {/* Engineering Catalog Toolbar */}
+            <div className="tc-toolbar" role="search" aria-label={locale === "ar" ? "البحث والتصفية" : locale === "tr" ? "Arama ve filtreleme" : "Search and filter"}>
+              <div className="tc-toolbar-row">
+                <div className="tc-search-wrapper">
+                  <svg className="tc-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input
+                    type="search"
+                    className="tc-search-input"
+                    placeholder={locale === "ar" ? "ابحث عن أداة..." : locale === "tr" ? "Araç ara..." : "Search tools..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label={locale === "ar" ? "بحث عن أداة" : locale === "tr" ? "Araç ara" : "Search tools"}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="tc-search-clear"
+                      onClick={() => setSearchQuery("")}
+                      aria-label={locale === "ar" ? "مسح البحث" : locale === "tr" ? "Aramayı temizle" : "Clear search"}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <div className="tc-toolbar-controls">
+                  <select
+                    className="tc-select"
+                    value={locale}
+                    onChange={(e) => setLocale(e.target.value as Locale)}
+                    aria-label={locale === "ar" ? "اللغة" : locale === "tr" ? "Dil" : "Language"}
+                  >
+                    {languageOptions.map((option) => (
+                      <option key={option.id} value={option.id}>{option.symbol} {option.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="tc-select"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value as ToolCategory | "all")}
+                    aria-label={locale === "ar" ? "تصفية حسب القسم" : locale === "tr" ? "Kategoriye göre filtrele" : "Filter by category"}
+                  >
+                    <option value="all">{locale === "ar" ? "كل الأقسام" : locale === "tr" ? "Tüm Kategoriler" : "All Categories"}</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{CATEGORY_LABELS[cat][locale]}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="tc-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    aria-label={locale === "ar" ? "ترتيب حسب" : locale === "tr" ? "Sıralama" : "Sort by"}
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{SORT_LABELS[opt][locale]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="tc-toolbar-info">
+                <span className="tc-results-count">
+                  {filteredTools.length === TOOLS_DATA.length
+                    ? (locale === "ar" ? `${TOOLS_DATA.length} أداة` : locale === "tr" ? `${TOOLS_DATA.length} araç` : `${TOOLS_DATA.length} tools`)
+                    : (locale === "ar" ? `${filteredTools.length} من ${TOOLS_DATA.length} أداة` : locale === "tr" ? `${filteredTools.length} / ${TOOLS_DATA.length} araç` : `${filteredTools.length} of ${TOOLS_DATA.length} tools`)}
+                </span>
+                {(searchQuery || selectedCategory !== "all" || sortBy !== "default") && (
+                  <button type="button" className="tc-clear-filters" onClick={clearFilters}>
+                    {locale === "ar" ? "مسح الفلاتر" : locale === "tr" ? "Filtreleri temizle" : "Clear filters"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Tools Grid */}
+            {filteredTools.length > 0 ? (
+              <div className="tc-grid">
+                {filteredTools.map((tool) => (
+                  <ToolCard
+                    key={tool.id}
+                    tool={tool}
+                    locale={locale}
+                    isActive={activeTool === tool.id}
+                    onSelect={handleSelectTool}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ToolsEmptyState locale={locale} onClear={clearFilters} />
+            )}
+
+            {/* Active Tool Area */}
+            {activeTool && (
+              <div ref={toolAreaRef} className="tc-active-tool" id="active-tool">
+                <div className="tc-active-tool-header">
+                  <h2 className="tc-active-tool-title">{getToolName(activeTool)}</h2>
+                  <button
+                    type="button"
+                    className="tc-active-tool-close"
+                    onClick={handleCloseTool}
+                    aria-label={locale === "ar" ? "إغلاق الأداة" : locale === "tr" ? "Aracı kapat" : "Close tool"}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="tc-active-tool-body">
+                  <ToolLoader toolId={activeTool} locale={locale} />
+                </div>
+              </div>
+            )}
           </div>
         </ToolsGate>
       </div>
+      <AccountDialog
+        locale={locale}
+        open={showLogin}
+        initialMode={accountMode}
+        viewer={viewer}
+        onClose={() => setShowLogin(false)}
+        onAuthenticated={handleAuthenticated}
+      />
     </PublicPageShell>
   );
 }

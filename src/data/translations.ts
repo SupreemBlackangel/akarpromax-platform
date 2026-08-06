@@ -13,9 +13,9 @@ export const themeOptions: Array<{ id: ThemeMode; symbol: string; labelKey: "the
 ];
 
 export const roleLabels: RoleLabels = {
-  ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", country_manager: "مدير دولة", ad_manager: "مدير الإعلانات", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
-  en: { guest: "Guest", viewer: "Viewer", analyst: "Analyst", content_editor: "Editor", country_manager: "Country manager", ad_manager: "Ad manager", sponsor_admin: "Sponsor admin", super_admin: "Super admin" },
-  tr: { guest: "Ziyaretçi", viewer: "Kullanıcı", analyst: "Analist", content_editor: "Editör", country_manager: "Ülke yöneticisi", ad_manager: "Reklam yöneticisi", sponsor_admin: "Sponsor yöneticisi", super_admin: "Süper yönetici" },
+  ar: { guest: "زائر", viewer: "مستخدم", analyst: "محلل", content_editor: "محرر", service_provider: "مزود خدمات", service_supervisor: "مشرف خدمات", country_manager: "مدير دولة", ad_manager: "مدير الإعلانات", sponsor_admin: "مدير الرعاة", super_admin: "المدير العام" },
+  en: { guest: "Guest", viewer: "Viewer", analyst: "Analyst", content_editor: "Editor", service_provider: "Service provider", service_supervisor: "Service supervisor", country_manager: "Country manager", ad_manager: "Ad manager", sponsor_admin: "Sponsor admin", super_admin: "Super admin" },
+  tr: { guest: "Ziyaretçi", viewer: "Kullanıcı", analyst: "Analist", content_editor: "Editör", service_provider: "Hizmet sağlayıcı", service_supervisor: "Hizmet denetçisi", country_manager: "Ülke yöneticisi", ad_manager: "Reklam yöneticisi", sponsor_admin: "Sponsor yöneticisi", super_admin: "Süper yönetici" },
 };
 
 export const translations: Record<Locale, Translation> = {
@@ -78,6 +78,14 @@ export const translations: Record<Locale, Translation> = {
       { title: "سوق الخدمات", description: "طلبات عروض أسعار للحرفيين والمهنيين." },
       { title: "المزادات", description: "مزايدة واضحة بإقرارات وسجل عمليات." },
       { title: "التقارير العقارية", description: "معاينة هندسية وتثمين قابلان للتوثيق." },
+      {
+        title: "الأدوات الهندسية",
+        description: "مجموعة متكاملة من أدوات التحويل والتحليل ومعالجة الملفات الهندسية والمكتبية.",
+        shortDescription: "تحويل، تحليل ومعالجة الملفات",
+        href: "/tools",
+        ariaLabel: "الانتقال إلى صفحة الأدوات الهندسية والرقمية",
+        iconAlt: "الأدوات الهندسية والرقمية",
+      },
     ],
     officeKicker: "امتداد المكتب العقاري",
     officeDescription: "التطبيق المكتبي يستقبل أخبار المنصة وإعلاناتها، ويرفع مسودات العقارات بحدود آمنة، ويربط الرادار بفرص المناطق القريبة من مكتبك.",
@@ -113,7 +121,7 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "منصة عُمانية للعقار والخدمات المهنية",
     chatAria: "تواصل مع عقار بروماكس",
     arrow: "←",
-    sidebar: [["⌂", "الرئيسية"], ["▥", "الكتب والبرامج"], ["◁", "أعلن معنا"], ["⌖", "من نحن"], ["♧", "اتصل بنا"], ["⌘", "الأسئلة الشائعة"], ["▦", "لوحة الإدارة"], ["♙", "إدارة المستخدمين"], ["◁", "إدارة الإعلانات"], ["◁", "admin.newsTicker"], ["▣", "إدارة الاشتراكات"], ["⚑", "إدارة العقارات"], ["⚒", "إدارة الخدمات"], ["♢", "إدارة المسوقين"], ["♧", "المشرفون والصلاحيات"], ["⚿", "مفاتيح التراخيص"], ["▤", "الخطط والأسعار"], ["◇", "الخصومات والكوبونات"], ["▱", "التقارير والتحليلات"], ["⚙", "إعدادات النظام"]],
+    sidebar: [["Home", "الرئيسية"], ["Library", "الكتب والبرامج"], ["Megaphone", "أعلن معنا"], ["MapPin", "من نحن"], ["Phone", "اتصل بنا"], ["HelpCircle", "الأسئلة الشائعة"], ["LayoutDashboard", "لوحة الإدارة"], ["UserCheck", "إدارة المستخدمين"], ["Megaphone", "إدارة الإعلانات"], ["Newspaper", "admin.newsTicker"], ["Wallet", "إدارة الاشتراكات"], ["Building2", "إدارة العقارات"], ["Hammer", "إدارة الخدمات"], ["ShieldCheck", "إدارة المسوقين"], ["Shield", "المشرفون والصلاحيات"], ["Key", "مفاتيح التراخيص"], ["CreditCard", "الخطط والأسعار"], ["Tag", "الخصومات والكوبونات"], ["BarChart3", "التقارير والتحليلات"], ["Settings", "إعدادات النظام"]],
   },
   en: {
     metaTitle: "AkarPromax | Smart real estate platform in Oman",
@@ -174,6 +182,14 @@ export const translations: Record<Locale, Translation> = {
       { title: "Service marketplace", description: "Quote requests for artisans and professionals." },
       { title: "Auctions", description: "Clear bidding with acknowledgements and an activity log." },
       { title: "Property reports", description: "Documentable engineering inspections and valuations." },
+      {
+        title: "Engineering Tools",
+        description: "An integrated collection of conversion, analysis, engineering, and document-processing tools.",
+        shortDescription: "Convert, analyze, and process files",
+        href: "/tools",
+        ariaLabel: "Go to the engineering and digital tools page",
+        iconAlt: "Engineering and Digital Tools",
+      },
     ],
     officeKicker: "The real estate office extension",
     officeDescription: "The desktop app receives platform news and ads, uploads property drafts safely, and connects the radar to opportunities near your office.",
@@ -209,7 +225,7 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "An Omani platform for property and professional services",
     chatAria: "Contact AkarPromax",
     arrow: "→",
-    sidebar: [["⌂", "Home"], ["▥", "Books and programs"], ["◁", "Advertise with us"], ["⌖", "About us"], ["♧", "Contact us"], ["⌘", "FAQ"], ["▦", "Admin dashboard"], ["♙", "User management"], ["◁", "Ad management"], ["◁", "admin.newsTicker"], ["▣", "Subscriptions"], ["⚑", "Property management"], ["⚒", "Service management"], ["♢", "Marketers"], ["♧", "Moderators and permissions"], ["⚿", "License keys"], ["▤", "Plans and pricing"], ["◇", "Discounts and coupons"], ["▱", "Reports and analytics"], ["⚙", "System settings"]],
+    sidebar: [["Home", "Home"], ["Library", "Books and programs"], ["Megaphone", "Advertise with us"], ["MapPin", "About us"], ["Phone", "Contact us"], ["HelpCircle", "FAQ"], ["LayoutDashboard", "Admin dashboard"], ["UserCheck", "User management"], ["Megaphone", "Ad management"], ["Newspaper", "admin.newsTicker"], ["Wallet", "Subscriptions"], ["Building2", "Property management"], ["Hammer", "Service management"], ["ShieldCheck", "Marketers"], ["Shield", "Moderators and permissions"], ["Key", "License keys"], ["CreditCard", "Plans and pricing"], ["Tag", "Discounts and coupons"], ["BarChart3", "Reports and analytics"], ["Settings", "System settings"]],
   },
   tr: {
     metaTitle: "AkarPromax | Umman'da akıllı gayrimenkul platformu",
@@ -270,6 +286,14 @@ export const translations: Record<Locale, Translation> = {
       { title: "Hizmet pazarı", description: "Ustalar ve profesyoneller için teklif talepleri." },
       { title: "Müzayedeler", description: "Onaylar ve işlem geçmişiyle şeffaf teklif süreci." },
       { title: "Gayrimenkul raporları", description: "Belgelendirilebilir mühendislik incelemeleri ve değerlemeler." },
+      {
+        title: "Mühendislik Araçları",
+        description: "Dönüştürme, analiz ve mühendislik ile belge işleme araçlarının entegre bir koleksiyonu.",
+        shortDescription: "Dosyaları dönüştürün, analiz edin ve işleyin",
+        href: "/tools",
+        ariaLabel: "Mühendislik ve dijital araçlar sayfasına git",
+        iconAlt: "Mühendislik ve Dijital Araçlar",
+      },
     ],
     officeKicker: "Gayrimenkul ofisi uzantısı",
     officeDescription: "Masaüstü uygulaması platform haberlerini ve ilanlarını alır, gayrimenkul taslaklarını güvenle yükler ve radarınızı ofisinize yakın fırsatlarla bağlar.",
@@ -305,6 +329,6 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "Gayrimenkul ve profesyonel hizmetler için Umman platformu",
     chatAria: "AkarPromax ile iletişime geç",
     arrow: "→",
-    sidebar: [["⌂", "Ana sayfa"], ["▥", "Kitaplar ve programlar"], ["◁", "Bize reklam verin"], ["⌖", "Hakkımızda"], ["♧", "İletişim"], ["⌘", "SSS"], ["▦", "Yönetim paneli"], ["♙", "Kullanıcı yönetimi"], ["◁", "İlan yönetimi"], ["◁", "admin.newsTicker"], ["▣", "Abonelikler"], ["⚑", "Gayrimenkul yönetimi"], ["⚒", "Hizmet yönetimi"], ["♢", "Pazarlamacılar"], ["♧", "Moderatörler ve yetkiler"], ["⚿", "Lisans anahtarları"], ["▤", "Planlar ve fiyatlar"], ["◇", "İndirimler ve kuponlar"], ["▱", "Raporlar ve analizler"], ["⚙", "Sistem ayarları"]],
+    sidebar: [["Home", "Ana sayfa"], ["Library", "Kitaplar ve programlar"], ["Megaphone", "Bize reklam verin"], ["MapPin", "Hakkımızda"], ["Phone", "İletişim"], ["HelpCircle", "SSS"], ["LayoutDashboard", "Yönetim paneli"], ["UserCheck", "Kullanıcı yönetimi"], ["Megaphone", "İlan yönetimi"], ["Newspaper", "admin.newsTicker"], ["Wallet", "Abonelikler"], ["Building2", "Gayrimenkul yönetimi"], ["Hammer", "Hizmet yönetimi"], ["ShieldCheck", "Pazarlamacılar"], ["Shield", "Moderatörler ve yetkiler"], ["Key", "Lisans anahtarları"], ["CreditCard", "Planlar ve fiyatlar"], ["Tag", "İndirimler ve kuponlar"], ["BarChart3", "Raporlar ve analizler"], ["Settings", "Sistem ayarları"]],
   },
 };

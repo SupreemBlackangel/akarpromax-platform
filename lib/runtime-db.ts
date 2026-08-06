@@ -4,6 +4,7 @@ import { ensureI18nSchema } from "@/lib/i18n-schema";
 import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
 import { seedServicesMarketplace } from "@services/seed-marketplace";
+import { ensurePropertiesSchema } from "@/lib/properties-schema";
 
 let sponsorSchemaReady: Promise<void> | null = null;
 let d1InitLogged = false;
@@ -449,6 +450,7 @@ async function ensureSponsorSchema(db: D1Database) {
   await ensureI18nSchema(db);
   await ensureServicesSchema(db);
   await ensureServicesMarketplaceSchema(db);
+  await ensurePropertiesSchema(db);
   await seedSponsorPlans(db);
   await seedNews(db);
   await seedServicesMarketplace(db);
