@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq, or } from "drizzle-orm";
 import { z } from "zod";
+import type { SQL } from "drizzle-orm";
 
 import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
-import type { SQL } from "drizzle-orm";
+import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { createRequestId } from "@/lib/security/audit";
+import { applySecurityHeaders } from "@/lib/security/headers";
+import { assertSafeOrigin } from "@/lib/security/origin";
+import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+// Validate the production environment at worker boot, before any request.
+getRuntimeEnv();
 
 const registerSchema = z
   .object({
@@ -36,11 +44,17 @@ function clean(value: unknown, maxLength: number): string {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = createRequestId();
+  assertSafeOrigin(request);
+
   let body: RegisterBody;
   try {
     body = (await request.json()) as RegisterBody;
   } catch {
-    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "invalid_body", requestId },
+      applySecurityHeaders({ status: 400 }),
+    );
   }
 
   const email = clean(body.email, 255).toLowerCase();
@@ -51,8 +65,20 @@ export async function POST(request: NextRequest) {
   const parsed = registerSchema.safeParse({ email: email || undefined, phone: phone || undefined, password, name: name || undefined, fullName: name || undefined });
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "validation_failed", issues: parsed.error.flatten() },
-      { status: 400 },
+      { error: "validation_failed", issues: parsed.error.flatten(), requestId },
+      applySecurityHeaders({ status: 400 }),
+    );
+  }
+
+  const ip = clientIp(request);
+  const limited = await enforceRateLimit("register", ip, email ? normalizeEmail(email) : phone);
+  if (!limited.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited", requestId, retryAfterSeconds: limited.retryAfterSeconds },
+      applySecurityHeaders({
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSeconds), "Cache-Control": "no-store" },
+      }),
     );
   }
 
@@ -60,15 +86,15 @@ export async function POST(request: NextRequest) {
   if (email) conditions.push(eq(users.email, email));
   if (phone) conditions.push(eq(users.phone, phone));
 
-type CreatedUser = {
-  id: string;
-  email: string | null;
-  phone: string | null;
-  name: string | null;
-  role: string;
-  isActive: boolean;
-  createdAt: Date;
-};
+  type CreatedUser = {
+    id: string;
+    email: string | null;
+    phone: string | null;
+    name: string | null;
+    role: string;
+    isActive: boolean;
+    createdAt: Date;
+  };
 
   const { db, end } = getDb();
   let existing: { id: string }[] = [];
@@ -83,7 +109,10 @@ type CreatedUser = {
     }
 
     if (existing[0]) {
-      return NextResponse.json({ error: "already_registered" }, { status: 409 });
+      return NextResponse.json(
+        { error: "already_registered", requestId },
+        applySecurityHeaders({ status: 409, headers: { "Cache-Control": "no-store" } }),
+      );
     }
 
     const passwordHash = await hashPassword(password);
@@ -114,13 +143,17 @@ type CreatedUser = {
   }
 
   if (!created) {
-    return NextResponse.json({ error: "registration_failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "registration_failed", requestId },
+      applySecurityHeaders({ status: 500 }),
+    );
   }
 
   await createSession({ userId: created.id, role: created.role, permissions: [] });
 
   return NextResponse.json(
     {
+      requestId,
       user: {
         id: created.id,
         email: created.email,
@@ -132,12 +165,12 @@ type CreatedUser = {
         permissions: permissionsForSessionRole(created.role),
       },
     },
-    { status: 201 },
+    applySecurityHeaders({ status: 201, headers: { "Cache-Control": "no-store" } }),
   );
 }
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    headers: { Allow: "POST, OPTIONS" },
+    headers: { Allow: "POST, OPTIONS", ...applySecurityHeaders().headers },
   });
 }

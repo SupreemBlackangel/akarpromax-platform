@@ -1,20 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodSchema } from "zod";
+
 import { getSession } from "@/lib/auth/session";
 import { ApiError } from "@/lib/errors/api-error";
 import { hasPermission } from "@/lib/rbac/check";
+import { createRequestId } from "@/lib/security/audit";
+import { applySecurityHeaders } from "@/lib/security/headers";
+import { assertSafeOrigin } from "@/lib/security/origin";
 
 type HandlerOptions<T> = {
   requiredPermission?: string;
   bodySchema?: ZodSchema<T>;
 };
 
+type HandlerContext<T> = {
+  session: Awaited<ReturnType<typeof getSession>>;
+  body: T;
+  requestId: string;
+};
+
 export function apiHandler<T = unknown>(
   options: HandlerOptions<T>,
-  fn: (req: NextRequest, ctx: { session: Awaited<ReturnType<typeof getSession>>; body: T }) => Promise<NextResponse>
+  fn: (req: NextRequest, ctx: HandlerContext<T>) => Promise<NextResponse>,
 ) {
   return async (req: NextRequest) => {
+    const requestId = createRequestId();
     try {
+      assertSafeOrigin(req);
+
       const session = await getSession();
 
       if (options.requiredPermission) {
@@ -34,13 +47,26 @@ export function apiHandler<T = unknown>(
         body = parsed.data;
       }
 
-      return await fn(req, { session, body });
+      return await fn(req, { session, body, requestId });
     } catch (err) {
       if (err instanceof ApiError) {
-        return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+        return NextResponse.json(
+          {
+            error: err.message,
+            code: err.code,
+            requestId,
+            ...(err.fieldErrors ? { fieldErrors: err.fieldErrors } : {}),
+          },
+          applySecurityHeaders({ status: err.status }),
+        );
       }
-      console.error("Unhandled API error:", err);
-      return NextResponse.json({ error: "خطأ داخلي في الخادم" }, { status: 500 });
+      // Never log the full error: it may embed SQL, table names, or stack
+      // traces. Correlation happens via requestId (see SECURITY_HEADERS_POLICY).
+      console.error(`[api:${requestId}] unhandled API error: ${err instanceof Error ? err.name : "unknown"}`);
+      return NextResponse.json(
+        { error: "خطأ داخلي في الخادم", code: "INTERNAL_ERROR", requestId },
+        applySecurityHeaders({ status: 500 }),
+      );
     }
   };
 }

@@ -5,15 +5,25 @@ import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
+import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { createRequestId } from "@/lib/security/audit";
+import { applySecurityHeaders } from "@/lib/security/headers";
 
 export const dynamic = "force-dynamic";
 
+// Validate the production environment at worker boot, before any request.
+getRuntimeEnv();
+
 export async function GET(request: NextRequest) {
+  const requestId = createRequestId();
   const session = await getSession(request.headers.get("cookie") ?? undefined);
   if (!session) {
     return NextResponse.json(
-      { authenticated: false },
-      { status: 401, headers: { "Cache-Control": "private, no-store" } },
+      { authenticated: false, requestId },
+      applySecurityHeaders({
+        status: 401,
+        headers: { "Cache-Control": "private, no-store" },
+      }),
     );
   }
 
@@ -28,14 +38,18 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json(
-      { authenticated: false },
-      { status: 401, headers: { "Cache-Control": "private, no-store" } },
+      { authenticated: false, requestId },
+      applySecurityHeaders({
+        status: 401,
+        headers: { "Cache-Control": "private, no-store" },
+      }),
     );
   }
 
   return NextResponse.json(
     {
       authenticated: true,
+      requestId,
       user: {
         id: user.id,
         email: user.email,
@@ -47,12 +61,12 @@ export async function GET(request: NextRequest) {
         permissions: permissionsForSessionRole(user.role),
       },
     },
-    { headers: { "Cache-Control": "private, no-store" } },
+    applySecurityHeaders({ headers: { "Cache-Control": "private, no-store" } }),
   );
 }
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    headers: { Allow: "GET, OPTIONS" },
+    headers: { Allow: "GET, OPTIONS", ...applySecurityHeaders().headers },
   });
 }
