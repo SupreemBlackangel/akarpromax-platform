@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
-import { getPermissionsForRole } from "@/lib/rbac/check";
+import { permissionsForSessionRole } from "@/lib/auth/identity-map";
 
 const SESSION_COOKIE = "akar_session";
 const secretKey = new TextEncoder().encode(process.env.SESSION_SECRET!);
@@ -25,7 +25,7 @@ export async function createSession(payload: CreateSessionInput) {
   const token = await new SignJWT({
     userId: payload.userId,
     role: payload.role,
-    permissions: getPermissionsForRole(payload.role),
+    permissions: permissionsForSessionRole(payload.role),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

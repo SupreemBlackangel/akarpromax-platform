@@ -3,6 +3,8 @@ import { ROLE_CATALOG, type SponsorRole } from "@/src/constants/roles";
 const SESSION_ROLE_TO_SPONSOR: Record<string, SponsorRole> = {
   super_admin: "super_admin",
   user: "viewer",
+  service_provider: "service_provider",
+  service_supervisor: "service_supervisor",
 };
 
 export function mapSessionRole(role: string): SponsorRole {
@@ -13,5 +15,7 @@ export function mapSessionRole(role: string): SponsorRole {
 
 export function permissionsForSessionRole(role: string): string[] {
   const sponsorRole = mapSessionRole(role);
-  return ROLE_CATALOG[sponsorRole]?.permissions ?? [];
+  const catalogPermissions = ROLE_CATALOG[sponsorRole]?.permissions ?? [];
+  if (sponsorRole === "super_admin") return [...catalogPermissions, "*"];
+  return catalogPermissions;
 }

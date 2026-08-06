@@ -53,6 +53,19 @@ export const PERMISSIONS = {
   SERVICES_REVIEW_MODERATE: "services.moderate_reviews",
   SERVICES_DISPUTE_RESOLVE: "services.resolve_disputes",
 
+  SERVICE_CATEGORIES_MANAGE: "service_categories.manage",
+  SERVICE_PROVIDERS_APPLY: "service_providers.apply",
+  SERVICE_PROVIDERS_MANAGE: "service_providers.manage",
+  SERVICE_PROVIDERS_REVIEW: "service_providers.review",
+  SERVICE_REQUESTS_MANAGE_OWN: "service_requests.manage_own",
+  SERVICE_REQUESTS_MANAGE_ALL: "service_requests.manage_all",
+  SERVICE_OFFERS_MANAGE_OWN: "service_offers.manage_own",
+  SERVICE_OFFERS_MANAGE_ALL: "service_offers.manage_all",
+  SERVICE_JOBS_MANAGE_OWN: "service_jobs.manage_own",
+  SERVICE_REPORTS_MANAGE: "service_reports.manage",
+  SERVICE_NOTIFICATIONS_VIEW: "service_notifications.view",
+  SERVICE_ADS_MANAGE: "service_ads.manage",
+
   TOOLS_USE: "tools.use",
 
   I18N_VIEW: "i18n.view",

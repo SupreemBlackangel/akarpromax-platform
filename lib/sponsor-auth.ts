@@ -22,8 +22,49 @@ export type SponsorIdentity = {
 };
 
 const permissionsByRole: Record<SponsorRole, string[]> = Object.fromEntries(
-  (Object.keys(ROLE_CATALOG) as SponsorRole[]).map((role) => [role, ROLE_CATALOG[role].permissions]),
+  (Object.keys(ROLE_CATALOG) as SponsorRole[]).map((role) => [
+    role,
+    role === "super_admin" ? [...ROLE_CATALOG[role].permissions, "*"] : ROLE_CATALOG[role].permissions,
+  ]),
 ) as Record<SponsorRole, string[]>;
+
+export const GUEST_IDENTITY: SponsorIdentity = {
+  authenticated: false,
+  email: null,
+  displayName: "Guest",
+  role: "guest",
+  countryCode: null,
+  permissions: [],
+};
+
+type SessionIdentityResolver = () => Promise<SponsorIdentity | null>;
+let identityResolverOverride: SessionIdentityResolver | null = null;
+
+/**
+ * Test-only seam: lets deterministic tests inject a fabricated session
+ * identity for the services module without faking ChatGPT headers.
+ * Passing null clears the override.
+ */
+export function setSessionIdentityResolverForTests(resolver: SessionIdentityResolver | null): void {
+  identityResolverOverride = resolver;
+}
+
+/**
+ * AkarProMax Identity (session-only) for the services module.
+ * Resolves strictly from the HttpOnly `akar_session` cookie and never
+ * consults external LLM identity headers, Bearer tokens, or the legacy
+ * auto-admin bypass (which remains confined to `getSponsorIdentity`
+ * for the sponsor module). Returns GUEST_IDENTITY when there is no
+ * valid session.
+ */
+export async function getSessionIdentity(): Promise<SponsorIdentity> {
+  if (identityResolverOverride) {
+    const identity = await identityResolverOverride();
+    if (identity) return identity;
+  }
+  const sessionIdentity = await identityFromSession();
+  return sessionIdentity ?? GUEST_IDENTITY;
+}
 
 type AccessRow = {
   email: string;
@@ -39,14 +80,7 @@ export async function getSponsorIdentity(): Promise<SponsorIdentity> {
 
   const user = await getChatGPTUser();
   if (!user) {
-    return {
-      authenticated: false,
-      email: null,
-      displayName: "Guest",
-      role: "guest",
-      countryCode: null,
-      permissions: [],
-    };
+    return GUEST_IDENTITY;
   }
 
   const email = user.email.trim().toLowerCase();
@@ -149,7 +183,7 @@ async function identityFromSession(): Promise<SponsorIdentity | null> {
 }
 
 export function hasSponsorPermission(identity: SponsorIdentity, permission: string): boolean {
-  return identity.permissions.includes(permission);
+  return identity.permissions.includes(permission) || identity.permissions.includes("*");
 }
 
 export function requireAuthenticatedEmail(identity: SponsorIdentity): string {
