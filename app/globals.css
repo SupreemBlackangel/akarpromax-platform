@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../src/styles/tokens.css";
 
 :root {
   color-scheme: light;
@@ -13,7 +14,27 @@
   --gold: #d8af55;
 }
 
-@theme inline { --color-background: var(--paper); --color-foreground: var(--ink); --font-sans: var(--font-site); }
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text-primary);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-accent: var(--color-accent);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+  --color-border: var(--color-border);
+  --font-sans: var(--font-family-arabic);
+  --font-latin: var(--font-family-latin);
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans Arabic", "Noto Kufi Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.75; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }

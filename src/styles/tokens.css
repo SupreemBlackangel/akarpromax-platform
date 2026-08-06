@@ -1,0 +1,213 @@
+/* ============================================================
+   AkarProMax Design Tokens — SINGLE SOURCE OF TRUTH (Phase 1)
+   Light defaults on :root; Dark overrides on [data-theme="dark"].
+   Consumed by app/globals.css @theme mapping and all UI primitives.
+   Docs: docs/design-system/DESIGN_TOKENS.md
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Color: surfaces ---- */
+  --color-background: #fbfcff;          /* legacy --paper */
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-muted: #f5f7ff;       /* legacy --lavender */
+  --color-surface-soft: #edf3ff;        /* legacy --sky */
+  --color-surface-input: #f8fbff;
+
+  /* ---- Color: text ---- */
+  --color-text-primary: #0b214c;        /* legacy --ink */
+  --color-text-secondary: #536781;
+  --color-text-muted: #7e8ca5;          /* legacy --muted */
+  --color-text-placeholder: #a5b2c6;
+  --color-text-inverse: #ffffff;
+
+  /* ---- Color: borders ---- */
+  --color-border: #dce5f4;              /* legacy --line */
+  --color-border-strong: #d9e5f8;
+  --color-border-focus: #6ea1ff;
+  --color-primary-ring: rgba(23, 105, 255, 0.12);
+
+  /* ---- Color: brand ---- */
+  --color-primary: #1769ff;             /* legacy --blue */
+  --color-primary-hover: #0e4fd2;       /* legacy --blue-dark */
+  --color-primary-active: #155dc7;
+  --color-primary-soft: #eaf2ff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eaf2ff;
+  --color-secondary-hover: #dceaff;
+  --color-secondary-foreground: #1769ff;
+  --color-accent: #d8af55;              /* legacy --gold */
+  --color-accent-foreground: #0b214c;
+
+  /* ---- Color: feedback ---- */
+  --color-success: #15803d;
+  --color-success-soft: #e6f8ef;
+  --color-success-foreground: #0b214c;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e3;
+  --color-warning-foreground: #0b214c;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --color-danger-foreground: #ffffff;
+  --color-info: #2563eb;
+  --color-info-soft: #edf3ff;
+  --color-info-foreground: #ffffff;
+
+  /* ---- Color: state ---- */
+  --color-disabled: #a5b2c6;
+  --color-disabled-surface: #eef2f7;
+  --color-overlay: rgba(7, 20, 41, 0.58);
+
+  /* ---- Spacing scale ---- */
+  --space-0: 0px;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-8: 24px;
+  --space-10: 32px;
+  --space-12: 40px;
+  --space-16: 48px;
+  --space-20: 64px;
+  --space-24: 96px;
+
+  /* ---- Radius ---- */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-pill: 9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(25, 64, 123, 0.06);
+  --shadow-md: 0 4px 10px rgba(25, 64, 123, 0.08);
+  --shadow-lg: 0 14px 26px rgba(25, 64, 123, 0.16);
+  --shadow-overlay: 0 20px 40px rgba(7, 20, 41, 0.28);
+  --shadow-focus: 0 0 0 3px var(--color-primary-ring);
+
+  /* ---- Typography ---- */
+  --font-family-arabic: "IBM Plex Sans Arabic", "Noto Kufi Arabic", "Noto Sans Arabic", Tahoma, Arial, sans-serif;
+  --font-family-latin: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
+  --font-size-display: 48px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.6;
+  --line-height-relaxed: 1.8;
+
+  /* ---- Motion ---- */
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+  --motion-slow: 320ms;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- Layering (z-index) ---- */
+  --layer-base: 0;
+  --layer-sticky: 20;
+  --layer-header: 30;
+  --layer-dropdown: 40;
+  --layer-overlay: 45;
+  --layer-dialog: 50;
+  --layer-toast: 60;
+  --layer-tooltip: 70;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-background: #0a1424;
+  --color-surface: #152a4b;
+  --color-surface-elevated: #1d3559;
+  --color-surface-muted: #10264c;
+  --color-surface-soft: #182d50;
+  --color-surface-input: #0f1d33;
+
+  /* Text */
+  --color-text-primary: #e8efff;
+  --color-text-secondary: #b8c9e2;
+  --color-text-muted: #8ea2c1;
+  --color-text-placeholder: #71809a;
+  --color-text-inverse: #0b214c;
+
+  /* Borders */
+  --color-border: #304867;
+  --color-border-strong: #263a5a;
+  --color-border-focus: #82adff;
+  --color-primary-ring: rgba(130, 173, 255, 0.25);
+
+  /* Brand */
+  --color-primary: #6ea1ff;
+  --color-primary-hover: #82adff;
+  --color-primary-active: #5f88c7;
+  --color-primary-soft: #1d3559;
+  --color-primary-foreground: #0b214c;
+  --color-secondary: #182d50;
+  --color-secondary-hover: #1d3559;
+  --color-secondary-foreground: #82adff;
+  --color-accent: #d8af55;
+  --color-accent-foreground: #0b214c;
+
+  /* Feedback */
+  --color-success: #4ade80;
+  --color-success-soft: #0e2a1d;
+  --color-success-foreground: #e8efff;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #2b2310;
+  --color-warning-foreground: #e8efff;
+  --color-danger: #f87171;
+  --color-danger-soft: #3a1520;
+  --color-danger-foreground: #ffffff;
+  --color-info: #82adff;
+  --color-info-soft: #1d3559;
+  --color-info-foreground: #0b214c;
+
+  /* State */
+  --color-disabled: #71809a;
+  --color-disabled-surface: #182d50;
+  --color-overlay: rgba(2, 8, 18, 0.66);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 14px 26px rgba(0, 0, 0, 0.42);
+  --shadow-overlay: 0 20px 40px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 3px var(--color-primary-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0.01ms;
+    --motion-normal: 0.01ms;
+    --motion-slow: 0.01ms;
+  }
+}
+
+/* Select chevron uses logical positioning via dir-aware rules. */
+.select-arrow {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e8ca5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  background-size: 0.75rem;
+}
+[dir="ltr"] .select-arrow {
+  background-position: right 0.75rem center;
+}
