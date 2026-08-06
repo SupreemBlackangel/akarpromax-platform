@@ -24,6 +24,39 @@ roadmap for Phase 3+ adoption across feature pages.
 | `shared/Footer` (legacy footer) | `src/components/shared/Footer.tsx` | `public-footer` | — | replaced in public shell (file kept) | — |
 | inline `AdSlot` in `PublicPageShell` | `src/components/PublicPageShell.tsx` | `ad-slot-frame.tsx` | — | replaced | — |
 
+## Phase 3 feature-page adoption (completed)
+
+Concrete mapping of the primitives onto the public feature pages. `dir` prop
+passed on `PageContainer` where the page drives `dir={dir}` (services-* pages);
+legacy `var(--*)` colors migrated to tokens (`--blue→--color-primary`,
+`--ink→--color-text-primary`, `--muted→--color-text-muted`, `--gold→--color-accent`,
+`--sky→--color-surface-soft`, `--paper→--color-background`, `--line→--color-border`,
+`--lavender→--color-surface-muted`, `--blue-dark→--color-primary-hover`).
+
+| Page | PageContainer | Grid | Button (CTA) | AdFrame | var(→token) | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `app/services/page.tsx` | yes | 2× (`columns={3}`) | login/register via shell | — | — | pilot commit `7c1d79a` |
+| `app/services/catalog/page.tsx` | yes | 2× (`columns={3}` per section) | — | — | — | list/grid → Grid |
+| `app/services/catalog/[code]/page.tsx` | yes | 2× (`columns={3}`) | — | — | — | provider + request lists |
+| `app/service-requests/page.tsx` | yes | 1× (`columns={3}`) | — | — | — | list → Grid; Link CTA kept |
+| `app/service-requests/new/page.tsx` | yes (×2 blocks) | 2× (`columns={2}`) | primary/submit + secondary/auth | 1 (bottom) | — | Tailwind form controls kept |
+| `app/service-requests/[id]/page.tsx` | yes (×3 blocks) | — | make-offer primary | — | — | dl-grid left as Tailwind |
+| `app/service-requests/[id]/offer/page.tsx` | yes (×2 blocks) | 1× (`columns={2}`) | primary/submit + secondary/auth | — | — | loading prop on submit |
+| `app/properties/[id]/page.tsx` | yes (×3 blocks) | — | ask CTA primary | 4 (after gallery/price/description; sidebar×3 vertical) | 100% (32 refs) | full var→token sweep |
+| `app/providers/[id]/page.tsx` | yes | 1× (`columns={3}`) | — | — | partial | legacy var→token |
+| `app/providers/apply/page.tsx` | yes | 1× (`columns={2}`) | submit primary | — | partial | legacy var→token |
+| `src/components/tools/ToolsPageClient.tsx` | — | — | — | 1 (hero, `variant="horizontal"`) | — | tc-* self-contained system preserved |
+
+### Scope preserved (out of Phase 3)
+- `app/page.tsx` landing — not rebuilt (only `#top`→`#main-content` from Phase 2).
+- `app/admin/**`, `app/dashboard/**`, `app/dev/**` — out of scope.
+- `lib/db/**`, `lib/runtime-db.ts`, `lib/auth/**`, `drizzle*`, `lib/ads/**` — untouched.
+- Legacy `.tc-*` tools styling system (`globals.css` 1271–1390) — preserved; it is a
+  self-contained calculator component style, not the legacy `var(--)` palette.
+- Tailwind utility form controls (`<input>`/`<select>`/`<textarea>` with `bg-gray-*`
+  etc.) and `<Link>` CTAs — intentionally kept (not legacy `var(--)`); only raw
+  primary/secondary `<button>` CTAs became `ui/Button`.
+
 ## Intentional non-changes (Phase 2)
 
 - `app/page.tsx` landing — not rebuilt; only its `#top`→`#main-content` anchors retargeted.
