@@ -12,15 +12,14 @@
 - Files:
   - `app/page.tsx`
   - `src/data/translations.ts`
-- Definitions:
-  - `translations.sidebar`: 20 translated items with icon keys.
-  - `adminNav`: real admin route list in `app/page.tsx`.
-  - `iconMap`: `lucide-react` map in `app/page.tsx`.
+- Definitions (after Phase 4 navigation reduction):
+  - `publicNav`: text-led public-only list in `app/page.tsx` (Home, Properties, Services, Offices & companies, About, Join us) targeting real section anchors.
+  - `copy.sidebar` was removed from `translations.ts` and the `SiteCopy` type; public/admin navigation data no longer share one structure.
   - `languageOptions`, `themeOptions`, `roleLabels` in `src/data/translations.ts`.
   - `quickLinks` and `usefulLinks` footer link arrays in `src/data/translations.ts`.
 - Actual behavior:
-  - Main `copy.sidebar` items render as anchors to `#module-${index}`.
-  - Admin routes render separately from `adminNav` with real `href` values.
+  - Main sidebar items render from `publicNav` as anchors to `#top`, `#properties`, `#services`, `#offices`, `#about`, `#account`.
+  - Admin routes are NOT rendered on the public page; they live only in `app/admin/**` clients.
 
 ### 2. Admin Dashboard Module Links
 - File: `app/admin/dashboard-admin-client.tsx`
@@ -65,7 +64,7 @@
 
 ### `lucide-react`
 - Used in `app/page.tsx`
-- Icons: `Home`, `Library`, `Megaphone`, `MapPin`, `Phone`, `HelpCircle`, `LayoutDashboard`, `UserCheck`, `Newspaper`, `Wallet`, `Building2`, `Hammer`, `ShieldCheck`, `Shield`, `Key`, `CreditCard`, `Tag`, `BarChart3`, `Settings`, `Users`, `Briefcase`, `Languages`
+- Icons: `Wrench` only (services band). All admin/sidebar icons removed in Phase 4.
 
 ### Unicode symbol icons
 - Used in dashboard/admin/sponsor sidebars and location widgets
@@ -81,15 +80,16 @@
 
 ## Major Navigation Findings
 
-### Broken or Misaligned Public Sidebar Anchors
-- `app/page.tsx` maps every translated sidebar item except index 0 to `#module-${index}`.
+### Broken or Misaligned Public Sidebar Anchors — RESOLVED
+- `app/page.tsx` previously mapped every translated sidebar item except index 0 to `#module-${index}`.
 - The page only defines `module-1` through `module-4` inside the services grid.
-- Result:
-  - labels such as "Books and programs", "Advertise", "Contact", and all admin labels do not map to real page sections.
+- Status: Fixed in Phase 4. The sidebar is now `publicNav` with real section anchors
+  (`#top`, `#properties`, `#services`, `#offices`, `#about`, `#account`).
 
-### Public/Admin IA Is Mixed in One Translation Array
-- `translations.sidebar` contains both public and admin labels.
-- This couples two different audiences into one navigation structure.
+### Public/Admin IA Is Mixed in One Translation Array — RESOLVED
+- `translations.sidebar` previously contained both public and admin labels.
+- Status: Fixed in Phase 4. The `sidebar` field was removed from all locales and from
+  `SiteCopy`; admin IA is defined exclusively in `app/admin/**` clients.
 
 ### No Real Route-Based Public Navigation
 - The landing page sidebar does not link to `/services`, `/tools`, or `/properties/[id]`.

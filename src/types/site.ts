@@ -87,7 +87,6 @@ export type Translation = {
   footerTagline: string;
   chatAria: string;
   arrow: string;
-  sidebar: Array<[string, string]>;
 };
 
 export type CountryOption = {

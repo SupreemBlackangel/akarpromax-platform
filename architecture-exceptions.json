@@ -92,14 +92,6 @@
       "expiresAfterPhase": 3
     },
     {
-      "id": "ARCH-LEGACY-017",
-      "rule": "ARCH-005",
-      "path": "app/page.tsx",
-      "reason": "Page imports admin navigation components (sidebar with admin links)",
-      "targetPhase": "Phase 3",
-      "expiresAfterPhase": 3
-    },
-    {
       "id": "ARCH-LEGACY-018",
       "rule": "ARCH-009",
       "path": "app/admin/sponsors/banner/page.tsx",

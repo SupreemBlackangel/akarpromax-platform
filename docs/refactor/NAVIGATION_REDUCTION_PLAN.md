@@ -1,5 +1,15 @@
 # NAVIGATION REDUCTION PLAN
 
+> **Status — Phase 4 (navigation reduction) partially done.** Public landing nav is now
+> admin-free: `adminNav`, `sidebarIndexes`, the header admin chip, and all admin sidebar
+> links were removed from `app/page.tsx`; `translations.sidebar` (mixed public/admin) was
+> deleted from every locale and from `SiteCopy`; the public sidebar is a text-led
+> `publicNav` (Home / Properties / Services / Offices & companies / About / Join us)
+> targeting real section anchors; lucide usage in `app/page.tsx` is reduced to `Wrench`.
+> Remaining work: retire the duplicated admin sidebars (dashboard/client modules), decide
+> the المزادات / المنتدى / المزيد public items once those routes exist, and consolidate
+> admin pages under the group routes below.
+
 ## Principles
 - Public navigation and admin navigation must be fully separated.
 - Navigation schemas must be scope-specific:

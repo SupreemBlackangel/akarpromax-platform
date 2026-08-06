@@ -121,7 +121,6 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "منصة عُمانية للعقار والخدمات المهنية",
     chatAria: "تواصل مع عقار بروماكس",
     arrow: "←",
-    sidebar: [["Home", "الرئيسية"], ["Library", "الكتب والبرامج"], ["Megaphone", "أعلن معنا"], ["MapPin", "من نحن"], ["Phone", "اتصل بنا"], ["HelpCircle", "الأسئلة الشائعة"], ["LayoutDashboard", "لوحة الإدارة"], ["UserCheck", "إدارة المستخدمين"], ["Megaphone", "إدارة الإعلانات"], ["Newspaper", "admin.newsTicker"], ["Wallet", "إدارة الاشتراكات"], ["Building2", "إدارة العقارات"], ["Hammer", "إدارة الخدمات"], ["ShieldCheck", "إدارة المسوقين"], ["Shield", "المشرفون والصلاحيات"], ["Key", "مفاتيح التراخيص"], ["CreditCard", "الخطط والأسعار"], ["Tag", "الخصومات والكوبونات"], ["BarChart3", "التقارير والتحليلات"], ["Settings", "إعدادات النظام"]],
   },
   en: {
     metaTitle: "AkarPromax | Smart real estate platform in Oman",
@@ -225,7 +224,6 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "An Omani platform for property and professional services",
     chatAria: "Contact AkarPromax",
     arrow: "→",
-    sidebar: [["Home", "Home"], ["Library", "Books and programs"], ["Megaphone", "Advertise with us"], ["MapPin", "About us"], ["Phone", "Contact us"], ["HelpCircle", "FAQ"], ["LayoutDashboard", "Admin dashboard"], ["UserCheck", "User management"], ["Megaphone", "Ad management"], ["Newspaper", "admin.newsTicker"], ["Wallet", "Subscriptions"], ["Building2", "Property management"], ["Hammer", "Service management"], ["ShieldCheck", "Marketers"], ["Shield", "Moderators and permissions"], ["Key", "License keys"], ["CreditCard", "Plans and pricing"], ["Tag", "Discounts and coupons"], ["BarChart3", "Reports and analytics"], ["Settings", "System settings"]],
   },
   tr: {
     metaTitle: "AkarPromax | Umman'da akıllı gayrimenkul platformu",
@@ -329,6 +327,5 @@ export const translations: Record<Locale, Translation> = {
     footerTagline: "Gayrimenkul ve profesyonel hizmetler için Umman platformu",
     chatAria: "AkarPromax ile iletişime geç",
     arrow: "→",
-    sidebar: [["Home", "Ana sayfa"], ["Library", "Kitaplar ve programlar"], ["Megaphone", "Bize reklam verin"], ["MapPin", "Hakkımızda"], ["Phone", "İletişim"], ["HelpCircle", "SSS"], ["LayoutDashboard", "Yönetim paneli"], ["UserCheck", "Kullanıcı yönetimi"], ["Megaphone", "İlan yönetimi"], ["Newspaper", "admin.newsTicker"], ["Wallet", "Abonelikler"], ["Building2", "Gayrimenkul yönetimi"], ["Hammer", "Hizmet yönetimi"], ["ShieldCheck", "Pazarlamacılar"], ["Shield", "Moderatörler ve yetkiler"], ["Key", "Lisans anahtarları"], ["CreditCard", "Planlar ve fiyatlar"], ["Tag", "İndirimler ve kuponlar"], ["BarChart3", "Raporlar ve analizler"], ["Settings", "Sistem ayarları"]],
   },
 };

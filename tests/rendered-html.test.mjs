@@ -102,7 +102,11 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(page, /sponsor-visual-image/);
   assert.match(page, /SponsorIdentity/);
   assert.match(sponsorIdentity, /sponsor-logo-fallback/);
-  assert.match(page, /sidebar-sponsor-admin/);
+  assert.match(page, /sidebar-public-nav/);
+  assert.doesNotMatch(page, /sidebar-sponsor-admin/);
+  assert.doesNotMatch(page, /adminNav/);
+  assert.doesNotMatch(page, /sidebar-admin-head/);
+  assert.doesNotMatch(page, /admin-chip/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);
   assert.match(schema, /sponsorAccess/);
@@ -183,11 +187,12 @@ test("includes the region-filtered news ticker, management API and admin panel",
   ]);
 
   assert.match(page, /<NewsTicker copy=\{copy\} locale=\{locale\} country=\{country\} city=\{city\} \/>/);
-  assert.match(page, /adminNav/);
-  assert.match(page, /sidebar-admin-head/);
-  assert.match(page, /PERMISSIONS/);
-  assert.match(page, /مركز الشريط الإخباري/);
-  assert.match(page, /مركز الإعلانات/);
+  assert.match(page, /sidebar-public-nav/);
+  assert.doesNotMatch(page, /adminNav/);
+  assert.doesNotMatch(page, /sidebar-admin-head/);
+  assert.doesNotMatch(page, /admin-chip/);
+  assert.doesNotMatch(page, /مركز الشريط الإخباري/);
+  assert.doesNotMatch(page, /مركز الإعلانات/);
   assert.match(ticker, /api\/news\?/);
   assert.match(ticker, /ticker-marquee/);
   assert.match(ticker, /animationDuration/);

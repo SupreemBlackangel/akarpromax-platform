@@ -4,12 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import Link from "next/link";
-import {
-  Home as HomeIcon, Library, Megaphone, MapPin, Phone, HelpCircle,
-  LayoutDashboard, UserCheck, Newspaper, Wallet, Building2,
-  Hammer, ShieldCheck, Shield, Key, CreditCard, Tag, BarChart3,
-  Settings, Users, Briefcase, Languages, Wrench,
-} from "lucide-react";
+import { Wrench } from "lucide-react";
 import LocationChip from "@/src/components/LocationChip";
 import AccountDialog from "@/src/components/AccountDialog";
 import Brand from "@/src/components/Brand";
@@ -33,15 +28,7 @@ import {
   sponsorToneByCountry,
 } from "@/src/data/locations";
 import { languageOptions, roleLabels, themeOptions, translations } from "@/src/data/translations";
-import { PERMISSIONS } from "@/src/constants/permissions";
 import type { PublicProperty } from "@/lib/properties-format";
-
-const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  Home: HomeIcon, Library, Megaphone, MapPin, Phone, HelpCircle,
-  LayoutDashboard, UserCheck, Newspaper, Wallet, Building2,
-  Hammer, ShieldCheck, Shield, Key, CreditCard, Tag, BarChart3,
-  Settings, Users, Briefcase, Languages,
-};
 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("ar");
@@ -139,32 +126,14 @@ export default function Home() {
   })));
   const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
-  const adminNav = [
-    { href: "/admin", icon: "LayoutDashboard", label: locale === "ar" ? "لوحة الإدارة" : locale === "tr" ? "Yönetim paneli" : "Admin dashboard", show: viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW) },
-    { href: "/admin/news", icon: "Newspaper", label: locale === "ar" ? "مركز الشريط الإخباري" : locale === "tr" ? "Haber merkezi" : "News center", show: viewer.permissions.includes(PERMISSIONS.NEWS_VIEW) },
-    { href: "/admin/ads", icon: "Megaphone", label: locale === "ar" ? "مركز الإعلانات" : locale === "tr" ? "Reklam merkezi" : "Advertising center", show: viewer.permissions.includes(PERMISSIONS.ADS_VIEW) },
-    { href: "/admin/sponsors", icon: "Shield", label: locale === "ar" ? "نظام الرعاة" : locale === "tr" ? "Sponsor sistemi" : "Sponsor system", show: viewer.permissions.includes(PERMISSIONS.SPONSORS_VIEW) },
-    { href: "/admin/users", icon: "Users", label: locale === "ar" ? "المستخدمون" : locale === "tr" ? "Kullanıcılar" : "Users", show: viewer.permissions.includes(PERMISSIONS.USERS_VIEW) },
-    { href: "/admin/roles", icon: "ShieldCheck", label: locale === "ar" ? "الأدوار والصلاحيات" : locale === "tr" ? "Roller ve izinler" : "Roles & permissions", show: viewer.permissions.includes(PERMISSIONS.ROLES_VIEW) },
-    { href: "/admin/reports", icon: "BarChart3", label: locale === "ar" ? "التقارير" : locale === "tr" ? "Raporlar" : "Reports", show: viewer.permissions.includes(PERMISSIONS.REPORTS_VIEW) },
-    { href: "/admin/settings", icon: "Settings", label: locale === "ar" ? "الإعدادات" : locale === "tr" ? "Ayarlar" : "Settings", show: viewer.permissions.includes(PERMISSIONS.SETTINGS_MANAGE) },
-    { href: "/services", icon: "Briefcase", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services marketplace", show: true },
-    { href: "/admin/i18n", icon: "Languages", label: locale === "ar" ? "إدارة الترجمات" : locale === "tr" ? "Çeviri yönetimi" : "Translation admin", show: viewer.permissions.includes(PERMISSIONS.I18N_VIEW) },
-  ].filter((item) => item.show);
-  const canOpenAdminPanel = adminNav.some((item) => item.href.startsWith("/admin"));
-  const sidebarIndexes = viewer.role === "super_admin"
-    ? copy.sidebar.map((_, index) => index)
-    : viewer.role === "sponsor_admin"
-      ? [0, 1, 2, 3, 4, 5, 6, 17]
-      : viewer.role === "ad_manager"
-        ? [0, 1, 2, 3, 4, 5, 17]
-      : viewer.role === "country_manager"
-        ? [0, 1, 2, 3, 4, 5, 6, 12, 13, 17]
-        : viewer.role === "content_editor"
-          ? [0, 1, 2, 3, 4, 5, 9]
-          : viewer.role === "analyst"
-            ? [0, 1, 2, 3, 4, 5, 17]
-            : [0, 1, 2, 3, 4, 5];
+  const publicNav = [
+    { href: "#top", label: locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana sayfa" : "Home" },
+    { href: "#properties", label: locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkul" : "Properties" },
+    { href: "#services", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services" },
+    { href: "#offices", label: locale === "ar" ? "المكاتب والشركات" : locale === "tr" ? "Ofisler ve şirketler" : "Offices & companies" },
+    { href: "#about", label: locale === "ar" ? "عن المنصة" : locale === "tr" ? "Hakkımızda" : "About" },
+    { href: "#account", label: locale === "ar" ? "انضم إلينا" : locale === "tr" ? "Bize katılın" : "Join us" },
+  ];
   const sidebarOpen = sidebarPinned || sidebarHovered;
   const selectHeroSlide = (index: number) => setActiveHeroIndex((index + heroSlides.length) % heroSlides.length);
 
@@ -386,17 +355,11 @@ export default function Home() {
       <aside id="right-sidebar" className={sidebarOpen ? "right-sidebar sidebar-open" : "right-sidebar"} aria-label={copy.sidebarAria} onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
         <div className="sidebar-head"><Brand copy={copy} /><button type="button" aria-label={copy.closeMenu} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>×</button></div>
         <div className="sidebar-scroll">
-          {copy.sidebar.map(([icon, label], index) => ({ icon, label, index })).filter((item) => sidebarIndexes.includes(item.index)).map(({ icon, label, index }) => (
-            <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={index === 0 ? "#top" : `#module-${index}`} key={`${locale}-${index}-${label}`}>
-              <span className="sidebar-icon" aria-hidden="true">{React.createElement(iconMap[icon] ?? HelpCircle, { size: 18 })}</span><span>{label}</span>
-            </a>
-          ))}
-          {adminNav.length > 0 && <div className="sidebar-admin-head">{locale === "ar" ? "الإدارة" : locale === "tr" ? "Yönetim" : "Admin"}</div>}
-          {adminNav.map(({ href, icon, label }) => (
-            <a className="sidebar-link sidebar-sponsor-admin" href={href} key={href}>
-              <span className="sidebar-icon" aria-hidden="true">{React.createElement(iconMap[icon] ?? HelpCircle, { size: 18 })}</span><span>{label}</span>
-            </a>
-          ))}
+          <nav className="sidebar-public-nav" aria-label={copy.sidebarAria}>
+            {publicNav.map((item, index) => (
+              <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={item.href} key={`${locale}-${index}-${item.label}`} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>{item.label}</a>
+            ))}
+          </nav>
         </div>
         <div className="sidebar-foot"><strong>{viewer.authenticated ? viewer.displayName : copy.brandTitle}</strong><span>{roleLabels[locale][viewer.role] ?? viewer.role} © 2026</span></div>
       </aside>
@@ -468,7 +431,7 @@ export default function Home() {
               </div>
               <a className="office-tool" href="#top" aria-label={copy.officeAppAria} title={copy.officeAppAria}>▣</a>
             </div>
-            <div className="header-actions"><a className="admin-chip" href={canOpenAdminPanel ? "/admin" : "#account"}><span className="admin-label">{roleLabels[locale][viewer.role] ?? "Admin"}</span><span aria-hidden="true">♙</span></a>{viewer.authenticated ? <button type="button" className="header-login header-account" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{viewer.displayName}</button> : <><button type="button" className="header-login" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{copy.login}</button><button type="button" className="header-register" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.register}</button></>}</div>
+            <div className="header-actions">{viewer.authenticated ? <button type="button" className="header-login header-account" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{viewer.displayName}</button> : <><button type="button" className="header-login" onClick={() => { setAccountMode("login"); setAccountOpen(true); }}>{copy.login}</button><button type="button" className="header-register" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.register}</button></>}</div>
           </div>
         </header>
 
