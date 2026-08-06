@@ -44,7 +44,7 @@ export default function SponsorsListView() {
     setLoading(true);
     fetch("/api/sponsor-profiles").then(r => r.ok ? r.json() : []).then(d => setProfiles(d)).finally(() => setLoading(false));
   }
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { window.queueMicrotask(() => fetchAll()); }, []);
 
   const filtered = useMemo(() => {
     return profiles.filter(p => {

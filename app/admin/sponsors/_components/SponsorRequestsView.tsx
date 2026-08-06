@@ -38,7 +38,7 @@ export default function SponsorRequestsView() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { fetchRequests(); }, []);
+  useEffect(() => { window.queueMicrotask(() => fetchRequests()); }, []);
 
   async function updateStatus(id: string, status: string) {
     setActionLoading(id);

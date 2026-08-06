@@ -59,6 +59,8 @@ const roleLabels: Record<string, string> = {
   viewer: "مستخدم مشاهدة",
   analyst: "محلل التقارير",
   content_editor: "محرر الرعاة",
+  service_provider: "مزود خدمات",
+  service_supervisor: "مشرف خدمات",
   country_manager: "مدير دولة",
   ad_manager: "مدير الإعلانات",
   sponsor_admin: "مدير الرعاة",

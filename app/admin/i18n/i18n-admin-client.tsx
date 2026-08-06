@@ -97,7 +97,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
-    loadVersions();
+    window.queueMicrotask(() => { void loadVersions(); });
     return () => controller.abort();
   }, []);
 

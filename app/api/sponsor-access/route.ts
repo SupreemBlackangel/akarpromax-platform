@@ -9,6 +9,8 @@ const assignableRoles: SponsorRole[] = [
   "viewer",
   "analyst",
   "content_editor",
+  "service_provider",
+  "service_supervisor",
   "country_manager",
   "ad_manager",
   "sponsor_admin",
