@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import Brand from "@/src/components/Brand";
 import type { Translation } from "@/src/types/site";
@@ -20,7 +20,6 @@ export default function Header({
   onLogin,
   onLogout,
 }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="shared-header">
@@ -28,10 +27,10 @@ export default function Header({
         <Brand copy={copy} />
 
         <nav className="main-nav" aria-label="Main navigation">
-          <a href="/">{locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana Sayfa" : "Home"}</a>
-          <a href="/properties">{locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkuller" : "Properties"}</a>
-          <a href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</a>
-          <a href="/tools">{locale === "ar" ? "الأدوات" : locale === "tr" ? "Araçlar" : "Tools"}</a>
+          <Link href="/">{locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana Sayfa" : "Home"}</Link>
+          <Link href="/properties">{locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkuller" : "Properties"}</Link>
+          <Link href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</Link>
+          <Link href="/tools">{locale === "ar" ? "الأدوات" : locale === "tr" ? "Araçlar" : "Tools"}</Link>
         </nav>
 
         <div className="header-actions">

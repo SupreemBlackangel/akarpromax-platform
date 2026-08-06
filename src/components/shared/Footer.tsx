@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Locale } from "@/src/types/site";
 import type { Translation } from "@/src/types/site";
 
@@ -24,14 +25,14 @@ export default function Footer({ locale, copy }: Props) {
           </div>
           <div>
             <h3>{t.quick}</h3>
-            <a href="/">{locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana Sayfa" : "Home"}</a>
-            <a href="/properties">{locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkuller" : "Properties"}</a>
-            <a href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</a>
-            <a href="/tools">{locale === "ar" ? "الأدوات" : locale === "tr" ? "Araçlar" : "Tools"}</a>
+            <Link href="/">{locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana Sayfa" : "Home"}</Link>
+            <Link href="/properties">{locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkuller" : "Properties"}</Link>
+            <Link href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</Link>
+            <Link href="/tools">{locale === "ar" ? "الأدوات" : locale === "tr" ? "Araçlar" : "Tools"}</Link>
           </div>
           <div>
             <h3>{t.useful}</h3>
-            <a href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</a>
+            <Link href="/services">{locale === "ar" ? "الخدمات" : locale === "tr" ? "Hizmetler" : "Services"}</Link>
           </div>
           <div>
             <h3>{t.contact}</h3>

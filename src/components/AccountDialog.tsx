@@ -21,7 +21,7 @@ type Props = {
 };
 
 type Mode = "login" | "register";
-type RegisterStep = 0 | 1 | 2;
+type RegisterStep = 0 | 1;
 
 type AuthUser = {
   id: string;
@@ -36,19 +36,12 @@ type AuthUser = {
 
 type RegisterResponse = {
   user?: AuthUser;
-  challenge?: { id: string; channel: string; expiresAt: string };
-  verificationCode?: string;
   error?: string;
 };
 
 type LoginResponse = {
   token?: string;
   user?: AuthUser;
-  error?: string;
-};
-
-type VerifyResponse = {
-  verified?: boolean;
   error?: string;
 };
 
@@ -59,7 +52,6 @@ const LABELS: Record<Locale, {
   registerTab: string;
   titleLogin: string;
   titleRegister: string;
-  titleVerify: string;
   titleAccount: string;
   name: string;
   email: string;
@@ -73,22 +65,17 @@ const LABELS: Record<Locale, {
   identifierHint: string;
   loginSubmit: string;
   registerSubmit: string;
-  verifySubmit: string;
   cancel: string;
   back: string;
   next: string;
   stepAccount: string;
   stepLocation: string;
-  stepVerify: string;
   locationTitle: string;
   locationHint: string;
   detectLocation: string;
   detectingLocation: string;
   locationError: string;
   locationDetected: string;
-  verifyHint: string;
-  verifyDevHint: string;
-  verifyPlaceholder: string;
   haveAccount: string;
   noAccount: string;
   switchLogin: string;
@@ -104,9 +91,6 @@ const LABELS: Record<Locale, {
   genericError: string;
   invalidCredentials: string;
   alreadyRegistered: string;
-  challengeExpired: string;
-  tooManyAttempts: string;
-  wrongCode: string;
   welcome: string;
 }> = {
   ar: {
@@ -116,7 +100,6 @@ const LABELS: Record<Locale, {
     registerTab: "تسجيل",
     titleLogin: "تسجيل الدخول",
     titleRegister: "إنشاء حساب جديد",
-    titleVerify: "تأكيد حسابك",
     titleAccount: "حسابي",
     name: "الاسم الكامل",
     email: "البريد الإلكتروني",
@@ -130,22 +113,17 @@ const LABELS: Record<Locale, {
     identifierHint: "بريدك الإلكتروني أو رقم هاتفك المسجل",
     loginSubmit: "دخول",
     registerSubmit: "إنشاء الحساب",
-    verifySubmit: "تأكيد الرمز",
     cancel: "إلغاء",
     back: "السابق",
     next: "التالي",
     stepAccount: "الحساب",
     stepLocation: "الموقع",
-    stepVerify: "التحقق",
     locationTitle: "حدّد موقعك",
     locationHint: "نكتشف موقعك تلقائيًا لنضع دولتك ومدينتك، أو اخترهما يدويًا.",
     detectLocation: "كشف الموقع تلقائيًا",
     detectingLocation: "جارٍ الكشف...",
     locationError: "تعذر كشف الموقع، حدّده يدويًا",
     locationDetected: "تم كشف موقعك",
-    verifyHint: "أدخل رمز التحقق المكوّن من 6 أرقام الذي أرسلناه إلى بريدك.",
-    verifyDevHint: "وضع التطوير: رمزك هو",
-    verifyPlaceholder: "000000",
     haveAccount: "لديك حساب بالفعل؟",
     noAccount: "ليس لديك حساب؟",
     switchLogin: "سجّل الدخول",
@@ -161,9 +139,6 @@ const LABELS: Record<Locale, {
     genericError: "حدث خطأ، حاول مجددًا",
     invalidCredentials: "بيانات الدخول غير صحيحة",
     alreadyRegistered: "هذا البريد أو الهاتف مسجل مسبقًا",
-    challengeExpired: "انتهت صلاحية الرمز، سجّل من جديد",
-    tooManyAttempts: "محاولات كثيرة، أعد التسجيل",
-    wrongCode: "الرمز غير صحيح",
     welcome: "أهلًا بك",
   },
   en: {
@@ -173,7 +148,6 @@ const LABELS: Record<Locale, {
     registerTab: "Register",
     titleLogin: "Log in",
     titleRegister: "Create an account",
-    titleVerify: "Verify your account",
     titleAccount: "My account",
     name: "Full name",
     email: "Email",
@@ -187,22 +161,17 @@ const LABELS: Record<Locale, {
     identifierHint: "Your registered email or phone number",
     loginSubmit: "Log in",
     registerSubmit: "Create account",
-    verifySubmit: "Verify code",
     cancel: "Cancel",
     back: "Back",
     next: "Next",
     stepAccount: "Account",
     stepLocation: "Location",
-    stepVerify: "Verify",
     locationTitle: "Set your location",
     locationHint: "We detect your location automatically to fill your country and city, or choose them manually.",
     detectLocation: "Detect location automatically",
     detectingLocation: "Detecting...",
     locationError: "Could not detect location, set it manually",
     locationDetected: "Location detected",
-    verifyHint: "Enter the 6-digit verification code we sent to your email.",
-    verifyDevHint: "Development mode: your code is",
-    verifyPlaceholder: "000000",
     haveAccount: "Already have an account?",
     noAccount: "Don't have an account?",
     switchLogin: "Log in",
@@ -218,9 +187,6 @@ const LABELS: Record<Locale, {
     genericError: "Something went wrong, try again",
     invalidCredentials: "Incorrect email/phone or password",
     alreadyRegistered: "This email or phone is already registered",
-    challengeExpired: "Verification expired, please register again",
-    tooManyAttempts: "Too many attempts, please register again",
-    wrongCode: "Incorrect code",
     welcome: "Welcome",
   },
   tr: {
@@ -230,7 +196,6 @@ const LABELS: Record<Locale, {
     registerTab: "Kayıt",
     titleLogin: "Giriş yap",
     titleRegister: "Hesap oluştur",
-    titleVerify: "Hesabını doğrula",
     titleAccount: "Hesabım",
     name: "Ad soyad",
     email: "E-posta",
@@ -244,22 +209,17 @@ const LABELS: Record<Locale, {
     identifierHint: "Kayıtlı e-posta adresiniz veya telefonunuz",
     loginSubmit: "Giriş yap",
     registerSubmit: "Hesap oluştur",
-    verifySubmit: "Kodu doğrula",
     cancel: "İptal",
     back: "Geri",
     next: "İleri",
     stepAccount: "Hesap",
     stepLocation: "Konum",
-    stepVerify: "Doğrulama",
     locationTitle: "Konumunuzu ayarlayın",
     locationHint: "Ülkenizi ve şehrinizi doldurmak için konumunuzu otomatik algılıyoruz, veya elle seçin.",
     detectLocation: "Konumu otomatik algıla",
     detectingLocation: "Algılanıyor...",
     locationError: "Konum algılanamadı, elle ayarlayın",
     locationDetected: "Konumunuz algılandı",
-    verifyHint: "E-postanıza gönderdiğimiz 6 haneli doğrulama kodunu girin.",
-    verifyDevHint: "Geliştirme modu: kodunuz",
-    verifyPlaceholder: "000000",
     haveAccount: "Zaten hesabınız var mı?",
     noAccount: "Hesabınız yok mu?",
     switchLogin: "Giriş yapın",
@@ -275,9 +235,6 @@ const LABELS: Record<Locale, {
     genericError: "Bir hata oluştu, tekrar deneyin",
     invalidCredentials: "E-posta/telefon veya şifre hatalı",
     alreadyRegistered: "Bu e-posta veya telefon zaten kayıtlı",
-    challengeExpired: "Doğrulama süresi doldu, lütfen yeniden kayıt olun",
-    tooManyAttempts: "Çok fazla deneme, lütfen yeniden kayıt olun",
-    wrongCode: "Kod hatalı",
     welcome: "Hoş geldin",
   },
 };
@@ -311,15 +268,6 @@ function toViewer(user: AuthUser): ViewerContext {
   };
 }
 
-function bearerHeader(): Record<string, string> {
-  try {
-    const token = localStorage.getItem("akar_token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  } catch {
-    return {};
-  }
-}
-
 export default function AccountDialog({
   locale,
   open,
@@ -332,8 +280,6 @@ export default function AccountDialog({
   const dialogId = useId();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [registerStep, setRegisterStep] = useState<RegisterStep>(0);
-  const [challengeId, setChallengeId] = useState("");
-  const [devCode, setDevCode] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -341,7 +287,6 @@ export default function AccountDialog({
   const [password, setPassword] = useState("");
   const [countryCode, setCountryCode] = useState(FALLBACK_COUNTRY);
   const [city, setCity] = useState("");
-  const [code, setCode] = useState("");
   const [identifier, setIdentifier] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -366,9 +311,6 @@ export default function AccountDialog({
       setError("");
       setLocationError("");
       setLocationDetected(false);
-      setCode("");
-      setChallengeId("");
-      setDevCode(null);
     }
   }
 
@@ -410,12 +352,9 @@ export default function AccountDialog({
     setError("");
     setLocationError("");
     setLocationDetected(false);
-    setCode("");
-    setChallengeId("");
-    setDevCode(null);
   }, []);
 
-  const setFieldError = useCallback((key: "emailError" | "phoneError" | "passwordError" | "nameError" | "missingError" | "genericError" | "invalidCredentials" | "alreadyRegistered" | "challengeExpired" | "tooManyAttempts" | "wrongCode") => {
+  const setFieldError = useCallback((key: "emailError" | "phoneError" | "passwordError" | "nameError" | "missingError" | "genericError" | "invalidCredentials" | "alreadyRegistered") => {
     setError(labels[key]);
   }, [labels]);
 
@@ -428,7 +367,7 @@ export default function AccountDialog({
       setFieldError("emailError");
       return false;
     }
-    if (!PHONE_PATTERN.test(phone.trim())) {
+    if (phone.trim() && !PHONE_PATTERN.test(phone.trim())) {
       setFieldError("phoneError");
       return false;
     }
@@ -510,58 +449,10 @@ export default function AccountDialog({
         if (data.error === "already_registered") return setFieldError("alreadyRegistered");
         return setFieldError("genericError");
       }
-      if (data.challenge) {
-        setChallengeId(data.challenge.id);
-        setDevCode(typeof data.verificationCode === "string" ? data.verificationCode : null);
-        setRegisterStep(2);
-      } else if (data.user) {
+      if (data.user) {
         onAuthenticated(toViewer(data.user));
         onClose();
       }
-    } catch {
-      if (!mountedRef.current) return;
-      setFieldError("genericError");
-    } finally {
-      if (mountedRef.current) setLoading(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (!/^\d{6}$/.test(code.trim())) return setFieldError("wrongCode");
-
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challengeId, code: code.trim() }),
-      });
-      const data: VerifyResponse = await response.json();
-      if (!response.ok) {
-        if (data.error === "challenge_expired") return setFieldError("challengeExpired");
-        if (data.error === "too_many_attempts") return setFieldError("tooManyAttempts");
-        if (data.error === "wrong_code") return setFieldError("wrongCode");
-        return setFieldError("genericError");
-      }
-      const me = await fetch("/api/auth/me", {
-        cache: "no-store",
-        headers: bearerHeader(),
-      });
-      const meData = await me.json();
-      if (meData.authenticated && meData.user) {
-        onAuthenticated(toViewer(meData.user as AuthUser));
-      } else {
-        onAuthenticated({
-          authenticated: true,
-          email,
-          displayName: name,
-          role: "viewer",
-          countryCode: countryCode || null,
-          permissions: [],
-        });
-      }
-      onClose();
     } catch {
       if (!mountedRef.current) return;
       setFieldError("genericError");
@@ -626,7 +517,7 @@ export default function AccountDialog({
   if (!open) return null;
 
   const loggedIn = viewer.authenticated;
-  const stepTitles = [labels.stepAccount, labels.stepLocation, labels.stepVerify];
+  const stepTitles = [labels.stepAccount, labels.stepLocation];
 
   return (
     <div className="account-backdrop" aria-hidden="true">
@@ -802,7 +693,7 @@ export default function AccountDialog({
                   {labels.noAccount} <button type="button" onClick={() => switchMode("login")}>{labels.switchLogin}</button>
                 </p>
               </form>
-            ) : registerStep === 1 ? (
+            ) : (
               <form
                 className="account-form"
                 onSubmit={(event) => {
@@ -873,39 +764,6 @@ export default function AccountDialog({
                   </button>
                 </div>
               </form>
-            ) : (
-              <div className="account-form">
-                <h3>{labels.titleVerify}</h3>
-                <p className="account-location-hint">{labels.verifyHint}</p>
-                {devCode && (
-                  <p className="account-dev-hint">
-                    {labels.verifyDevHint} <b>{devCode}</b>
-                  </p>
-                )}
-                <div className="account-field">
-                  <label htmlFor={`${dialogId}-code`}>{labels.verifyPlaceholder}</label>
-                  <input
-                    id={`${dialogId}-code`}
-                    ref={firstInputRef}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    value={code}
-                    onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-                    placeholder={labels.verifyPlaceholder}
-                  />
-                </div>
-                {error && <p className="account-error" role="alert">{error}</p>}
-                <div className="account-actions">
-                  <button className="account-cancel" type="button" onClick={() => setRegisterStep(1)}>
-                    {labels.back}
-                  </button>
-                  <button className="account-submit" type="button" onClick={() => void handleVerify()} disabled={loading}>
-                    {loading ? "…" : labels.verifySubmit}
-                  </button>
-                </div>
-              </div>
             )}
           </div>
         )}
