@@ -1,23 +1,57 @@
 "use client";
 
+import { useSyncExternalStore, type ReactNode } from "react";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import type { Translation } from "@/src/types/site";
-import Header from "@/src/components/shared/Header";
-import Footer from "@/src/components/shared/Footer";
-import NewsTicker from "@/src/components/NewsTicker";
-import AdSlot from "@/src/components/AdSlot";
+import type { DeviceType } from "@/src/constants/advertising";
+import type { BreadcrumbItem } from "@/src/config/public-navigation";
+import PublicPageShellImpl from "@/src/components/public/public-page-shell";
 
+type PageHeaderNode = {
+  title: string;
+  description?: ReactNode;
+  eyebrow?: string;
+  actions?: ReactNode;
+};
+
+type OfficePromotion = {
+  cta: string;
+  description: string;
+  href?: string;
+  onCta?: () => void;
+};
+
+/**
+ * Canonical public shell entry point. Import path unchanged for ~20 pages;
+ * implementation lives in src/components/public/*.
+ */
 type Props = {
   locale: Locale;
   copy: Translation;
   viewer: ViewerContext;
   country: string;
   city: string;
-  deviceType?: "desktop" | "mobile" | "tablet";
+  deviceType?: DeviceType;
   onLogin: () => void;
   onLogout: () => void;
-  children: React.ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
+  pageHeader?: PageHeaderNode;
+  officePromotion?: OfficePromotion;
+  cookieNotice?: boolean;
+  currentPath?: string;
+  children: ReactNode;
 };
+
+function subscribeToLocation(callback: () => void): () => void {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+}
+
+function getLocationSnapshot(): string {
+  return window.location.pathname;
+}
+
+const EMPTY_SERVER_PATH = "";
 
 export default function PublicPageShell({
   locale,
@@ -28,40 +62,34 @@ export default function PublicPageShell({
   deviceType = "desktop",
   onLogin,
   onLogout,
+  breadcrumbs,
+  pageHeader,
+  officePromotion,
+  cookieNotice = false,
+  currentPath: explicitPath,
   children,
 }: Props) {
+  const [path] = useSyncExternalStore(subscribeToLocation, getLocationSnapshot, () => EMPTY_SERVER_PATH);
+
+  const resolvedPath = explicitPath ?? path;
+
   return (
-    <div className="public-page-shell">
-      <Header
-        locale={locale}
-        copy={copy}
-        viewer={viewer}
-        onLogin={onLogin}
-        onLogout={onLogout}
-      />
-      <NewsTicker copy={copy} locale={locale} country={country} city={city} />
-      <main id="main-content" className="public-main">
-        <AdSlot
-          placement="global_header"
-          locale={locale}
-          country={country}
-          city={city}
-          deviceType={deviceType}
-          variant="horizontal"
-          className="container mt-4"
-        />
-        {children}
-        <AdSlot
-          placement="global_footer"
-          locale={locale}
-          country={country}
-          city={city}
-          deviceType={deviceType}
-          variant="horizontal"
-          className="container mb-4"
-        />
-      </main>
-      <Footer locale={locale} copy={copy} />
-    </div>
+    <PublicPageShellImpl
+      locale={locale}
+      copy={copy}
+      viewer={viewer}
+      country={country}
+      city={city}
+      deviceType={deviceType}
+      onLogin={onLogin}
+      onLogout={onLogout}
+      breadcrumbs={breadcrumbs}
+      pageHeader={pageHeader}
+      officePromotion={officePromotion}
+      cookieNotice={cookieNotice}
+      currentPath={resolvedPath}
+    >
+      {children}
+    </PublicPageShellImpl>
   );
 }

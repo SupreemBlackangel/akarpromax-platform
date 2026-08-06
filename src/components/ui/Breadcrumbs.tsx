@@ -10,13 +10,14 @@ type Crumb = {
 type BreadcrumbsProps = {
   items: Crumb[];
   homeLabel?: string;
+  ariaLabel?: string;
   className?: string;
   children?: ReactNode;
 };
 
-export default function Breadcrumbs({ items, homeLabel, className = "", children }: BreadcrumbsProps) {
+export default function Breadcrumbs({ items, homeLabel, ariaLabel, className = "", children }: BreadcrumbsProps) {
   return (
-    <nav aria-label={homeLabel ?? "Breadcrumb"} className={className}>
+    <nav aria-label={ariaLabel ?? homeLabel ?? "Breadcrumb"} className={className}>
       <ol className="flex flex-wrap items-center gap-[var(--space-2)]">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
