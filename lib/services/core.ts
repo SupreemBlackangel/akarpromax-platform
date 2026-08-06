@@ -1,6 +1,6 @@
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
-import { insertRow, getServicesDb } from "@/lib/services/db";
-import { writeAudit } from "@/lib/services/audit";
+import { insertRow, getServicesDb } from "@services/db";
+import { writeAudit } from "@services/audit";
 import {
   isListingStatus,
   isOrderStatus,
@@ -9,7 +9,7 @@ import {
   ORDER_STATUS,
   OFFER_STATUS,
   type OrderStatus,
-} from "@/lib/services/constants";
+} from "@services/constants";
 
 export type ActorContext = { userId?: string | null; ip?: string | null };
 

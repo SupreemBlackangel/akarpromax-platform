@@ -140,14 +140,6 @@
       "expiresAfterPhase": 3
     },
     {
-      "id": "ARCH-LEGACY-020",
-      "rule": "ARCH-022",
-      "path": "app/api/services",
-      "reason": "Services API routes use lib/services internal imports",
-      "targetPhase": "Phase 4",
-      "expiresAfterPhase": 4
-    },
-    {
       "id": "ARCH-LEGACY-021",
       "rule": "ARCH-022",
       "path": "lib/mysql-runtime.ts",
@@ -162,14 +154,6 @@
       "reason": "D1 runtime imports services-schema",
       "targetPhase": "Phase 5",
       "expiresAfterPhase": 5
-    },
-    {
-      "id": "ARCH-LEGACY-023",
-      "rule": "ARCH-022",
-      "path": "lib/services",
-      "reason": "Services module internal imports (not yet modularized)",
-      "targetPhase": "Phase 4",
-      "expiresAfterPhase": 4
     }
   ]
 }

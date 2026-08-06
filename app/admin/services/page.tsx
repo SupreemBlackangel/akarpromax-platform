@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PermissionGuard } from "@/src/components/PermissionGuard";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import ServicesAdminClient from "./services-admin-client";
+import ServicesAdminClient from "./admin-client";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
-import { getServicesDb } from "@/lib/services/db";
+import { getServicesDb } from "@services/db";
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
-import { computeMatchScore, type MatchProviderRow, type MatchRequestRow } from "@/lib/services/match-score";
+import { computeMatchScore, type MatchProviderRow, type MatchRequestRow } from "@services/match-score";
 
 export async function findCandidateProviders(request: MatchRequestRow): Promise<MatchProviderRow[]> {
   const db = await getServicesDb();

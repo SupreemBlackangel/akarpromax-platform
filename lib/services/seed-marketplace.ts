@@ -1,4 +1,4 @@
-import { computeMatchScore, type MatchRequestRow, type MatchProviderRow } from "@/lib/services/match-score";
+import { computeMatchScore, type MatchRequestRow, type MatchProviderRow } from "@services/match-score";
 
 export type SeedDb = {
   prepare: (query: string) => {

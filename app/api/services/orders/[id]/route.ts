@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSponsorIdentity, requireAuthenticatedEmail } from "@/lib/sponsor-auth";
-import { updateOrderStatus } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES, type OrderStatus } from "@/lib/services/constants";
+import { updateOrderStatus } from "@services/core";
+import { SERVICE_ERROR_CODES, type OrderStatus } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

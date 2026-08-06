@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@/src/components/services/ServiceCards";
-import { apiFetch } from "@/src/lib/services-client";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
+import { apiFetch } from "@services-client";
 import AdSlot from "@/src/components/AdSlot";
 
 export default function ServicesHubPage() {

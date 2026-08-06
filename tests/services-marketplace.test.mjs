@@ -37,7 +37,7 @@ test("the services marketplace ships public hub, catalog and provider profile pa
 test("services admin exists behind a permission gate and manages providers, reports and categories", async () => {
   const [page, client, adminApi, reportsApi, resolveApi, categoriesApi, marketplace] = await Promise.all([
     readFile(new URL("../app/admin/services/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/admin/services/services-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/services/admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/service-admin/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/service-reports/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/service-reports/[id]/resolve/route.ts", import.meta.url), "utf8"),
@@ -179,4 +179,65 @@ test("the marketplace seed registers the initial categories", async () => {
   assert.match(seed, /plumbing/);
   assert.match(seed, /electrical/);
   assert.match(seed, /dynamicFields/);
+});
+
+test("provider dashboard ships all ten pages behind auth and boundary-clean aliases", async () => {
+  const files = [
+    "../app/dashboard/services/page.tsx",
+    "../app/dashboard/services/inbox/page.tsx",
+    "../app/dashboard/services/jobs/page.tsx",
+    "../app/dashboard/services/jobs/[id]/page.tsx",
+    "../app/dashboard/services/matched-requests/page.tsx",
+    "../app/dashboard/services/my-requests/page.tsx",
+    "../app/dashboard/services/offers/page.tsx",
+    "../app/dashboard/services/offers/[id]/page.tsx",
+    "../app/dashboard/services/provider-profile/page.tsx",
+    "../app/dashboard/services/reviews/page.tsx",
+  ];
+  for (const file of files) {
+    const content = await readFile(new URL(file, import.meta.url), "utf8");
+    assert.match(content, /"use client"/, `${file} must be a client page`);
+    assert.match(content, /useServicesPage/, `${file} must use useServicesPage`);
+    assert.match(content, /ServiceDashboardShell/, `${file} must render the dashboard shell`);
+    assert.match(content, /viewer\.authenticated/, `${file} must gate on authentication`);
+    assert.match(content, /@services-ui\//, `${file} must import via @services-ui`);
+    assert.match(content, /@services-client/, `${file} must import via @services-client`);
+    assert.doesNotMatch(content, /@\/lib\/services|@\/src\/components\/services|@\/src\/lib\/services-client/, `${file} leaks legacy services paths`);
+    assert.doesNotMatch(content, /getSponsorIdentity|requireChatGPTUser|getChatGPTUser/, `${file} must stay session-only`);
+  }
+  const shell = await readFile(new URL("../src/components/services/ServiceDashboardShell.tsx", import.meta.url), "utf8");
+  assert.match(shell, /if \(!viewer\.authenticated\)/, "shell must gate anonymous viewers");
+});
+
+test("provider lifecycle statuses are fully labeled and drive the profile apply gate", async () => {
+  const [client, profile] = await Promise.all([
+    readFile(new URL("../src/lib/services-client.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/services/provider-profile/page.tsx", import.meta.url), "utf8"),
+  ]);
+  for (const status of ["draft", "submitted", "under_review", "approved", "rejected", "suspended"]) {
+    assert.match(client, new RegExp(`${status}: \\{ ar:`), `providerStatusLabel must cover ${status}`);
+    assert.match(client, new RegExp(`${status}: "(default|warning|success|error)"`), `providerStatusColor must cover ${status}`);
+  }
+  assert.match(profile, /ProviderStatusPill status=\{profile\.status\}/);
+  assert.match(profile, /profile\.status === "draft" \|\| profile\.status === "rejected"/);
+  assert.match(profile, /\/api\/service-providers\/\$\{encodeURIComponent\(profile\.id\)\}\/apply/);
+  assert.match(profile, /service_radius_km/);
+});
+
+test("offer and job detail pages enforce participant authz separation", async () => {
+  const [offer, job, matched] = await Promise.all([
+    readFile(new URL("../app/dashboard/services/offers/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/services/jobs/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/services/matched-requests/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(offer, /isCustomer && status === "sent"/);
+  assert.match(offer, /isProvider && status === "sent"/);
+  assert.match(offer, /isProvider && status === "withdrawn"/);
+  assert.match(offer, /\/api\/service-offers\/\$\{encodeURIComponent\(id\)\}\/\$\{path\}/);
+  assert.match(offer, /window\.location\.href = "\/dashboard\/services\/jobs"/);
+  assert.match(job, /disputed: \["completed"\]/);
+  assert.match(job, /const canReview = job\?\.status === "completed" && !reviewed;/);
+  assert.match(job, /ThreadMessages threadType="order"/);
+  assert.match(matched, /hasProfile === false/);
+  assert.match(matched, /\/dashboard\/services\/provider-profile/);
 });

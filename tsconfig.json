@@ -19,7 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@services/*": ["./lib/services/*"],
+      "@services-ui/*": ["./src/components/services/*"],
+      "@services-client": ["./src/lib/services-client.ts"]
     }
   },
   "include": [

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { reviewsForReviewee } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { reviewsForReviewee } from "@services/core";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

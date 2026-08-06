@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getRequestFull, listRequestHistory } from "@/lib/services/marketplace";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { getRequestFull, listRequestHistory } from "@services/marketplace";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

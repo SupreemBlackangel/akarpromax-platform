@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSponsorIdentity, hasSponsorPermission, requireAuthenticatedEmail } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { createListing, listListings, updateListingStatus } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { createListing, listListings, updateListingStatus } from "@services/core";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

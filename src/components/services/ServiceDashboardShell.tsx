@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { Locale, ViewerContext } from "@/src/types/site";
-import { apiFetch, formatTime } from "@/src/lib/services-client";
+import { apiFetch, formatTime } from "@services-client";
 
 type NotificationRow = {
   id: string;

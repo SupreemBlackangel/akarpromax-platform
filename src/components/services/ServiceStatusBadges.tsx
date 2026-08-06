@@ -1,7 +1,7 @@
 "use client";
 
-import type { StatusColor } from "@/src/lib/services-client";
-import { requestStatusLabel, requestStatusColor, offerStatusLabel, offerStatusColor, orderStatusLabel, orderStatusColor, providerStatusLabel, providerStatusColor } from "@/src/lib/services-client";
+import type { StatusColor } from "@services-client";
+import { requestStatusLabel, requestStatusColor, offerStatusLabel, offerStatusColor, orderStatusLabel, orderStatusColor, providerStatusLabel, providerStatusColor } from "@services-client";
 
 const colorClasses: Record<StatusColor, string> = {
   default: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300",

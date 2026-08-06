@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { CategoryCard, ProviderCard, type CategoryRow, type ProviderRow } from "@/src/components/services/ServiceCards";
-import { apiFetch, nameFor } from "@/src/lib/services-client";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { CategoryCard, ProviderCard, type CategoryRow, type ProviderRow } from "@services-ui/ServiceCards";
+import { apiFetch, nameFor } from "@services-client";
 
 export default function ServicesCatalogPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();

@@ -1,5 +1,5 @@
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
-import { insertRow, getServicesDb } from "@/lib/services/db";
+import { insertRow, getServicesDb } from "@services/db";
 
 export type AuditEntry = {
   action: string;

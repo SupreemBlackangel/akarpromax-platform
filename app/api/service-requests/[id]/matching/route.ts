@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { getRequestFull, listRequestMatches } from "@/lib/services/marketplace";
-import { runMatching } from "@/lib/services/matching";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { getRequestFull, listRequestMatches } from "@services/marketplace";
+import { runMatching } from "@services/matching";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

@@ -3,6 +3,8 @@ import mysql from "mysql2/promise";
 import { ensureAdSchema } from "@/lib/ad-schema";
 import { ensureI18nSchema } from "@/lib/i18n-schema";
 import { ensureServicesSchema } from "@/lib/services-schema";
+import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
+import { seedServicesMarketplace } from "@services/seed-marketplace";
 
 let pool: mysql.Pool | null = null;
 let adapter: MysqlRuntimeDb | null = null;
@@ -552,9 +554,11 @@ async function ensureMysqlSchema(db: D1Database): Promise<void> {
   await ensureAdSchema(db);
   await ensureI18nSchema(db);
   await ensureServicesSchema(db);
+  await ensureServicesMarketplaceSchema(db);
   await seedNews(db);
   await seedSponsorPlans(db);
   await seedLocalAdminAccess(db);
+  await seedServicesMarketplace(db);
 }
 
 async function seedLocalAdminAccess(db: D1Database) {

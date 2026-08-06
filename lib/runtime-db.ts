@@ -2,6 +2,8 @@ import { getMysqlRuntimeDb } from "@/lib/mysql-runtime";
 import { ensureAdSchema } from "@/lib/ad-schema";
 import { ensureI18nSchema } from "@/lib/i18n-schema";
 import { ensureServicesSchema } from "@/lib/services-schema";
+import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
+import { seedServicesMarketplace } from "@services/seed-marketplace";
 
 let sponsorSchemaReady: Promise<void> | null = null;
 let d1InitLogged = false;
@@ -446,8 +448,10 @@ async function ensureSponsorSchema(db: D1Database) {
   await ensureAdSchema(db);
   await ensureI18nSchema(db);
   await ensureServicesSchema(db);
+  await ensureServicesMarketplaceSchema(db);
   await seedSponsorPlans(db);
   await seedNews(db);
+  await seedServicesMarketplace(db);
 }
 
 async function seedNews(db: D1Database) {

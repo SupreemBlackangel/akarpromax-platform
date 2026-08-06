@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import Avatar from "@/src/components/services/Avatar";
-import { RatingStars } from "@/src/components/services/ServiceCards";
-import { apiFetch, formatDate, nameFor } from "@/src/lib/services-client";
-import type { ProviderRow } from "@/src/components/services/ServiceCards";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import Avatar from "@services-ui/Avatar";
+import { RatingStars } from "@services-ui/ServiceCards";
+import { apiFetch, formatDate, nameFor } from "@services-client";
+import type { ProviderRow } from "@services-ui/ServiceCards";
 
 type ReviewRow = Record<string, unknown> & {
   id: string;

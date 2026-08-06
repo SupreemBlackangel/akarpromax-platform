@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSponsorIdentity, requireAuthenticatedEmail } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { sendMessage, threadMessages } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { sendMessage, threadMessages } from "@services/core";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission, requireAuthenticatedEmail } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { providerAverageRating, updateListingStatus } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES, isListingStatus } from "@/lib/services/constants";
+import { providerAverageRating, updateListingStatus } from "@services/core";
+import { SERVICE_ERROR_CODES, isListingStatus } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

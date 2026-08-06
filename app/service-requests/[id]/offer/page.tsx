@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { type RequestRow } from "@/src/components/services/ServiceCards";
-import { RequestStatusPill } from "@/src/components/services/ServiceStatusBadges";
-import { apiFetch, formatMoney, nameFor } from "@/src/lib/services-client";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { type RequestRow } from "@services-ui/ServiceCards";
+import { RequestStatusPill } from "@services-ui/ServiceStatusBadges";
+import { apiFetch, formatMoney, nameFor } from "@services-client";
 
 type Props = { id: string };
 

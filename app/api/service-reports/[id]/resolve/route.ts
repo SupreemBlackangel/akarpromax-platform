@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
-import { resolveReport } from "@/lib/services/marketplace";
+import { resolveReport } from "@services/marketplace";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

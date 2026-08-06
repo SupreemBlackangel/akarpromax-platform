@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission, requireAuthenticatedEmail } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { openDispute, resolveDispute } from "@/lib/services/core";
-import { SERVICE_ERROR_CODES, isDisputeStatus } from "@/lib/services/constants";
+import { openDispute, resolveDispute } from "@services/core";
+import { SERVICE_ERROR_CODES, isDisputeStatus } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

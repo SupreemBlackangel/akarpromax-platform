@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import AdminPageShell from "@/src/components/AdminPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { apiFetch, formatDate, nameFor } from "@/src/lib/services-client";
-import type { CategoryRow } from "@/src/components/services/ServiceCards";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { apiFetch, formatDate, nameFor } from "@services-client";
+import type { CategoryRow } from "@services-ui/ServiceCards";
 
 type Overview = {
   pendingProviders: number; approvedProviders: number; publishedRequests: number;

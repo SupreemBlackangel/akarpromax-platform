@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { apiFetch } from "@/src/lib/services-client";
-import type { CategoryRow } from "@/src/components/services/ServiceCards";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { apiFetch } from "@services-client";
+import type { CategoryRow } from "@services-ui/ServiceCards";
 import AdSlot from "@/src/components/AdSlot";
 
 type DynamicField = Record<string, unknown> & {

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Avatar from "@/src/components/services/Avatar";
-import { RequestStatusPill, OfferStatusPill, OrderStatusPill, ProviderStatusPill } from "@/src/components/services/ServiceStatusBadges";
-import { formatMoney, formatDate, nameFor, parseJsonArray, type StatusColor } from "@/src/lib/services-client";
+import Avatar from "@services-ui/Avatar";
+import { RequestStatusPill, OfferStatusPill, OrderStatusPill, ProviderStatusPill } from "@services-ui/ServiceStatusBadges";
+import { formatMoney, formatDate, nameFor, parseJsonArray, type StatusColor } from "@services-client";
 import type { Locale } from "@/src/types/site";
 
 export type CategoryRow = Record<string, unknown> & {

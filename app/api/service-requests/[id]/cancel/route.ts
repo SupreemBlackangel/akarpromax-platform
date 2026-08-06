@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity } from "@/lib/sponsor-auth";
-import { getRequestFull, cancelRequestFull } from "@/lib/services/marketplace";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { getRequestFull, cancelRequestFull } from "@services/marketplace";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 

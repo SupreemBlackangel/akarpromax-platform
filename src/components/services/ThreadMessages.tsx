@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiFetch, formatTime } from "@/src/lib/services-client";
+import { apiFetch, formatTime } from "@services-client";
 
 type Message = Record<string, unknown> & {
   id: string;

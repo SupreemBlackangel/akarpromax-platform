@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { listReviews } from "@/lib/services/marketplace";
+import { listReviews } from "@services/marketplace";
 
 export const dynamic = "force-dynamic";
 

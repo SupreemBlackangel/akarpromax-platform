@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { RequestStatusPill, OfferStatusPill } from "@/src/components/services/ServiceStatusBadges";
-import Avatar from "@/src/components/services/Avatar";
-import { apiFetch, formatDate, formatMoney, nameFor, parseJsonArray } from "@/src/lib/services-client";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { RequestStatusPill, OfferStatusPill } from "@services-ui/ServiceStatusBadges";
+import Avatar from "@services-ui/Avatar";
+import { apiFetch, formatDate, formatMoney, nameFor, parseJsonArray } from "@services-client";
 
 type DetailRow = Record<string, unknown> & {
   id: string;

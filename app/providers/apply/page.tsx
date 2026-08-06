@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
+import { useServicesPage } from "@services-ui/useServicesPage";
 
 export default function ProviderApplyPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();

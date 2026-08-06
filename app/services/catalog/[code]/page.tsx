@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
-import { useServicesPage } from "@/src/components/services/useServicesPage";
-import { ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@/src/components/services/ServiceCards";
-import { apiFetch, nameFor } from "@/src/lib/services-client";
+import { useServicesPage } from "@services-ui/useServicesPage";
+import { ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
+import { apiFetch, nameFor } from "@services-client";
 
 type Props = { code: string };
 

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { addRequestAttachments, listRequestAttachments } from "@/lib/services/marketplace";
+import { addRequestAttachments, listRequestAttachments } from "@services/marketplace";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { SERVICE_ERROR_CODES } from "@/lib/services/constants";
+import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 
