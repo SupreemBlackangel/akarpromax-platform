@@ -44,6 +44,14 @@ export const PERMISSIONS = {
 
   OFFICE_LINK: "office.link",
   OFFICE_UNLINK: "office.unlink",
+  OFFICE_INTEGRATION_VIEW: "office.integration.view",
+  OFFICE_PAIRING_MANAGE: "office.pairing.manage",
+  OFFICE_DEVICES_MANAGE: "office.devices.manage",
+  OFFICE_DEVICES_REVOKE: "office.devices.revoke",
+  OFFICE_SYNC_VIEW: "office.sync.view",
+  OFFICE_RADAR_VIEW: "office.radar.view",
+  OFFICE_NOTIFICATIONS_VIEW: "office.notifications.view",
+  OFFICE_ADMIN_VIEW: "office.admin.view",
 
   SERVICES_VIEW: "services.view",
   SERVICES_CREATE: "services.create",

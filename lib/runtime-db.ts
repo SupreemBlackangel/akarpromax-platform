@@ -5,6 +5,7 @@ import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
+import { ensureIntegrationSchema } from "@/lib/integration/schema";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { logSecurityEvent } from "@/lib/security/audit";
 
@@ -534,7 +535,9 @@ async function ensureSponsorSchema(db: D1Database) {
   await ensureServicesSchema(db);
   await ensureServicesMarketplaceSchema(db);
   await ensurePropertiesSchema(db);
+  await ensureIntegrationSchema(db);
   await seedSponsorPlans(db);
+  await seedIntegrationDemo(db);
   await seedNews(db);
   await seedServicesMarketplace(db);
 }
@@ -594,8 +597,26 @@ async function seedNews(db: D1Database) {
   await db.batch(statements);
 }
 
-async function seedSponsorPlans(db: D1Database) {
-  const existing = await db.prepare("SELECT COUNT(*) AS count FROM sponsor_plans").first<{ count: number }>();
+async function seedIntegrationDemo(db: D1Database) {
+  const existing = await db.prepare("SELECT COUNT(*) AS count FROM office_notification_rules").first<{ count: number }>();
+  if (existing && Number(existing.count) > 0) return;
+
+  const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+  await db.batch([
+    db.prepare(
+      `INSERT INTO office_notification_rules
+        (id, sponsor_id, office_id, event_type, channel, enabled, created_at, updated_at)
+       VALUES (?1, 'demo@akarpromax.com', '', 'OFFICE_RADAR_MATCH', 'office_desktop', 1, ?2, ?3)`,
+    ).bind(crypto.randomUUID(), now, now),
+    db.prepare(
+      `INSERT INTO office_notification_rules
+        (id, sponsor_id, office_id, event_type, channel, enabled, created_at, updated_at)
+       VALUES (?1, 'demo@akarpromax.com', '', 'OFFICE_NEW_NEWS', 'in_app', 1, ?2, ?3)`,
+    ).bind(crypto.randomUUID(), now, now),
+  ]);
+}
+
+async function seedSponsorPlans(db: D1Database) {  const existing = await db.prepare("SELECT COUNT(*) AS count FROM sponsor_plans").first<{ count: number }>();
   if (existing && existing.count > 0) return;
 
   const plans = [
