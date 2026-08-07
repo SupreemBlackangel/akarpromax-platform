@@ -135,6 +135,40 @@ function evalClause(clause, row, params) {
     return compare(row, col, valueOf(eq[2], params));
   }
 
+  const isNull = /^([a-z_][a-z0-9_.]*) IS NULL$/i.exec(c);
+  if (isNull) {
+    const col = stripAlias(isNull[1]);
+    return row[col] == null;
+  }
+
+  const isNotNull = /^([a-z_][a-z0-9_.]*) IS NOT NULL$/i.exec(c);
+  if (isNotNull) {
+    const col = stripAlias(isNotNull[1]);
+    return row[col] != null;
+  }
+
+  const cmp = /^([a-z_][a-z0-9_.]*) (>=|<=|>|<) (.+)$/i.exec(c);
+  if (cmp) {
+    const col = stripAlias(cmp[1]);
+    const v = row[col];
+    if (v == null) return false;
+    const aNum = Number(v);
+    const bNum = Number(valueOf(cmp[3], params));
+    const isNumeric = /^-?\d+(\.\d+)?$/.test(String(v)) && /^-?\d+(\.\d+)?$/.test(String(valueOf(cmp[3], params)));
+    const a = isNumeric ? aNum : String(v);
+    const b = isNumeric ? bNum : String(valueOf(cmp[3], params));
+    switch (cmp[2]) {
+      case ">":
+        return a > b;
+      case "<":
+        return a < b;
+      case ">=":
+        return a >= b;
+      case "<=":
+        return a <= b;
+    }
+  }
+
   throw new Error(`Unsupported WHERE clause: ${c}`);
 }
 
@@ -229,15 +263,32 @@ class Statement {
   }
 
   #insert() {
-    const m = /^insert (?:or ignore )?into ([a-z_][a-z0-9_]*) \(([^)]+)\) values \(([^)]+)\)$/i.exec(this.sql);
-    if (!m) throw new Error(`Unsupported INSERT SQL: ${this.sql}`);
-    const table = m[1];
-    const columns = splitList(m[2]).map((c) => c.trim());
-    const values = splitList(m[3]).map((v) => valueOf(v, this.params));
+    const base = this.sql.match(/^insert (?:or ignore )?into ([a-z_][a-z0-9_]*) \(([^)]+)\) values \(([^)]+)\)/i);
+    const onConflict = this.sql.match(/ on conflict\s*\(([^)]+)\) do update set (.+)$/i);
+    if (!base) throw new Error(`Unsupported INSERT SQL: ${this.sql}`);
+    const table = base[1];
+    const columns = splitList(base[2]).map((c) => c.trim().replace(/^"|"$/g, ""));
+    const values = splitList(base[3]).map((v) => valueOf(v, this.params));
     const row = {};
     columns.forEach((col, i) => {
       row[col] = values[i] ?? null;
     });
+
+    if (onConflict) {
+      const keyCols = splitList(onConflict[1]).map((c) => c.trim().replace(/^"|"$/g, ""));
+      const rows = this.db.table(table);
+      const existing = rows.find((r) => keyCols.every((col) => compare(r, col, row[col])));
+      if (existing) {
+        const assignments = splitList(onConflict[2]).map((a) => a.trim());
+        for (const assignment of assignments) {
+          const am = /^([a-z_][a-z0-9_]*) = (.+)$/i.exec(assignment);
+          if (!am) throw new Error(`Unsupported ON CONFLICT SET clause: ${assignment}`);
+          existing[am[1]] = valueOf(am[2], this.params);
+        }
+        return;
+      }
+    }
+
     this.db.table(table).push(row);
   }
 
