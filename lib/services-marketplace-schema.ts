@@ -41,8 +41,8 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   `ALTER TABLE service_requests ADD COLUMN pricing_type VARCHAR(16) NOT NULL DEFAULT 'fixed'`,
   `ALTER TABLE service_requests ADD COLUMN reference_number VARCHAR(32) NULL`,
   `ALTER TABLE service_requests ADD COLUMN answers TEXT NULL`,
-  `ALTER TABLE service_requests ADD COLUMN published_at TEXT NULL`,
-  `ALTER TABLE service_requests ADD COLUMN matched_at TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN published_at DATETIME NULL`,
+  `ALTER TABLE service_requests ADD COLUMN matched_at DATETIME NULL`,
 
   // service_offers
   `ALTER TABLE service_offers ADD COLUMN materials_included INTEGER NOT NULL DEFAULT 0`,

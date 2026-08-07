@@ -6,12 +6,65 @@ import { getRuntimeEnv } from "@/lib/config/runtime-env";
 let adapter: PgRuntimeDb | null = null;
 let schemaReady: Promise<void> | null = null;
 
+/**
+ * Runtime detection cache.
+ *
+ * - `vinext dev` runs route code inside the Vite/Workers runtime, where
+ *   `import("cloudflare:workers")` resolves and `env.DB` exists. postgres-js's
+ *   module-level pool cannot be reused across requests there (throws
+ *   `Cannot perform I/O on behalf of a different request`), so we use a fresh
+ *   client per statement and close it.
+ * - `vinext start` runs plain Node.js: the module-level `cloudflare:` import
+ *   throws `ERR_UNSUPPORTED_ESM_URL_SCHEME`, and a shared pool is safe (and
+ *   required for sane TLS handshake amortization during schema init).
+ */
+let runtimeIsWorkers: boolean | null = null;
+
+async function detectWorkersRuntime(): Promise<boolean> {
+  if (runtimeIsWorkers === null) {
+    try {
+      await import("cloudflare:workers");
+      runtimeIsWorkers = true;
+    } catch {
+      runtimeIsWorkers = false;
+    }
+  }
+  return runtimeIsWorkers;
+}
+
+function clientOptions() {
+  return { ssl: "require", prepare: false } as const;
+}
+
+/** Node (vinext start): shared pool reused across statements and requests. */
+let sharedClient: postgres.Sql<Record<string, unknown>> | null = null;
+
+async function sharedPool(): Promise<postgres.Sql<Record<string, unknown>>> {
+  if (!sharedClient) {
+    sharedClient = postgres(getRuntimeEnv().databaseUrl, {
+      ...clientOptions(),
+      max: 10,
+      onnotice: () => {},
+    });
+  }
+  return sharedClient;
+}
+
+/** Workers (vinext dev): fresh single-connection client per statement. */
 function createClient(): postgres.Sql<Record<string, unknown>> {
   return postgres(getRuntimeEnv().databaseUrl, {
-    ssl: "require",
-    prepare: false,
+    ...clientOptions(),
     max: 1,
   });
+}
+
+async function acquireClient(): Promise<{ client: postgres.Sql<Record<string, unknown>>; release: () => Promise<void> }> {
+  if (await detectWorkersRuntime()) {
+    const client = createClient();
+    return { client, release: () => client.end({ timeout: 3 }) };
+  }
+  const client = await sharedPool();
+  return { client, release: async () => {} };
 }
 
 /**
@@ -64,6 +117,16 @@ class PgStatement implements D1PreparedStatement {
 
   constructor(private readonly sql: string) {}
 
+  /** Raw SQL, used by batch() to coalesce parameter-less DDL. */
+  rawSql(): string {
+    return this.sql;
+  }
+
+  /** True when the statement binds no values and has no placeholders. */
+  hasNoParameters(): boolean {
+    return this.values.length === 0 && !this.sql.includes("?");
+  }
+
   bind(...values: unknown[]): D1PreparedStatement {
     this.values = values;
     return this;
@@ -71,13 +134,18 @@ class PgStatement implements D1PreparedStatement {
 
   private async runQuery<T>(client?: postgres.Sql<Record<string, unknown>>): Promise<T[]> {
     const { sql, values } = expandPlaceholders(translateSql(this.sql), this.values);
-    const ownsClient = !client;
-    const active = client ?? createClient();
+    let release: (() => Promise<void>) | null = null;
+    let active = client;
+    if (!active) {
+      const acquired = await acquireClient();
+      active = acquired.client;
+      release = acquired.release;
+    }
     try {
       const rows = (await active.unsafe(sql, values as never[])) as T[];
       return Array.isArray(rows) ? rows : [];
     } finally {
-      if (ownsClient) await active.end({ timeout: 3 });
+      if (release) await release();
     }
   }
 
@@ -102,7 +170,7 @@ class PgStatement implements D1PreparedStatement {
 
   async run<T = Record<string, unknown>>(): Promise<D1Result<T>> {
     const { sql, values } = expandPlaceholders(translateSql(this.sql), this.values);
-    const client = createClient();
+    const { client, release } = await acquireClient();
     try {
       const result = await client.unsafe(sql, values as never[]);
       return {
@@ -111,7 +179,7 @@ class PgStatement implements D1PreparedStatement {
         meta: { changes: resultCount(result), last_row_id: 0 },
       };
     } finally {
-      await client.end({ timeout: 3 });
+      await release();
     }
   }
 }
@@ -123,18 +191,32 @@ export class PgRuntimeDb implements D1Database {
 
   async batch<T = Record<string, unknown>>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
     const results: D1Result<T>[] = [];
-    const client = createClient();
+    const { client, release } = await acquireClient();
     try {
+      let pendingDdl: string[] = [];
+      const flushDdl = async () => {
+        if (!pendingDdl.length) return;
+        const joined = pendingDdl.join(";\n");
+        pendingDdl = [];
+        await client.unsafe(joined);
+      };
       for (const statement of statements) {
         if (statement instanceof PgStatement) {
+          if (statement.hasNoParameters()) {
+            pendingDdl.push(translateSql(statement.rawSql()));
+            continue;
+          }
+          await flushDdl();
           results.push(await statement.allWith<T>(client));
         } else {
+          await flushDdl();
           results.push(await statement.all<T>());
         }
       }
+      await flushDdl();
       return results;
     } finally {
-      await client.end({ timeout: 3 });
+      await release();
     }
   }
 }

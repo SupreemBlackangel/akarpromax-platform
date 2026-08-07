@@ -5,6 +5,7 @@ import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-sche
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
 import { ensureIntegrationSchema } from "@/lib/integration/schema";
+import { isProduction } from "@/lib/config/runtime-env";
 
 export const CONTENT_TABLES_SQL: string[] = [
   `CREATE TABLE IF NOT EXISTS sponsor_access (
@@ -529,7 +530,27 @@ async function seedSponsorPlans(db: D1Database) {
  * Postgres (PgRuntimeDb) adapter. Both dialects accept this DDL after the
  * adapter's translateSql() applies placeholder/conflict transforms.
  */
+export const CONTENT_SCHEMA_VERSION = 1;
+
+const SCHEMA_META_SQL =
+  `CREATE TABLE IF NOT EXISTS ak_content_schema_meta (version INTEGER PRIMARY KEY NOT NULL)`.trim();
+
+async function isContentSchemaApplied(db: D1Database): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT 1 AS ok FROM ak_content_schema_meta WHERE version = ?1")
+    .bind(CONTENT_SCHEMA_VERSION)
+    .first<{ ok: number }>();
+  return !!row;
+}
+
 export async function ensureContentSchema(db: D1Database): Promise<void> {
+  // Fast path: in production the schema bootstrap is a set of round trips per
+  // statement against a remote Postgres/MySQL target (~100s on first boot).
+  // Once applied, skip the full DDL+seed run on every subsequent boot via the
+  // ak_content_schema_meta latch. In development (D1 local / dev) we always
+  // re-run the idempotent DDL + COUNT-guarded seeds so a locally-cleared DB
+  // repopulates automatically on restart.
+  if (isProduction() && (await isContentSchemaApplied(db).catch(() => false))) return;
   await db.batch(CONTENT_TABLES_SQL.map((sql) => db.prepare(sql)));
   await ensureAdSchema(db);
   await ensureI18nSchema(db);
@@ -537,8 +558,18 @@ export async function ensureContentSchema(db: D1Database): Promise<void> {
   await ensureServicesMarketplaceSchema(db);
   await ensurePropertiesSchema(db);
   await ensureIntegrationSchema(db);
-  await seedSponsorPlans(db);
-  await seedIntegrationDemo(db);
-  await seedNews(db);
-  await seedServicesMarketplace(db);
+
+  // Demo/seeding data is a development/preview concern only. Production boots
+  // run schema (DDL) but must NOT inject demo rows through the request path;
+  // real data arrives via controlled migrations/admin. Opt-in with
+  // SEED_DEMO_DATA=true for preview/verification against a real PG target.
+  const seedDemo = !isProduction() || process.env.SEED_DEMO_DATA === "true";
+  if (seedDemo) {
+    await seedSponsorPlans(db);
+    await seedIntegrationDemo(db);
+    await seedNews(db);
+    await seedServicesMarketplace(db);
+  }
+  await db.prepare(SCHEMA_META_SQL).run();
+  await db.prepare("INSERT OR IGNORE INTO ak_content_schema_meta (version) VALUES (?1)").bind(CONTENT_SCHEMA_VERSION).run();
 }

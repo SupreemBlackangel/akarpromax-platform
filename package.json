@@ -9,6 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
+    "postinstall": "node ./scripts/patch-vinext-windows.mjs",
     "test": "npm run build && node --import tsx --test tests/services-matching.test.mjs tests/services-marketplace.test.mjs tests/services-api.test.mjs tests/services-authz.test.mjs tests/services-e2e.mjs tests/rendered-html.test.mjs tests/design-tokens.test.mjs tests/ui-components.test.mjs tests/public-shell.test.mjs tests/auth-phase4.test.mjs tests/integrations-constants.test.mjs tests/integrations-pairing.test.mjs tests/integrations-sync.test.mjs tests/integrations-radar.test.mjs tests/integrations-notifications.test.mjs tests/integrations-realtime.test.mjs tests/integrations-news-ads.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
@@ -17,7 +18,8 @@
     "seed:i18n": "tsx scripts/seed-i18n.ts",
     "seed:services": "tsx scripts/seed-services.ts",
     "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts",
-    "seed:auth:admin": "tsx scripts/seed-auth-admin.ts"
+    "seed:auth:admin": "tsx scripts/seed-auth-admin.ts",
+    "test:e2e:production-runtime": "node --import tsx --test tests/e2e/production-runtime.test.mjs"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
