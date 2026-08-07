@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import { apiFetch, formatTime } from "@services-client";
+import { getSidebarConfig, type SidebarItem } from "@/src/config/sidebar";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 type NotificationRow = {
   id: string;
@@ -102,16 +104,80 @@ function NotificationsBell({ locale }: { locale: Locale }) {
   );
 }
 
-const navItems = [
-  { key: "overview", href: "/dashboard/services", label: "نظرة عامة", icon: "📊" },
-  { key: "my-requests", href: "/dashboard/services/my-requests", label: "طلباتي", icon: "📝" },
-  { key: "matched-requests", href: "/dashboard/services/matched-requests", label: "طلبات مناسبة لي", icon: "🎯" },
-  { key: "offers", href: "/dashboard/services/offers", label: "عروضي", icon: "💼" },
-  { key: "jobs", href: "/dashboard/services/jobs", label: "المهام", icon: "🔧" },
-  { key: "inbox", href: "/dashboard/services/inbox", label: "الرسائل", icon: "💬" },
-  { key: "reviews", href: "/dashboard/services/reviews", label: "التقييمات", icon: "⭐" },
-  { key: "provider-profile", href: "/dashboard/services/provider-profile", label: "ملفي كمقدم خدمة", icon: "👨‍🔧" },
-];
+function getUserType(viewer: ViewerContext): "customer" | "provider" | "supervisor" | "admin" {
+  const role = viewer.role as import("@/src/constants/roles").SponsorRole;
+  if (viewer.permissions.includes(PERMISSIONS.SERVICE_PROVIDERS_REVIEW) || viewer.permissions.includes(PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL)) {
+    return "supervisor";
+  }
+  if (role === "service_provider") {
+    return "provider";
+  }
+  if (viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW)) {
+    return "admin";
+  }
+  return "customer";
+}
+
+function renderNavItem(item: SidebarItem, active: string, t: (key: string) => string, badgeCounts: Record<string, number>) {
+  const isActive = active === item.key;
+  const badgeValue = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
+  const hasChildren = item.children && item.children.length > 0;
+
+  if (hasChildren) {
+    return (
+      <div key={item.key} className="group">
+        <button
+          type="button"
+          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+            isActive
+              ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+              : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          }`}
+        >
+          <span>{item.icon}</span>
+          <span>{t(item.labelKey)}</span>
+          <span className="transition-transform group-open:rotate-90">▸</span>
+        </button>
+        <div className="mt-1 ml-4 border-r border-gray-200 dark:border-gray-800 pl-3 space-y-1">
+          {item.children!.map((child) => (
+            <Link
+              key={child.key}
+              href={child.href}
+              className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition ${
+                active === child.key
+                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+              }`}
+            >
+              <span>{child.icon}</span>
+              <span>{t(child.labelKey)}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      key={item.key}
+      href={item.href}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+        isActive
+          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+          : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+      }`}
+    >
+      <span>{item.icon}</span>
+      <span>{t(item.labelKey)}</span>
+      {badgeValue > 0 && (
+        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+          {badgeValue > 99 ? "99+" : badgeValue}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export default function ServiceDashboardShell({
   viewer,
@@ -128,6 +194,24 @@ export default function ServiceDashboardShell({
   active: string;
   children: ReactNode;
 }) {
+  const userType = getUserType(viewer);
+  const sidebarConfig = getSidebarConfig(userType);
+  const visibleItems = useMemo(() => sidebarConfig.getVisibleItems(viewer), [sidebarConfig, viewer]);
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!viewer.authenticated) return;
+    const controller = new AbortController();
+    apiFetch<Record<string, number>>("/api/service-dashboard/counts")
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setBadgeCounts(data ?? {});
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [viewer.authenticated]);
+
   if (!viewer.authenticated) {
     return (
       <div dir={dir} className="container py-24 max-w-md text-center">
@@ -139,34 +223,21 @@ export default function ServiceDashboardShell({
 
   return (
     <div dir={dir} className="container py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.dashboard") ?? "لوحة خدماتي"}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{viewer.displayName} • {viewer.email}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <NotificationsBell locale={locale} />
-            <Link href="/services" className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">← {t("services.market") ?? "السوق"}</Link>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.dashboard") ?? "لوحة خدماتي"}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{viewer.displayName} • {viewer.email}</p>
         </div>
+        <div className="flex items-center gap-3">
+          <NotificationsBell locale={locale} />
+          <Link href="/services" className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">← {t("services.market") ?? "السوق"}</Link>
+        </div>
+      </div>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-6 items-start">
         <aside className="lg:sticky lg:top-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3">
-          <nav className="flex flex-col gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-                  active === item.key
-                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
+          <nav className="flex flex-col gap-1" aria-label={t("services.navigation") ?? "التنقل"}>
+            {visibleItems.map((item) => renderNavItem(item, active, t, badgeCounts))}
           </nav>
         </aside>
 
