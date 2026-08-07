@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { ToolCalculatorShell } from "./ToolCalculatorShell";
+import { ToolNumericInput } from "./ToolNumericInput";
+import { ToolSecondaryActions } from "./ToolSecondaryActions";
 
 type Props = { locale: string };
 
@@ -57,14 +60,14 @@ export function AreaCalculator({ locale }: Props) {
   const [shape, setShape] = useState<Shape>("polygon");
   const [unit, setUnit] = useState("m2");
   const [polygonText, setPolygonText] = useState("0,0\n100,0\n100,50\n0,50");
-  const [triA, setTriA] = useState("3");
-  const [triB, setTriB] = useState("4");
-  const [triC, setTriC] = useState("5");
-  const [triSasAngle, setTriSasAngle] = useState("90");
+  const [triA, setTriA] = useState(3);
+  const [triB, setTriB] = useState(4);
+  const [triC, setTriC] = useState(5);
+  const [triSasAngle, setTriSasAngle] = useState(90);
   const [triMode, setTriMode] = useState<"sss" | "sas">("sss");
-  const [regSides, setRegSides] = useState("6");
-  const [regSide, setRegSide] = useState("10");
-  const [circleRadius, setCircleRadius] = useState("5");
+  const [regSides, setRegSides] = useState(6);
+  const [regSide, setRegSide] = useState(10);
+  const [circleRadius, setCircleRadius] = useState(5);
 
   const parsePolygon = useCallback((): Array<[number, number]> | null => {
     try {
@@ -91,25 +94,21 @@ export function AreaCalculator({ locale }: Props) {
         return shoelaceArea(coords);
       }
       if (shape === "triangle") {
-        const a = parseFloat(triA), b = parseFloat(triB), c = parseFloat(triC);
-        if ([a, b, c].some(isNaN) || a <= 0 || b <= 0 || c <= 0) return null;
+        if ([triA, triB, triC].some((v) => v <= 0)) return null;
         if (triMode === "sss") {
-          if (a + b <= c || a + c <= b || b + c <= a) return null;
-          return triangleAreaSSS(a, b, c);
+          if (triA + triB <= triC || triA + triC <= triB || triB + triC <= triA) return null;
+          return triangleAreaSSS(triA, triB, triC);
         }
-        const angle = parseFloat(triSasAngle);
-        if (isNaN(angle) || angle <= 0 || angle >= 180) return null;
-        return triangleAreaSAS(a, b, angle);
+        if (triSasAngle <= 0 || triSasAngle >= 180) return null;
+        return triangleAreaSAS(triA, triB, triSasAngle);
       }
       if (shape === "regular") {
-        const n = parseInt(regSides), s = parseFloat(regSide);
-        if (isNaN(n) || isNaN(s) || n < 3 || s <= 0) return null;
-        return regularPolygonArea(n, s);
+        if (regSides < 3 || regSide <= 0) return null;
+        return regularPolygonArea(regSides, regSide);
       }
       if (shape === "circle") {
-        const r = parseFloat(circleRadius);
-        if (isNaN(r) || r <= 0) return null;
-        return circleArea(r);
+        if (circleRadius <= 0) return null;
+        return circleArea(circleRadius);
       }
       return null;
     } catch {
@@ -131,144 +130,143 @@ export function AreaCalculator({ locale }: Props) {
     return n.toLocaleString(locale === "ar" ? "ar-OM" : locale === "tr" ? "tr-TR" : "en-US", { maximumFractionDigits: 4 });
   };
 
+  const copyResult = useCallback(() => {
+    if (rawArea === null) return;
+    const text = conversions.map((c) => `${c.label}: ${formatNum(c.value)}`).join("\n");
+    navigator.clipboard.writeText(text);
+  }, [rawArea, conversions, locale]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const t = (k: string) => {
+    const m: Record<string, string> = {
+      title: locale === "ar" ? "حساب المساحات وتحويل الوحدات" : "Area Calculator & Unit Converter",
+      subtitle: locale === "ar" ? "مضلعات، مثلثات، أشكال منتظمة، دوائر + تحويل فوري" : "Polygons, triangles, regular shapes, circles + instant conversion",
+      copy: locale === "ar" ? "نسخ" : "Copy",
+      share: locale === "ar" ? "مشاركة" : "Share",
+    };
+    return m[k] ?? k;
+  };
+
   return (
-    <div dir={dir} className="max-w-2xl mx-auto">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 text-center">
-        {locale === "ar" ? "حساب المساحات وتحويل الوحدات" : "Area Calculator & Unit Converter"}
-      </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-        {locale === "ar" ? "مضلعات، مثلثات، أشكال منتظمة، دوائر + تحويل فوري" : "Polygons, triangles, regular shapes, circles + instant conversion"}
-      </p>
+    <ToolCalculatorShell title={t("title")} subtitle={t("subtitle")} dir={dir}>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {(["polygon", "triangle", "regular", "circle"] as Shape[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setShape(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                shape === s
+                  ? "bg-blue-600 text-white"
+                  : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+              }`}
+            >
+              {s === "polygon" ? (locale === "ar" ? "مضلع" : "Polygon") : s === "triangle" ? (locale === "ar" ? "مثلث" : "Triangle") : s === "regular" ? (locale === "ar" ? "شكل منتظم" : "Regular") : (locale === "ar" ? "دائرة" : "Circle")}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {(["polygon", "triangle", "regular", "circle"] as Shape[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setShape(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              shape === s
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            {s === "polygon" ? (locale === "ar" ? "مضلع" : "Polygon") : s === "triangle" ? (locale === "ar" ? "مثلث" : "Triangle") : s === "regular" ? (locale === "ar" ? "شكل منتظم" : "Regular") : (locale === "ar" ? "دائرة" : "Circle")}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-        {shape === "polygon" && (
-          <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {locale === "ar" ? "الإحداثيات (سطر واحد لكل نقطة: X,Y أو X Y)" : "Coordinates (one point per line: X,Y or X Y)"}
-            </label>
-            <textarea
-              value={polygonText}
-              onChange={(e) => setPolygonText(e.target.value)}
-              rows={5}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono"
-              placeholder={"0,0\n100,0\n100,50\n0,50"}
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              {locale === "ar" ? `النقطة الحالية: ${parsePolygon()?.length ?? 0} نقطة` : `Current: ${parsePolygon()?.length ?? 0} points`}
-            </p>
-          </div>
-        )}
-
-        {shape === "triangle" && (
-          <div>
-            <div className="flex gap-2 mb-3">
-              {(["sss", "sas"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setTriMode(m)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    triMode === m ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-                  }`}
-                >
-                  {m === "sss" ? "SSS (3 أضلاع)" : "SAS (ضلاع وزاوية)"}
-                </button>
-              ))}
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+          {shape === "polygon" && (
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                {locale === "ar" ? "الإحداثيات (سطر واحد لكل نقطة: X,Y أو X Y)" : "Coordinates (one point per line: X,Y or X Y)"}
+              </label>
+              <textarea
+                value={polygonText}
+                onChange={(e) => setPolygonText(e.target.value)}
+                rows={5}
+                dir="ltr"
+                className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={"0,0\n100,0\n100,50\n0,50"}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                {locale === "ar" ? `النقطة الحالية: ${parsePolygon()?.length ?? 0} نقطة` : `Current: ${parsePolygon()?.length ?? 0} points`}
+              </p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">a</label>
-                <input value={triA} onChange={(e) => setTriA(e.target.value)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
+          )}
+
+          {shape === "triangle" && (
+            <div>
+              <div className="flex gap-2 mb-3">
+                {(["sss", "sas"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setTriMode(m)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      triMode === m ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+                    }`}
+                  >
+                    {m === "sss" ? "SSS (3 أضلاع)" : "SAS (ضلاع وزاوية)"}
+                  </button>
+                ))}
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">b</label>
-                <input value={triB} onChange={(e) => setTriB(e.target.value)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{triMode === "sss" ? "c" : (locale === "ar" ? "الزاوية (°)" : "Angle (°)")}</label>
-                <input
+              <div className="grid grid-cols-3 gap-3">
+                <ToolNumericInput label="a" step="0.01" min={0} value={triA} onChange={setTriA} />
+                <ToolNumericInput label="b" step="0.01" min={0} value={triB} onChange={setTriB} />
+                <ToolNumericInput
+                  label={triMode === "sss" ? "c" : (locale === "ar" ? "الزاوية" : "Angle")}
+                  unit={triMode === "sas" ? "°" : undefined}
+                  step="0.01"
+                  min={0}
                   value={triMode === "sss" ? triC : triSasAngle}
-                  onChange={(e) => triMode === "sss" ? setTriC(e.target.value) : setTriSasAngle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono"
+                  onChange={triMode === "sss" ? setTriC : setTriSasAngle}
                 />
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {shape === "regular" && (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{locale === "ar" ? "عدد الأضلاع" : "Number of sides"}</label>
-              <input value={regSides} onChange={(e) => setRegSides(e.target.value)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
+          {shape === "regular" && (
+            <div className="grid grid-cols-2 gap-3">
+              <ToolNumericInput label={locale === "ar" ? "عدد الأضلاع" : "Number of sides"} step="1" min={3} inputMode="numeric" value={regSides} onChange={setRegSides} />
+              <ToolNumericInput label={locale === "ar" ? "طول الضلع" : "Side length"} step="0.01" min={0} value={regSide} onChange={setRegSide} />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{locale === "ar" ? "طول الضلع" : "Side length"}</label>
-              <input value={regSide} onChange={(e) => setRegSide(e.target.value)} className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono" />
-            </div>
-          </div>
-        )}
+          )}
 
-        {shape === "circle" && (
-          <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{locale === "ar" ? "نصف القطر" : "Radius"}</label>
-            <input
-              value={circleRadius}
-              onChange={(e) => setCircleRadius(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono"
+          {shape === "circle" && (
+            <ToolNumericInput label={locale === "ar" ? "نصف القطر" : "Radius"} step="0.01" min={0} value={circleRadius} onChange={setCircleRadius} />
+          )}
+        </div>
+
+        {rawArea !== null ? (
+          <div className="space-y-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+              <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+                {locale === "ar" ? "المساحة" : "Area"}
+              </div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 font-mono">
+                {formatNum(rawArea)} {labels.m2}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {conversions.map((c) => (
+                <div
+                  key={c.unit}
+                  className={`rounded-lg p-3 text-center border transition-colors cursor-pointer ${
+                    c.unit === unit
+                      ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
+                      : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-blue-200"
+                  }`}
+                  onClick={() => setUnit(c.unit)}
+                >
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400">{c.label}</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{formatNum(c.value)}</div>
+                </div>
+              ))}
+            </div>
+
+            <ToolSecondaryActions
+              actions={[
+                { label: t("copy"), onClick: copyResult },
+              ]}
             />
+          </div>
+        ) : (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
+            {locale === "ar" ? "أدخل القيم المطلوبة لحساب المساحة" : "Enter the required values to calculate area"}
           </div>
         )}
       </div>
-
-      {rawArea !== null ? (
-        <div className="space-y-2">
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-            <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">
-              {locale === "ar" ? "المساحة" : "Area"}
-            </div>
-            <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 font-mono">
-              {formatNum(rawArea)} {labels.m2}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {conversions.map((c) => (
-              <div
-                key={c.unit}
-                className={`rounded-lg p-3 text-center border transition-colors cursor-pointer ${
-                  c.unit === unit
-                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
-                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-blue-200"
-                }`}
-                onClick={() => setUnit(c.unit)}
-              >
-                <div className="text-[10px] text-gray-500 dark:text-gray-400">{c.label}</div>
-                <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{formatNum(c.value)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
-          {locale === "ar" ? "أدخل القيم المطلوبة لحساب المساحة" : "Enter the required values to calculate area"}
-        </div>
-      )}
-    </div>
+    </ToolCalculatorShell>
   );
 }

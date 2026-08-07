@@ -6,7 +6,6 @@ import { usePersistedState, useUrlShare } from "@/src/lib/tools/hooks";
 import { ToolCalculatorShell } from "./ToolCalculatorShell";
 import { ToolNumericInput } from "./ToolNumericInput";
 import { ToolResultCard } from "./ToolResultCard";
-import { ToolAdvancedOptions } from "./ToolAdvancedOptions";
 import { ToolSecondaryActions } from "./ToolSecondaryActions";
 
 type Props = { locale: string };
@@ -70,7 +69,7 @@ export function ConcreteCalc({ locale }: Props) {
       <button
         type="button"
         onClick={() => setInput(EXAMPLE)}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[36px]"
+        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {t("example")}
       </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { ToolCalculatorShell } from "./ToolCalculatorShell";
 
 type CalcProps = { locale: string };
 
@@ -161,7 +162,6 @@ export function Calculator({ locale }: CalcProps) {
       return;
     }
 
-    // digit or dot
     if (action === ".") {
       setDisplay((d) => {
         if (freshResult) return "0.";
@@ -171,7 +171,6 @@ export function Calculator({ locale }: CalcProps) {
       return;
     }
 
-    // digit
     setDisplay((d) => {
       if (freshResult) return action;
       return d === "0" ? action : d + action;
@@ -179,67 +178,66 @@ export function Calculator({ locale }: CalcProps) {
     setFreshResult(false);
   }, [display, lastOp, pendingValue, freshResult, memory, calculate, formatNum]);
 
-  const btnClasses = "h-12 rounded-lg text-sm font-semibold transition-all active:scale-95 border";
-
   return (
-    <div className="max-w-sm mx-auto" dir="rtl">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">
-        {locale === "ar" ? "الآلة الحاسبة العلمية" : "Scientific Calculator"}
-      </h2>
-
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 mb-3">
-        <div className="text-right text-xs text-gray-400 dark:text-gray-500 h-5 truncate">
-          {hasMemory ? `M = ${formatNum(memory)}` : ""}
-          {lastOp && pendingValue !== null ? ` ${formatNum(pendingValue)} ${lastOp}` : ""}
+    <ToolCalculatorShell
+      title={locale === "ar" ? "الآلة الحاسبة العلمية" : "Scientific Calculator"}
+      dir="rtl"
+    >
+      <div className="max-w-sm mx-auto">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 mb-3">
+          <div className="text-right text-xs text-gray-400 dark:text-gray-500 h-5 truncate">
+            {hasMemory ? `M = ${formatNum(memory)}` : ""}
+            {lastOp && pendingValue !== null ? ` ${formatNum(pendingValue)} ${lastOp}` : ""}
+          </div>
+          <div className="text-right text-3xl font-mono font-bold text-gray-900 dark:text-white truncate min-h-[40px] flex items-center justify-end">
+            {display}
+          </div>
         </div>
-        <div className="text-right text-3xl font-mono font-bold text-gray-900 dark:text-white truncate min-h-[40px] flex items-center justify-end">
-          {display}
-        </div>
-      </div>
 
-      <div className="grid grid-cols-5 gap-1.5">
-        {BUTTONS.flat().map((btn, i) => (
-          <button
-            key={i}
-            onClick={() => handleButton(btn.action)}
-            className={`${btnClasses} ${
-              btn.action === "equals"
-                ? "col-span-2 bg-blue-600 hover:bg-blue-700 text-white border-blue-700"
-                : btn.action.startsWith("op") || btn.action === "clear" || btn.action === "backspace"
-                  ? "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600"
-                  : btn.action.startsWith("m") || btn.action === "mc" || btn.action === "mr" || btn.action === "ms"
-                    ? "bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/60 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700"
-                    : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700"
-            }`}
-          >
-            {btn.label}
-          </button>
-        ))}
-      </div>
-
-      {history.length > 0 && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-              {locale === "ar" ? "السجل" : "History"}
-            </h3>
+        <div className="grid grid-cols-5 gap-1.5">
+          {BUTTONS.flat().map((btn, i) => (
             <button
-              onClick={() => setHistory([])}
-              className="text-xs text-red-500 hover:text-red-600"
+              key={i}
+              onClick={() => handleButton(btn.action)}
+              className={`h-12 min-h-[48px] rounded-lg text-sm font-semibold transition-all active:scale-95 border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                btn.action === "equals"
+                  ? "col-span-2 bg-blue-600 hover:bg-blue-700 text-white border-blue-700"
+                  : btn.action.startsWith("op") || btn.action === "clear" || btn.action === "backspace"
+                    ? "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                    : btn.action.startsWith("m") || btn.action === "mc" || btn.action === "mr" || btn.action === "ms"
+                      ? "bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/60 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700"
+                      : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+              }`}
             >
-              {locale === "ar" ? "مسح السجل" : "Clear history"}
+              {btn.label}
             </button>
-          </div>
-          <div className="max-h-40 overflow-y-auto space-y-1">
-            {history.slice().reverse().map((entry, i) => (
-              <div key={i} className="text-xs bg-gray-50 dark:bg-gray-800 rounded px-3 py-1.5 flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400 font-mono">{entry.expr}</span>
-                <span className="text-gray-900 dark:text-white font-mono font-semibold">= {entry.result}</span>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
-    </div>
+
+        {history.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                {locale === "ar" ? "السجل" : "History"}
+              </h3>
+              <button
+                onClick={() => setHistory([])}
+                className="text-xs text-red-500 hover:text-red-600 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+              >
+                {locale === "ar" ? "مسح السجل" : "Clear history"}
+              </button>
+            </div>
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {history.slice().reverse().map((entry, i) => (
+                <div key={i} className="text-xs bg-gray-50 dark:bg-gray-800 rounded px-3 py-1.5 flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400 font-mono">{entry.expr}</span>
+                  <span className="text-gray-900 dark:text-white font-mono font-semibold">= {entry.result}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </ToolCalculatorShell>
   );
 }

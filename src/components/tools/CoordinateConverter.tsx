@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import proj4 from "proj4";
+import { ToolCalculatorShell } from "./ToolCalculatorShell";
+import { ToolSecondaryActions } from "./ToolSecondaryActions";
 
 type Props = { locale: string };
 
@@ -67,7 +69,6 @@ export function CoordinateConverter({ locale }: Props) {
   const [dmsDirLat, setDmsDirLat] = useState("N");
   const [dmsDirLng, setDmsDirLng] = useState("E");
   const [utmZone, setUtmZone] = useState(39);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const parsed = useMemo(() => {
     try {
@@ -115,13 +116,6 @@ export function CoordinateConverter({ locale }: Props) {
     }
   }, [latInput, lngInput, inputFormat, dmsDirLat, dmsDirLng, utmZone]);
 
-  const copyToClipboard = useCallback((text: string, idx: number) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 1500);
-    });
-  }, []);
-
   const rows = useMemo(() => {
     if (!parsed) return [];
     return [
@@ -132,135 +126,158 @@ export function CoordinateConverter({ locale }: Props) {
     ];
   }, [parsed]);
 
+  const copyResult = useCallback(() => {
+    if (!parsed) return;
+    const text = rows.map((r) => `${r.label}: ${r.copy}`).join("\n");
+    navigator.clipboard.writeText(text);
+  }, [parsed, rows]);
+
+  const t = (k: string) => {
+    const m: Record<string, string> = {
+      title: locale === "ar" ? "تحويل الإحداثيات الجغرافية" : "Coordinate Converter",
+      subtitle: locale === "ar" ? "تحويل فوري بين DD و DMS و DDM و UTM" : "Instant conversion between DD / DMS / DDM / UTM",
+      copy: locale === "ar" ? "نسخ الكل" : "Copy All",
+      share: locale === "ar" ? "مشاركة" : "Share",
+    };
+    return m[k] ?? k;
+  };
+
   return (
-    <div dir={dir} className="max-w-2xl mx-auto">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 text-center">
-        {locale === "ar" ? "تحويل الإحداثيات الجغرافية" : "Coordinate Converter"}
-      </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-        {locale === "ar" ? "تحويل فوري بين DD و DMS و DDM و UTM" : "Instant conversion between DD / DMS / DDM / UTM"}
-      </p>
-
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(["dd", "dms", "ddm", "utm"] as Format[]).map((fmt) => (
-            <button
-              key={fmt}
-              onClick={() => setInputFormat(fmt)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                inputFormat === fmt
-                  ? "bg-blue-600 text-white"
-                  : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-              }`}
-            >
-              {fmt.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {inputFormat === "utm" ? (locale === "ar" ? "Easting (X)" : "Easting (X)") : (locale === "ar" ? "خط العرض (Lat)" : "Latitude (Lat)")}
-            </label>
-            <input
-              value={latInput}
-              onChange={(e) => setLatInput(e.target.value)}
-              placeholder={inputFormat === "dd" ? "23.5880" : inputFormat === "dms" ? "23° 35' 16.8\" N" : inputFormat === "ddm" ? "23° 35.28' N" : "437000"}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-              {inputFormat === "utm" ? (locale === "ar" ? "Northing (Y)" : "Northing (Y)") : (locale === "ar" ? "خط الطول (Lng)" : "Longitude (Lng)")}
-            </label>
-            <input
-              value={lngInput}
-              onChange={(e) => setLngInput(e.target.value)}
-              placeholder={inputFormat === "dd" ? "58.3829" : inputFormat === "dms" ? "58° 22' 58.4\" E" : inputFormat === "ddm" ? "58° 22.97' E" : "2606000"}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono"
-            />
-          </div>
-        </div>
-
-        {(inputFormat === "dms" || inputFormat === "ddm") && (
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {locale === "ar" ? "اتجاه خط العرض" : "Lat Direction"}
-              </label>
-              <select
-                value={dmsDirLat}
-                onChange={(e) => setDmsDirLat(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-              >
-                <option value="N">N (North)</option>
-                <option value="S">S (South)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                {locale === "ar" ? "اتجاه خط الطول" : "Lng Direction"}
-              </label>
-              <select
-                value={dmsDirLng}
-                onChange={(e) => setDmsDirLng(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
-              >
-                <option value="E">E (East)</option>
-                <option value="W">W (West)</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-3">
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            {locale === "ar" ? "نطاق UTM" : "UTM Zone"}
-          </label>
-          <div className="flex gap-2">
-            {OMAN_ZONES.map((z) => (
+    <ToolCalculatorShell title={t("title")} subtitle={t("subtitle")} dir={dir}>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(["dd", "dms", "ddm", "utm"] as Format[]).map((fmt) => (
               <button
-                key={z}
-                onClick={() => setUtmZone(z)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  utmZone === z
-                    ? "bg-green-600 text-white"
+                key={fmt}
+                onClick={() => setInputFormat(fmt)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  inputFormat === fmt
+                    ? "bg-blue-600 text-white"
                     : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
                 }`}
               >
-                Zone {z}
+                {fmt.toUpperCase()}
               </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      {parsed ? (
-        <div className="space-y-2">
-          {rows.map((row, i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3 flex items-start justify-between gap-3"
-            >
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{row.label}</div>
-                <div className="text-sm font-mono text-gray-900 dark:text-white whitespace-pre-line">{row.value}</div>
-              </div>
-              <button
-                onClick={() => copyToClipboard(row.copy, i)}
-                className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
-              >
-                {copiedIdx === i ? "✓" : "📋"}
-              </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                {inputFormat === "utm" ? (locale === "ar" ? "Easting (X)" : "Easting (X)") : (locale === "ar" ? "خط العرض (Lat)" : "Latitude (Lat)")}
+              </label>
+              <input
+                dir="ltr"
+                value={latInput}
+                onChange={(e) => setLatInput(e.target.value)}
+                placeholder={inputFormat === "dd" ? "23.5880" : inputFormat === "dms" ? "23° 35' 16.8\" N" : inputFormat === "ddm" ? "23° 35.28' N" : "437000"}
+                className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={inputFormat === "utm" ? "Easting" : "Latitude"}
+              />
             </div>
-          ))}
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                {inputFormat === "utm" ? (locale === "ar" ? "Northing (Y)" : "Northing (Y)") : (locale === "ar" ? "خط الطول (Lng)" : "Longitude (Lng)")}
+              </label>
+              <input
+                dir="ltr"
+                value={lngInput}
+                onChange={(e) => setLngInput(e.target.value)}
+                placeholder={inputFormat === "dd" ? "58.3829" : inputFormat === "dms" ? "58° 22' 58.4\" E" : inputFormat === "ddm" ? "58° 22.97' E" : "2606000"}
+                className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={inputFormat === "utm" ? "Northing" : "Longitude"}
+              />
+            </div>
+          </div>
+
+          {(inputFormat === "dms" || inputFormat === "ddm") && (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {locale === "ar" ? "اتجاه خط العرض" : "Lat Direction"}
+                </label>
+                <select
+                  value={dmsDirLat}
+                  onChange={(e) => setDmsDirLat(e.target.value)}
+                  className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Latitude direction"
+                >
+                  <option value="N">N (North)</option>
+                  <option value="S">S (South)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  {locale === "ar" ? "اتجاه خط الطول" : "Lng Direction"}
+                </label>
+                <select
+                  value={dmsDirLng}
+                  onChange={(e) => setDmsDirLng(e.target.value)}
+                  className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Longitude direction"
+                >
+                  <option value="E">E (East)</option>
+                  <option value="W">W (West)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3">
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              {locale === "ar" ? "نطاق UTM" : "UTM Zone"}
+            </label>
+            <div className="flex gap-2">
+              {OMAN_ZONES.map((z) => (
+                <button
+                  key={z}
+                  onClick={() => setUtmZone(z)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    utmZone === z
+                      ? "bg-green-600 text-white"
+                      : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+                  }`}
+                >
+                  Zone {z}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
-          {locale === "ar" ? "أدخل إحداثيات صحيحة للحصول على النتائج" : "Enter valid coordinates to see results"}
-        </div>
-      )}
-    </div>
+
+        {parsed ? (
+          <div className="space-y-2">
+            {rows.map((row, i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3 flex items-start justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{row.label}</div>
+                  <div className="text-sm font-mono text-gray-900 dark:text-white whitespace-pre-line" dir="ltr">{row.value}</div>
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(row.copy)}
+                  className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label={`Copy ${row.label}`}
+                >
+                  📋
+                </button>
+              </div>
+            ))}
+            <ToolSecondaryActions
+              actions={[
+                { label: t("copy"), onClick: copyResult },
+              ]}
+            />
+          </div>
+        ) : (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
+            {locale === "ar" ? "أدخل إحداثيات صحيحة للحصول على النتائج" : "Enter valid coordinates to see results"}
+          </div>
+        )}
+      </div>
+    </ToolCalculatorShell>
   );
 }

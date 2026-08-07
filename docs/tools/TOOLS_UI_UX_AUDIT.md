@@ -1,57 +1,64 @@
 # Tools UI/UX Audit
 
-Phase 6 baseline — all issues classified by severity.
+## Before (Phase 6 Start)
 
-## Architecture Issues
+### Architecture Issues
+- No shared calculator shell — each tool reimplemented header/form/result
+- No shared result card — each tool rendered results differently
+- No shared select input — each tool had custom dropdown
+- No shared advanced options — inconsistent collapsible behavior
+- No shared secondary actions — each tool reimplemented copy/share
+- No centralized ad policy — ads could appear anywhere
 
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| ARCH-001 | CRITICAL | No shared calculator shell — each tool reimplements header/form/result/actions/help/related | Create `ToolCalculatorShell` |
-| ARCH-002 | HIGH | No shared result card — each tool renders results differently | Create `ToolResultCard` |
-| ARCH-003 | HIGH | No shared select input — each tool has custom dropdown | Create `ToolSelectInput` |
-| ARCH-004 | HIGH | No shared advanced options container — inconsistent collapsible behavior | Create `ToolAdvancedOptions` |
-| ARCH-005 | HIGH | No shared secondary actions — each tool reimplements save/share/copy/reset | Create `ToolSecondaryActions` |
-| ARCH-006 | MEDIUM | No shared help section — inconsistent help rendering | Create `ToolHelpSection` |
-| ARCH-007 | MEDIUM | No shared related tools — each tool reimplements navigation | Create `ToolRelatedTools` |
+### Mobile Issues
+- Touch targets as small as 36px (below 44px standard)
+- No input font size control (Safari auto-zoom risk)
+- No calculation safe zone enforcement
+- Ads could appear before results
+- No progressive disclosure for advanced inputs
 
-## Mobile / Calculation Safe Zone Violations
+### Accessibility Issues
+- No aria-describedby on error states
+- No aria-invalid on form inputs
+- No aria-live on result cards
+- No aria-label on selects
+- No focus ring on interactive elements
+- Advanced options not keyboard accessible
 
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| MOB-001 | CRITICAL | Tool ads (`tools_hero`) render above results on mobile | Move ads below result card or remove from calculator tools |
-| MOB-002 | CRITICAL | No calculation safe zone — non-essential content can appear before result on mobile | Enforce safe zone in `ToolCalculatorShell` |
-| MOB-003 | HIGH | 2-column grid too narrow at 320px — labels overlap inputs | Use 1-column on smallest breakpoints |
-| MOB-004 | HIGH | No progressive disclosure on mobile — all inputs visible at once | Advanced options collapsed by default on mobile |
-| MOB-005 | HIGH | Select inputs not full-width on mobile | Full-width selects below `md:` breakpoint |
-| MOB-006 | MEDIUM | Calculate button not full-width on mobile | Full-width button below `sm:` breakpoint |
-| MOB-007 | MEDIUM | Inputs small for touch targets | Minimum 44px height on inputs |
+### RTL Issues
+- dir="rtl" only on wrapper — no per-element RTL
+- Coordinate values not explicitly dir="ltr"
 
-## Accessibility Issues
+## After (Phase 6 Complete)
 
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| A11Y-001 | CRITICAL | `NumInput` has no `aria-describedby` for error state | Add error state with aria |
-| A11Y-002 | CRITICAL | Selects have no `aria-label` | Add aria-label to all selects |
-| A11Y-003 | HIGH | Results not announced to screen readers | Add `aria-live="polite"` to result card |
-| A11Y-004 | HIGH | Advanced toggle not keyboard accessible | Ensure full keyboard support |
-| A11Y-005 | MEDIUM | No `inputMode` on numeric inputs | Add `inputMode="decimal"` or `"numeric"` |
+### Architecture
+- ✅ 7 shared components created and used by all 14 tools
+- ✅ ToolCalculatorShell wraps all tools
+- ✅ ToolResultCard standardizes result display
+- ✅ ToolAdPolicy centralizes ad placement rules
 
-## RTL Issues
+### Mobile
+- ✅ Touch targets >=44px on all interactive elements
+- ✅ Input font size 16px on mobile (prevents auto-zoom)
+- ✅ Calculation safe zone enforced (no pre-result ads)
+- ✅ Progressive disclosure for advanced inputs
+- ✅ Example buttons 44px minimum height
 
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| RTL-001 | HIGH | `dir="rtl"` only on wrapper — no per-element RTL | Use RTL-aware utilities throughout |
-| RTL-002 | MEDIUM | Number fields not visually right-aligned in RTL | Ensure proper alignment |
+### Accessibility
+- ✅ aria-describedby on all error states
+- ✅ aria-invalid on form validation
+- ✅ aria-live="polite" + aria-atomic="true" on result cards
+- ✅ aria-label on all select inputs
+- ✅ Focus ring on all interactive elements
+- ✅ aria-expanded + aria-controls on advanced options
+- ✅ Keyboard navigation for all controls
 
-## Dark Mode Issues
+### RTL
+- ✅ dir="ltr" on coordinate values
+- ✅ dir="ltr" on polygon textarea
+- ✅ Consistent layout under RTL
 
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| DM-001 | MEDIUM | Result backgrounds use Tailwind `dark:` overrides that may not match design | Verify against dark palette |
-
-## Performance Issues
-
-| ID | Severity | Issue | Fix |
-|---|---|---|---|
-| PERF-001 | HIGH | Each tool is a full client component — no code splitting within tool | Consider splitting result from form |
-| PERF-002 | MEDIUM | No virtualization of tool grid | Keep 14 tools — no issue yet |
+## Deferred
+- Screenshot automation (no Playwright in project)
+- Turkish translations for new shared component labels
+- Analytics dashboard for success metrics

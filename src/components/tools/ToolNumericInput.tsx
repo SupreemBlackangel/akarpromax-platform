@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 
 const SPIN_CLASS = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-const BASE_CLASS = `w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[44px] ${SPIN_CLASS}`;
-const ERROR_CLASS = "border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800";
+const BASE_CLASS = `w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent ${SPIN_CLASS}`;
+const ERROR_CLASS = "border-red-400 dark:border-red-500 focus:ring-red-200 dark:focus:ring-red-800";
 
 type ToolNumericInputProps = {
   value: number;
@@ -48,7 +48,8 @@ export function ToolNumericInput({
   };
 
   const showError = localError || error;
-  const describedBy = showError ? `${label.replace(/\s+/g, "-")}-error` : undefined;
+  const errorId = `${label.replace(/\s+/g, "-")}-error`;
+  const describedBy = showError ? errorId : undefined;
 
   return (
     <div className={className}>
@@ -71,7 +72,7 @@ export function ToolNumericInput({
         className={`${BASE_CLASS}${showError ? ` ${ERROR_CLASS}` : ""}${className ? ` ${className}` : ""}`}
       />
       {showError && (
-        <p id={describedBy} className="mt-1 text-xs text-red-500 dark:text-red-400" role="alert">
+        <p id={errorId} className="mt-1 text-xs text-red-500 dark:text-red-400" role="alert">
           {showError}
         </p>
       )}

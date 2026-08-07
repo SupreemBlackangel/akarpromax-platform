@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { ToolCalculatorShell } from "./ToolCalculatorShell";
 
 type Props = { locale: string };
 
@@ -166,76 +167,75 @@ export function PdfToWord({ locale }: Props) {
   };
 
   return (
-    <div dir={dir} className="max-w-2xl mx-auto">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1 text-center">
-        {locale === "ar" ? "تحويل PDF إلى Word" : "PDF → Word Converter"}
-      </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-        {locale === "ar" ? "ارفع ملف PDF أو صورة واحصل على مستند Word" : "Upload a PDF or image and get a Word document"}
-      </p>
-
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp"
-          onChange={handleFile}
-          className="hidden"
-        />
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={stage !== "idle" && stage !== "done" && stage !== "error"}
-          className="w-full px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-semibold transition-colors"
-        >
-          {locale === "ar" ? "📁 اختر ملف PDF أو صورة" : "📁 Choose PDF or image file"}
-        </button>
-        {fileName && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">{fileName}</p>
-        )}
-      </div>
-
-      {stage !== "idle" && (
+    <ToolCalculatorShell
+      title={locale === "ar" ? "تحويل PDF إلى Word" : "PDF → Word Converter"}
+      subtitle={locale === "ar" ? "ارفع ملف PDF أو صورة واحصل على مستند Word" : "Upload a PDF or image and get a Word document"}
+      dir={dir}
+    >
+      <div className="max-w-2xl mx-auto">
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-700 dark:text-gray-200">{stageLabels[stage]}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{progress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-300 ${
-                stage === "error" ? "bg-red-500" : stage === "done" ? "bg-green-500" : "bg-blue-500"
-              }`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {stage === "error" && (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm">
-          {errorMsg}
-        </div>
-      )}
-
-      {stage === "done" && downloadUrl && (
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
-          <p className="text-green-700 dark:text-green-300 text-sm mb-3">
-            {locale === "ar" ? "تم إنشاء المستند بنجاح" : "Document created successfully"}
-          </p>
-          <a
-            href={downloadUrl}
-            download={fileName ? fileName.replace(/\.\w+$/, ".docx") : "document.docx"}
-            className="inline-block px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors"
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp"
+            onChange={handleFile}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={stage !== "idle" && stage !== "done" && stage !== "error"}
+            className="w-full px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-semibold transition-colors min-h-[48px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            {locale === "ar" ? "⬇ تنزيل ملف Word" : "⬇ Download Word file"}
-          </a>
+            {locale === "ar" ? "📁 اختر ملف PDF أو صورة" : "📁 Choose PDF or image file"}
+          </button>
+          {fileName && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">{fileName}</p>
+          )}
         </div>
-      )}
 
-      <div className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center space-y-1">
-        <p>{locale === "ar" ? "PDF → استخراج نص → OCR للمسوح → توليد docx" : "PDF → text extraction → OCR for scans → docx generation"}</p>
-        <p>{locale === "ar" ? "المعالجة تتم بالكامل في المتصفح — لا ملفات تُرفع للخادم" : "All processing happens in the browser — no files sent to server"}</p>
+        {stage !== "idle" && (
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-700 dark:text-gray-200">{stageLabels[stage]}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  stage === "error" ? "bg-red-500" : stage === "done" ? "bg-green-500" : "bg-blue-500"
+                }`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {stage === "error" && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm">
+            {errorMsg}
+          </div>
+        )}
+
+        {stage === "done" && downloadUrl && (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+            <p className="text-green-700 dark:text-green-300 text-sm mb-3">
+              {locale === "ar" ? "تم إنشاء المستند بنجاح" : "Document created successfully"}
+            </p>
+            <a
+              href={downloadUrl}
+              download={fileName ? fileName.replace(/\.\w+$/, ".docx") : "document.docx"}
+              className="inline-block px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              {locale === "ar" ? "⬇ تنزيل ملف Word" : "⬇ Download Word file"}
+            </a>
+          </div>
+        )}
+
+        <div className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center space-y-1">
+          <p>{locale === "ar" ? "PDF → استخراج نص → OCR للمسوح → توليد docx" : "PDF → text extraction → OCR for scans → docx generation"}</p>
+          <p>{locale === "ar" ? "المعالجة تتم بالكامل في المتصفح — لا ملفات تُرفع للخادم" : "All processing happens in the browser — no files sent to server"}</p>
+        </div>
       </div>
-    </div>
+    </ToolCalculatorShell>
   );
 }
