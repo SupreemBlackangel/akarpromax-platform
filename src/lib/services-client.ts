@@ -10,6 +10,8 @@ export class ServiceError extends Error {
   }
 }
 
+export const SERVICE_ADMIN_OVERVIEW_ENDPOINT = "/api/service-admin";
+
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,

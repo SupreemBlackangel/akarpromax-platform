@@ -204,19 +204,19 @@ Actions: `contacted`, `ignored`
 ### Indexes
 ```sql
 -- Providers by status + country
-CREATE INDEX service_provider_profiles_status_country_idx 
+CREATE INDEX service_provider_profiles_status_country_idx
   ON service_provider_profiles (status, country_code);
 
 -- Provider categories
-CREATE INDEX service_provider_categories_category_idx 
+CREATE INDEX service_provider_categories_category_idx
   ON service_provider_categories (category_id);
 
 -- Matches by request + score
-CREATE INDEX service_request_matches_request_score_idx 
+CREATE INDEX service_request_matches_request_score_idx
   ON service_request_matches (request_id, score DESC);
 
 -- Matches by request + provider
-CREATE UNIQUE INDEX service_request_matches_request_provider_unique 
+CREATE UNIQUE INDEX service_request_matches_request_provider_unique
   ON service_request_matches (request_id, provider_id);
 ```
 

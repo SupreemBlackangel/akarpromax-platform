@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import ServiceDashboardShell from "@services-ui/ServiceDashboardShell";
-import { apiFetch } from "@services-client";
+import { apiFetch, SERVICE_ADMIN_OVERVIEW_ENDPOINT } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
@@ -56,7 +56,7 @@ export default function SupervisorDashboardPage() {
       setMessage("");
       try {
         const [overviewData, providersData, reportsData, categoriesData] = await Promise.all([
-          apiFetch<{ overview: Overview }>("/api/service-admin"),
+          apiFetch<{ overview: Overview }>(SERVICE_ADMIN_OVERVIEW_ENDPOINT),
           apiFetch<{ profiles: ProviderRow[] }>("/api/service-providers?status=under_review&limit=100").catch(() => ({ profiles: [] })),
           apiFetch<{ reports: ReportRow[] }>("/api/service-reports?limit=100").catch(() => ({ reports: [] })),
           apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM").catch(() => ({ categories: [] })),

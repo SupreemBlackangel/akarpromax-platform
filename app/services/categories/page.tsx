@@ -62,10 +62,10 @@ export default function ServiceCategoriesPage() {
         <Link href="/services" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
           ← {t("services.back") ?? "العودة للسوق"}
         </Link>
-        <header className="mt-6">
+        <div className="mt-6">
           <h1 className="text-3xl font-black text-gray-900 dark:text-white">{t("services.categories") ?? "جميع التصنيفات"}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.categoriesSub") ?? "استعرض جميع تصنيفات الخدمات المتاحة واختر ما يناسبك"}</p>
-        </header>
+        </div>
 
         {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 

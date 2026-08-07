@@ -13,8 +13,9 @@ interface GeoDistanceProvider {
 }
 ```
 
-- `HaversineGeoDistanceProvider` — implementation backed by the existing
-  `distanceKm` from `lib/services/match-score.ts`. Radius is capped at
+- `HaversineGeoDistanceProvider` — self-contained Haversine implementation
+  (`haversineKm`, earth radius 6371 km) so the integration module has no
+  cross-module import into the services domain. Radius is capped at
   `RADAR_MAX_RADIUS_KM = 100`.
 - `PostGISGeoDistanceProvider` — **reserved contract**, not implemented. Swapping it
   in later requires no change to `GeoRadarService`.

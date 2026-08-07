@@ -161,10 +161,10 @@ const navGroups = [
   {
     label: "الخدمات والمنظمات",
     items: [
-      { 
-        href: "/admin/services", 
-        icon: "✦", 
-        label: "سوق الخدمات", 
+      {
+        href: "/admin/services",
+        icon: "✦",
+        label: "سوق الخدمات",
         permission: [PERMISSIONS.SERVICE_CATEGORIES_MANAGE, PERMISSIONS.SERVICE_REPORTS_MANAGE, PERMISSIONS.SERVICE_PROVIDERS_REVIEW],
         children: [
           { key: "services-overview",      labelKey: "admin.services.overview",      href: "/admin/services",                 icon: "📊" },
@@ -194,7 +194,7 @@ export default function ServiceDashboardShell({ viewer, active, children }) {
   const userType = getUserType(viewer);  // "customer" | "provider" | "supervisor"
   const config = getSidebarConfig(userType);
   const visibleItems = config.getVisibleItems(viewer);
-  
+
   return (
     <aside>
       <nav>
