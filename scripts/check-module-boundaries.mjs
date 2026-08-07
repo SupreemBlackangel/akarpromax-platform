@@ -135,6 +135,15 @@ console.log('');
 const files = getAllFiles('app').concat(getAllFiles('src')).concat(getAllFiles('lib'));
 const importPattern = /from\s+["']([^"']+)["']/g;
 
+/*
+ * A real "internal" import targets a module's private subpath:
+ *   @/modules/<name>/internal | repository | service | schema
+ * (or the aliased form @/modules/...). Loose substring matches like
+ * `/service` also falsely flag `@/lib/services-schema`, so we require the
+ * explicit modules/.../internal|repository|schema|service shape.
+ */
+const internalImportPattern = /^(?:\/?@?\/?)(?:modules\/[^/]+\/(?:internal|repository|schema|service))/;
+
 for (const file of files) {
   const content = readFileContent(file);
   const rel = relativePath(file);
@@ -144,7 +153,8 @@ for (const file of files) {
     const importPath = match[1];
     
     // Check for internal imports
-    if (importPath.includes('/internal/') || importPath.includes('/repository/') || importPath.includes('/service')) {
+    const normalized = importPath.replace(/^@\/\//, "/").replace(/^@/, "");
+    if (internalImportPattern.test(normalized)) {
       if (isException('ARCH-022', rel)) {
         legacyExceptions++;
       } else {

@@ -8,10 +8,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   getRuntimeEnv();
-  // Drive schema initialization on the readiness probe so a deployment can
-  // poll readiness BEFORE the first content request. `selectSchemaMode` is
-  // cached/idempotent; calling it here materializes the schema latch (and
-  // fails fast with SchemaModeError for an impossible provider/binding mix).
   let ready = getSchemaStatus().ready;
   let mode = getSchemaStatus().mode;
   let error: string | null = null;
@@ -25,10 +21,9 @@ export async function GET() {
       mode = getSchemaStatus().mode;
     }
   }
-
   return NextResponse.json(
     {
-      status: ready ? "ok" : "degraded",
+      status: ready ? "ready" : "not_ready",
       schema: { mode, ready },
       ...(error ? { error: "schema_initialization_failed" } : {}),
       timestamp: new Date().toISOString(),

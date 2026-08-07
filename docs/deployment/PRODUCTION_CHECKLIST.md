@@ -1,0 +1,30 @@
+# Production Deployment Checklist
+
+- [ ] `npm ci` clean (lockfile honored; no manual node_modules edits).
+- [ ] `node -v` ≥ 22.13.0.
+- [ ] `DB_PROVIDER=postgres` set (production only; no MySQL/Hybrid auth).
+- [ ] `DATABASE_URL` valid PostgreSQL connection (`sslmode=require`).
+- [ ] `SESSION_SECRET` ≥ 32-byte hex (not default/empty).
+- [ ] `APP_URL` points at real HTTPS origin.
+- [ ] `TRUSTED_ORIGINS` includes the deployment origin.
+- [ ] `NODE_ENV=production`.
+- [ ] `npm run build` succeeds.
+- [ ] `npm start` boots without `runtime-db` errors.
+- [ ] `GET /api/health` → `200`, `schema.mode="postgres"`, `schema.ready=true`.
+- [ ] `GET /api/health/live` → `200`.
+- [ ] `GET /api/health/ready` → `200`.
+- [ ] `GET /` → 200 HTML shell.
+- [ ] `GET /api/news` → 200.
+- [ ] `GET /api/services/categories?country=om` → 200.
+- [ ] `GET /api/properties` → 200.
+- [ ] `GET /api/sponsors` → 200.
+- [ ] `GET /assets/*.css` → 200.
+- [ ] `GET /assets/*.js` → 200.
+- [ ] `POST /api/auth/register` → 201.
+- [ ] `POST /api/auth/login` → 200 + `Set-Cookie: akar_session=`.
+- [ ] `GET /api/auth/me` → `{authenticated:true}` (with cookie).
+- [ ] `POST /api/auth/logout` → 200 + clearing cookie.
+- [ ] `GET /api/user-context` → authenticated identity (with cookie).
+- [ ] Static asset cache key patch present post-`npm ci` (see `docs/runtime/VINEXT_RUNTIME_PATCHES.md`).
+- [ ] `SEED_DEMO_DATA` unset (production default = no demo data).
+- [ ] No `localhost auto-admin` / ChatGPT-header identity paths reachable (grep-verified).

@@ -1,72 +1,27 @@
-# Deployment Environment Matrix — Phase 5
+# Environment Matrix
 
-Run-profile view. Full variable reference: `docs/runtime/ENVIRONMENT_MATRIX.md`.
+| Env | `NODE_ENV` | `DB_PROVIDER` | Database | `SESSION_COOKIE secure` | Notes |
+|---|---|---|---|---|---|
+| Local dev | development | (unset) | D1 local | false (dev) | `vinext dev`; D1 binding only. |
+| Local dev (PG) | development | postgres | PostgreSQL | false (dev) | Optional; `DATABASE_URL` required. |
+| Preview / staging | production | postgres | PostgreSQL (Neon/staging) | true | `APP_URL`/`TRUSTED_ORIGINS` set to the preview host. |
+| Production | production | postgres | PostgreSQL (Neon) | true | `DB_PROVIDER=postgres` required; auth + content both PG. |
+| Legacy compat | production | mysql | MySQL | true | Opt-in; content + auth still PG (hybrid only if explicitly accepted). |
 
-## Profiles
+### Cookie `secure` flag
 
-### Development
-| Concern | Value |
-| --- | --- |
-| Runtime | `vinext dev` (Workers/Vite) |
-| DB provider | `postgres` (auth) + `d1` (content) |
-| Cookie mode | HttpOnly, SameSite=Lax, Secure=false |
-| APP_URL | `http://localhost:3000` |
-| HTTPS | off |
-| Seed policy | allowed (`SEED_DEMO_DATA=true`) |
-| Email | console transport |
-| SSE | DB-backed, works |
-| Logging | verbose |
+`lib/auth/session.ts::buildSessionCookieOptions`: `secure = NODE_ENV === "production"`.
 
-### Test
-| Concern | Value |
-| --- | --- |
-| Runtime | `node --import tsx --test` (no server) |
-| DB provider | `postgres` (via helpers/mocks where needed) + in-memory D1 |
-| Cookie mode | HttpOnly, Secure=false |
-| Seed policy | test seeds only |
-| Email | `ConsoleEmailTransport` captured |
-| SSE | `setRealtimeTransportForTesting` |
+- In production (`NODE_ENV=production`) the session cookie is `Secure`; this requires HTTPS termination at the edge/load balancer. The raw `Cookie` header is always read first (`headers()`), so `/me` authenticates over HTTPS in production.
+- Over local `vinext start` HTTP with `NODE_ENV=production`: `Secure` cookies are **not** sent back by HTTP clients, so the E2E harness reads the cookie value from the `Set-Cookie` response and re-submits it manually in the `Cookie` header (which browsers/clients do for same-origin). This is a documented local-test strategy; it does not change production security.
 
-### Staging
-| Concern | Value |
-| --- | --- |
-| Runtime | `vinext start` (Node production bundle) |
-| DB provider | `postgres` (primary); `mysql` only if explicitly chosen |
-| Cookie mode | HttpOnly, SameSite=Lax, Secure=true |
-| HTTPS | on (reverse proxy) |
-| Seed policy | blocked (production rules apply when `NODE_ENV=production`) |
-| Email | SMTP or console (reports DEGRADED if unset) |
-| SSE | hardened, DB-backed |
+### Local test strategy vs HTTPS production strategy
 
-### Production
-| Concern | Value |
-| --- | --- |
-| Runtime | `vinext start` (Node production bundle) |
-| DB provider | **`postgres`** (declared architecture, ADR-001) |
-| Cookie mode | HttpOnly, SameSite=Lax, Secure=true |
-| HTTPS | on (reverse proxy; X-Forwarded-Proto policy documented) |
-| Seed policy | **blocked** (`assertSeedAllowed()` refuses) |
-| Email | SMTP required for verification; DEGRADED if unset |
-| SSE | hardened, DB-backed |
-| Logging | redacted; no secrets/stack to clients |
+| Concern | Local HTTP (`vinext start`, `NODE_ENV=production`) | Production HTTPS |
+|---|---|---|
+| Set-Cookie `Secure` | true | true |
+| Client returns cookie over HTTP | No (browser). E2E harness injects `Cookie` header explicitly. | Yes (HTTPS). |
+| Session validation | reads raw `Cookie` header | reads raw `Cookie` header |
+| Security posture | unchanged | unchanged |
 
-## Required variables by profile
-
-| Variable | Dev | Test | Staging | Prod |
-| --- | --- | --- | --- | --- |
-| NODE_ENV | development | test | production | production |
-| APP_URL | optional | default localhost | required | required |
-| TRUSTED_ORIGINS | optional | optional | required | required |
-| SESSION_SECRET | fallback | test fallback | required | required |
-| DATABASE_URL | optional | optional | required | required |
-| DB_PROVIDER | optional | optional | required | required (postgres) |
-| MYSQL_URL | optional | optional | optional | optional |
-| SEED_DEMO_DATA | optional | optional | n/a | n/a (blocked) |
-| SMTP_* | n/a | n/a | optional | recommended |
-| AD_TRACKING_SECRET | optional | optional | recommended | recommended |
-
-## Production boot guard summary
-
-`NODE_ENV=production` + missing `APP_URL`/`TRUSTED_ORIGINS`/`SESSION_SECRET`/
-`DB_PROVIDER`/`DATABASE_URL` → fail-fast (`RuntimeEnvError`). No insecure
-defaults exist for production-required secrets.
+No `Secure=false` path exists in production-accessible code.

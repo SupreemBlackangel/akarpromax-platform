@@ -1,64 +1,31 @@
 # Auth Rate Limit Policy
 
-Generated: 2026-08-06
+`lib/security/rate-limit.ts`.
 
-Enforced by `lib/security/rate-limit.ts`. Applies to the auth API routes
-(`login`, `register`, `verify`) and is available to every operation below via
-`enforceRateLimit(operation, ip, identifier?)`.
+## Model
 
-## Operation table
+- In-memory token-bucket / fixed-window store per key.
+- Keys: `login:{ip}:{normalized-email}`, `verify_email:{ip}`, `verify_code:{ip}`, `register:{ip}`.
 
-| Operation | Limit | Window | Cooldown | Dimensions |
-| --- | --- | --- | --- | --- |
-| `login` | 10 | 60 s | 60 s | IP + normalized identifier (email or phone) |
-| `register` | 5 | 60 s | 300 s | IP + normalized identifier |
-| `verify_code` | 15 | 60 s | 60 s | IP |
-| `password_reset` | 5 | 60 s | 300 s | IP + identifier |
-| `password_reset_confirm` | 5 | 60 s | 60 s | IP |
-| `otp_resend` | 5 | 60 s | 300 s | IP + identifier |
-| `change_email` | 5 | 60 s | 300 s | IP |
-| `dev_login` | 10 | 60 s | 60 s | IP (route does not exist; reserved) |
+## Production limitation
 
-- Bucket keys are `sha256("<operation>:<dimension>")` so identifiers/IPs are
-  never stored or logged in plaintext (`InspectableRateLimitStore.keys()` is
-  hash-only).
-- A dimension counts only when the operation fails before success; once any
-  bucket exceeds `limit`, `setCooldown` freezes the key for `cooldownMs`.
-- A single `cooldownMs: 0` config falls back to the remaining window as the
-  block period.
+The in-memory store is **process-local**. Under multiple `vinext start` instances the limit counters are not shared, so a distributed brute-force could exceed per-instance limits. This is logged on startup:
 
-## Identity normalization
+```
+[security] rate limiter uses an in-memory store; a shared store is required before horizontal scaling
+```
 
-- Email: `trim().toLowerCase()`.
-- Phone: `trim()` → remove whitespace and all non-digits, keep last 12 digits
-  (country code preserved when present).
-- IP (`clientIp`): `cf-connecting-ip` → first `x-forwarded-for` entry →
-  `x-real-ip` → `"unknown"`.
+## Shared-store roadmap
 
-## Response contract
+For horizontal production scale, swap the in-memory `RateLimitStore` for a Redis-backed implementation (keyed by the same `login:{ip}:{email}` shape). No other call site changes.
 
-A blocked request returns `429` with the unified error shape
-(`{ error, code, requestId }`) and a `Retry-After`-style hint derived from
-`retryAfterSeconds`. The client-side copy maps the generic failure to a
-"try again" message; no rate-limit internals are exposed to the UI.
+## Current limits (defaults in `lib/security/rate-limit.ts`)
 
-## Audit
+| Action | Window | Max attempts |
+|---|---|---|
+| login | 60s | 10 |
+| verify_email | 60s | 10 |
+| verify_code | 60s | 10 |
+| register | 60s | 5 |
 
-Every block emits `AUTH_RATE_LIMITED { operation }` via
-`lib/security/audit.ts`. Normalizer/limiter behaviour is covered by
-`tests/rate-limit.test.mjs` (burst/reject, window reset, cooldown, identifier
-sharing, IP independence, hashed keys, disabled mode).
-
-## Storage and horizontal scaling
-
-The default store is **in-memory** (`MemoryRateLimitStore`), correct for a
-single process. Production logs a startup warning when the in-memory store is
-used. Before running multiple instances:
-
-1. Implement `RateLimitStore` backed by a shared key-value store (Redis is the
-   planned choice per ADR-001); bucket logic and cooldown semantics must
-   match `MemoryRateLimitStore` exactly.
-2. Keep `InspectableRateLimitStore` equivalence for audits.
-3. Update `setRateLimitStoreForTests`/`getRateLimiter` wiring.
-
-No new dependency (Redis client) was added in Phase 0.
+Rate-limited responses return `429` with `Retry-After`.
