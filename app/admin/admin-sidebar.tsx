@@ -59,6 +59,10 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "النظام المتصل",
+    items: [{ href: "/admin/integration", icon: "🔗", label: "مركز التكامل", permission: PERMISSIONS.OFFICE_ADMIN_VIEW }],
+  },
+  {
     label: "إعدادات النظام",
     items: [{ href: "/admin/settings", icon: "⚙", label: "الإعدادات", permission: PERMISSIONS.SETTINGS_MANAGE }],
   },
