@@ -7,8 +7,9 @@ import { getDb } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
+import { accountBlockReason, isAccountUsable } from "@/lib/auth/access-control";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
-import { createRequestId, logSecurityEvent } from "@/lib/security/audit";
+import { createRequestId, logSecurityEvent, recordAuditEvent } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
@@ -89,6 +90,12 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     logSecurityEvent("AUTH_LOGIN_FAILED", { requestId });
+    void recordAuditEvent({
+      eventType: "AUTH_LOGIN_FAILED",
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent"),
+      detail: { reason: "unknown_identifier" },
+    });
     return NextResponse.json(
       { error: "invalid_credentials", requestId },
       applySecurityHeaders({ status: 401, headers: { "Cache-Control": "no-store" } }),
@@ -98,20 +105,54 @@ export async function POST(request: NextRequest) {
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
     logSecurityEvent("AUTH_LOGIN_FAILED", { requestId });
+    void recordAuditEvent({
+      eventType: "AUTH_LOGIN_FAILED",
+      userId: user.id,
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent"),
+      detail: { reason: "bad_password" },
+    });
     return NextResponse.json(
       { error: "invalid_credentials", requestId },
       applySecurityHeaders({ status: 401, headers: { "Cache-Control": "no-store" } }),
     );
   }
 
-  if (!user.isActive) {
+  if (!isAccountUsable(user.status, user.isActive)) {
+    const reason = accountBlockReason(user.status, user.isActive) ?? "account_blocked";
+    logSecurityEvent("AUTH_ACCOUNT_BLOCKED", { requestId, userId: user.id, reason });
+    void recordAuditEvent({
+      eventType: "AUTH_ACCOUNT_BLOCKED",
+      userId: user.id,
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent"),
+      detail: { reason },
+    });
     return NextResponse.json(
-      { error: "account_suspended", requestId },
+      { error: "account_blocked", reason, requestId },
       applySecurityHeaders({ status: 403, headers: { "Cache-Control": "no-store" } }),
     );
   }
 
   await createSession({ userId: user.id, role: user.role, permissions: [] });
+
+  const { db: db2, end: end2 } = getDb();
+  try {
+    await db2.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+  } catch {
+    // lastLoginAt is best-effort; do not fail the login.
+  } finally {
+    await end2();
+  }
+
+  logSecurityEvent("AUTH_LOGIN_SUCCESS", { requestId, userId: user.id });
+  void recordAuditEvent({
+    eventType: "AUTH_LOGIN_SUCCESS",
+    userId: user.id,
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent"),
+    detail: {},
+  });
 
   return NextResponse.json(
     {
@@ -122,12 +163,24 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         name: user.name,
         role: mapSessionRole(user.role),
+        status: user.status,
+        emailVerified: user.emailVerifiedAt !== null ? true : user.email !== null ? false : null,
         isActive: user.isActive,
+        onboardingCompleted: user.onboardingCompletedAt !== null,
         createdAt: user.createdAt,
         permissions: permissionsForSessionRole(user.role),
       },
     },
     applySecurityHeaders({ headers: { "Cache-Control": "no-store" } }),
+  );
+}
+
+// Kept for compatibility with the deprecated 2FA-style endpoint; routes callers
+// that supplied { challengeId, code } to the dedicated /otp/verify handler.
+export async function PUT(request: NextRequest) {
+  return NextResponse.json(
+    { error: "method_not_supported", message: "Use POST /api/auth/login or POST /api/auth/otp/verify", requestId: createRequestId() },
+    applySecurityHeaders({ status: 405, headers: { Allow: "POST, OPTIONS", "Cache-Control": "no-store" } }),
   );
 }
 

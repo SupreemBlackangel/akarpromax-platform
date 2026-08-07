@@ -6,11 +6,16 @@ export type RateLimitOperation =
   | "login"
   | "register"
   | "verify_code"
+  | "verify_email"
+  | "otp_request"
+  | "otp_resend"
+  | "email_verification_resend"
   | "password_reset"
   | "password_reset_confirm"
-  | "otp_resend"
   | "change_email"
-  | "dev_login";
+  | "dev_login"
+  | "office_pairing_complete"
+  | "office_sync_push";
 
 export type RateLimitConfig = {
   limit: number;
@@ -22,11 +27,16 @@ export const RATE_LIMIT_CONFIGS: Record<RateLimitOperation, RateLimitConfig> = {
   login: { limit: 10, windowMs: 60_000, cooldownMs: 60_000 },
   register: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   verify_code: { limit: 15, windowMs: 60_000, cooldownMs: 60_000 },
+  verify_email: { limit: 5, windowMs: 60_000, cooldownMs: 60_000 },
   password_reset: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   password_reset_confirm: { limit: 5, windowMs: 60_000, cooldownMs: 60_000 },
   otp_resend: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
+  otp_request: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
+  email_verification_resend: { limit: 3, windowMs: 60_000, cooldownMs: 600_000 },
   change_email: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   dev_login: { limit: 10, windowMs: 60_000, cooldownMs: 60_000 },
+  office_pairing_complete: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
+  office_sync_push: { limit: 120, windowMs: 60_000, cooldownMs: 60_000 },
 };
 
 export type RateLimitResult = {

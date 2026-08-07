@@ -8,6 +8,7 @@ import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-m
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { createRequestId } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
+import { assertSafeOrigin } from "@/lib/security/origin";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ getRuntimeEnv();
 
 export async function GET(request: NextRequest) {
   const requestId = createRequestId();
+  assertSafeOrigin(request);
   const session = await getSession(request.headers.get("cookie") ?? undefined);
   if (!session) {
     return NextResponse.json(
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
     await end();
   }
 
-  if (!user) {
+  if (!user || !user.isActive) {
     return NextResponse.json(
       { authenticated: false, requestId },
       applySecurityHeaders({
@@ -56,7 +58,11 @@ export async function GET(request: NextRequest) {
         phone: user.phone,
         name: user.name,
         role: mapSessionRole(user.role),
+        status: user.status,
+        emailVerified: user.emailVerifiedAt !== null ? true : user.email !== null ? false : null,
         isActive: user.isActive,
+        onboardingCompleted: user.onboardingCompletedAt !== null,
+        preferredLanguage: user.preferredLanguage,
         createdAt: user.createdAt,
         permissions: permissionsForSessionRole(user.role),
       },

@@ -31,12 +31,14 @@ type AuthUser = {
   phone?: string | null;
   role?: string;
   isActive?: boolean;
+  requiresVerification?: boolean;
   createdAt?: string;
   permissions?: string[];
 };
 
 type RegisterResponse = {
   user?: AuthUser;
+  requiresVerification?: boolean;
   error?: string;
 };
 
@@ -84,6 +86,8 @@ const LABELS: Record<Locale, {
   logout: string;
   memberSince: string;
   notVerified: string;
+  verificationSent: string;
+  verificationSentBody: string;
   emailError: string;
   phoneError: string;
   passwordError: string;
@@ -132,6 +136,8 @@ const LABELS: Record<Locale, {
     logout: "تسجيل الخروج",
     memberSince: "عضو جديد",
     notVerified: "بانتظار التحقق",
+    verificationSent: "تفعيل البريد الإلكتروني",
+    verificationSentBody: "أرسلنا رابط تفعيل إلى بريدك. افتح بريدك لتفعيل الحساب.",
     emailError: "بريد إلكتروني غير صالح",
     phoneError: "رقم هاتف غير صالح",
     passwordError: "كلمة المرور 8 أحرف على الأقل",
@@ -180,6 +186,8 @@ const LABELS: Record<Locale, {
     logout: "Sign out",
     memberSince: "New member",
     notVerified: "Pending verification",
+    verificationSent: "Verify your email",
+    verificationSentBody: "We sent an activation link to your email. Open your inbox to verify your account.",
     emailError: "Invalid email address",
     phoneError: "Invalid phone number",
     passwordError: "Password must be at least 8 characters",
@@ -228,6 +236,8 @@ const LABELS: Record<Locale, {
     logout: "Çıkış yap",
     memberSince: "Yeni üye",
     notVerified: "Doğrulama bekliyor",
+    verificationSent: "E-postayı doğrulayın",
+    verificationSentBody: "E-postanıza bir etkinleştirme bağlantısı gönderdik. Hesabınızı etkinleştirmek için gelen kutunuzu kontrol edin.",
     emailError: "Geçersiz e-posta adresi",
     phoneError: "Geçersiz telefon numarası",
     passwordError: "Şifre en az 8 karakter olmalı",
@@ -295,6 +305,7 @@ export default function AccountDialog({
   const [locationError, setLocationError] = useState("");
   const [locationDetected, setLocationDetected] = useState(false);
   const [error, setError] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -307,13 +318,14 @@ export default function AccountDialog({
 
   if (prevOpen !== open) {
     setPrevOpen(open);
-    if (open) {
-      setMode(initialMode);
-      setRegisterStep(0);
-      setError("");
-      setLocationError("");
-      setLocationDetected(false);
-    }
+      if (open) {
+        setMode(initialMode);
+        setRegisterStep(0);
+        setError("");
+        setLocationError("");
+        setLocationDetected(false);
+        setVerificationSent(false);
+      }
   }
 
   useEffect(() => {
@@ -456,6 +468,11 @@ export default function AccountDialog({
         return setFieldError("genericError");
       }
       if (data.user) {
+        if (data.requiresVerification) {
+          setVerificationSent(true);
+          setLoading(false);
+          return;
+        }
         onAuthenticated(toViewer(data.user));
         onClose();
       }
@@ -533,7 +550,15 @@ export default function AccountDialog({
           ×
         </button>
 
-        {loggedIn ? (
+        {verificationSent ? (
+          <div className="account-verify-notice">
+            <p className="account-kicker">{labels.verificationSent}</p>
+            <p className="account-subline">{labels.verificationSentBody}</p>
+            <button className="account-submit account-submit-wide" type="button" onClick={onClose}>
+              {labels.close}
+            </button>
+          </div>
+        ) : loggedIn ? (
           <div className="account-panel">
             <span className="account-avatar" aria-hidden="true">
               {(viewer.displayName || "A").slice(0, 1).toUpperCase()}

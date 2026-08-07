@@ -47,6 +47,11 @@ export default defineConfig(async () => {
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
+    build: {
+      rolldownOptions: {
+        external: ["nodemailer"],
+      },
+    },
     plugins: [
       vinext(),
       sites(),
