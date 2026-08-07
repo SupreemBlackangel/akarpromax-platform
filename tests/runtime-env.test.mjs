@@ -19,6 +19,7 @@ function prodEnv(overrides = {}) {
     NODE_ENV: "production",
     SESSION_SECRET: VALID_SECRET,
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
+    DB_PROVIDER: "postgres",
     APP_URL: TEST_URL,
     TRUSTED_ORIGINS: TEST_URL,
     ...overrides,
@@ -89,6 +90,40 @@ test("production fails fast on missing or empty TRUSTED_ORIGINS", () => {
 test("production rejects invalid TRUSTED_ORIGINS entries", () => {
   assert.throws(() => validateRuntimeEnv(prodEnv({ TRUSTED_ORIGINS: "not-a-url" })), /TRUSTED_ORIGINS/);
   assert.throws(() => validateRuntimeEnv(prodEnv({ TRUSTED_ORIGINS: "ftp://example.com" })), /TRUSTED_ORIGINS/);
+});
+
+test("production requires DB_PROVIDER=postgres", () => {
+  const env = prodEnv();
+  delete env.DB_PROVIDER;
+  assert.throws(() => validateRuntimeEnv(env), /DB_PROVIDER/);
+  assert.throws(() => validateRuntimeEnv(prodEnv({ DB_PROVIDER: "mysql" })), /DB_PROVIDER/);
+  assert.throws(() => validateRuntimeEnv(prodEnv({ DB_PROVIDER: "d1" })), /DB_PROVIDER/);
+  const ok = validateRuntimeEnv(prodEnv({ DB_PROVIDER: "postgres" }));
+  assert.equal(ok.dbProvider, "postgres");
+});
+
+test("production accepts an explicit DB_PROVIDER=postgres", () => {
+  const env = validateRuntimeEnv(prodEnv({ DB_PROVIDER: "postgres" }));
+  assert.equal(env.dbProvider, "postgres");
+});
+
+test("production rejects an invalid DB_PROVIDER value", () => {
+  assert.throws(() => validateRuntimeEnv(prodEnv({ DB_PROVIDER: "oracle" })), /DB_PROVIDER/);
+});
+
+test("development defaults to d1 provider", () => {
+  const env = validateRuntimeEnv({ NODE_ENV: "development" });
+  assert.equal(env.dbProvider, "d1");
+});
+
+test("development allows explicit postgres or mysql provider", () => {
+  assert.equal(validateRuntimeEnv({ NODE_ENV: "development", DB_PROVIDER: "postgres" }).dbProvider, "postgres");
+  assert.equal(validateRuntimeEnv({ NODE_ENV: "development", DB_PROVIDER: "mysql" }).dbProvider, "mysql");
+});
+
+test("test environment defaults to d1 provider", () => {
+  const env = validateRuntimeEnv({ NODE_ENV: "test" });
+  assert.equal(env.dbProvider, "d1");
 });
 
 test("production parses a comma-separated TRUSTED_ORIGINS list", () => {

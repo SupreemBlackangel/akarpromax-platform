@@ -49,7 +49,7 @@ export default defineConfig(async () => {
       : undefined,
     build: {
       rolldownOptions: {
-        external: ["nodemailer"],
+        external: ["nodemailer", "postgres"],
       },
     },
     plugins: [

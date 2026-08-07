@@ -5,15 +5,18 @@ Status: **Accepted** · Date: 2026-08-07 · Owner: Platform Engineering
 ## Context
 
 The Connected Ecosystem (office devices, pairing, sync, geo radar, notifications,
-realtime) must persist data across the same runtime matrix as the rest of the platform:
+realtime) must persist data across the same runtime matrix as the rest of the platform.
+The content backend is now selected **deterministically** via `DB_PROVIDER`
+(`lib/config/runtime-env.ts` → `lib/runtime-db.ts`), so the matrix is:
 
 | Runtime | Available schema backend |
 | --- | --- |
-| `vinext dev` (Vite/Workers) | D1 (SQLite via `cloudflare:workers` `env.DB`) |
-| `vinext start` (production build) | MySQL via `lib/mysql-runtime.ts` `translateSql` shim |
-| Postgres (`lib/db`) | Auth only — `lib/db/schema.ts` (users, sessions, roles) |
+| `vinext dev` (Vite/Workers) | D1 (SQLite via `cloudflare:workers` `env.DB`) when `DB_PROVIDER` unset or `d1`; Postgres when `DB_PROVIDER=postgres`; MySQL when `DB_PROVIDER=mysql` |
+| `vinext start` (production build) | MySQL via `lib/mysql-runtime.ts` `translateSql` shim (`DB_PROVIDER=mysql`); Postgres cannot load under `vinext start` (see AGENTS.md) |
+| Postgres (`lib/db` / `lib/pg-runtime.ts`) | Auth + content runtime primary; `lib/pg-runtime.ts` implements the `D1Database` interface over the `postgres` driver with `translateSql`/placeholder expansion |
 
-PostGIS is **not available** in any of these runtimes today.
+`d1` without the binding fails fast (`SchemaModeError`) — there is no silent
+fallback to MySQL. PostGIS is **not available** in any of these runtimes today.
 
 ## Options considered
 
@@ -28,9 +31,10 @@ PostGIS is **not available** in any of these runtimes today.
 - Cons: no D1 path under `vinext dev` where E2E testing lives; would make dev/test
   diverge from production. Rejected.
 
-### Option C — Provider-neutral repositories over D1/MySQL (ACCEPTED)
+### Option C — Provider-neutral repositories over D1/PG/MySQL (ACCEPTED)
 - Integrations use the **existing** runtime DB seam (`lib/runtime-db.ts` →
-  `getRuntimeDb()`), which resolves to D1 in dev and MySQL under start.
+  `getRuntimeDb()`), which resolves to the `DB_PROVIDER`-selected backend
+  (`postgres` | `mysql` | `d1`) — see `lib/pg-runtime.ts` and `lib/mysql-runtime.ts`.
 - Data access goes through **repositories** (`lib/integration/db.ts`) that never
   depend on SQLite- or MySQL-specific SQL.
 - Geo is behind a `GeoDistanceProvider` interface with a

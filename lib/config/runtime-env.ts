@@ -2,6 +2,8 @@ import { logSecurityEvent } from "@/lib/security/audit";
 
 export type NodeEnv = "development" | "test" | "production";
 
+export type DbProvider = "postgres" | "mysql" | "d1";
+
 export type RuntimeEnv = {
   nodeEnv: NodeEnv;
   isProduction: boolean;
@@ -11,6 +13,7 @@ export type RuntimeEnv = {
   trustedOrigins: string[];
   databaseUrl: string;
   mysqlUrl: string | null;
+  dbProvider: DbProvider;
 };
 
 export class RuntimeEnvError extends Error {
@@ -94,10 +97,30 @@ function normalizeAppUrl(raw: string | undefined): string {
   return "";
 }
 
+const DB_PROVIDER_VALUES: DbProvider[] = ["postgres", "mysql", "d1"];
+
+function parseDbProvider(raw: string | undefined, isProduction: boolean): DbProvider {
+  const value = (raw ?? "").trim().toLowerCase();
+  if (!value) {
+    if (isProduction) {
+      fail("DB_PROVIDER", "missing (required: postgres for production)");
+    }
+    return "d1";
+  }
+  if (!DB_PROVIDER_VALUES.includes(value as DbProvider)) {
+    fail("DB_PROVIDER", `invalid value "${value}" (expected postgres, mysql, or d1)`);
+  }
+  if (isProduction && value !== "postgres") {
+    fail("DB_PROVIDER", `production only supports postgres (got "${value}")`);
+  }
+  return value as DbProvider;
+}
+
 export function validateRuntimeEnv(raw: NodeJS.ProcessEnv): RuntimeEnv {
   const nodeEnv = (raw.NODE_ENV as NodeEnv) || "development";
   const isProduction = nodeEnv === "production";
   const mysqlUrl = raw.MYSQL_URL && raw.MYSQL_URL.trim() ? raw.MYSQL_URL.trim() : null;
+  const dbProvider = parseDbProvider(raw.DB_PROVIDER, isProduction);
 
   if (isProduction) {
     const configuredSecret = raw.SESSION_SECRET ?? "";
@@ -128,6 +151,7 @@ export function validateRuntimeEnv(raw: NodeJS.ProcessEnv): RuntimeEnv {
       trustedOrigins,
       databaseUrl: raw.DATABASE_URL.trim(),
       mysqlUrl,
+      dbProvider,
     };
   }
 
@@ -161,6 +185,7 @@ export function validateRuntimeEnv(raw: NodeJS.ProcessEnv): RuntimeEnv {
     trustedOrigins: [...trustedOrigins],
     databaseUrl: raw.DATABASE_URL ?? "",
     mysqlUrl,
+    dbProvider,
   };
 }
 

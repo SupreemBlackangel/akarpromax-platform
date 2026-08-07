@@ -7,57 +7,20 @@ import {
   getSchemaStatus,
 } from "../lib/runtime-db.ts";
 
-const base = {
-  d1Available: true,
-  d1InitSucceeded: true,
-  allowMysqlFallback: false,
-  mysqlConfigured: true,
-};
-
-test("D1 with successful init selects d1 mode", () => {
-  assert.equal(decideSchemaMode(base), "d1");
+test("postgres provider selects postgres mode", () => {
+  assert.equal(decideSchemaMode("postgres", false), "postgres");
 });
 
-test("missing D1 binding with MySQL configured selects mysql-fallback", () => {
-  assert.equal(
-    decideSchemaMode({ ...base, d1Available: false }),
-    "mysql-fallback",
-  );
+test("mysql provider selects mysql mode without any D1 binding", () => {
+  assert.equal(decideSchemaMode("mysql", false), "mysql");
 });
 
-test("D1 init failure without the explicit flag fails fast in any environment", () => {
-  assert.throws(
-    () => decideSchemaMode({ ...base, d1InitSucceeded: false }),
-    SchemaModeError,
-  );
+test("d1 provider with the binding present selects d1 mode", () => {
+  assert.equal(decideSchemaMode("d1", true), "d1");
 });
 
-test("D1 init failure with explicit MySQL fallback selects mysql-fallback", () => {
-  assert.equal(
-    decideSchemaMode({ ...base, d1InitSucceeded: false, allowMysqlFallback: true }),
-    "mysql-fallback",
-  );
-});
-
-test("D1 init failure cannot fall back when MySQL is not configured", () => {
-  assert.throws(
-    () => decideSchemaMode({ ...base, d1InitSucceeded: false, allowMysqlFallback: true, mysqlConfigured: false }),
-    SchemaModeError,
-  );
-});
-
-test("no backend at all fails", () => {
-  assert.throws(
-    () => decideSchemaMode({ ...base, d1Available: false, mysqlConfigured: false }),
-    SchemaModeError,
-  );
-});
-
-test("missing D1 + missing MySQL + allow flag still fails", () => {
-  assert.throws(
-    () => decideSchemaMode({ ...base, d1Available: false, mysqlConfigured: false, allowMysqlFallback: true }),
-    SchemaModeError,
-  );
+test("d1 provider without the binding fails fast (no fallback)", () => {
+  assert.throws(() => decideSchemaMode("d1", false), SchemaModeError);
 });
 
 test("schema status starts uninitialized and not ready", () => {

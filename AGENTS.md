@@ -15,6 +15,29 @@ relativePath: path.relative(base, batch[j]).split(path.sep).join("/"),
 **IMPORTANT**: This patch lives in `node_modules` and is lost on `npm install`.
 If assets start 404ing again after reinstalling, re-apply this one-line fix.
 
+## Content runtime DB — deterministic `DB_PROVIDER` selection (Phase 5)
+The content backend (sponsors, ads, news, services, i18n, integration tables) is
+picked **explicitly** via `DB_PROVIDER` in `lib/config/runtime-env.ts`, then
+`lib/runtime-db.ts` dispatches `getRuntimeDb()`:
+
+- `postgres` → `lib/pg-runtime.ts` (`PgRuntimeDb`, a `D1Database` adapter over
+  the `postgres` package: per-statement client, `ssl: "require"`,
+  `prepare: false`, plus `translateSql` for backticks / `INSERT OR IGNORE` /
+  `DATETIME` / `datetime('now')` and `$N` placeholder expansion). **Production
+  requires `DB_PROVIDER=postgres`** and nothing else is accepted.
+- `mysql` → `lib/mysql-runtime.ts` (legacy/compat shim, opt-in under
+  `vinext start`).
+- `d1` → D1 binding `env.DB` via `cloudflare:workers`; **fails fast with
+  `SchemaModeError` when the binding is absent** — there is NO silent fallback.
+- Dev/test default to `d1` when unset; explicit `postgres`/`mysql` are allowed.
+
+`ALLOW_MYSQL_FALLBACK` is gone. Shared schema+seeds live in
+`lib/content-schema.ts` (`ensureContentSchema`), consumed by both the D1 and PG
+adapters. E2E `DB_PROVIDER=postgres` under `vinext dev --port 3010`: `GET
+/api/news` and `GET /api/services/categories?country=om` return seeded Neon rows
+(200). Note `sponsors`/`ads` tables have no seeder, so those list routes return
+empty arrays (expected).
+
 ## Dev-mode limitation
 `vinext dev` breaks on MySQL/drizzle queries with
 `EvalError: Code generation from strings disallowed for this context`.
@@ -24,10 +47,11 @@ Use `vinext start` (production build) for MySQL-backed E2E testing.
 `cloudflare:workers` / `env.DB` (used by `lib/runtime-db.ts` for the D1 content
 tables: sponsors, ads, news, ...) is shimmed only by `@cloudflare/vite-plugin`
 in the Vite dev server. Under `vinext start` the import fails with
-`ERR_UNSUPPORTED_ESM_URL_SCHEME` and those routes degrade to empty results
-(e.g. `GET /api/news` → `{"news":[]}`, so the ticker falls back to static copy).
+`ERR_UNSUPPORTED_ESM_URL_SCHEME` — with `DB_PROVIDER=d1` (dev default) that now
+surfaces as `SchemaModeError` rather than an empty-result fallback. For PG or
+MySQL content under `vinext start`, set `DB_PROVIDER` explicitly.
 
-E2E-test D1 routes (news/sponsors/ads CRUD, seeded rows) on `vinext dev`
+E2E-test content routes (news/sponsors/ads CRUD, seeded rows) on `vinext dev`
 (e.g. `npx vinext dev --port 3010`); keep MySQL auth flows on `vinext start`.
 The dev-server D1 state persists in the local Miniflare storage dir.
 
@@ -67,31 +91,29 @@ Node-targeted build for start, or MySQL-backed auth under start (MySQL `users`
 table exists in `lib/db/mysql/schema`). As of now: **auth E2E runs on
 `vinext dev` only; `vinext start` stays MySQL-backed.**
 
-## runtime-db falls back to MySQL even in dev (FIXED)
-`lib/runtime-db.ts` tries `cloudflare:workers` `env.DB` first; D1 **is** available
-to route handlers under `vinext dev`. But `ensureSponsorSchema()` threw
-`index ... already exists: SQLITE_ERROR` on the D1 schema init (i18n/services
-`CREATE INDEX` lacked `IF NOT EXISTS`, and their catch regex only matched
-MySQL's `duplicate` wording). The failure was swallowed, so `getRuntimeDb()`
-silently fell back to MySQL → `connect ETIMEDOUT` → 500s on every data route.
-Fixed by adding `IF NOT EXISTS` to `I18N_INDEXES_SQL` / `SERVICES_INDEXES_SQL`
-and widening the duplicate regex to `/duplicate (key|index|column)|already exists/i`.
-**Caveat**: `sponsorSchemaReady` is a module singleton — if schema init ever
-rejects again, all subsequent calls fall back to MySQL until the server restarts.
-News/sponsors/ads/admin-data now serve real D1 (seeded) data in dev; MySQL is
-only needed for `vinext start`.
+## runtime-db schema mode (FIXED)
+`lib/runtime-db.ts` now selects the schema mode deterministically via
+`DB_PROVIDER` (`decideSchemaMode(provider, d1Available)`), and there is **no
+silent fallback** — a `d1` request without the binding throws `SchemaModeError`.
+The old D1→MySQL fallback (`ALLOW_MYSQL_FALLBACK`) is removed. Shared schema and
+seeds live in `lib/content-schema.ts` (`ensureContentSchema`) and run through
+the active adapter's `translateSql` (PG: `lib/pg-runtime.ts`; MySQL:
+`lib/mysql-runtime.ts`). `CREATE INDEX` statements use `IF NOT EXISTS`, and the
+duplicate-error regexes match `/duplicate (key|index|column)|already exists/i`
+(MySQL `duplicate` wording and PG `already exists` alike).
 
 ## MYSQL_URL must be separate from DATABASE_URL (FIXED)
 `DATABASE_URL` points at Postgres/Neon, but `lib/mysql-runtime.ts`,
 `lib/mysql-db.ts` and `drizzle.mysql.config.ts` used to read it as the MySQL
-connection string. Under `vinext start` the D1 binding is absent, so data
-routes fell back to MySQL → mysql2 tried to parse the `postgresql://` URL
-(ETIMEDOUT, plus `Ignoring invalid configuration option ... sslmode/
+connection string. Under `vinext start` with `DB_PROVIDER=mysql` the D1 binding
+is absent, so data routes used MySQL → mysql2 tried to parse the `postgresql://`
+URL (ETIMEDOUT, plus `Ignoring invalid configuration option ... sslmode/
 channel_binding` warnings) → 500s on news/sponsors/ads/admin.
 Now all three files use `MYSQL_URL` (falls back to
 `mysql://root:root@localhost:3306/akarpromax`), declared in `.env`/`.env.example`.
-**Verified under `vinext start` (port 3011):** `GET /api/news` → 200 with the
-MySQL rows (4 for the guest scope); `GET /api/sponsors` → 200. Login still
-500s there because PG cannot load (`cloudflare:`), so keep auth E2E on `dev`.
+**Verified under `vinext start` (port 3011, `DB_PROVIDER=mysql`):**
+`GET /api/news` → 200 with the MySQL rows (4 for the guest scope);
+`GET /api/sponsors` → 200. Login still 500s there because PG cannot load
+(`cloudflare:`), so keep auth E2E on `dev`.
 
 

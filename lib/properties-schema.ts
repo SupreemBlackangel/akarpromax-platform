@@ -42,7 +42,7 @@ export const PROPERTY_INDEXES_SQL: string[] = [
 ];
 
 function isDuplicateKeyError(message: string): boolean {
-  return /duplicate key/i.test(message);
+  return /duplicate (key|index|column)|already exists/i.test(message);
 }
 
 export async function ensurePropertiesSchema(db: D1Database): Promise<void> {
