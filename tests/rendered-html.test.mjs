@@ -193,7 +193,7 @@ test("includes the region-filtered news ticker, management API and admin panel",
   assert.doesNotMatch(page, /admin-chip/);
   assert.doesNotMatch(page, /مركز الشريط الإخباري/);
   assert.doesNotMatch(page, /مركز الإعلانات/);
-  assert.match(ticker, /api\/news\?/);
+  assert.match(ticker, /api\/news\/feed\?/);
   assert.match(ticker, /ticker-marquee/);
   assert.match(ticker, /animationDuration/);
   assert.match(ticker, /tickerPause/);
@@ -203,8 +203,8 @@ test("includes the region-filtered news ticker, management API and admin panel",
   assert.doesNotMatch(ticker, /_blank/);
   assert.doesNotMatch(ticker, /isExternalLink/);
   assert.doesNotMatch(ticker, /href=\{item\.linkUrl\}/);
-  assert.match(newsApi, /scope = 'global' OR \(scope = 'country' AND lower\(country_code\) = \?1\)/);
-  assert.match(newsApi, /scope = 'city'/);
+  assert.match(newsApi, /n\.scope = 'global' OR \(n\.scope = 'country' AND lower\(n\.country_code\) = \?1\)/);
+  assert.match(newsApi, /n\.scope = 'city'/);
   assert.match(newsApi, /NEWS_PUBLISH/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS news/);
   assert.match(permissions, /NEWS_VIEW/);

@@ -27,6 +27,8 @@ export type Translation = {
   tickerLabel: string;
   tickerPause: string;
   tickerPlay: string;
+  tickerPrev: string;
+  tickerNext: string;
   ticker: string[];
   heroAria: string;
   heroEyebrow: string;

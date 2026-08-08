@@ -6,6 +6,7 @@ import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
+import { ensureNewsSchema } from "@/lib/news/schema";
 
 let pool: mysql.Pool | null = null;
 let adapter: MysqlRuntimeDb | null = null;
@@ -557,6 +558,7 @@ async function ensureMysqlSchema(db: D1Database): Promise<void> {
   await ensureServicesSchema(db);
   await ensureServicesMarketplaceSchema(db);
   await ensurePropertiesSchema(db);
+  await ensureNewsSchema(db);
   await seedNews(db);
   await seedSponsorPlans(db);
   await seedLocalAdminAccess(db);

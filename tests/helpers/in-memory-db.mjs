@@ -107,6 +107,22 @@ function evalClause(clause, row, params) {
     return splitLogical(c, "OR").some((part) => evalClause(part, row, params));
   }
 
+  const dateCmp = /^date\(([a-z_][a-z0-9_.]+)\) (<=|>=|<|>) date\('now'\)$/i.exec(c);
+  if (dateCmp) {
+    const col = stripAlias(dateCmp[1]);
+    const v = row[col];
+    if (v == null) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    const val = String(v).slice(0, 10);
+    const cmp = val.localeCompare(today);
+    switch (dateCmp[2]) {
+      case "<": return cmp < 0;
+      case ">": return cmp > 0;
+      case "<=": return cmp <= 0;
+      case ">=": return cmp >= 0;
+    }
+  }
+
   const notIn = /^([a-z_][a-z0-9_.]*) NOT IN \((.*)\)$/i.exec(c);
   if (notIn) {
     const col = stripAlias(notIn[1]);
@@ -305,7 +321,15 @@ class Statement {
       for (const assignment of assignments) {
         const am = /^([a-z_][a-z0-9_]*) = (.+)$/i.exec(assignment);
         if (!am) throw new Error(`Unsupported SET clause: ${assignment}`);
-        row[am[1]] = valueOf(am[2], this.params);
+        const col = am[1];
+        const rhs = am[2].trim();
+        const add = /^([a-z_][a-z0-9_]*) \+ (\?\d+|-?\d+(?:\.\d+)?)$/i.exec(rhs);
+        if (add && add[1] === col) {
+          const current = Number(row[col]) || 0;
+          row[col] = current + Number(valueOf(add[2], this.params));
+        } else {
+          row[col] = valueOf(rhs, this.params);
+        }
       }
       changed++;
     }

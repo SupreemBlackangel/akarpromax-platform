@@ -5,6 +5,7 @@ import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-sche
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
 import { ensureIntegrationSchema } from "@/lib/integration/schema";
+import { ensureNewsSchema } from "@/lib/news/schema";
 import { isProduction } from "@/lib/config/runtime-env";
 
 export const CONTENT_TABLES_SQL: string[] = [
@@ -558,6 +559,7 @@ export async function ensureContentSchema(db: D1Database): Promise<void> {
   await ensureServicesMarketplaceSchema(db);
   await ensurePropertiesSchema(db);
   await ensureIntegrationSchema(db);
+  await ensureNewsSchema(db);
 
   // Demo/seeding data is a development/preview concern only. Production boots
   // run schema (DDL) but must NOT inject demo rows through the request path;

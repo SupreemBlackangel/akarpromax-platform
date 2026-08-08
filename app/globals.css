@@ -172,16 +172,16 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 .ticker-label { padding: 3px 9px; border-radius: 5px; background: rgba(255,255,255,.15); color: #fff; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .ticker-pulse { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.17); animation: ticker-pulse 1.4s ease-in-out infinite; }
 @keyframes ticker-pulse { 50% { box-shadow: 0 0 0 7px rgba(255,255,255,0); } }
-.ticker-track { display: flex; flex: 1; overflow: hidden; font-size: 11px; }
-.ticker-marquee { display: inline-flex; align-items: center; will-change: transform; animation: ticker-scroll linear infinite; }
-.ticker-item { display: inline-flex; align-items: center; white-space: nowrap; }
+.ticker-track { display: flex; flex: 1; overflow: hidden; font-size: 11px; outline: none; }
+.ticker-marquee { display: flex; align-items: center; width: 100%; will-change: transform; transition: transform .5s ease; }
+.ticker-item { flex: 0 0 100%; display: inline-flex; align-items: center; white-space: nowrap; }
 .ticker-dot { margin-inline-start: 20px; opacity: .7; }
-.ticker-inner:hover .ticker-marquee { animation-play-state: paused; }
-.news-ticker.is-paused .ticker-marquee { animation-play-state: paused; }
+.news-ticker.is-paused .ticker-marquee { transition: none; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .ticker-inner button { border: 0; background: transparent; color: #fff; font-size: 11px; cursor: pointer; }
-.ticker-pause { opacity: .8; transition: opacity .15s ease; }
-.ticker-pause:hover { opacity: 1; }
+.ticker-nav, .ticker-pause { opacity: .8; transition: opacity .15s ease; }
+.ticker-nav:hover, .ticker-pause:hover { opacity: 1; }
+.ticker-nav:focus-visible, .ticker-pause:focus-visible { outline: 2px solid rgba(255,255,255,.8); outline-offset: 2px; }
 
 .sponsor-tone-gold { --sponsor-accent: #d3aa50; --sponsor-soft: #fff8e8; --sponsor-deep: #735116; --sponsor-contrast: #10264c; }
 .sponsor-tone-blue { --sponsor-accent: #2d7cff; --sponsor-soft: #edf4ff; --sponsor-deep: #1751a9; --sponsor-contrast: #fff; }
@@ -261,7 +261,7 @@ html[dir="ltr"] .hero-ad::before { background: linear-gradient(270deg, rgba(3,17
 @keyframes hero-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) {
   .hero-ad-media, .hero-ad-dots button.active span, .ticker-marquee, .ticker-pulse { animation: none; }
-  .hero-ad-asset, .sponsor-visual-image { transition: none; }
+  .hero-ad-asset, .sponsor-visual-image, .ticker-marquee { transition: none; }
 }
 
 .top-ads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding-top: 25px; padding-bottom: 33px; }

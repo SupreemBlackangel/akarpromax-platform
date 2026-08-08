@@ -14,12 +14,25 @@ export async function GET(req: NextRequest) {
   const countryCode = (url.searchParams.get("country") ?? "om").toLowerCase().slice(0, 2);
   const cityId = url.searchParams.get("city") ?? undefined;
   const limit = Math.max(1, Math.min(100, Number(url.searchParams.get("limit") ?? 20)));
+  const view = url.searchParams.get("view") ?? "list";
 
   const news = await listOfficeNews({
     countryCode,
     cityId,
     limit,
   });
+
+  if (view === "ticker") {
+    return NextResponse.json({
+      items: news.map((item) => ({
+        id: item.id,
+        titleAr: item.titleAr,
+        titleEn: item.titleEn,
+        titleTr: item.titleTr,
+        linkUrl: item.linkUrl,
+      })),
+    });
+  }
 
   return NextResponse.json({ news });
 }

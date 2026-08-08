@@ -34,6 +34,8 @@ const labels = {
   tickerLabel: "News",
   tickerPause: "Pause",
   tickerPlay: "Play",
+  tickerPrev: "Previous news",
+  tickerNext: "Next news",
   quickTitle: "Quick links",
   usefulTitle: "Useful",
   footerLegalTitle: "Legal",

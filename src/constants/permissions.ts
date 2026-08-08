@@ -30,6 +30,8 @@ export const PERMISSIONS = {
   NEWS_UPDATE: "news.update",
   NEWS_PUBLISH: "news.publish",
   NEWS_DELETE: "news.delete",
+  NEWS_SOURCES_MANAGE: "news.sources.manage",
+  NEWS_ANALYTICS_VIEW: "news.analytics.view",
 
   USERS_VIEW: "users.view",
   USERS_CREATE: "users.create",
