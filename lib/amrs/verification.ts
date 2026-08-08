@@ -1,7 +1,8 @@
-import { eq, and, sql, lt } from "drizzle-orm";
+import { eq, and, sql, lt, desc } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { verificationRecords } from "@/lib/db/schema";
 import type { EntityType, VerificationType, VerificationSource } from "@/lib/amrs/contracts/common";
+import type { VerificationStatusChangedEvent } from "@/lib/amrs/contracts/events";
 
 export interface VerificationRecordInput {
   entityType: EntityType;
@@ -192,4 +193,233 @@ export function getVerificationSummary(records: VerificationRecordResult[]): {
     totalVerified: [...statusMap.values()].filter((s) => s === "verified").length,
     totalTypes: statusMap.size,
   };
+}
+
+// ─── AMRS-4: Verification Lifecycle ────────────────────────────────
+
+export const verificationEventLog: VerificationStatusChangedEvent[] = [];
+
+export function clearVerificationEvents(): void {
+  verificationEventLog.length = 0;
+}
+
+function emitVerificationEvent(
+  entityType: EntityType,
+  entityId: string,
+  verificationType: VerificationType,
+  oldStatus: string,
+  newStatus: string,
+): void {
+  verificationEventLog.push({
+    entityType,
+    entityId,
+    verificationType,
+    oldStatus: oldStatus as VerificationStatusChangedEvent["oldStatus"],
+    newStatus: newStatus as VerificationStatusChangedEvent["newStatus"],
+    changedAt: new Date(),
+  });
+}
+
+export async function renewVerification(
+  entityType: EntityType,
+  entityId: string,
+  type: VerificationType,
+  source: VerificationSource = "manual",
+  countryCode?: string,
+): Promise<VerificationRecordResult> {
+  const existing = await getVerificationStatus(entityType, entityId, type);
+  if (existing && existing.status === "pending") {
+    throw new Error("ACTIVE_VERIFICATION_EXISTS");
+  }
+
+  const oldStatus = existing?.status ?? "none";
+  const record = await submitVerification({ entityType, entityId, type, source, countryCode });
+  emitVerificationEvent(entityType, entityId, type, oldStatus, "pending");
+  return record;
+}
+
+export async function revokeVerificationWithEvent(
+  recordId: string,
+  entityType: EntityType,
+  entityId: string,
+  verificationType: VerificationType,
+): Promise<void> {
+  const { db, end } = getDb();
+  try {
+    const [record] = await db
+      .select()
+      .from(verificationRecords)
+      .where(eq(verificationRecords.id, recordId))
+      .limit(1);
+
+    if (!record) throw new Error("RECORD_NOT_FOUND");
+
+    const oldStatus = record.status;
+    await db
+      .update(verificationRecords)
+      .set({ status: "revoked" })
+      .where(eq(verificationRecords.id, recordId));
+    emitVerificationEvent(entityType, entityId, verificationType, oldStatus, "revoked");
+  } finally {
+    await end();
+  }
+}
+
+export interface TrustPanelItem {
+  type: VerificationType;
+  status: string;
+  verifiedAt: Date | null;
+  expiresAt: Date | null;
+  isExpired: boolean;
+  source: string;
+}
+
+export interface EntityTrustPanel {
+  entityType: EntityType;
+  entityId: string;
+  items: TrustPanelItem[];
+  summary: {
+    totalVerified: number;
+    totalPending: number;
+    totalFailed: number;
+    totalExpired: number;
+    totalRevoked: number;
+    highestTrustType: VerificationType | null;
+  };
+}
+
+const TRUST_RANK: VerificationType[] = [
+  "identity",
+  "license",
+  "organization",
+  "professional",
+  "email",
+  "phone",
+  "address",
+];
+
+export async function getTrustPanel(
+  entityType: EntityType,
+  entityId: string,
+): Promise<EntityTrustPanel> {
+  const records = await listVerifications(entityType, entityId);
+
+  const items: TrustPanelItem[] = records.map((r) => ({
+    type: r.type as VerificationType,
+    status: r.status,
+    verifiedAt: r.verifiedAt,
+    expiresAt: r.expiresAt,
+    isExpired: r.expiresAt ? r.expiresAt.getTime() < Date.now() : false,
+    source: r.source,
+  }));
+
+  const counts = { verified: 0, pending: 0, failed: 0, expired: 0, revoked: 0 };
+  for (const item of items) {
+    if (item.isExpired) counts.expired++;
+    else if (item.status === "verified") counts.verified++;
+    else if (item.status === "pending") counts.pending++;
+    else if (item.status === "failed") counts.failed++;
+    else if (item.status === "revoked") counts.revoked++;
+  }
+
+  const verifiedTypes = new Set(
+    items.filter((i) => i.status === "verified" && !i.isExpired).map((i) => i.type),
+  );
+  const highestTrustType = TRUST_RANK.find((t) => verifiedTypes.has(t)) ?? null;
+
+  return {
+    entityType,
+    entityId,
+    items,
+    summary: {
+      totalVerified: counts.verified,
+      totalPending: counts.pending,
+      totalFailed: counts.failed,
+      totalExpired: counts.expired,
+      totalRevoked: counts.revoked,
+      highestTrustType,
+    },
+  };
+}
+
+export async function listPendingVerifications(): Promise<VerificationRecordResult[]> {
+  const { db, end } = getDb();
+  try {
+    const rows = await db
+      .select()
+      .from(verificationRecords)
+      .where(eq(verificationRecords.status, "pending"))
+      .orderBy(desc(verificationRecords.createdAt));
+    return rows as VerificationRecordResult[];
+  } finally {
+    await end();
+  }
+}
+
+export async function approveVerificationWithEvent(
+  recordId: string,
+  verifiedBy: string,
+  entityType: EntityType,
+  entityId: string,
+  verificationType: VerificationType,
+  expiresInDays?: number,
+): Promise<void> {
+  const { db, end } = getDb();
+  try {
+    const [record] = await db
+      .select()
+      .from(verificationRecords)
+      .where(eq(verificationRecords.id, recordId))
+      .limit(1);
+
+    if (!record) throw new Error("RECORD_NOT_FOUND");
+    if (record.verifiedBy === entityId) throw new Error("CANNOT_APPROVE_OWN");
+
+    const oldStatus = record.status;
+    const expiresAt = expiresInDays
+      ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+      : record.expiresAt;
+
+    await db
+      .update(verificationRecords)
+      .set({
+        status: "verified",
+        verifiedAt: new Date(),
+        expiresAt,
+        verifiedBy,
+      })
+      .where(eq(verificationRecords.id, recordId));
+
+    emitVerificationEvent(entityType, entityId, verificationType, oldStatus, "verified");
+  } finally {
+    await end();
+  }
+}
+
+export async function rejectVerificationWithEvent(
+  recordId: string,
+  entityType: EntityType,
+  entityId: string,
+  verificationType: VerificationType,
+): Promise<void> {
+  const { db, end } = getDb();
+  try {
+    const [record] = await db
+      .select()
+      .from(verificationRecords)
+      .where(eq(verificationRecords.id, recordId))
+      .limit(1);
+
+    if (!record) throw new Error("RECORD_NOT_FOUND");
+
+    const oldStatus = record.status;
+    await db
+      .update(verificationRecords)
+      .set({ status: "failed" })
+      .where(eq(verificationRecords.id, recordId));
+
+    emitVerificationEvent(entityType, entityId, verificationType, oldStatus, "failed");
+  } finally {
+    await end();
+  }
 }
