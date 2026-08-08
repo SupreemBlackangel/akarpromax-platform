@@ -134,10 +134,10 @@ export function CoordinateConverter({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "تحويل الإحداثيات الجغرافية" : "Coordinate Converter",
-      subtitle: locale === "ar" ? "تحويل فوري بين DD و DMS و DDM و UTM" : "Instant conversion between DD / DMS / DDM / UTM",
-      copy: locale === "ar" ? "نسخ الكل" : "Copy All",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "تحويل الإحداثيات الجغرافية" : locale === "tr" ? "Koordinat Çevirici" : "Coordinate Converter",
+      subtitle: locale === "ar" ? "تحويل فوري بين DD و DMS و DDM و UTM" : locale === "tr" ? "DD / DMS / DDM / UTM arası anında çeviri" : "Instant conversion between DD / DMS / DDM / UTM",
+      copy: locale === "ar" ? "نسخ الكل" : locale === "tr" ? "Tümünü Kopyala" : "Copy All",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

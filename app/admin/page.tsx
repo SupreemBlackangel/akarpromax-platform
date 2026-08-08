@@ -1,11 +1,11 @@
 import { requireSessionUser } from "@/lib/sponsor-auth";
-import DashboardAdminClient from "./dashboard-admin-client";
+import CommandCenterOverview from "./command-center-client";
 
 export const dynamic = "force-dynamic";
 
 async function AdminDashboardGate() {
   await requireSessionUser("/admin");
-  return <DashboardAdminClient />;
+  return <CommandCenterOverview />;
 }
 
 export default function AdminPage() {

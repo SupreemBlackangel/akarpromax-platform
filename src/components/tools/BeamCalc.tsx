@@ -31,19 +31,19 @@ export function BeamCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة الكمرات والجسور" : "Beam & Bridge Calculator",
-      subtitle: locale === "ar" ? "حساب حجم الصب وعدد أسياخ التسليح والاستهلاك" : "Calculate pour volume, rebar count & consumption",
-      b: locale === "ar" ? "العرض b" : "Width b",
-      h: locale === "ar" ? "الارتفاع h" : "Height h",
-      length: locale === "ar" ? "طول البحر" : "Span length",
-      volume: locale === "ar" ? "حجم الصب" : "Pour Volume",
-      mainBars: locale === "ar" ? "أسياخ رئيسية" : "Main Bars",
-      stirrups: locale === "ar" ? "كانات" : "Stirrups",
-      rebarKg: locale === "ar" ? "حديد (كغ)" : "Rebar (kg)",
-      density: locale === "ar" ? "كثافة الحديد (كغ/م³)" : "Rebar Density (kg/m³)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة الكمرات والجسور" : locale === "tr" ? "Kiriş ve Köprü Hesaplayıcı" : "Beam & Bridge Calculator",
+      subtitle: locale === "ar" ? "حساب حجم الصب وعدد أسياخ التسليح والاستهلاك" : locale === "tr" ? "Döküm hacmi, donatı sayısı ve tüketim hesaplayın" : "Calculate pour volume, rebar count & consumption",
+      b: locale === "ar" ? "العرض b" : locale === "tr" ? "Genişlik b" : "Width b",
+      h: locale === "ar" ? "الارتفاع h" : locale === "tr" ? "Yükseklik h" : "Height h",
+      length: locale === "ar" ? "طول البحر" : locale === "tr" ? "Açık Uzunluk" : "Span length",
+      volume: locale === "ar" ? "حجم الصب" : locale === "tr" ? "Döküm Hacmi" : "Pour Volume",
+      mainBars: locale === "ar" ? "أسياخ رئيسية" : locale === "tr" ? "Ana Donatılar" : "Main Bars",
+      stirrups: locale === "ar" ? "كانات" : locale === "tr" ? "Etringler" : "Stirrups",
+      rebarKg: locale === "ar" ? "حديد (كغ)" : locale === "tr" ? "Donatı (kg)" : "Rebar (kg)",
+      density: locale === "ar" ? "كثافة الحديد (كغ/م³)" : locale === "tr" ? "Donatı Yoğunluğu (kg/m³)" : "Rebar Density (kg/m³)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

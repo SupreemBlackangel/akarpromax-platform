@@ -221,7 +221,7 @@ test("includes the region-filtered news ticker, management API and admin panel",
 test("includes the expanded admin dashboard, users, roles, reports and settings suite", async () => {
   const [dashboardPage, dashboard, usersPage, users, rolesPage, roles, reportsPage, reports, settingsPage, settings, statsApi, analyticsApi, accessApi, rolesConstants, permissions, styles] = await Promise.all([
     readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/admin/dashboard-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/command-center-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/users/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/users-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/roles/page.tsx", import.meta.url), "utf8"),
@@ -238,12 +238,9 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(dashboardPage, /DashboardAdminClient/);
-  assert.match(dashboard, /\/api\/admin\/stats/);
-  assert.match(dashboard, /admin-stat-grid/);
-  assert.match(dashboard, /admin-dashboard-grid/);
-  assert.match(dashboard, /الرعاة النشطون/);
-  assert.match(dashboard, /لوحة الإحصاءات/);
+  assert.match(dashboardPage, /CommandCenterOverview/);
+  assert.match(dashboard, /\/api\/admin\/command-center\/overview/);
+  assert.match(dashboard, /cc-stat-grid/);
 
   assert.match(usersPage, /UsersAdminClient/);
   assert.match(users, /\/api\/sponsor-access/);

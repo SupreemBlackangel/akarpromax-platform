@@ -39,22 +39,22 @@ export function BrickCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة الطوب والطابوق" : "Brick Calculator",
-      subtitle: locale === "ar" ? "حساب عدد الطوب والمونة والأسمنت والرمل" : "Calculate bricks, mortar, cement & sand",
-      wl: locale === "ar" ? "طول الجدار" : "Wall Length",
-      wh: locale === "ar" ? "ارتفاع الجدار" : "Wall Height",
-      bl: locale === "ar" ? "طول الطوبة" : "Brick Length",
-      bw: locale === "ar" ? "عرض الطوبة" : "Brick Width",
-      bh: locale === "ar" ? "ارتفاع الطوبة" : "Brick Height",
-      mt: locale === "ar" ? "سماكة المونة" : "Mortar Thickness",
-      wallDim: locale === "ar" ? "أبعاد الجدار" : "Wall Dimensions",
-      brickDim: locale === "ar" ? "أبعاد الطوبة والمونة" : "Brick & Mortar",
-      bricks: locale === "ar" ? "عدد الطوب" : "Bricks Needed",
-      cement: locale === "ar" ? "أكياس الأسمنت" : "Cement Bags",
-      sand: locale === "ar" ? "الرمل (طن)" : "Sand (tons)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة الطوب والطابوق" : locale === "tr" ? "Tuğla Hesaplayıcı" : "Brick Calculator",
+      subtitle: locale === "ar" ? "حساب عدد الطوب والمونة والأسمنت والرمل" : locale === "tr" ? "Tuğla, harç, çimento ve kum sayısını hesaplayın" : "Calculate bricks, mortar, cement & sand",
+      wl: locale === "ar" ? "طول الجدار" : locale === "tr" ? "Duvar Uzunluğu" : "Wall Length",
+      wh: locale === "ar" ? "ارتفاع الجدار" : locale === "tr" ? "Duvar Yüksekliği" : "Wall Height",
+      bl: locale === "ar" ? "طول الطوبة" : locale === "tr" ? "Tuğla Uzunluğu" : "Brick Length",
+      bw: locale === "ar" ? "عرض الطوبة" : locale === "tr" ? "Tuğla Genişliği" : "Brick Width",
+      bh: locale === "ar" ? "ارتفاع الطوبة" : locale === "tr" ? "Tuğla Yüksekliği" : "Brick Height",
+      mt: locale === "ar" ? "سماكة المونة" : locale === "tr" ? "Harç Kalınlığı" : "Mortar Thickness",
+      wallDim: locale === "ar" ? "أبعاد الجدار" : locale === "tr" ? "Duvar Boyutları" : "Wall Dimensions",
+      brickDim: locale === "ar" ? "أبعاد الطوبة والمونة" : locale === "tr" ? "Tuğla ve Harç" : "Brick & Mortar",
+      bricks: locale === "ar" ? "عدد الطوب" : locale === "tr" ? "Gerekli Tuğla Sayısı" : "Bricks Needed",
+      cement: locale === "ar" ? "أكياس الأسمنت" : locale === "tr" ? "Çimento Torbaları" : "Cement Bags",
+      sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

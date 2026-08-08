@@ -40,20 +40,20 @@ export function ConcreteCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة الخرسانة المسلحة" : "Reinforced Concrete Calculator",
-      subtitle: locale === "ar" ? "حساب حجم الخرسانة وأكياس الأسمنت والرمل والحصى" : "Calculate concrete volume, cement bags, sand & gravel",
-      length: locale === "ar" ? "الطول" : "Length",
-      width: locale === "ar" ? "العرض" : "Width",
-      thickness: locale === "ar" ? "السماكة" : "Thickness",
-      volume: locale === "ar" ? "حجم الخرسانة" : "Concrete Volume",
-      cement: locale === "ar" ? "أكياس الأسمنت (50 كغ)" : "Cement Bags (50 kg)",
-      sand: locale === "ar" ? "الرمل (طن)" : "Sand (tons)",
-      gravel: locale === "ar" ? "الحصى (طن)" : "Gravel (tons)",
-      water: locale === "ar" ? "الماء (لتر)" : "Water (liters)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      download: locale === "ar" ? "تنزيل" : "Download",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة الخرسانة المسلحة" : locale === "tr" ? "Betonarme Hesaplayıcı" : "Reinforced Concrete Calculator",
+      subtitle: locale === "ar" ? "حساب حجم الخرسانة وأكياس الأسمنت والرمل والحصى" : locale === "tr" ? "Beton hacmi, çimento torbaları, kum ve çakıl hesaplayın" : "Calculate concrete volume, cement bags, sand & gravel",
+      length: locale === "ar" ? "الطول" : locale === "tr" ? "Uzunluk" : "Length",
+      width: locale === "ar" ? "العرض" : locale === "tr" ? "Genişlik" : "Width",
+      thickness: locale === "ar" ? "السماكة" : locale === "tr" ? "Kalınlık" : "Thickness",
+      volume: locale === "ar" ? "حجم الخرسانة" : locale === "tr" ? "Beton Hacmi" : "Concrete Volume",
+      cement: locale === "ar" ? "أكياس الأسمنت (50 كغ)" : locale === "tr" ? "Çimento Torbaları (50 kg)" : "Cement Bags (50 kg)",
+      sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
+      gravel: locale === "ar" ? "الحصى (طن)" : locale === "tr" ? "Çakıl (ton)" : "Gravel (tons)",
+      water: locale === "ar" ? "الماء (لتر)" : locale === "tr" ? "Su (litre)" : "Water (liters)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      download: locale === "ar" ? "تنزيل" : locale === "tr" ? "İndir" : "Download",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

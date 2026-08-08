@@ -31,17 +31,17 @@ export function SlopeCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة الميل والانحدار" : "Slope & Gradient Calculator",
-      subtitle: locale === "ar" ? "حساب نسبة الميل بالدرجات ونسبة 1:X للمصارف والأسطح" : "Calculate slope %, ratio 1:X & angle for drains/surfaces",
-      height: locale === "ar" ? "فرق الارتفاع" : "Height Difference",
-      distance: locale === "ar" ? "المسافة الأفقية" : "Horizontal Distance",
-      percent: locale === "ar" ? "نسبة الميل" : "Slope %",
-      ratio: locale === "ar" ? "نسبة الميل" : "Slope Ratio",
-      angle: locale === "ar" ? "زاوية الانحدار" : "Slope Angle",
-      category: locale === "ar" ? "تصنيف الميل" : "Slope Category",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة الميل والانحدار" : locale === "tr" ? "Eğim ve Gradyan Hesaplayıcı" : "Slope & Gradient Calculator",
+      subtitle: locale === "ar" ? "حساب نسبة الميل بالدرجات ونسبة 1:X للمصارف والأسطح" : locale === "tr" ? "Eğim %, oran 1:X ve açıyı hesaplayın" : "Calculate slope %, ratio 1:X & angle for drains/surfaces",
+      height: locale === "ar" ? "فرق الارتفاع" : locale === "tr" ? "Yükseklik Farkı" : "Height Difference",
+      distance: locale === "ar" ? "المسافة الأفقية" : locale === "tr" ? "Yatay Mesafe" : "Horizontal Distance",
+      percent: locale === "ar" ? "نسبة الميل" : locale === "tr" ? "Eğim %" : "Slope %",
+      ratio: locale === "ar" ? "نسبة الميل" : locale === "tr" ? "Eğim Oranı" : "Slope Ratio",
+      angle: locale === "ar" ? "زاوية الانحدار" : locale === "tr" ? "Eğim Açısı" : "Slope Angle",
+      category: locale === "ar" ? "تصنيف الميل" : locale === "tr" ? "Eğim Kategorisi" : "Slope Category",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

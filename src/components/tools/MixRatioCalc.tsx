@@ -38,17 +38,17 @@ export function MixRatioCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة نسب الخلطة" : "Mix Ratio Calculator",
-      subtitle: locale === "ar" ? "حساب كمية الأسمنت والرمل والزلط بالطن والمتر المكعب" : "Calculate cement, sand & gravel in tons/m³",
-      volume: locale === "ar" ? "حجم الخلطة" : "Mix Volume",
-      ratio: locale === "ar" ? "نسبة الخلط" : "Mix Ratio",
-      cement: locale === "ar" ? "الأسمنت (طن)" : "Cement (tons)",
-      cementBags: locale === "ar" ? "أكياس الأسمنت" : "Cement Bags",
-      sand: locale === "ar" ? "الرمل (طن)" : "Sand (tons)",
-      gravel: locale === "ar" ? "الزلط (طن)" : "Gravel (tons)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة نسب الخلطة" : locale === "tr" ? "Karışım Oranı Hesaplayıcı" : "Mix Ratio Calculator",
+      subtitle: locale === "ar" ? "حساب كمية الأسمنت والرمل والزلط بالطن والمتر المكعب" : locale === "tr" ? "Çimento, kum ve çakıl ton/m³ cinsinden hesaplayın" : "Calculate cement, sand & gravel in tons/m³",
+      volume: locale === "ar" ? "حجم الخلطة" : locale === "tr" ? "Karışım Hacmi" : "Mix Volume",
+      ratio: locale === "ar" ? "نسبة الخلط" : locale === "tr" ? "Karışım Oranı" : "Mix Ratio",
+      cement: locale === "ar" ? "الأسمنت (طن)" : locale === "tr" ? "Çimento (ton)" : "Cement (tons)",
+      cementBags: locale === "ar" ? "أكياس الأسمنت" : locale === "tr" ? "Çimento Torbaları" : "Cement Bags",
+      sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
+      gravel: locale === "ar" ? "الزلط (طن)" : locale === "tr" ? "Çakıl (ton)" : "Gravel (tons)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

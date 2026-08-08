@@ -30,18 +30,18 @@ export function RebarCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة حديد التسليح" : "Rebar Weight Calculator",
-      subtitle: locale === "ar" ? "وزن السيخ الواحد والوزن الكلي بالمعادلة d²/162" : "Single bar weight & total using d²/162",
-      diameter: locale === "ar" ? "قطر السيخ" : "Bar Diameter",
-      length: locale === "ar" ? "طول السيخ" : "Bar Length",
-      count: locale === "ar" ? "عدد الأسياخ" : "Bar Count",
-      barWeight: locale === "ar" ? "وزن السيخ (كغ/م)" : "Bar Weight (kg/m)",
-      totalKg: locale === "ar" ? "الوزن الكلي (كغ)" : "Total Weight (kg)",
-      totalTons: locale === "ar" ? "الوزن الكلي (طن)" : "Total Weight (tons)",
-      formula: locale === "ar" ? "d² ÷ 162" : "d² ÷ 162",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة حديد التسليح" : locale === "tr" ? "Donatı Ağırlık Hesaplayıcı" : "Rebar Weight Calculator",
+      subtitle: locale === "ar" ? "وزن السيخ الواحد والوزن الكلي بالمعادلة d²/162" : locale === "tr" ? "Tek çubuk ağırlığı ve d²/162 formülü ile toplam" : "Single bar weight & total using d²/162",
+      diameter: locale === "ar" ? "قطر السيخ" : locale === "tr" ? "Çubuk Çapı" : "Bar Diameter",
+      length: locale === "ar" ? "طول السيخ" : locale === "tr" ? "Çubuk Uzunluğu" : "Bar Length",
+      count: locale === "ar" ? "عدد الأسياخ" : locale === "tr" ? "Çubuk Sayısı" : "Bar Count",
+      barWeight: locale === "ar" ? "وزن السيخ (كغ/م)" : locale === "tr" ? "Çubuk Ağırlığı (kg/m)" : "Bar Weight (kg/m)",
+      totalKg: locale === "ar" ? "الوزن الكلي (كغ)" : locale === "tr" ? "Toplam Ağırlık (kg)" : "Total Weight (kg)",
+      totalTons: locale === "ar" ? "الوزن الكلي (طن)" : locale === "tr" ? "Toplam Ağırlık (ton)" : "Total Weight (tons)",
+      formula: locale === "ar" ? "d² ÷ 162" : locale === "tr" ? "d² ÷ 162" : "d² ÷ 162",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

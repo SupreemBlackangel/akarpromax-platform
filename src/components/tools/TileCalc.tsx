@@ -34,21 +34,21 @@ export function TileCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة البلاط" : "Tile Calculator",
-      subtitle: locale === "ar" ? "حساب عدد البلاطات واللاصق والمهمل" : "Calculate tile count, adhesive & waste",
-      rl: locale === "ar" ? "طول الغرفة" : "Room Length",
-      rw: locale === "ar" ? "عرض الغرفة" : "Room Width",
-      waste: locale === "ar" ? "نسبة الهالك" : "Waste %",
-      tileDim: locale === "ar" ? "أبعاد البلاطة" : "Tile Dimensions",
-      tl: locale === "ar" ? "طول البلاطة" : "Tile Length",
-      tw: locale === "ar" ? "عرض البلاطة" : "Tile Width",
-      area: locale === "ar" ? "المساحة" : "Area",
-      tiles: locale === "ar" ? "عدد البلاطات" : "Tiles Needed",
-      adhesive: locale === "ar" ? "أكياس اللاصق" : "Adhesive Bags",
-      grout: locale === "ar" ? "مونة (كغ)" : "Grout (kg)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة البلاط" : locale === "tr" ? "Seramik Hesaplayıcı" : "Tile Calculator",
+      subtitle: locale === "ar" ? "حساب عدد البلاطات واللاصق والمهمل" : locale === "tr" ? "Seramik sayısı, yapıştırıcı ve fireyi hesaplayın" : "Calculate tile count, adhesive & waste",
+      rl: locale === "ar" ? "طول الغرفة" : locale === "tr" ? "Oda Uzunluğu" : "Room Length",
+      rw: locale === "ar" ? "عرض الغرفة" : locale === "tr" ? "Oda Genişliği" : "Room Width",
+      waste: locale === "ar" ? "نسبة الهالك" : locale === "tr" ? "Fire %" : "Waste %",
+      tileDim: locale === "ar" ? "أبعاد البلاطة" : locale === "tr" ? "Seramik Boyutları" : "Tile Dimensions",
+      tl: locale === "ar" ? "طول البلاطة" : locale === "tr" ? "Seramik Uzunluğu" : "Tile Length",
+      tw: locale === "ar" ? "عرض البلاطة" : locale === "tr" ? "Seramik Genişliği" : "Tile Width",
+      area: locale === "ar" ? "المساحة" : locale === "tr" ? "Alan" : "Area",
+      tiles: locale === "ar" ? "عدد البلاطات" : locale === "tr" ? "Gerekli Seramik Sayısı" : "Tiles Needed",
+      adhesive: locale === "ar" ? "أكياس اللاصق" : locale === "tr" ? "Yapıştırıcı Torbaları" : "Adhesive Bags",
+      grout: locale === "ar" ? "مونة (كغ)" : locale === "tr" ? "Derz Dolgusu (kg)" : "Grout (kg)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

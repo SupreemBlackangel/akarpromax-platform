@@ -32,18 +32,18 @@ export function PaintCalc({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حاسبة الدهان" : "Paint Calculator",
-      subtitle: locale === "ar" ? "حساب استهلاك البويات بالجالون واللتر" : "Calculate paint consumption in gallons/liters",
-      wallArea: locale === "ar" ? "مساحة الجدران" : "Wall Area",
-      ceilingArea: locale === "ar" ? "مساحة السقف" : "Ceiling Area",
-      coats: locale === "ar" ? "عدد الطبقات" : "Number of Coats",
-      coverage: locale === "ar" ? "التغطية (لتر/م²)" : "Coverage (L/m²)",
-      totalArea: locale === "ar" ? "المساحة الكلية" : "Total Area",
-      liters: locale === "ar" ? "البويات (لتر)" : "Paint (liters)",
-      gallons: locale === "ar" ? "البويات (جالون)" : "Paint (gallons)",
-      example: locale === "ar" ? "مثال" : "Example",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حاسبة الدهان" : locale === "tr" ? "Boya Hesaplayıcı" : "Paint Calculator",
+      subtitle: locale === "ar" ? "حساب استهلاك البويات بالجالون واللتر" : locale === "tr" ? "Boya tüketimini galon/litre cinsinden hesaplayın" : "Calculate paint consumption in gallons/liters",
+      wallArea: locale === "ar" ? "مساحة الجدران" : locale === "tr" ? "Duvar Alanı" : "Wall Area",
+      ceilingArea: locale === "ar" ? "مساحة السقف" : locale === "tr" ? "Tavan Alanı" : "Ceiling Area",
+      coats: locale === "ar" ? "عدد الطبقات" : locale === "tr" ? "Kat Sayısı" : "Number of Coats",
+      coverage: locale === "ar" ? "التغطية (لتر/م²)" : locale === "tr" ? "Kaplama (L/m²)" : "Coverage (L/m²)",
+      totalArea: locale === "ar" ? "المساحة الكلية" : locale === "tr" ? "Toplam Alan" : "Total Area",
+      liters: locale === "ar" ? "البويات (لتر)" : locale === "tr" ? "Boya (litre)" : "Paint (liters)",
+      gallons: locale === "ar" ? "البويات (جالون)" : locale === "tr" ? "Boya (galon)" : "Paint (gallons)",
+      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };

@@ -138,10 +138,10 @@ export function AreaCalculator({ locale }: Props) {
 
   const t = (k: string) => {
     const m: Record<string, string> = {
-      title: locale === "ar" ? "حساب المساحات وتحويل الوحدات" : "Area Calculator & Unit Converter",
-      subtitle: locale === "ar" ? "مضلعات، مثلثات، أشكال منتظمة، دوائر + تحويل فوري" : "Polygons, triangles, regular shapes, circles + instant conversion",
-      copy: locale === "ar" ? "نسخ" : "Copy",
-      share: locale === "ar" ? "مشاركة" : "Share",
+      title: locale === "ar" ? "حساب المساحات وتحويل الوحدات" : locale === "tr" ? "Alan Hesaplayıcı ve Birim Çevirici" : "Area Calculator & Unit Converter",
+      subtitle: locale === "ar" ? "مضلعات، مثلثات، أشكال منتظمة، دوائر + تحويل فوري" : locale === "tr" ? "Çokgenler, üçgenler, düzgün şekiller, daireler + anında çeviri" : "Polygons, triangles, regular shapes, circles + instant conversion",
+      copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
+      share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
     return m[k] ?? k;
   };
