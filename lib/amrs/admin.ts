@@ -109,7 +109,6 @@ export async function executeBulkOrganizationAction(
   try {
     for (const id of action.entityIds) {
       try {
-        let result;
         switch (action.action) {
           case "suspend":
             await db
