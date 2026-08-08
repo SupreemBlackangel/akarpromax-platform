@@ -47,6 +47,7 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<any>> = {
   points2dxf: lazy(() => import("@/src/components/tools/PointsToDxf").then((m) => ({ default: m.PointsToDxf }))),
   pdf2word: lazy(() => import("@/src/components/tools/PdfToWord").then((m) => ({ default: m.PdfToWord }))),
   landmapper: lazy(() => import("@/src/components/tools/LandMapper").then((m) => ({ default: m.LandMapper }))),
+  findmyland: lazy(() => import("@/src/components/tools/FindMyLand").then((m) => ({ default: m.FindMyLand }))),
 };
 
 function ToolLoader({ toolId, locale }: { toolId: string; locale: string }) {

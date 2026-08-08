@@ -1,6 +1,6 @@
 # Tools Inventory
 
-All 14 tools in the /tools page.
+All 15 tools in the /tools page.
 
 ## Route Architecture
 
@@ -24,6 +24,7 @@ Single page: all tools render on `/tools` via `?tool=<id>` query param. No sub-r
 | 12 | points2dxf | file_tool | surveying | available |
 | 13 | pdf2word | file_tool | document | new |
 | 14 | landmapper | map_tool | surveying | new |
+| 15 | findmyland | map_tool | surveying | new |
 
 ## Shared Components (Phase 6)
 
@@ -59,6 +60,7 @@ Single page: all tools render on `/tools` via `?tool=<id>` query param. No sub-r
 | `src/components/tools/PointsToDxf.tsx` | `PointsToDxf` | Shell |
 | `src/components/tools/PdfToWord.tsx` | `PdfToWord` | Shell |
 | `src/components/tools/LandMapper.tsx` | `LandMapper` | Shell, SecondaryActions |
+| `src/components/tools/FindMyLand.tsx` | `FindMyLand` | Shell, SecondaryActions |
 
 ## Library Files
 
@@ -69,3 +71,6 @@ Single page: all tools render on `/tools` via `?tool=<id>` query param. No sub-r
 | `src/lib/tools/land-analysis.ts` | OCR coordinate extraction |
 | `src/lib/cad/types.ts` | CAD document types |
 | `src/lib/cad/validation.ts` | CAD validation + sanitization |
+| `lib/land/intelligence/` | FindMyLand resolver pipeline (classifier, CRS detector, geometry, confidence) |
+| `lib/land/resolve-store.ts` | 1h TTL in-memory resolve-result store |
+| `lib/land/amrs-directory.ts` | Real AMRS directory discovery (`REAL_AMRS_DIRECTORY`) |

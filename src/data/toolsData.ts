@@ -186,4 +186,17 @@ export const TOOLS_DATA: ToolDefinition[] = [
     status: "new",
     featured: true,
   },
+  {
+    id: "findmyland",
+    icon: "📍",
+    ar: "حدد أرضي",
+    en: "Find My Land",
+    tr: "Arazimi Bul",
+    descAr: "حدد موقع أرضك من الصك بالخريطة",
+    descEn: "Locate your land from a deed on the map",
+    descTr: "Tapunuzdan arsanızı haritada bulun",
+    category: "surveying",
+    status: "new",
+    featured: true,
+  },
 ];
