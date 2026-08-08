@@ -1,8 +1,8 @@
 import { eq, and, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { reputationProfiles, reputationEvaluations, reputationHistory } from "@/lib/db/schema";
-import type { EntityType, ReputationLevel } from "@/lib/amrs/contracts/common";
-import { isPromotion, isDemotion } from "@/lib/amrs/contracts/reputation";
+import type { EntityType, ReputationLevel, OrganizationType } from "@/lib/amrs/contracts/common";
+import { isPromotion, isDemotion, levelRank } from "@/lib/amrs/contracts/reputation";
 
 export interface ReputationProfileResult {
   id: string;
@@ -300,4 +300,245 @@ export async function getReputationDistribution(): Promise<Record<string, number
   } finally {
     await end();
   }
+}
+
+// ─── AMRS-5: Reputation Policy Engine ──────────────────────────────
+
+export interface ReputationPolicy {
+  readonly entityType: EntityType;
+  readonly organizationType?: OrganizationType;
+  readonly signalWeights: Record<string, number>;
+  readonly levelThresholds: Record<ReputationLevel, number>;
+  readonly minJobsForPromotion: number;
+  readonly maxDemotionGraceDays: number;
+  readonly promaxRequires: PromaxRequirement;
+}
+
+export interface PromaxRequirement {
+  readonly minVerificationScore: number;
+  readonly minCompletedJobs: number;
+  readonly minRating: number;
+  readonly minProfileCompleteness: number;
+}
+
+const PROFESSIONAL_POLICY: ReputationPolicy = {
+  entityType: "professional",
+  signalWeights: {
+    verification: 0.25,
+    profileCompleteness: 0.15,
+    responseRate: 0.20,
+    completedJobs: 0.15,
+    rating: 0.15,
+    cancellationRate: -0.05,
+    resolvedDisputes: 0.03,
+    policyCompliance: 0.05,
+    recentActivity: 0.02,
+  },
+  levelThresholds: { new: 0, rising: 200, distinguished: 450, gold: 700, promax: 900 },
+  minJobsForPromotion: 5,
+  maxDemotionGraceDays: 30,
+  promaxRequires: {
+    minVerificationScore: 80,
+    minCompletedJobs: 50,
+    minRating: 400,
+    minProfileCompleteness: 90,
+  },
+};
+
+const REAL_ESTATE_ORG_POLICY: ReputationPolicy = {
+  entityType: "organization",
+  organizationType: "real_estate",
+  signalWeights: {
+    verification: 0.30,
+    profileCompleteness: 0.10,
+    responseRate: 0.15,
+    completedJobs: 0.20,
+    rating: 0.10,
+    cancellationRate: -0.05,
+    resolvedDisputes: 0.03,
+    policyCompliance: 0.05,
+    recentActivity: 0.02,
+  },
+  levelThresholds: { new: 0, rising: 180, distinguished: 420, gold: 680, promax: 880 },
+  minJobsForPromotion: 10,
+  maxDemotionGraceDays: 45,
+  promaxRequires: {
+    minVerificationScore: 90,
+    minCompletedJobs: 100,
+    minRating: 420,
+    minProfileCompleteness: 85,
+  },
+};
+
+const BUSINESS_ORG_POLICY: ReputationPolicy = {
+  entityType: "organization",
+  organizationType: "business",
+  signalWeights: {
+    verification: 0.20,
+    profileCompleteness: 0.10,
+    responseRate: 0.15,
+    completedJobs: 0.20,
+    rating: 0.15,
+    cancellationRate: -0.05,
+    resolvedDisputes: 0.05,
+    policyCompliance: 0.08,
+    recentActivity: 0.02,
+  },
+  levelThresholds: { new: 0, rising: 190, distinguished: 430, gold: 690, promax: 890 },
+  minJobsForPromotion: 8,
+  maxDemotionGraceDays: 30,
+  promaxRequires: {
+    minVerificationScore: 85,
+    minCompletedJobs: 75,
+    minRating: 400,
+    minProfileCompleteness: 80,
+  },
+};
+
+const USER_POLICY: ReputationPolicy = {
+  entityType: "user",
+  signalWeights: {
+    verification: 0.30,
+    profileCompleteness: 0.20,
+    responseRate: 0.15,
+    completedJobs: 0.10,
+    rating: 0.10,
+    cancellationRate: -0.03,
+    resolvedDisputes: 0.02,
+    policyCompliance: 0.05,
+    recentActivity: 0.05,
+  },
+  levelThresholds: { new: 0, rising: 200, distinguished: 450, gold: 700, promax: 900 },
+  minJobsForPromotion: 0,
+  maxDemotionGraceDays: 14,
+  promaxRequires: {
+    minVerificationScore: 90,
+    minCompletedJobs: 0,
+    minRating: 450,
+    minProfileCompleteness: 95,
+  },
+};
+
+const POLICIES: Record<string, ReputationPolicy> = {
+  "professional": PROFESSIONAL_POLICY,
+  "organization:real_estate": REAL_ESTATE_ORG_POLICY,
+  "organization:business": BUSINESS_ORG_POLICY,
+  "organization:other": BUSINESS_ORG_POLICY,
+  "user": USER_POLICY,
+};
+
+export function getPolicy(entityType: EntityType, organizationType?: OrganizationType): ReputationPolicy {
+  if (entityType === "organization" && organizationType) {
+    return POLICIES[`organization:${organizationType}`] ?? BUSINESS_ORG_POLICY;
+  }
+  return POLICIES[entityType] ?? USER_POLICY;
+}
+
+export function computeScoreWithPolicy(
+  signals: EvaluationSignals,
+  policy: ReputationPolicy,
+): number {
+  let raw = 0;
+  for (const [key, weight] of Object.entries(policy.signalWeights)) {
+    const value = (signals as unknown as Record<string, number>)[key] ?? 0;
+    raw += value * weight;
+  }
+  return Math.max(0, Math.min(1000, Math.round(raw)));
+}
+
+export function scoreToLevelWithPolicy(
+  score: number,
+  policy: ReputationPolicy,
+): ReputationLevel {
+  const t = policy.levelThresholds;
+  if (score >= t.promax) return "promax";
+  if (score >= t.gold) return "gold";
+  if (score >= t.distinguished) return "distinguished";
+  if (score >= t.rising) return "rising";
+  return "new";
+}
+
+export function isEligibleForPromax(
+  signals: EvaluationSignals,
+  policy: ReputationPolicy,
+): { eligible: boolean; reasons: string[] } {
+  const reasons: string[] = [];
+  const req = policy.promaxRequires;
+
+  if (signals.verification < req.minVerificationScore) {
+    reasons.push(`verification score ${signals.verification} < ${req.minVerificationScore}`);
+  }
+  if (signals.completedJobs < req.minCompletedJobs) {
+    reasons.push(`completed jobs ${signals.completedJobs} < ${req.minCompletedJobs}`);
+  }
+  if (signals.rating < req.minRating) {
+    reasons.push(`rating ${signals.rating} < ${req.minRating}`);
+  }
+  if (signals.profileCompleteness < req.minProfileCompleteness) {
+    reasons.push(`profile completeness ${signals.profileCompleteness} < ${req.minProfileCompleteness}`);
+  }
+
+  return { eligible: reasons.length === 0, reasons };
+}
+
+export function shouldApplyGracePeriod(
+  oldLevel: ReputationLevel,
+  newLevel: ReputationLevel,
+  policy: ReputationPolicy,
+): boolean {
+  if (!isDemotion(oldLevel, newLevel)) return false;
+  const rankDiff = levelRank(oldLevel) - levelRank(newLevel);
+  return rankDiff <= 1 && policy.maxDemotionGraceDays > 0;
+}
+
+export function getGracePeriodEndsAt(
+  policy: ReputationPolicy,
+  demotedAt: Date = new Date(),
+): Date {
+  return new Date(demotedAt.getTime() + policy.maxDemotionGraceDays * 24 * 60 * 60 * 1000);
+}
+
+export interface LevelExplanation {
+  level: ReputationLevel;
+  score: number;
+  policy: string;
+  signalBreakdown: { signal: string; value: number; weight: number; contribution: number }[];
+  isPromotion: boolean;
+  isDemotion: boolean;
+  inGracePeriod: boolean;
+  gracePeriodEndsAt: Date | null;
+}
+
+export function explainLevel(
+  entityType: EntityType,
+  organizationType: OrganizationType | undefined,
+  signals: EvaluationSignals,
+  previousLevel: ReputationLevel | null,
+  gracePeriodEndsAt: Date | null,
+): LevelExplanation {
+  const policy = getPolicy(entityType, organizationType);
+  const score = computeScoreWithPolicy(signals, policy);
+  const level = scoreToLevelWithPolicy(score, policy);
+
+  const signalBreakdown = Object.entries(policy.signalWeights).map(([signal, weight]) => ({
+    signal,
+    value: (signals as unknown as Record<string, number>)[signal] ?? 0,
+    weight,
+    contribution: Math.round(((signals as unknown as Record<string, number>)[signal] ?? 0) * weight),
+  }));
+
+  const promoted = previousLevel ? isPromotion(previousLevel, level) : false;
+  const demoted = previousLevel ? isDemotion(previousLevel, level) : false;
+  const inGracePeriod = gracePeriodEndsAt ? gracePeriodEndsAt.getTime() > Date.now() : false;
+
+  return {
+    level,
+    score,
+    policy: `${entityType}${organizationType ? `:${organizationType}` : ""}`,
+    signalBreakdown,
+    isPromotion: promoted,
+    isDemotion: demoted,
+    inGracePeriod,
+    gracePeriodEndsAt,
+  };
 }
