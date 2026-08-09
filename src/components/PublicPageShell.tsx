@@ -5,6 +5,7 @@ import type { Locale, ViewerContext } from "@/src/types/site";
 import type { Translation } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
 import type { BreadcrumbItem } from "@/src/config/public-navigation";
+import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import PublicPageShellImpl from "@/src/components/public/public-page-shell";
 
 type PageHeaderNode = {
@@ -20,6 +21,17 @@ type OfficePromotion = {
   href?: string;
   onCta?: () => void;
 };
+
+type PublicAdLayout =
+  | { mode: "safe-no-ads" }
+  | {
+      mode: "standard";
+      family: StandardPublicAdLayoutKey;
+      entityType?: string;
+      entityId?: string | number;
+      categoryId?: string | number;
+      tags?: string[];
+    };
 
 /**
  * Canonical public shell entry point. Import path unchanged for ~20 pages;
@@ -39,6 +51,7 @@ type Props = {
   officePromotion?: OfficePromotion;
   cookieNotice?: boolean;
   currentPath?: string;
+  adLayout?: PublicAdLayout;
   children: ReactNode;
 };
 
@@ -71,6 +84,7 @@ export default function PublicPageShell({
   officePromotion,
   cookieNotice = false,
   currentPath: explicitPath,
+  adLayout,
   children,
 }: Props) {
   const [path] = useSyncExternalStore(subscribeToLocation, getLocationSnapshot, () => EMPTY_SERVER_PATH);
@@ -90,6 +104,7 @@ export default function PublicPageShell({
       breadcrumbs={breadcrumbs}
       pageHeader={pageHeader}
       officePromotion={officePromotion}
+      adLayout={adLayout}
       cookieNotice={cookieNotice}
       currentPath={resolvedPath}
     >

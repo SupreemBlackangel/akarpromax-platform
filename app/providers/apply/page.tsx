@@ -24,6 +24,7 @@ export default function ProviderApplyPage() {
       viewer={viewer}
       country={country}
       city={city}
+      adLayout={{ mode: "safe-no-ads" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

@@ -54,6 +54,8 @@ export default function CategoryDetailPage({ code }: Props) {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath={`/services/catalog/${code}`}
+      adLayout={{ mode: "standard", family: "services" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

@@ -53,7 +53,7 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /country-sponsor/);
   assert.doesNotMatch(html, /sponsor-inline/);
   assert.doesNotMatch(html, /footer-sponsor/);
-  assert.match(html, /side-rail-ad/);
+  assert.doesNotMatch(html, /side-rail-ad/);
   assert.match(html, /data-sponsor-country="om"/);
   assert.match(html, /partners@akarpromax\.om/);
 });
@@ -96,10 +96,8 @@ test("includes the country sponsor administration and generated campaign art", a
 
   assert.match(page, /\/api\/user-context/);
   assert.match(page, /\/api\/sponsors\?country=/);
-  assert.match(page, /HeroAdSlide/);
-  assert.match(page, /hero-ad-media/);
-  assert.match(page, /hero-ad-controls/);
-  assert.match(page, /mediaType === "video"/);
+  assert.match(page, /StandardPublicAdLayout/);
+  assert.match(page, /family="home"/);
   assert.match(page, /sponsor-ribbon-visual/);
   assert.match(page, /sponsor-visual-image/);
   assert.match(page, /SponsorIdentity/);
@@ -139,8 +137,10 @@ test("includes the country sponsor administration and generated campaign art", a
 });
 
 test("includes the managed advertising center, media storage and targeted hero delivery", async () => {
-  const [page, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, roles, migration, styles] = await Promise.all([
+  const [page, layout, layoutConfig, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, roles, migration, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/ads/standard-public-ad-layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/config/standard-public-ad-layout.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/ads/ads-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ads/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ad-assets/route.ts", import.meta.url), "utf8"),
@@ -153,10 +153,17 @@ test("includes the managed advertising center, media storage and targeted hero d
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /\/api\/ads\?country=/);
-  assert.match(page, /\/api\/ad-events/);
-  assert.match(page, /campaignId/);
-  assert.match(page, /IntersectionObserver/);
+  assert.match(page, /StandardPublicAdLayout/);
+  assert.match(page, /family="home"/);
+  assert.doesNotMatch(page, /\/api\/ads\?country=/);
+  assert.doesNotMatch(page, /\/api\/ad-events/);
+  assert.match(layout, /data-standard-public-ad-layout/);
+  assert.match(layout, /sideLeft01/);
+  assert.match(layout, /sideRight02/);
+  assert.match(layout, /bottom03/);
+  assert.match(layoutConfig, /"web_home"/);
+  assert.match(layoutConfig, /"web_services"/);
+  assert.match(layoutConfig, /"web_property_detail"/);
   assert.match(admin, /إعداد حملة المحرك الذكي/);
   assert.match(admin, /image\/png,image\/jpeg,image\/webp,video\/mp4,video\/webm,video\/ogg/);
   assert.match(admin, /مكتبة الصور والفيديو/);

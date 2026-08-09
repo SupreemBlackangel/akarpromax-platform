@@ -104,6 +104,7 @@ export default function DirectoryPage() {
       country={country}
       city={city}
       currentPath="/directory"
+      adLayout={{ mode: "standard", family: "directory" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
       pageHeader={{

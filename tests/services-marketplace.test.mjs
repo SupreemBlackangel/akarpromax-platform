@@ -18,8 +18,7 @@ test("the services marketplace ships public hub, catalog and provider profile pa
   assert.match(hub, /ProviderCard/);
   assert.match(hub, /RequestCard/);
   assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\("\/api\/service-categories\?country=OM"\)/);
-  assert.match(hub, /AdSlot/);
-  assert.match(hub, /services_hub_mid/);
+  assert.match(hub, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);
   assert.match(category, /service-providers\?categoryId=\$\{encodeURIComponent\(found\.id\)\}/);
   assert.match(category, /\.find\(\(c\) => c\.code === code\)/);
   assert.match(providers, /service-reviews\?revieweeUserId=/);

@@ -6,10 +6,8 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
 import { apiFetch } from "@services-client";
-import AdSlot from "@/src/components/AdSlot";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
-import AdFrame from "@/src/components/ui/AdFrame";
 
 export default function ServicesHubPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -49,6 +47,8 @@ export default function ServicesHubPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/services"
+      adLayout={{ mode: "standard", family: "services" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
@@ -72,18 +72,6 @@ export default function ServicesHubPage() {
             </Link>
           </div>
         </section>
-
-        <AdFrame label={copy.adLabel} variant="horizontal" className="mt-8">
-          <AdSlot
-            placement="services_hub_mid"
-            locale={locale}
-            country={country}
-            city={city}
-            path="/services"
-            entityType="services"
-            variant="horizontal"
-          />
-        </AdFrame>
 
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">

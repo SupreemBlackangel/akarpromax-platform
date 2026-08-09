@@ -19,6 +19,10 @@ type AdSlotFrameProps = {
   city?: string;
   deviceType?: DeviceType;
   path?: string;
+  entityType?: string;
+  entityId?: string | number;
+  categoryId?: string | number;
+  tags?: string[];
   className?: string;
   requestable?: boolean;
   onRequestAd?: () => void;
@@ -32,6 +36,10 @@ export default function AdSlotFrame({
   city,
   deviceType,
   path,
+  entityType,
+  entityId,
+  categoryId,
+  tags,
   className = "",
   requestable = false,
   onRequestAd,
@@ -45,6 +53,10 @@ export default function AdSlotFrame({
         city={city}
         deviceType={deviceType}
         path={path}
+        entityType={entityType}
+        entityId={entityId}
+        categoryId={categoryId}
+        tags={tags}
         variant={config.variant}
         eager={!config.lazy}
         requestable={requestable}

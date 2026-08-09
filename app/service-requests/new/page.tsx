@@ -9,8 +9,6 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
 import SearchInput from "@/src/components/ui/SearchInput";
-import AdFrame from "@/src/components/ui/AdFrame";
-import AdSlot from "@/src/components/AdSlot";
 import type { CategoryRow } from "@services-ui/ServiceCards";
 
 type DynamicField = Record<string, unknown> & {
@@ -163,6 +161,7 @@ export default function NewServiceRequestPage() {
         viewer={viewer}
         country={country}
         city={city}
+        adLayout={{ mode: "safe-no-ads" }}
         onLogin={() => openLogin("login")}
         onLogout={handleLogout}
       >
@@ -309,6 +308,7 @@ export default function NewServiceRequestPage() {
       viewer={viewer}
       country={country}
       city={city}
+      adLayout={{ mode: "safe-no-ads" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
@@ -583,10 +583,6 @@ export default function NewServiceRequestPage() {
             </div>
           </div>
         </div>
-
-        <AdFrame label={copy?.adLabel ?? (locale === "ar" ? "إعلان" : locale === "tr" ? "Reklam" : "Advertisement")} variant="horizontal" className="mt-6">
-          <AdSlot placement="request_wizard_bottom" locale={locale} country={country} city={city} path="/service-requests/new" entityType="services" variant="horizontal" />
-        </AdFrame>
       </PageContainer>
       {AccountDialog}
     </PublicPageShell>

@@ -107,6 +107,7 @@ export default function NewsPageClient() {
       city={city}
       currentPath="/news"
       pageHeader={pageHeader}
+      adLayout={{ mode: "standard", family: "news" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

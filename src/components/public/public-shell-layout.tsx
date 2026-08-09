@@ -15,6 +15,8 @@ import MobileNavigation from "@/src/components/public/mobile-navigation";
 import OfficeAppPromotion from "@/src/components/public/office-app-promotion";
 import CookieNotice from "@/src/components/public/cookie-notice";
 import ToastRegion from "@/src/components/public/toast-region";
+import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
+import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
 import { shouldUsePublicSidebar } from "@/src/config/public-navigation";
 
 type PageHeaderNode = {
@@ -30,6 +32,17 @@ type OfficePromotion = {
   href?: string;
   onCta?: () => void;
 };
+
+type PublicAdLayout =
+  | { mode: "safe-no-ads" }
+  | {
+      mode: "standard";
+      family: StandardPublicAdLayoutKey;
+      entityType?: string;
+      entityId?: string | number;
+      categoryId?: string | number;
+      tags?: string[];
+    };
 
 /**
  * Pure shell composition (SSR-safe, unit-testable via renderToStaticMarkup).
@@ -55,6 +68,7 @@ export type PublicShellLayoutProps = {
   breadcrumbs?: BreadcrumbItem[];
   pageHeader?: PageHeaderNode;
   officePromotion?: OfficePromotion;
+  adLayout?: PublicAdLayout;
   cookieNoticeVisible: boolean;
   onCookieAccept: () => void;
   onCookieReject: () => void;
@@ -80,6 +94,7 @@ export function PublicShellLayout({
   breadcrumbs,
   pageHeader,
   officePromotion,
+  adLayout,
   cookieNoticeVisible,
   onCookieAccept,
   onCookieReject,
@@ -87,6 +102,8 @@ export function PublicShellLayout({
   children,
 }: PublicShellLayoutProps) {
   const showPublicSidebar = shouldUsePublicSidebar(currentPath);
+  const usesStandardAdLayout = adLayout?.mode === "standard";
+  const hidesPublicAds = adLayout?.mode === "safe-no-ads";
   const sidebarFooter = viewer.authenticated ? (
     <div className="flex flex-col gap-[var(--space-3)]">
       <div className="min-w-0">
@@ -118,6 +135,24 @@ export function PublicShellLayout({
         {labels.register}
       </button>
     </div>
+  );
+
+  const content = (
+    <>
+      {breadcrumbs && (
+        <PageContainer className="pt-[var(--space-6)]">
+          <Breadcrumbs items={breadcrumbs} ariaLabel={labels.breadcrumbAria} homeLabel={labels.navHome} />
+        </PageContainer>
+      )}
+
+      {pageHeader && (
+        <PageContainer className="pt-[var(--space-8)]">
+          <PageHeader title={pageHeader.title} description={pageHeader.description} eyebrow={pageHeader.eyebrow} actions={pageHeader.actions} />
+        </PageContainer>
+      )}
+
+      {children}
+    </>
   );
 
   return (
@@ -160,7 +195,7 @@ export function PublicShellLayout({
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />
 
           <main id="main-content" tabIndex={-1} className="public-main outline-none">
-            {PUBLIC_TOP_AD.used && (
+            {!usesStandardAdLayout && !hidesPublicAds && PUBLIC_TOP_AD.used && (
               <PageContainer className="pt-[var(--space-4)]">
                 <AdSlotFrame
                   config={PUBLIC_TOP_AD}
@@ -173,21 +208,27 @@ export function PublicShellLayout({
               </PageContainer>
             )}
 
-            {breadcrumbs && (
-              <PageContainer className="pt-[var(--space-6)]">
-                <Breadcrumbs items={breadcrumbs} ariaLabel={labels.breadcrumbAria} homeLabel={labels.navHome} />
-              </PageContainer>
+            {usesStandardAdLayout ? (
+              <StandardPublicAdLayout
+                family={adLayout.family}
+                label={labels.adLabel}
+                locale={locale}
+                country={country}
+                city={city}
+                deviceType={deviceType}
+                path={currentPath}
+                entityType={adLayout.entityType}
+                entityId={adLayout.entityId}
+                categoryId={adLayout.categoryId}
+                tags={adLayout.tags}
+              >
+                {content}
+              </StandardPublicAdLayout>
+            ) : (
+              content
             )}
 
-            {pageHeader && (
-              <PageContainer className="pt-[var(--space-8)]">
-                <PageHeader title={pageHeader.title} description={pageHeader.description} eyebrow={pageHeader.eyebrow} actions={pageHeader.actions} />
-              </PageContainer>
-            )}
-
-            {children}
-
-            {PUBLIC_BOTTOM_AD.used && (
+            {!usesStandardAdLayout && !hidesPublicAds && PUBLIC_BOTTOM_AD.used && (
               <PageContainer className="pb-[var(--space-6)]">
                 <AdSlotFrame
                   config={PUBLIC_BOTTOM_AD}

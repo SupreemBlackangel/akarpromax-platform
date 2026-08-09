@@ -3,7 +3,6 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import AdSlot from "@/src/components/AdSlot";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { translations } from "@/src/data/translations";
 import { detectCountry, detectCity, selectedCountryOf } from "@/src/data/locations";
@@ -11,7 +10,6 @@ import type { ViewerContext } from "@/src/types/site";
 import type { PublicProperty } from "@/lib/properties-format";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Button from "@/src/components/ui/Button";
-import AdFrame from "@/src/components/ui/AdFrame";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -96,7 +94,6 @@ export default function PropertyPage({ params }: Props) {
   const countryMeta = selectedCountryOf(country);
   const localePrice = property ? property.price.toLocaleString(locale === "ar" ? "ar" : "en") : "";
   const imageUrl = property?.imageUrl || "/og.png";
-  const adTags = property ? [property.propertyType, property.listingType] : [];
 
   return (
     <PublicPageShell
@@ -106,6 +103,8 @@ export default function PropertyPage({ params }: Props) {
       country={country}
       city={city}
       deviceType={deviceType}
+      currentPath={`/properties/${id}`}
+      adLayout={property ? { mode: "standard", family: "property-detail", entityType: "property", entityId: id, categoryId: property.propertyType, tags: [property.propertyType, property.listingType] } : undefined}
       onLogin={() => {}}
       onLogout={() => {}}
     >
@@ -139,10 +138,6 @@ export default function PropertyPage({ params }: Props) {
             </div>
           </div>
 
-          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
-            <AdSlot placement="property_after_gallery" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
-          </AdFrame>
-
           <div className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.details}</p>
             <h1 className="mt-1 text-2xl font-black">{property.title[locale]}</h1>
@@ -154,18 +149,10 @@ export default function PropertyPage({ params }: Props) {
             <span className="mt-1 inline-block text-[10px] font-bold text-[color:var(--color-text-muted)]">{t.priceLabel}</span>
           </div>
 
-          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
-            <AdSlot placement="property_below_price" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
-          </AdFrame>
-
           <section className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.descriptionLabel}</p>
             <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">{property.description[locale]}</p>
           </section>
-
-          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
-            <AdSlot placement="property_after_description" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
-          </AdFrame>
 
           <section className="mt-6 rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.featuresLabel}</p>
@@ -178,10 +165,6 @@ export default function PropertyPage({ params }: Props) {
             <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.mapLabel}</p>
             <div className="mt-3 grid h-48 place-items-center rounded-xl border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-background)] text-xs font-bold text-[color:var(--color-text-muted)]">{property.area[locale] ?? property.title[locale]}</div>
           </section>
-
-          <AdFrame label={translations[locale].adLabel} variant="horizontal" className="mt-5">
-            <AdSlot placement="property_before_similar" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="horizontal" />
-          </AdFrame>
         </section>
 
         <aside className="flex flex-col gap-5">
@@ -192,15 +175,6 @@ export default function PropertyPage({ params }: Props) {
               <Button type="button" size="sm">{t.ask}</Button>
             </div>
           </div>
-          <AdFrame label={translations[locale].adLabel} variant="vertical">
-            <AdSlot placement="property_sidebar_top" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
-          </AdFrame>
-          <AdFrame label={translations[locale].adLabel} variant="vertical">
-            <AdSlot placement="property_sidebar_middle" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
-          </AdFrame>
-          <AdFrame label={translations[locale].adLabel} variant="vertical">
-            <AdSlot placement="property_sidebar_bottom" locale={locale} country={country} city={city} deviceType={deviceType} path={`/properties/${id}`} entityType="property" entityId={id} categoryId={property.propertyType} tags={adTags} variant="vertical" />
-          </AdFrame>
         </aside>
       </div>
       </PageContainer>

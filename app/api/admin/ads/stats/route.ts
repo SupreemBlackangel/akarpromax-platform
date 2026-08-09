@@ -5,7 +5,7 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 import { statDate } from "@/lib/ads/geo";
 import { loadActiveAds, computeInventoryHealth } from "@/lib/ads/engine";
 import { buildContext } from "@/lib/ads/context";
-import { AD_PLACEMENTS } from "@/src/constants/advertising";
+import { AD_PLACEMENTS, visibleAdminPlacements } from "@/src/constants/advertising";
 
 export const dynamic = "force-dynamic";
 
@@ -96,12 +96,12 @@ export async function GET() {
 
   const placementKeys = new Set<string>();
   for (const row of placements.results) placementKeys.add(String(row.placement));
-  for (const key of Object.keys(AD_PLACEMENTS)) placementKeys.add(key);
+  for (const meta of visibleAdminPlacements()) placementKeys.add(meta.key);
 
   const inventory = [...placementKeys].slice(0, 120).map((placement) => {
     const meta = AD_PLACEMENTS[placement];
     const section = meta?.sections?.[0] ?? "home";
-    const channel = section === "office" ? "office" : "website";
+    const channel = meta?.channel ?? (section === "office" ? "office" : "website");
     const ctx = buildContext({ placement, section, channel });
     const health = computeInventoryHealth(healthAds, ctx);
     const placementRows = placements.results.filter((row) => row.placement === placement);

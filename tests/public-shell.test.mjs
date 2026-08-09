@@ -98,6 +98,7 @@ function renderShell(props = {}) {
     mobileMenuOpen: false,
     onOpenMenu: noop,
     onCloseMenu: noop,
+    adLayout: undefined,
     cookieNoticeVisible: false,
     onCookieAccept: noop,
     onCookieReject: noop,
@@ -236,6 +237,21 @@ test("toast live region is present with a polite announcement", () => {
 test("ad frames render their placement skeleton in SSR output", () => {
   const html = renderShell();
   assert.match(html, /ad-slot-skeleton/, "public top ad region renders");
+});
+
+test("standard public ad layout renders the managed 8-slot shell and replaces legacy top/bottom ads", () => {
+  const html = renderShell({ adLayout: { mode: "standard", family: "services" }, currentPath: "/services" });
+  assert.match(html, /data-standard-public-ad-layout="services"/);
+  assert.equal((html.match(/standard-public-ad-hero/g) ?? []).length, 1, "one hero slot");
+  assert.equal((html.match(/standard-public-ad-bottom/g) ?? []).length, 3, "three bottom slots");
+  assert.equal((html.match(/class="public-ad-slot standard-public-ad-rail /g) ?? []).length, 4, "four desktop rail slots");
+  assert.equal((html.match(/standard-public-ad-inline/g) ?? []).length, 4, "four responsive inline rail slots");
+});
+
+test("safe-no-ads suppresses inherited shell advertising on sensitive pages", () => {
+  const html = renderShell({ adLayout: { mode: "safe-no-ads" }, currentPath: "/service-requests/new" });
+  assert.doesNotMatch(html, /ad-slot-skeleton/);
+  assert.doesNotMatch(html, /data-standard-public-ad-layout=/);
 });
 
 test("office promotion renders only when provided with an action", () => {

@@ -48,7 +48,7 @@ export default function NewOfferPage({ id }: Props) {
 
   if (!viewer.authenticated) {
     return (
-      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
+      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} adLayout={{ mode: "safe-no-ads" }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <PageContainer dir={dir} className="py-24 max-w-md text-center">
           <div className="text-5xl mb-4">🔒</div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
@@ -107,6 +107,7 @@ export default function NewOfferPage({ id }: Props) {
       viewer={viewer}
       country={country}
       city={city}
+      adLayout={{ mode: "safe-no-ads" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

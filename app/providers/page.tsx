@@ -60,6 +60,7 @@ export default function ProvidersDirectoryPage() {
       country={country}
       city={city}
       currentPath="/providers"
+      adLayout={{ mode: "standard", family: "providers" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
       pageHeader={{

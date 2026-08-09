@@ -9,8 +9,6 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import { CategoryCard, type CategoryRow } from "@services-ui/ServiceCards";
 import SearchInput from "@/src/components/ui/SearchInput";
-import AdFrame from "@/src/components/ui/AdFrame";
-import AdSlot from "@/src/components/AdSlot";
 
 export default function ServiceCategoriesPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -55,6 +53,8 @@ export default function ServiceCategoriesPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/services/categories"
+      adLayout={{ mode: "standard", family: "services" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
@@ -101,9 +101,6 @@ export default function ServiceCategoriesPage() {
           )}
         </div>
 
-        <AdFrame label={copy?.adLabel ?? (locale === "ar" ? "إعلان" : locale === "tr" ? "Reklam" : "Advertisement")} variant="horizontal" className="mt-10">
-          <AdSlot placement="services_categories_bottom" locale={locale} country={country} city={city} path="/services/categories" entityType="services" variant="horizontal" />
-        </AdFrame>
       </PageContainer>
       {AccountDialog}
     </PublicPageShell>

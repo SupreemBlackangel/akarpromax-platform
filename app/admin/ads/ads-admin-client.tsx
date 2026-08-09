@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES } from "@/src/constants/advertising";
+import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES, visibleAdminPlacements } from "@/src/constants/advertising";
 
 type Identity = {
   authenticated: boolean;
@@ -598,8 +598,9 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
   const allowedPlacements = useMemo(() => {
     const scopes = form.sectionScopes.length ? form.sectionScopes : Object.keys(sectionLabels);
-    return Object.values(AD_PLACEMENTS).filter((meta) => meta.sections.some((section) => scopes.includes(section)));
-  }, [form.sectionScopes]);
+    const channels = new Set(form.channels.length ? form.channels : ["website"]);
+    return visibleAdminPlacements().filter((meta) => channels.has(meta.channel) && meta.sections.some((section) => scopes.includes(section)));
+  }, [form.channels, form.sectionScopes]);
 
   async function saveCampaign(event: React.FormEvent) {
     event.preventDefault();
@@ -896,7 +897,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
           <section className="ads-form-section" hidden={wizardStep !== 4}><div><span>4</span><h3>الأقسام والمواضع</h3></div>
             <fieldset className="ads-choice-fieldset"><legend>الأقسام — إعلان عام يتضمن كل الأقسام</legend><div>{Object.values(PLATFORM_SECTIONS_REGISTRY).map((meta) => <label key={meta.key}><input type="checkbox" checked={form.sectionScopes.includes(meta.key)} onChange={() => toggleList("sectionScopes", meta.key)} />{meta.label.ar}</label>)}</div></fieldset>
-            <fieldset className="ads-choice-fieldset"><legend>المواضع — يُرشَّح حسب الأقسام المختارة</legend><div className="ads-placement-grid">{allowedPlacements.map((meta) => <label key={meta.key}><input type="checkbox" checked={form.placements.includes(meta.key)} onChange={() => toggleList("placements", meta.key)} /><strong>{meta.label.ar}</strong><small>{meta.shape === "horizontal" ? "أفقي" : meta.shape === "vertical" ? "عمودي" : meta.shape === "floating" ? "عائم" : "منبثق"}</small></label>)}</div></fieldset>
+            <fieldset className="ads-choice-fieldset"><legend>المواضع — يُرشَّح حسب القناة والأقسام المختارة</legend><div className="ads-placement-grid">{allowedPlacements.map((meta) => <label key={meta.key}><input type="checkbox" checked={form.placements.includes(meta.key)} onChange={() => toggleList("placements", meta.key)} /><strong>{meta.label.ar}</strong><small>{meta.channel === "office" ? "Office" : "Website"} • {meta.shape === "horizontal" ? "أفقي" : meta.shape === "vertical" ? "عمودي" : meta.shape === "floating" ? "عائم" : "منبثق"}{meta.aspectRatio ? ` • ${meta.aspectRatio}` : ""}</small></label>)}</div></fieldset>
             <fieldset className="ads-choice-fieldset"><legend>أنواع الصفحات</legend><div>{PAGE_TYPES_LIST.map((pageType) => <label key={pageType}><input type="checkbox" checked={form.pageTypes.includes(pageType)} onChange={() => toggleList("pageTypes", pageType)} />{pageTypeLabels[pageType] ?? pageType}</label>)}</div></fieldset>
           </section>
 

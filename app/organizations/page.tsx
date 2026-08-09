@@ -83,6 +83,7 @@ export default function OrganizationsDirectoryPage() {
       country={country}
       city={city}
       currentPath="/organizations"
+      adLayout={{ mode: "standard", family: "organizations" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
       pageHeader={{

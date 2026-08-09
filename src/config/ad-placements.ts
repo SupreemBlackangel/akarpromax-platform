@@ -10,7 +10,7 @@ export type PublicAdSlotConfig = {
   key: string;
   /** Stable engine placement string passed to AdSlot (must exist in AD_PLACEMENTS). */
   placement: string;
-  variant: "horizontal" | "vertical";
+  variant: "hero" | "horizontal" | "vertical";
   lazy: boolean;
   used: boolean;
 };

@@ -17,7 +17,7 @@ type AdSlotProps = {
   entityId?: string | number;
   categoryId?: string | number;
   tags?: string[];
-  variant?: "horizontal" | "vertical" | "floating" | "popup";
+  variant?: "hero" | "horizontal" | "vertical" | "floating" | "popup";
   className?: string;
   eager?: boolean;
   requestable?: boolean;

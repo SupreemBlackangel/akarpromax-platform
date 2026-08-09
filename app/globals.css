@@ -1045,6 +1045,7 @@ html[data-theme="dark"] .ads-form-grid input, html[data-theme="dark"] .ads-form-
 /* ===== Ad engine slots ===== */
 .ad-slot { position: relative; overflow: hidden; }
 .ad-slot-horizontal { min-height: 96px; }
+.ad-slot-hero { min-height: clamp(300px, 34vw, 440px); }
 .ad-slot-vertical { min-height: 320px; }
 .ad-slot-floating { min-height: 64px; }
 .ad-slot-popup { min-height: 240px; }
@@ -1064,14 +1065,30 @@ html[data-theme="dark"] .ad-slot-link { border-color: #223252; background: #0e1a
 .ad-slot-cta { margin-top: 6px; color: var(--blue); font-size: 12px; font-weight: 800; }
 .ad-slot-badge { position: absolute; z-index: 2; top: 8px; inset-inline-start: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(11, 33, 76, .72); color: #fff; font: 700 9px Tahoma, Arial, sans-serif; letter-spacing: .04em; }
 html[data-theme="dark"] .ad-slot-badge { background: rgba(216, 175, 85, .92); color: #0b214c; }
+.ad-slot-hero .ad-slot-link { position: relative; min-height: inherit; align-items: flex-end; border-radius: 24px; background: #071a36; box-shadow: 0 18px 38px rgba(20,61,128,.18); }
+.ad-slot-hero .ad-slot-media { position: absolute; inset: 0; flex: none; background: #071a36; }
+.ad-slot-hero .ad-slot-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3,17,39,.94) 0%, rgba(5,28,65,.81) 43%, rgba(7,37,79,.32) 76%, rgba(4,20,42,.16) 100%), linear-gradient(0deg, rgba(3,14,32,.52), transparent 54%); }
+html[dir="ltr"] .ad-slot-hero .ad-slot-media::after { background: linear-gradient(270deg, rgba(3,17,39,.94) 0%, rgba(5,28,65,.81) 43%, rgba(7,37,79,.32) 76%, rgba(4,20,42,.16) 100%), linear-gradient(0deg, rgba(3,14,32,.52), transparent 54%); }
+.ad-slot-hero .ad-slot-copy { position: relative; z-index: 1; max-width: min(720px, 100%); padding: clamp(24px, 3vw, 38px); color: #fff; }
+.ad-slot-hero .ad-slot-eyebrow { width: fit-content; margin-bottom: 8px; padding: 6px 11px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(10,48,98,.42); color: #c8dcff; font-size: 11px; font-weight: 700; letter-spacing: .01em; }
+.ad-slot-hero .ad-slot-title { color: #fff; font-size: clamp(32px, 4vw, 54px); line-height: 1.08; letter-spacing: -.03em; text-shadow: 0 5px 24px rgba(0,0,0,.32); }
+.ad-slot-hero .ad-slot-accent { color: #f4c86a; font-size: clamp(20px, 2vw, 26px); }
+.ad-slot-hero .ad-slot-desc { max-width: 640px; color: rgba(230,240,255,.92); font-size: 14px; line-height: 1.8; -webkit-line-clamp: 3; }
+.ad-slot-hero .ad-slot-cta { width: fit-content; margin-top: 14px; padding: 10px 19px; border-radius: 11px; background: #fff; color: var(--blue-dark); box-shadow: 0 12px 26px rgba(0,0,0,.18); }
+.ad-slot-hero .ad-slot-badge { top: 14px; inset-inline-start: 14px; }
 .ad-slot-vertical .ad-slot-link { flex-direction: column; }
 .ad-slot-vertical .ad-slot-media { flex: none; width: 100%; height: 180px; }
 .ad-slot-vertical .ad-slot-copy { padding: 12px 14px 16px; }
 .ad-slot-floating { position: fixed; z-index: 60; right: 12px; bottom: 12px; left: 12px; }
 .ad-slot-floating .ad-slot-link { min-height: 72px; box-shadow: 0 12px 26px rgba(25, 64, 123, .18); }
 .ad-slot-floating .ad-slot-media { flex-basis: 120px; }
+.standard-public-ad-hero, .standard-public-ad-rail, .standard-public-ad-inline, .standard-public-ad-bottom { min-width: 0; }
 .ad-slot-container-vertical { display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 720px) {
+  .ad-slot-hero { min-height: 280px; }
+  .ad-slot-hero .ad-slot-copy { padding: 20px; }
+  .ad-slot-hero .ad-slot-title { font-size: clamp(28px, 9vw, 40px); }
+  .ad-slot-hero .ad-slot-desc { font-size: 13px; -webkit-line-clamp: 2; }
   .ad-slot-horizontal .ad-slot-media { flex-basis: 128px; }
   .ad-slot-horizontal .ad-slot-copy { padding: 10px 12px; }
   .ad-slot-title { font-size: 14px; }

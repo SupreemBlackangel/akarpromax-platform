@@ -1,4 +1,4 @@
-import { resolveSectionFromPath, resolvePageType, type DeviceType, type PlatformSection } from "@/src/constants/advertising";
+import { AD_PLACEMENTS, resolveSectionFromPath, resolvePageType, type DeviceType, type PlatformSection } from "@/src/constants/advertising";
 import type { ResolvedAdContext, AdChannel } from "@/lib/ads/types";
 import { isAdChannel } from "@/lib/ads/types";
 
@@ -98,5 +98,5 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
 }
 
 export function isValidPlacement(placement: string): boolean {
-  return placement.length > 0 && placement.length <= 64 && /^[a-z0-9_-]+$/.test(placement);
+  return placement.length > 0 && placement.length <= 64 && /^[a-z0-9_-]+$/.test(placement) && Boolean(AD_PLACEMENTS[placement]);
 }

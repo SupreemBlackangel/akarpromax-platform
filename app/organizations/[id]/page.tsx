@@ -81,6 +81,7 @@ export default function OrganizationProfilePage({ params }: { params: { id: stri
       country={country}
       city={city}
       currentPath={`/organizations/${params.id}`}
+      adLayout={{ mode: "standard", family: "organization-detail", entityType: "organization", entityId: params.id }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
       pageHeader={organization ? {

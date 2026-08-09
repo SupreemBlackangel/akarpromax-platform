@@ -59,7 +59,7 @@ export default function ProviderProfilePage({ id }: Props) {
 
   if (loading) {
     return (
-      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
+      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath={`/providers/${id}`} adLayout={{ mode: "standard", family: "provider-detail", entityType: "service_provider", entityId: id }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <PageContainer className="py-8" dir={dir}><div className="h-72 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" /></PageContainer>
       </PublicPageShell>
     );
@@ -67,7 +67,7 @@ export default function ProviderProfilePage({ id }: Props) {
 
   if (!profile) {
     return (
-      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
+      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath={`/providers/${id}`} adLayout={{ mode: "standard", family: "provider-detail", entityType: "service_provider", entityId: id }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <PageContainer className="py-24 text-center text-gray-500 dark:text-gray-400" dir={dir}>{error || t("services.empty")}</PageContainer>
       </PublicPageShell>
     );
@@ -91,6 +91,8 @@ export default function ProviderProfilePage({ id }: Props) {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath={`/providers/${id}`}
+      adLayout={{ mode: "standard", family: "provider-detail", entityType: "service_provider", entityId: id }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

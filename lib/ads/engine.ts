@@ -2,6 +2,7 @@ import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDay
 import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
 import { AD_CHANNELS, isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
+import { sectionVariants } from "@/src/constants/advertising";
 import type { DeviceType } from "@/src/constants/advertising";
 
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
@@ -253,7 +254,8 @@ export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, no
 
 function isSectionMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
   if (ad.sectionScopes.length === 0) return { ok: true, score: 100 };
-  if (ad.sectionScopes.includes(ctx.section)) return { ok: true, score: 100 };
+  const variants = sectionVariants(ctx.section);
+  if (ad.sectionScopes.some((scope) => variants.includes(scope as never))) return { ok: true, score: 100 };
   if (ad.sectionScopes.includes("global")) return { ok: true, score: 30 };
   return { ok: false, score: 0 };
 }
@@ -399,11 +401,11 @@ function isCategoryMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; s
   const sectionSpecific: { list: string[]; section: string }[] = [
     { list: ad.propertyTypes, section: "properties" },
     { list: ad.serviceCategories, section: "services" },
-    { list: ad.officeTypes, section: "offices" },
-    { list: ad.toolCategories, section: "engineering-tools" },
+    { list: ad.officeTypes, section: "organizations" },
+    { list: ad.toolCategories, section: "tools" },
   ];
   for (const candidate of sectionSpecific) {
-    if (candidate.list.length > 0 && candidate.section === ctx.section) {
+    if (candidate.list.length > 0 && sectionVariants(ctx.section).includes(candidate.section as never)) {
       if (isTagIntersect(candidate.list, ctx.tags)) return { ok: true, score: 40 };
       return { ok: false, score: 0 };
     }

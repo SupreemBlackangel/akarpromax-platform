@@ -51,6 +51,8 @@ export default function ServicesCatalogPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/services/catalog"
+      adLayout={{ mode: "standard", family: "services" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
