@@ -1,5 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { saveLand, getLand, getLandsByOwner, deleteLand, clearLands } from "@/lib/land/saved-land";
 import {
   createSharePayload,
@@ -334,6 +335,12 @@ describe("Land Quote Request", () => {
     });
     assert.equal(result.ok, false);
     assert.equal(result.error, "INVALID_QUOTE_SERVICE");
+  });
+
+  it("Find My Land posts a valid quote service understood by the API", async () => {
+    const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
+    assert.match(source, /service:\s*"boundary_survey"/);
+    assert.doesNotMatch(source, /service:\s*"land-survey"/);
   });
 
   it("requestSurveyorQuote rejects invalid budget", () => {

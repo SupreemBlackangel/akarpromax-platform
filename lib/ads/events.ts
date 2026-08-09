@@ -4,7 +4,16 @@ import type { ResolvedAdContext } from "@/lib/ads/types";
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
-export type TrackingPayload = { cid: string; pl: string; sec: string; pg: string; ts: number };
+export type TrackingPayload = {
+  cid: string;
+  pl: string;
+  sec: string;
+  pg: string;
+  cr?: string;
+  ch?: string;
+  ic?: "commercial" | "house";
+  ts: number;
+};
 
 function getAdSecret(): string {
   return process.env.AD_TRACKING_SECRET || "akar-ad-tracking-v1";
@@ -20,11 +29,20 @@ function base64UrlDecode(value: string): string {
 }
 
 export async function signTrackingToken(
-  input: { campaignId: string; placement: string; section: string; pageType: string },
+  input: { campaignId: string; placement: string; section: string; pageType: string; creativeId?: string | null; channel?: string; inventoryClass?: "commercial" | "house" },
   now = new Date(),
 ): Promise<string> {
   const payload = base64UrlEncode(
-    JSON.stringify({ cid: input.campaignId, pl: input.placement, sec: input.section, pg: input.pageType, ts: now.getTime() }),
+    JSON.stringify({
+      cid: input.campaignId,
+      pl: input.placement,
+      sec: input.section,
+      pg: input.pageType,
+      cr: input.creativeId ?? undefined,
+      ch: input.channel ?? undefined,
+      ic: input.inventoryClass ?? undefined,
+      ts: now.getTime(),
+    }),
   );
   const signature = await sha256Hex(`${payload}.${getAdSecret()}`);
   return `${payload}.${signature}`;
@@ -39,6 +57,8 @@ export async function verifyTrackingToken(token: string): Promise<TrackingPayloa
     const data = JSON.parse(base64UrlDecode(payload)) as TrackingPayload;
     if (typeof data.cid !== "string" || typeof data.pl !== "string" || typeof data.ts !== "number") return null;
     if (Date.now() - data.ts > TOKEN_TTL_MS) return null;
+    if (data.ic !== undefined && data.ic !== "commercial" && data.ic !== "house") return null;
+    if (data.ch !== undefined && data.ch !== "website" && data.ch !== "office") return null;
     return data;
   } catch {
     return null;
@@ -95,15 +115,22 @@ async function hasSeenBefore(db: D1Database, campaignId: string, ctx: ResolvedAd
   return Number(row?.n ?? 0) > 0;
 }
 
-export async function recordImpression(db: D1Database, campaignId: string, ctx: ResolvedAdContext, now = new Date()) {
+export async function recordImpression(
+  db: D1Database,
+  campaignId: string,
+  ctx: ResolvedAdContext,
+  now = new Date(),
+  extra: { creativeId?: string | null; inventoryClass?: "commercial" | "house" } = {},
+) {
   const unique = !(await hasSeenBefore(db, campaignId, ctx, frequencyWindowSince("day", now)));
+  const inventoryClass = extra.inventoryClass ?? "commercial";
   await db
     .prepare(
       `INSERT INTO ad_impressions
          (id, campaign_id, placement, section, page_type, entity_type, entity_id,
           country_code, region_id, city_id, district_id, locale, device,
-          session_id, user_id)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
+          session_id, user_id, creative_id, channel, inventory_class)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)`,
     )
     .bind(
       crypto.randomUUID(),
@@ -121,6 +148,9 @@ export async function recordImpression(db: D1Database, campaignId: string, ctx: 
       ctx.deviceType,
       ctx.sessionId ?? null,
       ctx.userId ?? null,
+      extra.creativeId ?? null,
+      ctx.channel ?? "website",
+      inventoryClass,
     )
     .run();
 
@@ -137,14 +167,21 @@ export async function recordImpression(db: D1Database, campaignId: string, ctx: 
     .run();
 }
 
-export async function recordClick(db: D1Database, campaignId: string, ctx: ResolvedAdContext, now = new Date()) {
+export async function recordClick(
+  db: D1Database,
+  campaignId: string,
+  ctx: ResolvedAdContext,
+  now = new Date(),
+  extra: { creativeId?: string | null; inventoryClass?: "commercial" | "house" } = {},
+) {
+  const inventoryClass = extra.inventoryClass ?? "commercial";
   await db
     .prepare(
       `INSERT INTO ad_clicks
          (id, campaign_id, placement, section, page_type, entity_type, entity_id,
           country_code, region_id, city_id, district_id, locale, device,
-          session_id, user_id)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
+          session_id, user_id, creative_id, channel, inventory_class)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)`,
     )
     .bind(
       crypto.randomUUID(),
@@ -162,6 +199,9 @@ export async function recordClick(db: D1Database, campaignId: string, ctx: Resol
       ctx.deviceType,
       ctx.sessionId ?? null,
       ctx.userId ?? null,
+      extra.creativeId ?? null,
+      ctx.channel ?? "website",
+      inventoryClass,
     )
     .run();
 

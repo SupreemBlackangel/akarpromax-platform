@@ -1,4 +1,4 @@
-import { eq, and, or, ilike, sql, desc, asc } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, type SQL } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { organizations } from "@/lib/db/schema";
 import type { EntityType, OrganizationType, OrganizationClassification, ReputationLevel } from "@/lib/amrs/contracts/common";
@@ -43,7 +43,7 @@ export interface DirectoryResult {
 function applyFilters(
   filters: DirectoryFilters,
 ) {
-  const conditions = [];
+  const conditions: SQL[] = [eq(organizations.status, "active")];
 
   if (filters.countryCode) {
     conditions.push(eq(organizations.countryCode, filters.countryCode));
@@ -53,13 +53,12 @@ function applyFilters(
   }
 
   if (filters.search) {
-    conditions.push(
-      or(
-        ilike(organizations.nameEn, `%${filters.search}%`),
-        ilike(organizations.nameAr, `%${filters.search}%`),
-        ilike(organizations.slug, `%${filters.search}%`),
-      ),
+    const searchCondition = or(
+      ilike(organizations.nameEn, `%${filters.search}%`),
+      ilike(organizations.nameAr, `%${filters.search}%`),
+      ilike(organizations.slug, `%${filters.search}%`),
     );
+    if (searchCondition) conditions.push(searchCondition);
   }
 
   return conditions.length > 0 ? and(...conditions) : undefined;

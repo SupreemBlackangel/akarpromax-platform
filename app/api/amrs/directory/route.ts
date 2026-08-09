@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchDirectory, getDirectoryEntry, getDirectoryStats } from "@/lib/amrs/directory";
+import { ensurePgIdentitySchema } from "@/lib/db/pg-identity-schema";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const q = request.nextUrl.searchParams;
-
   if (q.has("stats")) {
     const stats = await getDirectoryStats();
     return NextResponse.json(stats, { headers: { "Cache-Control": "public, max-age=300" } });

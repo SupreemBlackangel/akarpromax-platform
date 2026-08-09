@@ -216,11 +216,13 @@ function matchesRow(row, where, params) {
 function extractWhereAndTail(sql) {
   const orderByMatch = / order by (.+?)(?= limit|$)/i.exec(sql);
   const limitMatch = / limit (\d+|\?\d+)/i.exec(sql);
+  const offsetMatch = / offset (\d+|\?\d+)/i.exec(sql);
   const orderBy = orderByMatch?.[1] ?? null;
   const limit = limitMatch?.[1] ?? null;
+  const offset = offsetMatch?.[1] ?? null;
   const whereMatch = / where (.+?)(?= order by| limit|$)/i.exec(sql);
   const where = whereMatch?.[1]?.trim() || null;
-  return { where, orderBy, limit };
+  return { where, orderBy, limit, offset };
 }
 
 export class InMemoryDatabase {
@@ -263,11 +265,14 @@ class Statement {
   }
 
   async run() {
-    if (/^insert/i.test(this.sql)) this.#insert();
-    else if (/^update/i.test(this.sql)) this.#update();
-    else if (/^delete/i.test(this.sql)) this.#delete();
+    let changes = 0;
+    if (/^insert/i.test(this.sql)) {
+      this.#insert();
+      changes = 1;
+    } else if (/^update/i.test(this.sql)) changes = this.#update();
+    else if (/^delete/i.test(this.sql)) changes = this.#delete();
     else throw new Error(`Unsupported write SQL: ${this.sql}`);
-    return { meta: { changes: 0 } };
+    return { meta: { changes } };
   }
 
   async first() {
@@ -285,6 +290,9 @@ class Statement {
     const table = base[1];
     const columns = splitList(base[2]).map((c) => c.trim().replace(/^"|"$/g, ""));
     const values = splitList(base[3]).map((v) => valueOf(v, this.params));
+    if (values.length !== columns.length) {
+      throw new Error(`INSERT column/value mismatch for ${table}: ${columns.length} columns, ${values.length} values`);
+    }
     const row = {};
     columns.forEach((col, i) => {
       row[col] = values[i] ?? null;
@@ -341,9 +349,14 @@ class Statement {
     if (!m) throw new Error(`Unsupported DELETE SQL: ${this.sql}`);
     const table = m[1];
     const rows = this.db.table(table);
+    let deleted = 0;
     for (let i = rows.length - 1; i >= 0; i--) {
-      if (matchesRow(rows[i], m[2], this.params)) rows.splice(i, 1);
+      if (matchesRow(rows[i], m[2], this.params)) {
+        rows.splice(i, 1);
+        deleted++;
+      }
     }
+    return deleted;
   }
 
   #select() {
@@ -363,7 +376,7 @@ class Statement {
     if (!m) throw new Error(`Unsupported SELECT SQL: ${this.sql}`);
     const table = m[3];
     const colsRaw = m[2].trim();
-    const { where, orderBy, limit } = extractWhereAndTail(m[4] || "");
+    const { where, orderBy, limit, offset } = extractWhereAndTail(m[4] || "");
 
     let rows = this.db.table(table).filter((row) => matchesRow(row, where, this.params));
 
@@ -391,6 +404,10 @@ class Statement {
       });
     }
 
+    if (offset) {
+      const n = Number(valueOf(offset, this.params));
+      rows = rows.slice(n);
+    }
     if (limit) {
       const n = Number(valueOf(limit, this.params));
       rows = rows.slice(0, n);

@@ -109,7 +109,11 @@ function getUserType(viewer: ViewerContext): "customer" | "provider" | "supervis
   if (viewer.permissions.includes(PERMISSIONS.SERVICE_PROVIDERS_REVIEW) || viewer.permissions.includes(PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL)) {
     return "supervisor";
   }
-  if (role === "service_provider") {
+  if (
+    role === "service_provider" ||
+    viewer.permissions.includes(PERMISSIONS.SERVICE_OFFERS_MANAGE_OWN) ||
+    viewer.permissions.includes(PERMISSIONS.SERVICE_JOBS_MANAGE_OWN)
+  ) {
     return "provider";
   }
   if (viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW)) {

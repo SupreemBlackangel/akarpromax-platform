@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { augmentPermissionsForServiceProviderCapability } from "@/lib/services/identity";
 import { createRequestId } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
@@ -48,6 +49,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const permissions = await augmentPermissionsForServiceProviderCapability(
+    user.email?.trim().toLowerCase() ?? null,
+    permissionsForSessionRole(user.role),
+  );
+
   return NextResponse.json(
     {
       authenticated: true,
@@ -64,7 +70,7 @@ export async function GET(request: NextRequest) {
         onboardingCompleted: user.onboardingCompletedAt !== null,
         preferredLanguage: user.preferredLanguage,
         createdAt: user.createdAt,
-        permissions: permissionsForSessionRole(user.role),
+        permissions,
       },
     },
     applySecurityHeaders({ headers: { "Cache-Control": "private, no-store" } }),

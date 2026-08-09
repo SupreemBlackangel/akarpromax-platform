@@ -1,6 +1,7 @@
 export const AD_CAMPAIGN_NEW_COLUMNS: string[] = [
   `ADD COLUMN mobile_media_url TEXT NULL`,
   `ADD COLUMN tablet_media_url TEXT NULL`,
+  `ADD COLUMN channels TEXT NOT NULL DEFAULT '["website"]'`,
   `ADD COLUMN section_scopes TEXT NULL`,
   `ADD COLUMN page_types TEXT NULL`,
   `ADD COLUMN placements TEXT NULL`,
@@ -83,6 +84,9 @@ export const AD_TABLES_SQL: string[] = [
     device VARCHAR(16) NOT NULL DEFAULT 'desktop',
     session_id VARCHAR(100) NULL,
     user_id VARCHAR(100) NULL,
+    creative_id VARCHAR(36) NULL,
+    channel VARCHAR(16) NOT NULL DEFAULT 'website',
+    inventory_class VARCHAR(16) NOT NULL DEFAULT 'commercial',
     tracked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS ad_clicks (
@@ -101,6 +105,9 @@ export const AD_TABLES_SQL: string[] = [
     device VARCHAR(16) NOT NULL DEFAULT 'desktop',
     session_id VARCHAR(100) NULL,
     user_id VARCHAR(100) NULL,
+    creative_id VARCHAR(36) NULL,
+    channel VARCHAR(16) NOT NULL DEFAULT 'website',
+    inventory_class VARCHAR(16) NOT NULL DEFAULT 'commercial',
     target_url VARCHAR(800) NULL,
     clicked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
@@ -130,10 +137,26 @@ export const AD_TABLE_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS ad_impressions_campaign_date_idx ON ad_impressions (campaign_id, tracked_at)`,
   `CREATE INDEX IF NOT EXISTS ad_impressions_session_idx ON ad_impressions (session_id)`,
   `CREATE INDEX IF NOT EXISTS ad_impressions_geo_idx ON ad_impressions (country_code, city_id)`,
+  `CREATE INDEX IF NOT EXISTS ad_impressions_creative_idx ON ad_impressions (campaign_id, creative_id)`,
+  `CREATE INDEX IF NOT EXISTS ad_impressions_channel_class_idx ON ad_impressions (channel, inventory_class)`,
   `CREATE INDEX IF NOT EXISTS ad_clicks_campaign_date_idx ON ad_clicks (campaign_id, clicked_at)`,
   `CREATE INDEX IF NOT EXISTS ad_clicks_session_idx ON ad_clicks (session_id)`,
+  `CREATE INDEX IF NOT EXISTS ad_clicks_creative_idx ON ad_clicks (campaign_id, creative_id)`,
   `CREATE INDEX IF NOT EXISTS ad_conversions_campaign_idx ON ad_conversions (campaign_id, converted_at)`,
   `CREATE INDEX IF NOT EXISTS ad_daily_stats_campaign_idx ON ad_daily_statistics (campaign_id, stat_date)`,
+];
+
+export const AD_TRACKING_NEW_COLUMNS: { table: string; column: string }[] = [
+  { table: "ad_impressions", column: `ADD COLUMN creative_id VARCHAR(36) NULL` },
+  { table: "ad_impressions", column: `ADD COLUMN channel VARCHAR(16) NOT NULL DEFAULT 'website'` },
+  { table: "ad_impressions", column: `ADD COLUMN inventory_class VARCHAR(16) NOT NULL DEFAULT 'commercial'` },
+  { table: "ad_clicks", column: `ADD COLUMN creative_id VARCHAR(36) NULL` },
+  { table: "ad_clicks", column: `ADD COLUMN channel VARCHAR(16) NOT NULL DEFAULT 'website'` },
+  { table: "ad_clicks", column: `ADD COLUMN inventory_class VARCHAR(16) NOT NULL DEFAULT 'commercial'` },
+];
+
+export const AD_CREATIVE_NEW_COLUMNS: { table: string; column: string }[] = [
+  { table: "ad_creatives", column: `ADD COLUMN tablet_media_url TEXT NULL` },
 ];
 
 function isDuplicateColumnError(message: string): boolean {
@@ -156,6 +179,24 @@ export async function ensureAdSchema(db: D1Database): Promise<void> {
   for (const column of AD_CAMPAIGN_NEW_COLUMNS) {
     try {
       await db.prepare(`ALTER TABLE ad_campaigns ${column}`).run();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isDuplicateColumnError(message)) throw error;
+    }
+  }
+
+  for (const { table, column } of AD_TRACKING_NEW_COLUMNS) {
+    try {
+      await db.prepare(`ALTER TABLE ${table} ${column}`).run();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isDuplicateColumnError(message)) throw error;
+    }
+  }
+
+  for (const { table, column } of AD_CREATIVE_NEW_COLUMNS) {
+    try {
+      await db.prepare(`ALTER TABLE ${table} ${column}`).run();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (!isDuplicateColumnError(message)) throw error;

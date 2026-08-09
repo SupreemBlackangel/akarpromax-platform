@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
   }
   try {
     const db = await getRuntimeDb();
-    await recordClick(db, resolved.campaignId, resolved.ctx);
+    await recordClick(db, resolved.campaignId, resolved.ctx, new Date(), {
+      creativeId: resolved.creativeId,
+      inventoryClass: resolved.inventoryClass,
+    });
     const row = await db
       .prepare("SELECT target_url FROM ad_campaigns WHERE id = ?1 LIMIT 1")
       .bind(resolved.campaignId)
@@ -49,7 +52,10 @@ export async function GET(request: NextRequest) {
   }
   try {
     const db = await getRuntimeDb();
-    await recordClick(db, payload.cid, ctx);
+    await recordClick(db, payload.cid, ctx, new Date(), {
+      creativeId: payload.cr ?? null,
+      inventoryClass: payload.ic ?? "commercial",
+    });
     const row = await db
       .prepare("SELECT target_url FROM ad_campaigns WHERE id = ?1 LIMIT 1")
       .bind(payload.cid)

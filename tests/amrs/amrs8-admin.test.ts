@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { BulkActionResult } from "@/lib/amrs/admin";
+import { emptyOrganizationsResult } from "@/lib/amrs/schema-fallback";
 
 // ─── Bulk action validation ────────────────────────────────────────
 
@@ -214,5 +215,11 @@ describe("AMRS-8 Admin cache control", () => {
   it("bulk action results should not be cached", () => {
     const cacheControl = "no-store";
     assert.equal(cacheControl, "no-store");
+  });
+});
+
+describe("AMRS-8 Missing schema fallback", () => {
+  it("builds an empty organizations payload", () => {
+    assert.deepEqual(emptyOrganizationsResult(), { organizations: [], total: 0 });
   });
 });

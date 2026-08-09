@@ -93,6 +93,8 @@ export type Translation = {
   navServices: string;
   navCatalog: string;
   navRequests: string;
+  navDirectory: string;
+  navNews: string;
   navTools: string;
   navApply: string;
   navMore: string;

@@ -9,6 +9,7 @@ import { createSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
 import { accountBlockReason, isAccountUsable } from "@/lib/auth/access-control";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { augmentPermissionsForServiceProviderCapability } from "@/lib/services/identity";
 import { createRequestId, logSecurityEvent, recordAuditEvent } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
@@ -146,6 +147,10 @@ export async function POST(request: NextRequest) {
   }
 
   logSecurityEvent("AUTH_LOGIN_SUCCESS", { requestId, userId: user.id });
+  const permissions = await augmentPermissionsForServiceProviderCapability(
+    user.email?.trim().toLowerCase() ?? null,
+    permissionsForSessionRole(user.role),
+  );
   void recordAuditEvent({
     eventType: "AUTH_LOGIN_SUCCESS",
     userId: user.id,
@@ -168,7 +173,7 @@ export async function POST(request: NextRequest) {
         isActive: user.isActive,
         onboardingCompleted: user.onboardingCompletedAt !== null,
         createdAt: user.createdAt,
-        permissions: permissionsForSessionRole(user.role),
+        permissions,
       },
     },
     applySecurityHeaders({ headers: { "Cache-Control": "no-store" } }),

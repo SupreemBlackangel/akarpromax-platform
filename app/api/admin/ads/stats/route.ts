@@ -3,6 +3,9 @@ import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { statDate } from "@/lib/ads/geo";
+import { loadActiveAds, computeInventoryHealth } from "@/lib/ads/engine";
+import { buildContext } from "@/lib/ads/context";
+import { AD_PLACEMENTS } from "@/src/constants/advertising";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +17,7 @@ export async function GET() {
   const db = await getRuntimeDb();
   const today = statDate(new Date());
 
-  const [campaigns, daily, placements] = await Promise.all([
+  const [campaigns, daily, placements, classSplit, healthAds] = await Promise.all([
     db.prepare(
       `SELECT id, internal_name, advertiser_name, campaign_type, status, approval_status,
               total_impressions, total_unique_impressions, total_clicks, total_unique_clicks,
@@ -32,13 +35,19 @@ export async function GET() {
        ORDER BY stat_date ASC`,
     ).bind(today.slice(0, 8) + "01").all<Record<string, string | number>>(),
     db.prepare(
-      `SELECT placement, COUNT(*) AS impressions,
+      `SELECT placement, channel, inventory_class, COUNT(*) AS impressions
+       FROM ad_impressions
+       GROUP BY placement, channel, inventory_class
+       ORDER BY impressions DESC
+       LIMIT 120`,
+    ).all<Record<string, string | number>>(),
+    db.prepare(
+      `SELECT inventory_class, COUNT(*) AS impressions,
               SUM(CASE WHEN session_id IS NOT NULL THEN 1 ELSE 0 END) AS with_session
        FROM ad_impressions
-       GROUP BY placement
-       ORDER BY impressions DESC
-       LIMIT 60`,
+       GROUP BY inventory_class`,
     ).all<Record<string, string | number>>(),
+    loadActiveAds(db),
   ]);
 
   const campaignsList = campaigns.results.map((row) => ({
@@ -71,8 +80,52 @@ export async function GET() {
 
   const placementsList = placements.results.map((row) => ({
     placement: row.placement,
+    channel: row.channel,
+    inventoryClass: row.inventory_class,
     impressions: Number(row.impressions),
   }));
 
-  return NextResponse.json({ campaigns: campaignsList, daily: dailySeries, placements: placementsList, today }, { headers: { "Cache-Control": "no-store" } });
+  const split = {
+    commercial: 0,
+    house: 0,
+  };
+  for (const row of classSplit.results) {
+    if (row.inventory_class === "house") split.house += Number(row.impressions);
+    else split.commercial += Number(row.impressions);
+  }
+
+  const placementKeys = new Set<string>();
+  for (const row of placements.results) placementKeys.add(String(row.placement));
+  for (const key of Object.keys(AD_PLACEMENTS)) placementKeys.add(key);
+
+  const inventory = [...placementKeys].slice(0, 120).map((placement) => {
+    const meta = AD_PLACEMENTS[placement];
+    const section = meta?.sections?.[0] ?? "home";
+    const channel = section === "office" ? "office" : "website";
+    const ctx = buildContext({ placement, section, channel });
+    const health = computeInventoryHealth(healthAds, ctx);
+    const placementRows = placements.results.filter((row) => row.placement === placement);
+    let commercial = 0;
+    let house = 0;
+    for (const row of placementRows) {
+      if (row.inventory_class === "house") house += Number(row.impressions);
+      else commercial += Number(row.impressions);
+    }
+    const total = commercial + house;
+    return {
+      placement,
+      status: health.status,
+      eligibleCommercial: health.eligibleCommercial,
+      fallbackActive: health.fallbackActive,
+      fallbackTurns: health.fallbackTurns,
+      commercialImpressions: commercial,
+      houseImpressions: house,
+      commercialFillRate: total > 0 ? commercial / total : 0,
+    };
+  });
+
+  return NextResponse.json(
+    { campaigns: campaignsList, daily: dailySeries, placements: placementsList, split, inventory, today },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

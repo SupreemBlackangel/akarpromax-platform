@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
   }
   try {
     const db = await getRuntimeDb();
-    await recordImpression(db, resolved.campaignId, resolved.ctx);
+    await recordImpression(db, resolved.campaignId, resolved.ctx, new Date(), {
+      creativeId: resolved.creativeId,
+      inventoryClass: resolved.inventoryClass,
+    });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Failed to record impression" }, { status: 500 });

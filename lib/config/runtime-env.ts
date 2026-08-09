@@ -131,8 +131,13 @@ export function validateRuntimeEnv(raw: NodeJS.ProcessEnv): RuntimeEnv {
       fail("SESSION_SECRET", "development/test fallback used in production");
     }
     if (!raw.DATABASE_URL || !raw.DATABASE_URL.trim()) fail("DATABASE_URL", "missing");
-    const appUrl = normalizeAppUrl(raw.APP_URL);
-    if (!appUrl) fail("APP_URL", "missing or not a valid http(s) URL");
+    const appUrl = normalizeAppUrl(raw.APP_PUBLIC_URL?.trim() || raw.APP_URL);
+    if (!appUrl) fail("APP_URL", "missing or not a valid http(s) URL (APP_PUBLIC_URL preferred)");
+
+    const emailTransportChoice = (raw.EMAIL_TRANSPORT ?? "").trim().toLowerCase();
+    if ((raw.EMAIL_TRANSPORT ?? "").trim() && emailTransportChoice !== "console" && emailTransportChoice !== "smtp") {
+      fail("EMAIL_TRANSPORT", `invalid value "${raw.EMAIL_TRANSPORT}" (expected console or smtp)`);
+    }
 
     const trustedOrigins = parseTrustedOrigins(raw.TRUSTED_ORIGINS);
     if (trustedOrigins.length === 0) {
@@ -171,7 +176,7 @@ export function validateRuntimeEnv(raw: NodeJS.ProcessEnv): RuntimeEnv {
     });
   }
 
-  const appUrl = normalizeAppUrl(raw.APP_URL) || (nodeEnv === "test" ? "http://localhost:3000" : "http://localhost:3000");
+  const appUrl = normalizeAppUrl(raw.APP_PUBLIC_URL?.trim() || raw.APP_URL) || (nodeEnv === "test" ? "http://localhost:3000" : "http://localhost:3000");
   const configuredOrigins = parseTrustedOrigins(raw.TRUSTED_ORIGINS);
   const trustedOrigins = new Set(configuredOrigins);
   if (appUrl) trustedOrigins.add(new URL(appUrl).origin);

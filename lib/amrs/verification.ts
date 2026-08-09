@@ -1,8 +1,9 @@
 import { eq, and, sql, lt, desc } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { verificationRecords } from "@/lib/db/schema";
+import { organizationMembers, users, verificationRecords } from "@/lib/db/schema";
 import type { EntityType, VerificationType, VerificationSource } from "@/lib/amrs/contracts/common";
 import type { VerificationStatusChangedEvent } from "@/lib/amrs/contracts/events";
+import { getServicesDb } from "@/lib/services/db";
 
 export interface VerificationRecordInput {
   entityType: EntityType;
@@ -162,7 +163,7 @@ export async function getExpiringVerifications(daysAhead: number = 30): Promise<
 export async function expireVerifications(): Promise<number> {
   const { db, end } = getDb();
   try {
-    const now = new Date();
+    const now = new Date().toISOString();
     const result = await db.execute(sql`
       UPDATE verification_records
       SET status = 'expired'
@@ -364,6 +365,9 @@ export async function approveVerificationWithEvent(
   verificationType: VerificationType,
   expiresInDays?: number,
 ): Promise<void> {
+  if (await isSelfVerificationApproval(verifiedBy, entityType, entityId)) {
+    throw new Error("CANNOT_APPROVE_OWN");
+  }
   const { db, end } = getDb();
   try {
     const [record] = await db
@@ -373,7 +377,6 @@ export async function approveVerificationWithEvent(
       .limit(1);
 
     if (!record) throw new Error("RECORD_NOT_FOUND");
-    if (record.verifiedBy === entityId) throw new Error("CANNOT_APPROVE_OWN");
 
     const oldStatus = record.status;
     const expiresAt = expiresInDays
@@ -394,6 +397,58 @@ export async function approveVerificationWithEvent(
   } finally {
     await end();
   }
+}
+
+async function isSelfVerificationApproval(
+  approverUserId: string,
+  entityType: EntityType,
+  entityId: string,
+): Promise<boolean> {
+  if (entityType === "user") {
+    return approverUserId === entityId;
+  }
+
+  if (entityType === "organization") {
+    const { db, end } = getDb();
+    try {
+      const rows = await db
+        .select({ id: organizationMembers.id })
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, entityId),
+            eq(organizationMembers.userId, approverUserId),
+            eq(organizationMembers.status, "active"),
+          ),
+        )
+        .limit(1);
+      return Boolean(rows[0]);
+    } finally {
+      await end();
+    }
+  }
+
+  if (entityType === "professional") {
+    const servicesDb = await getServicesDb();
+    const provider = await servicesDb
+      .prepare("SELECT user_id FROM service_provider_profiles WHERE id = ?1 LIMIT 1")
+      .bind(entityId)
+      .first<{ user_id: string | null }>();
+    if (!provider?.user_id) return false;
+    const { db, end } = getDb();
+    try {
+      const rows = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, String(provider.user_id).trim().toLowerCase()))
+        .limit(1);
+      return rows[0]?.id === approverUserId;
+    } finally {
+      await end();
+    }
+  }
+
+  return false;
 }
 
 export async function rejectVerificationWithEvent(

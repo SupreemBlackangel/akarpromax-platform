@@ -21,6 +21,11 @@ import {
   markAllNotificationsRead,
   unreadNotificationsCount,
 } from "../lib/services/marketplace.ts";
+import {
+  rekeyServiceUserReferences,
+  augmentPermissionsForServiceProviderCapability,
+  serviceProviderCapabilityPermissions,
+} from "../lib/services/identity.ts";
 
 const ADMIN = { userId: "admin@example.com", ip: "127.0.0.1" };
 
@@ -220,4 +225,65 @@ test("notifications are created, listed newest-first, read individually and in b
 
   const notifications = db.dump("service_notifications");
   assert.equal(notifications.filter((n) => n.user_id === "u1" && n.is_read === 1).length, 2);
+});
+
+test("service identity rekey updates all ownership and participant references", async () => {
+  const db = setServicesDbForTesting(createInMemoryDb());
+  db.seed("service_provider_profiles", [{ id: "p1", user_id: "old@example.com", email: "old@example.com" }]);
+  db.seed("service_requests", [{ id: "r1", customer_user_id: "old@example.com" }]);
+  db.seed("service_offers", [{ id: "o1", request_id: "r1", provider_user_id: "old@example.com" }]);
+  db.seed("service_orders", [{ id: "j1", request_id: "r1", offer_id: "o1", customer_user_id: "old@example.com", provider_user_id: "old@example.com" }]);
+  db.seed("service_messages", [{ id: "m1", sender_user_id: "old@example.com" }]);
+  db.seed("service_reviews", [{ id: "rv1", reviewer_user_id: "old@example.com", reviewee_user_id: "old@example.com" }]);
+  db.seed("service_disputes", [{ id: "d1", opened_by_user_id: "old@example.com" }]);
+  db.seed("service_bookmarks", [{ id: "b1", user_id: "old@example.com" }]);
+  db.seed("service_request_attachments", [{ id: "a1", uploaded_by: "old@example.com" }]);
+  db.seed("service_request_status_history", [{ id: "h1", changed_by: "old@example.com" }]);
+  db.seed("service_offer_revisions", [{ id: "or1", provider_user_id: "old@example.com", created_by: "old@example.com" }]);
+  db.seed("service_job_timeline", [{ id: "t1", actor_user_id: "old@example.com" }]);
+  db.seed("service_reports", [{ id: "rp1", reporter_user_id: "old@example.com", resolved_by: "old@example.com" }]);
+  db.seed("service_notifications", [{ id: "n1", user_id: "old@example.com" }]);
+  db.seed("service_provider_documents", [{ id: "pd1", verified_by: "old@example.com", uploaded_by: "old@example.com" }]);
+
+  const result = await rekeyServiceUserReferences("old@example.com", "new@example.com");
+  assert.equal(result.oldUserKey, "old@example.com");
+  assert.equal(result.newUserKey, "new@example.com");
+
+  assert.equal(db.dump("service_provider_profiles")[0].user_id, "new@example.com");
+  assert.equal(db.dump("service_provider_profiles")[0].email, "new@example.com");
+  assert.equal(db.dump("service_requests")[0].customer_user_id, "new@example.com");
+  assert.equal(db.dump("service_offers")[0].provider_user_id, "new@example.com");
+  assert.equal(db.dump("service_orders")[0].customer_user_id, "new@example.com");
+  assert.equal(db.dump("service_orders")[0].provider_user_id, "new@example.com");
+  assert.equal(db.dump("service_messages")[0].sender_user_id, "new@example.com");
+  assert.equal(db.dump("service_reviews")[0].reviewer_user_id, "new@example.com");
+  assert.equal(db.dump("service_reviews")[0].reviewee_user_id, "new@example.com");
+  assert.equal(db.dump("service_disputes")[0].opened_by_user_id, "new@example.com");
+  assert.equal(db.dump("service_bookmarks")[0].user_id, "new@example.com");
+  assert.equal(db.dump("service_request_attachments")[0].uploaded_by, "new@example.com");
+  assert.equal(db.dump("service_request_status_history")[0].changed_by, "new@example.com");
+  assert.equal(db.dump("service_offer_revisions")[0].provider_user_id, "new@example.com");
+  assert.equal(db.dump("service_offer_revisions")[0].created_by, "new@example.com");
+  assert.equal(db.dump("service_job_timeline")[0].actor_user_id, "new@example.com");
+  assert.equal(db.dump("service_reports")[0].reporter_user_id, "new@example.com");
+  assert.equal(db.dump("service_reports")[0].resolved_by, "new@example.com");
+  assert.equal(db.dump("service_notifications")[0].user_id, "new@example.com");
+  assert.equal(db.dump("service_provider_documents")[0].verified_by, "new@example.com");
+  assert.equal(db.dump("service_provider_documents")[0].uploaded_by, "new@example.com");
+});
+
+test("approved provider capability augments viewer permissions without changing the base auth role", async () => {
+  const db = setServicesDbForTesting(createInMemoryDb());
+  db.seed("service_provider_profiles", [{ id: "p1", user_id: "viewer@example.com", status: "approved" }]);
+  const permissions = await augmentPermissionsForServiceProviderCapability("viewer@example.com", ["tools.use"]);
+  assert.ok(permissions.includes("service_offers.manage_own"));
+  assert.ok(permissions.includes("service_jobs.manage_own"));
+  assert.ok(permissions.includes("tools.use"));
+});
+
+test("only approved provider capability grants provider action permissions", async () => {
+  const draftPermissions = serviceProviderCapabilityPermissions("draft");
+  const approvedPermissions = serviceProviderCapabilityPermissions("approved");
+  assert.equal(draftPermissions.includes("service_offers.manage_own"), false);
+  assert.equal(approvedPermissions.includes("service_offers.manage_own"), true);
 });

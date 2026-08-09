@@ -22,8 +22,11 @@ import {
 } from "../lib/auth/access-control.ts";
 import { PERMISSIONS } from "../src/constants/permissions.ts";
 import { renderEmail } from "../lib/email/templates.ts";
+import { canAccessAmrsAdmin } from "../lib/amrs/access.ts";
+import { getEmailRuntimeStatus } from "../lib/email.ts";
 import { redactFields, createRequestId, logSecurityEvent } from "../lib/security/audit.ts";
 import { MemoryRateLimitStore, RateLimiter, RATE_LIMIT_CONFIGS } from "../lib/security/rate-limit.ts";
+import { resolveUserLocale } from "../lib/auth/verification-actions.ts";
 
 const ONE_HOUR = 60 * 60 * 1000;
 
@@ -183,6 +186,71 @@ test("email: welcome email renders for all locales with html + text", () => {
     assert.ok(html.length > 0);
     assert.ok(text.length > 0);
   }
+});
+
+test("email: welcome delivery locale prefers the stored user language over the route fallback", () => {
+  assert.equal(resolveUserLocale("en", "ar"), "en");
+  assert.equal(resolveUserLocale("tr", "ar"), "tr");
+  assert.equal(resolveUserLocale("ar", "en"), "ar");
+  assert.equal(resolveUserLocale(null, "en"), "en");
+  assert.equal(resolveUserLocale("unknown", "tr"), "tr");
+});
+
+test("email readiness reports console transport as not production-capable and smtp as production-capable when configured", () => {
+  assert.deepEqual(getEmailRuntimeStatus({ APP_URL: "http://localhost:3010" }), {
+    transport: "console",
+    configured: false,
+    senderConfigured: false,
+    publicBaseUrlConfigured: true,
+    productionCapable: false,
+  });
+
+  assert.deepEqual(
+    getEmailRuntimeStatus({
+      SMTP_HOST: "smtp.example.com",
+      SMTP_USER: "mailer",
+      SMTP_PASS: "secret",
+      SMTP_FROM: "no-reply@example.com",
+      APP_PUBLIC_URL: "https://staging.akarpromax.om",
+    }),
+    {
+      transport: "smtp",
+      configured: true,
+      senderConfigured: true,
+      publicBaseUrlConfigured: true,
+      productionCapable: true,
+    },
+  );
+});
+
+test("AMRS admin access denies provider-capability sessions and allows sponsor-style admins", () => {
+  const providerCapability = {
+    authenticated: true,
+    email: "provider@example.com",
+    displayName: "Provider",
+    role: "viewer",
+    countryCode: null,
+    permissions: [PERMISSIONS.TOOLS_USE, PERMISSIONS.SERVICE_OFFERS_MANAGE_OWN],
+  };
+  const sponsorAdmin = {
+    authenticated: true,
+    email: "sponsor-admin@example.com",
+    displayName: "Sponsor Admin",
+    role: "sponsor_admin",
+    countryCode: null,
+    permissions: [PERMISSIONS.USERS_VIEW, PERMISSIONS.SPONSORS_APPROVE],
+  };
+  const superAdmin = {
+    authenticated: true,
+    email: "super@example.com",
+    displayName: "Super Admin",
+    role: "super_admin",
+    countryCode: null,
+    permissions: [PERMISSIONS.ADMIN_DASHBOARD_VIEW, "*"],
+  };
+  assert.equal(canAccessAmrsAdmin(providerCapability), false);
+  assert.equal(canAccessAmrsAdmin(sponsorAdmin), true);
+  assert.equal(canAccessAmrsAdmin(superAdmin), true);
 });
 
 test("rate limit: new ops (otp_request, email_verification_resend, verify_email) exist and are bounded", async () => {

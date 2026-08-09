@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
 import type { SponsorRole } from "@/src/constants/roles";
+import { augmentPermissionsForServiceProviderCapability } from "@/lib/services/identity";
 
 export type { SponsorRole } from "@/src/constants/roles";
 
@@ -94,13 +95,17 @@ async function identityFromSession(): Promise<SponsorIdentity | null> {
     if (!user?.email) return null;
 
     const role = mapSessionRole(session.role);
+    const permissions = await augmentPermissionsForServiceProviderCapability(
+      user.email.trim().toLowerCase(),
+      permissionsForSessionRole(session.role),
+    );
     return {
       authenticated: true,
       email: user.email.trim().toLowerCase(),
       displayName: user.name || user.email,
       role,
       countryCode: null,
-      permissions: permissionsForSessionRole(session.role),
+      permissions,
     };
   } catch {
     return null;

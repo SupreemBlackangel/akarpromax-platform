@@ -330,7 +330,7 @@ export function FindMyLand({ locale }: Props) {
         const res = await fetch(`/api/land/${savedLand.id}/surveyors/quote`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ surveyorId, requesterId, service: "land-survey" }),
+          body: JSON.stringify({ surveyorId, requesterId, service: "boundary_survey" }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         setQuoteSentId(surveyorId);

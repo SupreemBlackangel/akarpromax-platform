@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { canAccessAmrsAdmin } from "@/lib/amrs/access";
+import { getSession } from "@/lib/auth/session";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { createOrganization, listOrganizations } from "@/lib/amrs/organization";
+import { ensurePgIdentitySchema } from "@/lib/db/pg-identity-schema";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  await ensurePgIdentitySchema();
+  const identity = await getSessionIdentity();
   const q = request.nextUrl.searchParams;
   const type = q.get("type") as "real_estate" | "business" | "other" | undefined;
-  const status = q.get("status") as "draft" | "pending_review" | "active" | "suspended" | "deleted" | undefined;
+  const requestedStatus = q.get("status") as "draft" | "pending_review" | "active" | "suspended" | "deleted" | undefined;
+  const status = canAccessAmrsAdmin(identity) ? requestedStatus : "active";
   const countryCode = q.get("country") ?? undefined;
   const limit = Math.min(parseInt(q.get("limit") ?? "20", 10), 100);
   const offset = parseInt(q.get("offset") ?? "0", 10);
@@ -17,8 +23,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
-  if (!identity.authenticated || !identity.email) {
+  const session = await getSession();
+  if (!identity.authenticated || !identity.email || !session?.userId) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
         contactEmail: body.contactEmail as string | undefined,
         contactPhone: body.contactPhone as string | undefined,
       },
-      identity.email,
+      session.userId,
     );
 
     return NextResponse.json({ ok: true, ...result }, { status: 201 });

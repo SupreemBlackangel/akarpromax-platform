@@ -124,7 +124,8 @@ describe("AMRS-12 Policy pipeline", () => {
 
   it("explainLevel provides full pipeline explanation", () => {
     const explanation = explainLevel("professional", undefined, signals, "new", null);
-    assert.equal(explanation.level, scoreToLevel(computeScore(signals)));
+    const policy = getPolicy("professional");
+    assert.equal(explanation.level, scoreToLevelWithPolicy(computeScoreWithPolicy(signals, policy), policy));
     assert.ok(explanation.signalBreakdown.length > 0);
     assert.equal(explanation.policy, "professional");
   });

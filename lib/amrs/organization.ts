@@ -82,60 +82,62 @@ export async function createOrganization(
 ): Promise<CreateOrganizationResult> {
   const { db, end } = getDb();
   try {
-    const baseSlug = slugify(input.nameEn || input.nameAr || `org-${Date.now()}`);
+    return await db.transaction(async (tx) => {
+      const baseSlug = slugify(input.nameEn || input.nameAr || `org-${Date.now()}`);
 
-    let slug = baseSlug;
-    let attempt = 0;
-    while (true) {
-      const existing = await db
-        .select({ id: organizations.id })
-        .from(organizations)
-        .where(eq(organizations.slug, slug))
-        .limit(1);
-      if (existing.length === 0) break;
-      attempt++;
-      slug = `${baseSlug}-${attempt}`;
-      if (attempt > 100) throw new Error("SLUG_GENERATION_FAILED");
-    }
+      let slug = baseSlug;
+      let attempt = 0;
+      while (true) {
+        const existing = await tx
+          .select({ id: organizations.id })
+          .from(organizations)
+          .where(eq(organizations.slug, slug))
+          .limit(1);
+        if (existing.length === 0) break;
+        attempt++;
+        slug = `${baseSlug}-${attempt}`;
+        if (attempt > 100) throw new Error("SLUG_GENERATION_FAILED");
+      }
 
-    const [org] = await db
-      .insert(organizations)
-      .values({
-        nameAr: input.nameAr ?? null,
-        nameEn: input.nameEn ?? null,
-        nameTr: input.nameTr ?? null,
-        slug,
-        type: input.type,
-        classification: input.classification,
-        countryCode: input.countryCode,
-        cityId: input.cityId ?? null,
-        districtId: input.districtId ?? null,
-        latitude: input.latitude ?? null,
-        longitude: input.longitude ?? null,
-        descriptionAr: input.descriptionAr ?? null,
-        descriptionEn: input.descriptionEn ?? null,
-        descriptionTr: input.descriptionTr ?? null,
-        websiteUrl: input.websiteUrl ?? null,
-        contactEmail: input.contactEmail ?? null,
-        contactPhone: input.contactPhone ?? null,
-        status: "draft",
-      })
-      .returning();
+      const [org] = await tx
+        .insert(organizations)
+        .values({
+          nameAr: input.nameAr ?? null,
+          nameEn: input.nameEn ?? null,
+          nameTr: input.nameTr ?? null,
+          slug,
+          type: input.type,
+          classification: input.classification,
+          countryCode: input.countryCode,
+          cityId: input.cityId ?? null,
+          districtId: input.districtId ?? null,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
+          descriptionAr: input.descriptionAr ?? null,
+          descriptionEn: input.descriptionEn ?? null,
+          descriptionTr: input.descriptionTr ?? null,
+          websiteUrl: input.websiteUrl ?? null,
+          contactEmail: input.contactEmail ?? null,
+          contactPhone: input.contactPhone ?? null,
+          status: "draft",
+        })
+        .returning();
 
-    const [membership] = await db
-      .insert(organizationMembers)
-      .values({
-        organizationId: org.id,
-        userId: ownerId,
-        role: "owner",
-        status: "active",
-      })
-      .returning();
+      const [membership] = await tx
+        .insert(organizationMembers)
+        .values({
+          organizationId: org.id,
+          userId: ownerId,
+          role: "owner",
+          status: "active",
+        })
+        .returning();
 
-    return {
-      organization: org as OrganizationRecord,
-      membership: membership as OrganizationMembershipRecord,
-    };
+      return {
+        organization: org as OrganizationRecord,
+        membership: membership as OrganizationMembershipRecord,
+      };
+    });
   } finally {
     await end();
   }

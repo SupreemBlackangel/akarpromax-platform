@@ -1,5 +1,6 @@
 import { resolveSectionFromPath, resolvePageType, type DeviceType, type PlatformSection } from "@/src/constants/advertising";
-import type { ResolvedAdContext } from "@/lib/ads/types";
+import type { ResolvedAdContext, AdChannel } from "@/lib/ads/types";
+import { isAdChannel } from "@/lib/ads/types";
 
 export const SUPPORTED_LOCALES = ["ar", "en", "tr"] as const;
 export const SUPPORTED_DEVICES = ["desktop", "tablet", "mobile"] as const;
@@ -9,6 +10,7 @@ export type MatchRequest = {
   section?: string;
   pageType?: string;
   placement?: string;
+  channel?: string;
   language?: string;
   deviceType?: string;
   countryCode?: string;
@@ -61,6 +63,7 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
   const section = cleanString(input.section, 40) || resolveSectionFromPath(path || "/");
   const pageType = cleanString(input.pageType, 40) || resolvePageType(section as PlatformSection, path || "/");
   const placement = cleanString(input.placement, 64);
+  const channel: AdChannel = isAdChannel(input.channel) ? input.channel : "website";
 
   const sessionId = cleanString(input.sessionId, 120);
   const userId = cleanString(input.userId, 120);
@@ -71,6 +74,7 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
     section,
     pageType,
     placement,
+    channel,
     entityType: entityType || undefined,
     entityId: input.entityId != null ? String(input.entityId).slice(0, 100) : undefined,
     categoryId: input.categoryId != null ? String(input.categoryId).slice(0, 100) : undefined,

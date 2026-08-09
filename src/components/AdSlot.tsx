@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import type { DeviceType } from "@/src/constants/advertising";
 import type { AdMatchResult } from "@/lib/ads/types";
 import { isVideoAsset } from "@/src/data/locations";
@@ -77,7 +77,38 @@ function getSessionId(): string {
   }
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 const badgeLabel: Record<"ar" | "en" | "tr", string> = { ar: "إعلان", en: "Ad", tr: "Reklam" };
+
+const MIN_VISUAL_SECONDS = 5;
+
+type AdSlotState = {
+  ads: AdMatchResult[];
+  currentIndex: number;
+  loaded: boolean;
+};
+
+type AdSlotAction =
+  | { type: "reset" }
+  | { type: "matched"; ads: AdMatchResult[] }
+  | { type: "done" }
+  | { type: "next" };
+
+function adSlotReducer(state: AdSlotState, action: AdSlotAction): AdSlotState {
+  switch (action.type) {
+    case "reset":
+      return { ads: [], currentIndex: 0, loaded: false };
+    case "matched":
+      return { ...state, ads: action.ads };
+    case "done":
+      return { ...state, loaded: true };
+    case "next":
+      return state.ads.length < 2 ? state : { ...state, currentIndex: (state.currentIndex + 1) % state.ads.length };
+  }
+}
 
 export default function AdSlot({
   placement,
@@ -98,14 +129,18 @@ export default function AdSlot({
   onViewDetails,
   onContact,
 }: AdSlotProps) {
-  const [ad, setAd] = useState<AdMatchResult | null>(null);
+  const [{ ads, currentIndex, loaded }, dispatch] = useReducer(adSlotReducer, { ads: [], currentIndex: 0, loaded: false });
   const [deviceType, setDeviceType] = useState<DeviceType>(providedDeviceType ?? detectDeviceType());
   const [prevProvidedDeviceType, setPrevProvidedDeviceType] = useState(providedDeviceType);
-  const [loaded, setLoaded] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [tabHidden, setTabHidden] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState<boolean>(() => prefersReducedMotion());
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const impressionSent = useRef(false);
-
+  const impressedRef = useRef<Set<string>>(new Set());
   const sessionId = useRef<string>("");
+
+  const ad = ads[currentIndex] ?? null;
+  const paused = hovering || tabHidden;
 
   if (providedDeviceType !== prevProvidedDeviceType) {
     setPrevProvidedDeviceType(providedDeviceType);
@@ -114,14 +149,23 @@ export default function AdSlot({
 
   useEffect(() => {
     sessionId.current = getSessionId();
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    media.addEventListener?.("change", onChange);
+    return () => media.removeEventListener?.("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => setTabHidden(document.visibilityState !== "visible");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    impressionSent.current = false;
+    impressedRef.current = new Set();
+    dispatch({ type: "reset" });
     (async () => {
-      setAd(null);
-      setLoaded(false);
       try {
         const res = await fetch("/api/ads/match", {
           method: "POST",
@@ -139,35 +183,50 @@ export default function AdSlot({
             categoryId,
             tags,
             sessionId: sessionId.current,
+            count: 3,
           }),
           cache: "no-store",
           signal: controller.signal,
         });
         const data = await res.json();
         if (controller.signal.aborted) return;
-        setAd(Array.isArray(data.ads) && data.ads.length ? data.ads[0] : null);
+        const matched: AdMatchResult[] = Array.isArray(data.ads) ? data.ads : [];
+        dispatch({ type: "matched", ads: matched });
       } catch {
-        if (!controller.signal.aborted) setAd(null);
+        if (!controller.signal.aborted) dispatch({ type: "matched", ads: [] });
       } finally {
-        if (!controller.signal.aborted) setLoaded(true);
+        if (!controller.signal.aborted) dispatch({ type: "done" });
       }
     })();
     return () => controller.abort();
   }, [categoryId, city, country, deviceType, entityId, entityType, locale, path, placement, tags]);
 
   useEffect(() => {
+    if (ads.length < 2 || reducedMotion || paused) return;
+    const current = ads[currentIndex];
+    const seconds = Math.max(MIN_VISUAL_SECONDS, current?.durationSeconds ?? MIN_VISUAL_SECONDS);
+    const timer = window.setTimeout(() => {
+      dispatch({ type: "next" });
+    }, seconds * 1000);
+    return () => window.clearTimeout(timer);
+  }, [ads, currentIndex, paused, reducedMotion]);
+
+  useEffect(() => {
     const container = containerRef.current;
-    if (!ad || !container || impressionSent.current) return;
+    const currentAd = ads[currentIndex];
+    if (!currentAd || !container) return;
+    const key = `${currentAd.campaignId}:${currentAd.creativeId ?? "main"}`;
+    if (impressedRef.current.has(key)) return;
     let timer: number | undefined;
     const record = () => {
-      if (impressionSent.current || document.visibilityState !== "visible") return;
-      impressionSent.current = true;
+      if (impressedRef.current.has(key) || document.visibilityState !== "visible") return;
+      impressedRef.current.add(key);
       void fetch("/api/ads/impression", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          campaignId: ad.campaignId,
-          token: ad.trackingToken,
+          campaignId: currentAd.campaignId,
+          token: currentAd.trackingToken,
           placement,
           path,
           countryCode: country,
@@ -196,7 +255,7 @@ export default function AdSlot({
       observer.disconnect();
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [ad, categoryId, city, country, deviceType, entityId, entityType, locale, path, placement, tags]);
+  }, [ads, currentIndex, categoryId, city, country, deviceType, entityId, entityType, locale, path, placement, tags]);
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!ad) return;
@@ -268,8 +327,15 @@ export default function AdSlot({
   }
 
   return (
-    <div className={`ad-slot ad-slot-${variant}${className ? ` ${className}` : ""}`} ref={containerRef} dir={locale === "ar" ? "rtl" : "ltr"}>
+    <div
+      className={`ad-slot ad-slot-${variant}${className ? ` ${className}` : ""}`}
+      ref={containerRef}
+      dir={locale === "ar" ? "rtl" : "ltr"}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
       <a
+        key={`${ad.campaignId}:${ad.creativeId ?? "main"}`}
         className="ad-slot-link"
         href={ad.targetUrl}
         target={ad.targetUrl.startsWith("/") ? undefined : "_blank"}

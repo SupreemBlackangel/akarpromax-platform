@@ -124,4 +124,24 @@ describe("AMRS Directory -> Surveyor Adapter", () => {
     await discoverSurveyorsFromDirectory({ lat: 24.7136, lon: 46.6753 }, { countryCode: "SA" }, source);
     assert.equal(sawCountry, "SA");
   });
+
+  it("degrades to an empty result when the organizations table is unavailable", async () => {
+    const source: SurveyorDirectorySource = {
+      search: async () => {
+        const error = new Error("relation \"organizations\" does not exist") as Error & { cause?: { code: string } };
+        error.cause = { code: "42P01" };
+        throw error;
+      },
+    };
+
+    const result = await discoverSurveyorsFromDirectory(
+      { lat: 24.7136, lon: 46.6753 },
+      { countryCode: "SA" },
+      source,
+    );
+
+    assert.equal(result.total, 0);
+    assert.deepEqual(result.candidates, []);
+    assert.equal(result.query.role, "surveyor");
+  });
 });

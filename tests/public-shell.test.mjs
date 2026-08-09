@@ -27,6 +27,8 @@ const labels = {
   navServices: "Services",
   navCatalog: "Catalog",
   navRequests: "Requests",
+  navDirectory: "Directory",
+  navNews: "News",
   navTools: "Tools",
   navApply: "Become a provider",
   ticker: [],
@@ -89,7 +91,7 @@ test("shell renders skip link targeting #main-content and the target exists", ()
   assert.match(html, /id="main-content"/);
 });
 
-test("shell renders exactly the 6 real-route nav links and no broken /properties link", () => {
+test("shell renders the real-route nav links and no broken /properties link", () => {
   const html = renderShell();
   for (const item of PUBLIC_NAV) {
     assert.match(html, new RegExp(`href="${item.href}"`), `nav must link ${item.href}`);
@@ -100,7 +102,7 @@ test("shell renders exactly the 6 real-route nav links and no broken /properties
 
 test("nav links never include nonexistent routes from the excluded inventory", () => {
   const html = renderShell();
-  for (const bad of ["/about", "/contact", "/news", "/search", "/offices", "/providers", "/blog", "/auctions", "/admin"]) {
+  for (const bad of ["/about", "/contact", "/search", "/offices", "/providers", "/blog", "/auctions", "/admin"]) {
     assert.doesNotMatch(html, new RegExp(`href="${bad.replace("/", "\\/")}"`), `must not link ${bad} exactly`);
   }
 });

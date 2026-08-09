@@ -13,6 +13,12 @@ import {
   reputationHistory,
 } from "@/lib/db/schema";
 
+const DRIZZLE_COLUMNS = Symbol.for("drizzle:Columns");
+
+function drizzleColumns(table: unknown): Record<string, unknown> {
+  return ((table as Record<PropertyKey, unknown>)[DRIZZLE_COLUMNS] as Record<string, unknown>) ?? {};
+}
+
 function readLatestMigration(): string {
   const migrationDir = join(process.cwd(), "drizzle-pg");
   const files = readdirSync(migrationDir).filter((f: string) => f.endsWith(".sql"));
@@ -24,7 +30,7 @@ function readLatestMigration(): string {
 // ─── INVARIANT 1: Organizations table has all required columns ───
 
 test("invariant: organizations table has all required columns", () => {
-  const cols = (organizations as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const cols = drizzleColumns(organizations);
   const requiredCols = [
     "id", "nameAr", "nameEn", "nameTr", "slug", "type", "classification",
     "countryCode", "cityId", "districtId", "latitude", "longitude",
@@ -40,7 +46,7 @@ test("invariant: organizations table has all required columns", () => {
 // ─── INVARIANT 2: OrganizationMembers has required fields ───
 
 test("invariant: organizationMembers has required fields", () => {
-  const columns = (organizationMembers as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(organizationMembers);
   assert.ok("organizationId" in columns, "organizationMembers must have organizationId");
   assert.ok("userId" in columns, "organizationMembers must have userId");
   assert.ok("role" in columns, "organizationMembers must have role");
@@ -52,7 +58,7 @@ test("invariant: organizationMembers has required fields", () => {
 // ─── INVARIANT 3: VerificationRecords has subject-based polymorphic pattern ───
 
 test("invariant: verificationRecords has entity_type + entity_id pattern", () => {
-  const columns = (verificationRecords as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(verificationRecords);
   assert.ok("entityType" in columns, "verificationRecords must have entityType");
   assert.ok("entityId" in columns, "verificationRecords must have entityId");
   assert.ok("type" in columns, "verificationRecords must have type");
@@ -67,7 +73,7 @@ test("invariant: verificationRecords has entity_type + entity_id pattern", () =>
 // ─── INVARIANT 4: ReputationProfiles has level + score ───
 
 test("invariant: reputationProfiles has entity_type + entity_id + level + score", () => {
-  const columns = (reputationProfiles as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(reputationProfiles);
   assert.ok("entityType" in columns, "reputationProfiles must have entityType");
   assert.ok("entityId" in columns, "reputationProfiles must have entityId");
   assert.ok("level" in columns, "reputationProfiles must have level");
@@ -80,7 +86,7 @@ test("invariant: reputationProfiles has entity_type + entity_id + level + score"
 // ─── INVARIANT 5: ReputationEvaluations stores signals as JSONB ───
 
 test("invariant: reputationEvaluations has signals JSONB + admin override fields", () => {
-  const columns = (reputationEvaluations as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(reputationEvaluations);
   assert.ok("reputationId" in columns, "reputationEvaluations must have reputationId");
   assert.ok("policyVersion" in columns, "reputationEvaluations must have policyVersion");
   assert.ok("oldLevel" in columns, "reputationEvaluations must have oldLevel");
@@ -94,7 +100,7 @@ test("invariant: reputationEvaluations has signals JSONB + admin override fields
 // ─── INVARIANT 6: ReputationHistory is immutable-ish audit trail ───
 
 test("invariant: reputationHistory has level transition fields", () => {
-  const columns = (reputationHistory as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(reputationHistory);
   assert.ok("entityType" in columns, "reputationHistory must have entityType");
   assert.ok("entityId" in columns, "reputationHistory must have entityId");
   assert.ok("oldLevel" in columns, "reputationHistory must have oldLevel");
@@ -107,7 +113,7 @@ test("invariant: reputationHistory has level transition fields", () => {
 // ─── INVARIANT 7: OrganizationBranches has location fields ───
 
 test("invariant: organizationBranches has location and status fields", () => {
-  const columns = (organizationBranches as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(organizationBranches);
   assert.ok("organizationId" in columns, "organizationBranches must have organizationId");
   assert.ok("nameAr" in columns, "organizationBranches must have nameAr");
   assert.ok("nameEn" in columns, "organizationBranches must have nameEn");
@@ -222,7 +228,7 @@ test("invariant: all 7 AMRS tables are exported from schema", () => {
 // ─── INVARIANT 17: Verification entity_type + type uniqueness is enforced ───
 
 test("invariant: verification_records supports subject+type unique constraint", () => {
-  const columns = (verificationRecords as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(verificationRecords);
   assert.ok("entityType" in columns && "entityId" in columns && "type" in columns,
     "verificationRecords must have entityType + entityId + type for unique constraint");
 });
@@ -230,7 +236,7 @@ test("invariant: verification_records supports subject+type unique constraint", 
 // ─── INVARIANT 18: Reputation entity_type + entity_id uniqueness is enforced ───
 
 test("invariant: reputation_profiles supports subject unique constraint", () => {
-  const columns = (reputationProfiles as any)[Symbol.for("drizzle:Columns")] as Record<string, unknown>;
+  const columns = drizzleColumns(reputationProfiles);
   assert.ok("entityType" in columns && "entityId" in columns,
     "reputationProfiles must have entityType + entityId for unique constraint");
 });

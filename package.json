@@ -13,12 +13,15 @@
     "test": "npm run build && node --import tsx --test tests/services-matching.test.mjs tests/services-marketplace.test.mjs tests/services-api.test.mjs tests/services-authz.test.mjs tests/services-e2e.mjs tests/rendered-html.test.mjs tests/design-tokens.test.mjs tests/ui-components.test.mjs tests/public-shell.test.mjs tests/auth-phase4.test.mjs tests/integrations-constants.test.mjs tests/integrations-pairing.test.mjs tests/integrations-sync.test.mjs tests/integrations-radar.test.mjs tests/integrations-notifications.test.mjs tests/integrations-realtime.test.mjs tests/integrations-news-ads.test.mjs tests/command-center.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
+    "db:migrate:pg": "node --import tsx scripts/apply-pg-identity-schema.ts",
+    "db:check:pg": "node --import tsx scripts/check-pg-identity-schema.ts",
     "db:generate:mysql": "drizzle-kit generate --config drizzle.mysql.config.ts",
     "db:migrate:mysql": "drizzle-kit migrate --config drizzle.mysql.config.ts",
     "seed:i18n": "tsx scripts/seed-i18n.ts",
     "seed:services": "tsx scripts/seed-services.ts",
     "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts",
     "seed:auth:admin": "tsx scripts/seed-auth-admin.ts",
+    "email:check": "node --env-file=.env --import tsx scripts/email-provider-check.ts",
     "test:e2e:production-runtime": "node --import tsx --test tests/e2e/production-runtime.test.mjs"
   },
   "dependencies": {
@@ -33,6 +36,7 @@
     "mammoth": "^1.12.0",
     "mysql2": "^3.23.2",
     "next": "16.2.6",
+    "nodemailer": "^9.0.5",
     "pdfjs-dist": "^6.2.108",
     "postgres": "^3.4.9",
     "proj4": "^2.21.0",

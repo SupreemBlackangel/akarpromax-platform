@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { canAccessAmrsAdmin } from "@/lib/amrs/access";
+import { ensurePgIdentitySchema } from "@/lib/db/pg-identity-schema";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { getAdminDashboardStats, executeBulkOrganizationAction, getOrganizationsByStatus } from "@/lib/amrs/admin";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+  if (!canAccessAmrsAdmin(identity)) {
+    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
   }
 
   const q = request.nextUrl.searchParams;
@@ -24,9 +30,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+  if (!canAccessAmrsAdmin(identity)) {
+    return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
   }
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;

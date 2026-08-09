@@ -1,4 +1,5 @@
 import { searchDirectory, DirectoryFilters, DirectoryEntry } from "@/lib/amrs/directory";
+import { isMissingOrganizationsTableError } from "@/lib/amrs/schema-fallback";
 import { SurveyorCandidate, SurveyorQuery, SurveyorSearchResult } from "@/lib/land/contracts";
 import { findSurveyors } from "@/lib/land/surveyor-discovery";
 
@@ -46,16 +47,6 @@ export async function discoverSurveyorsFromDirectory(
   options: SurveyorDiscoveryOptions = {},
   source: SurveyorDirectorySource = REAL_AMRS_DIRECTORY,
 ): Promise<SurveyorSearchResult> {
-  const filters: DirectoryFilters = {
-    entityType: "organization",
-    countryCode: options.countryCode,
-    search: options.search ?? "surveyor",
-    limit: 100,
-  };
-
-  const { entries } = await source.search(filters);
-  const pool: SurveyorCandidate[] = entries.map(mapDirectoryEntryToSurveyor);
-
   const query: SurveyorQuery = {
     landPoint,
     role: options.role ?? "surveyor",
@@ -66,6 +57,23 @@ export async function discoverSurveyorsFromDirectory(
     sortBy: options.sortBy ?? "reputation",
     limit: options.limit,
   };
+
+  const filters: DirectoryFilters = {
+    entityType: "organization",
+    countryCode: options.countryCode,
+    search: options.search ?? "surveyor",
+    limit: 100,
+  };
+
+  let entries: DirectoryEntry[] = [];
+  try {
+    ({ entries } = await source.search(filters));
+  } catch (error) {
+    if (!isMissingOrganizationsTableError(error)) {
+      throw error;
+    }
+  }
+  const pool: SurveyorCandidate[] = entries.map(mapDirectoryEntryToSurveyor);
 
   return findSurveyors(pool, query);
 }

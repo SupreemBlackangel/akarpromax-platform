@@ -16,6 +16,9 @@ const campaignTypes = ["platform", "sponsor", "property", "service", "request"] 
 const mediaTypes = ["image", "video"] as const;
 const supportedLocales = ["ar", "en", "tr"] as const;
 
+export const MAX_COMMERCIAL_CREATIVES = 5;
+export const MAX_HOUSE_CREATIVES = 10;
+
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
@@ -78,6 +81,8 @@ export type CampaignPayload = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  channels: string[];
+  creatives: CreativePayload[];
   eyebrowAr: string;
   eyebrowEn: string;
   eyebrowTr: string;
@@ -150,10 +155,47 @@ function cleanTime(value: unknown): string | null {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+export type CreativePayload = {
+  id: string;
+  mediaType: string;
+  mediaUrl: string;
+  mobileMediaUrl: string | null;
+  tabletMediaUrl: string | null;
+  posterUrl: string | null;
+  position: number;
+  durationSeconds: number;
+  status: string;
+};
+
+export function normaliseCreatives(body: Record<string, unknown>, isFallback: boolean): CreativePayload[] {
+  const cap = isFallback ? MAX_HOUSE_CREATIVES : MAX_COMMERCIAL_CREATIVES;
+  if (!Array.isArray(body.creatives)) return [];
+  return body.creatives.slice(0, cap).flatMap((item, index) => {
+    if (!item || typeof item !== "object") return [];
+    const creative = item as Record<string, unknown>;
+    const mediaUrl = cleanUrl(creative.mediaUrl, true);
+    if (!mediaUrl) return [];
+    return [{
+      id: clean(creative.id, 80) || crypto.randomUUID(),
+      mediaType: cleanChoice(creative.mediaType, mediaTypes, "image"),
+      mediaUrl,
+      mobileMediaUrl: cleanUrl(creative.mobileMediaUrl),
+      tabletMediaUrl: cleanUrl(creative.tabletMediaUrl),
+      posterUrl: cleanUrl(creative.posterUrl),
+      position: index + 1,
+      durationSeconds: Math.max(3, Math.min(15, Number(creative.durationSeconds) || 6)),
+      status: "active",
+    }];
+  });
+}
+
 export function normaliseCampaignPayload(body: Record<string, unknown>): CampaignPayload {
   const countries = cleanList(body.countries, /^[a-z]{2}$/, 30);
   const sectionScopes = cleanList(body.sectionScopes, /^[a-z0-9-]+$/, 20);
   const placements = validPlacementsForScopes(cleanList(body.placements, /^[a-z0-9_-]+$/, 60), sectionScopes);
+  const channels = cleanList(body.channels, /^(?:website|office)$/, 2);
+  if (!channels.length) channels.push("website");
+  const isFallback = Boolean(body.isFallback);
 
   return {
     internalName: clean(body.internalName, 140),
@@ -165,6 +207,8 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
     mobileMediaUrl: cleanUrl(body.mobileMediaUrl),
     tabletMediaUrl: cleanUrl(body.tabletMediaUrl),
     posterUrl: cleanUrl(body.posterUrl),
+    channels,
+    creatives: normaliseCreatives(body, isFallback),
     eyebrowAr: clean(body.eyebrowAr, 100),
     eyebrowEn: clean(body.eyebrowEn, 100),
     eyebrowTr: clean(body.eyebrowTr, 100),
@@ -241,6 +285,7 @@ export function validateCampaignPayload(payload: CampaignPayload): boolean {
     payload.descriptionAr && payload.descriptionEn && payload.descriptionTr &&
     payload.ctaAr && payload.ctaEn && payload.ctaTr &&
     payload.targetUrl &&
+    payload.channels.length &&
     payload.languages.length &&
     payload.devices.length,
   );
@@ -272,7 +317,7 @@ export { supportedLocales, statuses, campaignTypes, mediaTypes, DEVICE_TYPES, AP
 
 export const ADMIN_CAMPAIGN_SELECT = `
   SELECT a.id, a.internal_name, a.advertiser_name, a.campaign_type, a.status,
-         a.media_type, a.media_url, a.mobile_media_url, a.tablet_media_url, a.poster_url,
+         a.media_type, a.media_url, a.mobile_media_url, a.tablet_media_url, a.poster_url, a.channels,
          a.eyebrow_ar, a.eyebrow_en, a.eyebrow_tr, a.title_ar, a.title_en, a.title_tr,
          a.accent_ar, a.accent_en, a.accent_tr, a.description_ar, a.description_en, a.description_tr,
          a.cta_ar, a.cta_en, a.cta_tr, a.target_url,
@@ -303,6 +348,7 @@ type AdminRow = {
   mobile_media_url: string | null;
   tablet_media_url: string | null;
   poster_url: string | null;
+  channels: string;
   eyebrow_ar: string;
   eyebrow_en: string;
   eyebrow_tr: string;
@@ -411,6 +457,7 @@ export function serialiseCampaign(row: AdminRow) {
     mobileMediaUrl: row.mobile_media_url,
     tabletMediaUrl: row.tablet_media_url,
     posterUrl: row.poster_url,
+    channels: parseList(row.channels, ["website"]),
     eyebrow: { ar: row.eyebrow_ar, en: row.eyebrow_en, tr: row.eyebrow_tr },
     title: { ar: row.title_ar, en: row.title_en, tr: row.title_tr },
     accent: { ar: row.accent_ar, en: row.accent_en, tr: row.accent_tr },

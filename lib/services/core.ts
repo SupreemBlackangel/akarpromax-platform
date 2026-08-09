@@ -136,6 +136,12 @@ export async function updateListingStatus(listingId: string, status: string, act
   await writeAudit({ action: `service_listing.status.${status}`, entityType: "service_listings", entityId: listingId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
+export async function getListing(listingId: string): Promise<Record<string, unknown> | null> {
+  const db = await getServicesDb();
+  const row = await db.prepare("SELECT * FROM service_listings WHERE id = ?1").bind(listingId).first<Record<string, unknown>>();
+  return row ?? null;
+}
+
 export async function listListings(query: {
   categoryId?: string;
   countryCode?: string;
@@ -145,6 +151,7 @@ export async function listListings(query: {
   longitude?: number | null;
   radiusKm?: number;
   limit?: number;
+  offset?: number;
 }): Promise<Array<Record<string, unknown>>> {
   const db = await getServicesDb();
   const clauses: string[] = [];
@@ -170,9 +177,13 @@ export async function listListings(query: {
   let sql = "SELECT * FROM service_listings";
   if (clauses.length) sql += ` WHERE ${clauses.join(" AND ")}`;
   sql += " ORDER BY is_featured DESC, updated_at DESC";
-  if (query.limit) {
+  if (query.limit != null) {
     params.push(Math.min(query.limit, 100));
     sql += ` LIMIT ?${params.length}`;
+  }
+  if (query.offset) {
+    params.push(Math.max(query.offset, 0));
+    sql += ` OFFSET ?${params.length}`;
   }
   const result = await db.prepare(sql).bind(...params).all<Record<string, unknown>>();
   const rows = result.results ?? [];

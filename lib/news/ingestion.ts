@@ -21,6 +21,7 @@ import type { NewsSourceType } from "@/lib/news/contracts";
 
 export const FETCH_TIMEOUT_MS = 15_000;
 export const MAX_FEED_BYTES = 512 * 1024;
+const MAX_FETCH_REDIRECTS = 5;
 
 const RELEVANCE_KEYWORDS = [
   "عقار", "عقارات", "عقارية", "إيجار", "إيجارات", "بيع", "تمليك", "أراضي",
@@ -57,20 +58,39 @@ function normalizePubDate(raw: string | null): string | null {
 }
 
 async function fetchFeedText(source: NewsSource): Promise<{ text: string; etag: string | null }> {
-  if (!isSafeFetchUrl(source.url)) {
-    throw new Error("Blocked: source URL is not a public http(s) endpoint");
-  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(source.url, {
-      signal: controller.signal,
-      headers: {
-        Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-        "User-Agent": "AkarPromaxNewsBot/1.0",
-      },
-      redirect: "follow",
-    });
+    let currentUrl = source.url;
+    let response: Response | null = null;
+    for (let redirectCount = 0; redirectCount <= MAX_FETCH_REDIRECTS; redirectCount += 1) {
+      if (!isSafeFetchUrl(currentUrl)) {
+        throw new Error("Blocked: source URL is not a public http(s) endpoint");
+      }
+      response = await fetch(currentUrl, {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+          "User-Agent": "AkarPromaxNewsBot/1.0",
+        },
+        redirect: "manual",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        currentUrl = new URL(location, currentUrl).toString();
+        continue;
+      }
+      break;
+    }
+    if (!response) {
+      throw new Error("Empty response");
+    }
+    if (response.status >= 300 && response.status < 400) {
+      throw new Error(`Too many redirects (max ${MAX_FETCH_REDIRECTS})`);
+    }
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -167,7 +187,7 @@ export async function ingestSource(sourceId: string): Promise<IngestionSummary> 
          source_name, source_url, source_published_at, fetched_at, content_hash,
          external_id, review_status, created_at, updated_at)
        VALUES (?1, NULL, ?2, ?3, ?4, NULL, NULL, NULL, 'GENERAL', ?5, NULL, 0, 0,
-         ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?14)`,
+         ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?15)`,
     ).bind(
       id,
       description?.slice(0, 300) ?? null,

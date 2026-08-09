@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     countryCode,
     cityId,
     limit,
+    channel: view === "ticker" ? "OFFICE_TICKER" : "OFFICE_NEWS",
   });
 
   if (view === "ticker") {

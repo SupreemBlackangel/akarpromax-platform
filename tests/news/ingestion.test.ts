@@ -34,6 +34,22 @@ function mockFetchOnce(body: string, status = 200): void {
   });
 }
 
+function mockFetchSequence(...responses: Array<{ body?: string; status?: number; headers?: Record<string, string> }>): void {
+  let index = 0;
+  (globalThis as Record<string, unknown>).fetch = async () => {
+    const response = responses[Math.min(index, responses.length - 1)] ?? {};
+    index += 1;
+    const body = response.body ?? "";
+    const status = response.status ?? 200;
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      headers: new Headers(response.headers ?? { "content-type": "application/rss+xml" }),
+      arrayBuffer: async () => new TextEncoder().encode(body).buffer,
+    };
+  };
+}
+
 function clearFetchMock(): void {
   delete (globalThis as Record<string, unknown>).fetch;
 }
@@ -106,6 +122,17 @@ describe("news ingestion (in-memory db + mocked fetch)", () => {
     const summary = await ingestSource(source.id);
     assert.equal(summary.fetched, false);
     assert.ok(summary.errors.some((e) => e.includes("HTTP 500")));
+  });
+
+  it("blocks redirects to private or local targets", async () => {
+    mockFetchSequence({
+      status: 302,
+      headers: { location: "http://127.0.0.1:3010/internal" },
+    });
+    const source = await createNewsSource({ name: "Redirector", url: "https://example.com/rss" }, null);
+    const summary = await ingestSource(source.id);
+    assert.equal(summary.fetched, false);
+    assert.ok(summary.errors.some((e) => e.includes("Blocked: source URL is not a public http(s) endpoint")));
   });
 
   it("rejects unknown sources", async () => {

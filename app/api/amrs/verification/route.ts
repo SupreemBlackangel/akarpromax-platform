@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { listVerifications, submitVerification, getVerificationSummary } from "@/lib/amrs/verification";
+import { ensurePgIdentitySchema } from "@/lib/db/pg-identity-schema";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
@@ -20,6 +22,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });

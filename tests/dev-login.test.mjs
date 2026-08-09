@@ -27,6 +27,7 @@ function applyEnv(env) {
 test("dev login is blocked in production even when the flag is set", () => {
   const restore = applyEnv({
     NODE_ENV: "production",
+    DB_PROVIDER: "postgres",
     SESSION_SECRET: VALID_SECRET,
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
     APP_URL: "https://app.akarpromax.com",

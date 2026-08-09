@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ensurePgIdentitySchema } from "@/lib/db/pg-identity-schema";
 import { discoverSurveyorsFromDirectory } from "@/lib/land/amrs-directory";
 import { checkRateLimit } from "@/lib/amrs/security";
 
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest) {
   if (Number.isNaN(lat) || Number.isNaN(lon)) {
     return NextResponse.json({ error: "INVALID_LOCATION" }, { status: 400 });
   }
+
+  await ensurePgIdentitySchema();
 
   const result = await discoverSurveyorsFromDirectory(
     { lat, lon },

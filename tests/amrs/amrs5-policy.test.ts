@@ -266,7 +266,7 @@ describe("AMRS-5 Level explanation", () => {
       "new",
       null,
     );
-    const expectedLevel = scoreToLevel(computeScore(FULL_SIGNALS));
+    const expectedLevel = scoreToLevelWithPolicy(computeScoreWithPolicy(FULL_SIGNALS, getPolicy("professional")), getPolicy("professional"));
     assert.equal(explanation.isPromotion, isPromotion("new", expectedLevel));
   });
 
@@ -278,7 +278,7 @@ describe("AMRS-5 Level explanation", () => {
       "promax",
       null,
     );
-    const expectedLevel = scoreToLevel(computeScore(FULL_SIGNALS));
+    const expectedLevel = scoreToLevelWithPolicy(computeScoreWithPolicy(FULL_SIGNALS, getPolicy("professional")), getPolicy("professional"));
     assert.equal(explanation.isDemotion, isDemotion("promax", expectedLevel));
   });
 

@@ -154,7 +154,7 @@ export async function createNewsPlacement(newsId: string, input: Partial<NewsPla
          language, audiences, priority, manual_order,
          max_impressions, max_clicks, max_per_user_per_day, max_per_session,
          start_at, end_at, status, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?18)`,
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?19)`,
     )
     .bind(
       id,

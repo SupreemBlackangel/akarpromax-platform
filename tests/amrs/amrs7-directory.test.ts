@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import type { DirectoryFilters, DirectoryEntry } from "@/lib/amrs/directory";
+import { emptyDirectoryResult, emptyDirectoryStats, isMissingOrganizationsTableError } from "@/lib/amrs/schema-fallback";
 
 // ─── Directory filter logic ────────────────────────────────────────
 
@@ -271,5 +272,19 @@ describe("AMRS-7 Cache control", () => {
   it("stats have longer cache", () => {
     const cacheControl = "public, max-age=300";
     assert.ok(cacheControl.includes("max-age=300"));
+  });
+});
+
+describe("AMRS-7 Missing schema fallback", () => {
+  it("detects missing organizations-table errors", () => {
+    const error = new Error("relation \"organizations\" does not exist") as Error & { cause?: { code: string } };
+    error.cause = { code: "42P01" };
+    assert.equal(isMissingOrganizationsTableError(error), true);
+    assert.equal(isMissingOrganizationsTableError(new Error("boom")), false);
+  });
+
+  it("builds empty directory payloads", () => {
+    assert.deepEqual(emptyDirectoryResult(5, 10), { entries: [], total: 0, limit: 5, offset: 10 });
+    assert.deepEqual(emptyDirectoryStats(), { totalOrganizations: 0, byType: {}, byCountry: {} });
   });
 });

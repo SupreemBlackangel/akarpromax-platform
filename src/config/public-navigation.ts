@@ -1,5 +1,5 @@
 import type { Translation, TranslationStringKey } from "@/src/types/site";
-import { Home, LayoutGrid, Store, ClipboardList, Wrench, Briefcase, type LucideIcon } from "lucide-react";
+import { Home, LayoutGrid, Store, ClipboardList, Wrench, Briefcase, Newspaper, Building2, type LucideIcon } from "lucide-react";
 
 /**
  * Single source of truth for public navigation (desktop + mobile + breadcrumbs).
@@ -21,6 +21,8 @@ export const PUBLIC_NAV: PublicNavItem[] = [
   { key: "services", labelKey: "navServices", href: "/services", icon: Store },
   { key: "catalog", labelKey: "navCatalog", href: "/services/catalog", icon: LayoutGrid },
   { key: "requests", labelKey: "navRequests", href: "/service-requests", icon: ClipboardList },
+  { key: "directory", labelKey: "navDirectory", href: "/directory", icon: Building2 },
+  { key: "news", labelKey: "navNews", href: "/news", icon: Newspaper },
   { key: "tools", labelKey: "navTools", href: "/tools", icon: Wrench },
   { key: "apply", labelKey: "navApply", href: "/providers/apply", icon: Briefcase },
 ];

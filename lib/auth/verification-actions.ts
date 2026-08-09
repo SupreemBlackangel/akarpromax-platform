@@ -12,6 +12,7 @@ import {
   verifyOtpRecord,
   verifyTokenRecord,
 } from "@/lib/auth/verification";
+import { rekeyServiceUserReferences } from "@/lib/services/identity";
 import { consumeChallenge, createVerificationChallenge, findActiveChallengeByTokenHash, findLatestActiveOtpChallengeForUser, incrementChallengeAttempts, revokeUserChallenges } from "@/lib/db/verification";
 import { recordAuditEvent, logSecurityEvent } from "@/lib/security/audit";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
@@ -23,6 +24,10 @@ export type ActionResult = { ok: boolean; reason?: string; userId?: string; deta
 const VERIFY = "email_verification" as const;
 const RESET = "password_reset" as const;
 const EMAIL_CHANGE = "email_change" as const;
+
+export function resolveUserLocale(preferredLanguage: string | null | undefined, fallback: Locale = "ar"): Locale {
+  return preferredLanguage === "ar" || preferredLanguage === "en" || preferredLanguage === "tr" ? preferredLanguage : fallback;
+}
 
 export async function activateAccount(rawToken: string, locale: Locale = "ar"): Promise<ActionResult> {
   const tokenHash = await hashChallengeValue(rawToken);
@@ -69,10 +74,11 @@ export async function activateAccount(rawToken: string, locale: Locale = "ar"): 
   });
 
   const user = await fetchUserSafe(row.userId);
+  const deliveryLocale = resolveUserLocale(user?.preferredLanguage, locale);
   if (user?.email) {
     void emailService.send("welcome", {
       to: user.email,
-      locale,
+      locale: deliveryLocale,
       variables: { recipientName: user.name ?? undefined },
       urls: {},
     }).catch(() => undefined);
@@ -299,12 +305,25 @@ export async function confirmEmailChangeOtp(userId: string, code: string, locale
     return { ok: false, reason: result.reason, detail: { attempts: row.attempts + 1 } };
   }
 
+  const currentUser = await fetchUserSafe(userId);
+  const oldEmail = currentUser?.email ?? null;
+  const newEmail = row.destination;
+
+  if (oldEmail && oldEmail !== newEmail) {
+    await rekeyServiceUserReferences(oldEmail, newEmail);
+  }
+
   const { db, end } = getDb();
   try {
     await db
       .update(users)
-      .set({ email: row.destination, pendingEmail: null, emailVerifiedAt: new Date() })
+      .set({ email: newEmail, pendingEmail: null, emailVerifiedAt: new Date() })
       .where(eq(users.id, userId));
+  } catch (error) {
+    if (oldEmail && oldEmail !== newEmail) {
+      await rekeyServiceUserReferences(newEmail, oldEmail).catch(() => undefined);
+    }
+    throw error;
   } finally {
     await end();
   }
@@ -390,10 +409,10 @@ export async function completeOnboarding(userId: string): Promise<ActionResult> 
   return { ok: true, userId };
 }
 
-async function fetchUserSafe(userId: string): Promise<{ email: string | null; name: string | null } | null> {
+async function fetchUserSafe(userId: string): Promise<{ email: string | null; name: string | null; preferredLanguage: string | null } | null> {
   const { db, end } = getDb();
   try {
-    const rows = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+    const rows = await db.select({ email: users.email, name: users.name, preferredLanguage: users.preferredLanguage }).from(users).where(eq(users.id, userId)).limit(1);
     return rows[0] ?? null;
   } catch {
     return null;

@@ -1,9 +1,18 @@
 import type { DeviceType } from "@/src/constants/advertising";
 
+export type AdChannel = "website" | "office";
+
+export const AD_CHANNELS: readonly AdChannel[] = ["website", "office"] as const;
+
+export function isAdChannel(value: string | undefined): value is AdChannel {
+  return value === "website" || value === "office";
+}
+
 export type ResolvedAdContext = {
   section: string;
   pageType: string;
   placement: string;
+  channel?: AdChannel;
   entityType?: string;
   entityId?: string;
   categoryId?: string;
@@ -36,6 +45,7 @@ export type AdEngineRow = {
   mobile_media_url: string | null;
   tablet_media_url: string | null;
   poster_url: string | null;
+  channels: string | null;
   eyebrow_ar: string;
   eyebrow_en: string;
   eyebrow_tr: string;
@@ -109,6 +119,17 @@ export type AdEngineRow = {
   deleted_at: string | null;
 };
 
+export type ParsedCreative = {
+  id: string;
+  mediaType: string;
+  mediaUrl: string;
+  mobileMediaUrl: string | null;
+  tabletMediaUrl: string | null;
+  posterUrl: string | null;
+  position: number;
+  durationSeconds: number;
+};
+
 export type ParsedAd = {
   id: string;
   internalName: string;
@@ -119,6 +140,7 @@ export type ParsedAd = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  channels: AdChannel[];
   eyebrow: { ar: string; en: string; tr: string };
   title: { ar: string; en: string; tr: string };
   accent: { ar: string; en: string; tr: string };
@@ -176,6 +198,7 @@ export type ParsedAd = {
   totalImpressions: number;
   totalClicks: number;
   totalConversions: number;
+  creatives: ParsedCreative[];
 };
 
 export type DailyStatRow = {
@@ -210,6 +233,11 @@ export type AdMatchResult = {
   isFeatured: boolean;
   isFallback: boolean;
   placement: string;
+  channel: AdChannel;
+  creativeId: string | null;
+  creativePosition: number;
+  creativeCount: number;
+  durationSeconds: number;
   trackingToken: string;
 };
 
@@ -219,4 +247,18 @@ export type MatchOptions = {
   stats?: EngineStats;
   ads?: ParsedAd[];
   now?: Date;
+  minimumCommercialInventory?: number;
+};
+
+export type InventoryHealth = {
+  placement: string;
+  channel: AdChannel;
+  eligibleCommercial: number;
+  fallbackActive: boolean;
+  fallbackTurns: number;
+  status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_COMMERCIAL_INVENTORY";
+  commercialImpressions: number;
+  houseImpressions: number;
+  totalValidImpressions: number;
+  commercialFillRate: number;
 };

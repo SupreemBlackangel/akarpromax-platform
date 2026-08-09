@@ -116,4 +116,28 @@ Now all three files use `MYSQL_URL` (falls back to
 `GET /api/sponsors` → 200. Login still 500s there because PG cannot load
 (`cloudflare:`), so keep auth E2E on `dev`.
 
+## Ads network — one central engine, two channels (DONE)
+Website + AkarProMax Office share one serving engine (`lib/ads/engine.ts`
+`matchAds` → `scoreAd` → `selectCreative`, house fill via
+`selectHouseCandidates`) over the content runtime DB (`getRuntimeDb()`).
+- Campaigns carry `channels` JSON (`website` default / `office`); `isChannelMatch`
+  isolates the two surfaces (verified live both ways). Office placements live in
+  the `office` section of `AD_PLACEMENTS` (`src/constants/advertising.ts`);
+  `app/api/office/v1/ads` (Bearer device token, scope `office.ads.read`) serves
+  via the central engine and records into central `ad_impressions`/`ad_clicks`.
+- **D1 schema contract**: `ad_creatives` must include `tablet_media_url`
+  (in `content-schema.ts` CREATE TABLE **and** `AD_CREATIVE_NEW_COLUMNS` ALTER in
+  `lib/ad-schema.ts`), because `loadCreatives` SELECTs it. `ad_impressions`/
+  `ad_clicks` carry `creative_id`, `channel`, `inventory_class` (DDL +
+  `AD_TRACKING_NEW_COLUMNS`). Regression-guarded by `tests/ads-schema-contract.test.mjs`.
+- `/api/admin/ads/stats` inventory health is computed per placement **and
+  channel** (channel derived from the placement's section — `office` sections
+  use channel `office`), so office placements never report website inventory.
+- D31 engine behavior (3-commercial threshold → house fill, round-robin
+  creatives, channel isolation, house≠commercial) is regression-guarded by
+  `tests/ads-engine.test.mjs` (12 cases). Docs in `docs/ads/*` (9 files).
 
+## `tests` prod envs require `DB_PROVIDER=postgres`
+Any test that sets `NODE_ENV: "production"` (security-headers, origin-guard,
+dev-login, ...) must also set `DB_PROVIDER: "postgres"` — production refuses to
+boot without it (`getRuntimeEnv`/`parseDbProvider`).

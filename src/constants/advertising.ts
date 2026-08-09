@@ -8,6 +8,7 @@ export const PLATFORM_SECTIONS = {
   CONSULTATIONS: "consultations",
   AUCTIONS: "auctions",
   NEWS: "news",
+  OFFICE: "office",
   GLOBAL: "global",
 } as const;
 
@@ -33,6 +34,7 @@ export const PLATFORM_SECTIONS_REGISTRY: Record<PlatformSection, SectionMeta> = 
   consultations: { key: "consultations", label: { ar: "الاستشارات", en: "Consultations", tr: "Danışmanlıklar" }, path: "/consultations" },
   auctions: { key: "auctions", label: { ar: "المزادات", en: "Auctions", tr: "Açık Artırmalar" }, path: "/auctions" },
   news: { key: "news", label: { ar: "الأخبار", en: "News", tr: "Haberler" }, path: "/news" },
+  office: { key: "office", label: { ar: "مكتب بروماكس", en: "AkarProMax Office", tr: "AkarProMax Ofisi" }, path: "" },
   global: { key: "global", label: { ar: "عام (كل الأقسام)", en: "Global (all sections)", tr: "Genel (tüm bölümler)" }, path: "" },
 };
 
@@ -118,6 +120,12 @@ export const AD_PLACEMENTS: Record<string, PlacementMeta> = {
   tool_after_gallery: { key: "tool_after_gallery", label: { ar: "بعد معرض الأداة", en: "After tool gallery", tr: "Araç galerisinden sonra" }, sections: ["engineering-tools"], shape: "horizontal" },
   tool_after_description: { key: "tool_after_description", label: { ar: "بعد وصف الأداة", en: "After tool description", tr: "Araç açıklamasından sonra" }, sections: ["engineering-tools"], shape: "horizontal" },
   tool_sidebar: { key: "tool_sidebar", label: { ar: "شريط الأداة الجانبي", en: "Tool sidebar", tr: "Araç kenar çubuğu" }, sections: ["engineering-tools"], shape: "vertical" },
+
+  office_dashboard_hero: { key: "office_dashboard_hero", label: { ar: "بانر لوحة المكتب", en: "Office dashboard hero", tr: "Ofis paneli büyük banner" }, sections: ["office"], shape: "horizontal" },
+  office_dashboard_sidebar: { key: "office_dashboard_sidebar", label: { ar: "شريط لوحة المكتب", en: "Office dashboard sidebar", tr: "Ofis paneli kenar çubuğu" }, sections: ["office"], shape: "vertical" },
+  office_news_inline: { key: "office_news_inline", label: { ar: "داخل أخبار المكتب", en: "Office news inline", tr: "Ofis haberleri içi" }, sections: ["office"], shape: "horizontal" },
+  office_properties_inline: { key: "office_properties_inline", label: { ar: "داخل عقارات المكتب", en: "Office properties inline", tr: "Ofis gayrimenkulleri içi" }, sections: ["office"], shape: "horizontal" },
+  office_services_inline: { key: "office_services_inline", label: { ar: "داخل خدمات المكتب", en: "Office services inline", tr: "Ofis hizmetleri içi" }, sections: ["office"], shape: "horizontal" },
 };
 
 export function isPlacementValidForSection(placement: string, section: PlatformSection): boolean {

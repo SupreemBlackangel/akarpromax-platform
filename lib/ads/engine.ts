@@ -1,5 +1,6 @@
-import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDayOfWeek, frequencyWindowSince, formatDateTime } from "@/lib/ads/geo";
-import type { AdEngineRow, ParsedAd, ResolvedAdContext, AdMatchResult, EngineStats, MatchOptions } from "@/lib/ads/types";
+import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDayOfWeek, frequencyWindowSince, formatDateTime, statDate } from "@/lib/ads/geo";
+import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
+import { AD_CHANNELS, isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
 import type { DeviceType } from "@/src/constants/advertising";
 
@@ -10,6 +11,18 @@ function parseList(value: string | null | undefined, fallback: string[] = []): s
     return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function parseChannels(value: string | null | undefined): AdChannel[] {
+  if (!value) return ["website"];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return ["website"];
+    const channels = parsed.filter((item): item is AdChannel => isAdChannel(String(item)));
+    return channels.length ? channels : ["website"];
+  } catch {
+    return ["website"];
   }
 }
 
@@ -42,6 +55,7 @@ export function parseAd(row: AdEngineRow): ParsedAd {
     mobileMediaUrl: row.mobile_media_url,
     tabletMediaUrl: row.tablet_media_url,
     posterUrl: row.poster_url,
+    channels: parseChannels(row.channels),
     eyebrow: { ar: row.eyebrow_ar, en: row.eyebrow_en, tr: row.eyebrow_tr },
     title: { ar: row.title_ar, en: row.title_en, tr: row.title_tr },
     accent: { ar: row.accent_ar, en: row.accent_en, tr: row.accent_tr },
@@ -99,7 +113,52 @@ export function parseAd(row: AdEngineRow): ParsedAd {
     totalImpressions: toNumber(row.total_impressions),
     totalClicks: toNumber(row.total_clicks),
     totalConversions: toNumber(row.total_conversions),
+    creatives: [],
   };
+}
+
+type CreativeRow = {
+  id: string;
+  campaign_id: string;
+  media_type: string;
+  media_url: string;
+  mobile_media_url: string | null;
+  tablet_media_url: string | null;
+  poster_url: string | null;
+  position: number;
+  duration_seconds: number;
+  status: string;
+};
+
+export async function loadCreatives(db: D1Database, campaignIds: string[]): Promise<Map<string, ParsedCreative[]>> {
+  const map = new Map<string, ParsedCreative[]>();
+  if (campaignIds.length === 0) return map;
+  const placeholders = campaignIds.map((_, index) => `?${index + 1}`).join(",");
+  const rows = await db
+    .prepare(
+      `SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status
+       FROM ad_creatives
+       WHERE campaign_id IN (${placeholders})
+       ORDER BY position ASC`,
+    )
+    .bind(...campaignIds)
+    .all<CreativeRow>();
+  for (const row of rows.results) {
+    if (row.status !== "active") continue;
+    const list = map.get(row.campaign_id) ?? [];
+    list.push({
+      id: row.id,
+      mediaType: row.media_type,
+      mediaUrl: row.media_url,
+      mobileMediaUrl: row.mobile_media_url,
+      tabletMediaUrl: row.tablet_media_url,
+      posterUrl: row.poster_url,
+      position: toNumber(row.position),
+      durationSeconds: Math.max(3, toNumber(row.duration_seconds) || 6),
+    });
+    map.set(row.campaign_id, list);
+  }
+  return map;
 }
 
 export async function loadActiveAds(db: D1Database, now = new Date()): Promise<ParsedAd[]> {
@@ -107,6 +166,7 @@ export async function loadActiveAds(db: D1Database, now = new Date()): Promise<P
     .prepare(
       `SELECT id, internal_name, advertiser_name, campaign_type, status, media_type,
               media_url, mobile_media_url, tablet_media_url, poster_url,
+              channels,
               eyebrow_ar, eyebrow_en, eyebrow_tr, title_ar, title_en, title_tr,
               accent_ar, accent_en, accent_tr, description_ar, description_en, description_tr,
               cta_ar, cta_en, cta_tr, target_url,
@@ -133,7 +193,10 @@ export async function loadActiveAds(db: D1Database, now = new Date()): Promise<P
     )
     .bind(formatDateTime(now), formatDateTime(now))
     .all<AdEngineRow>();
-  return rows.results.map(parseAd);
+  const ads = rows.results.map(parseAd);
+  const creatives = await loadCreatives(db, ads.map((ad) => ad.id));
+  for (const ad of ads) ad.creatives = creatives.get(ad.id) ?? [];
+  return ads;
 }
 
 export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, now = new Date()): Promise<EngineStats> {
@@ -193,6 +256,12 @@ function isSectionMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; sc
   if (ad.sectionScopes.includes(ctx.section)) return { ok: true, score: 100 };
   if (ad.sectionScopes.includes("global")) return { ok: true, score: 30 };
   return { ok: false, score: 0 };
+}
+
+function isChannelMatch(ad: ParsedAd, ctx: ResolvedAdContext): boolean {
+  const channel = ctx.channel ?? "website";
+  if (ad.channels.length === 0) return channel === "website";
+  return ad.channels.includes(channel);
 }
 
 function isPlacementMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
@@ -360,6 +429,7 @@ type ScoredAd = { ad: ParsedAd; score: number };
 export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?: EngineStats): number | null {
   if (!ad.isActive) return null;
   if (ad.approvalStatus !== "approved") return null;
+  if (!isChannelMatch(ad, ctx)) return null;
   if (!isTimeMatch(ad, now, ctx)) return null;
   if (!isOsMatch(ad, ctx)) return null;
   if (!isBudgetEligible(ad, stats)) return null;
@@ -421,10 +491,70 @@ function selectBand(scored: ScoredAd[], used: Set<string>): ScoredAd[] {
   return remaining.filter((candidate) => candidate.score >= maxScore - 50);
 }
 
+/**
+ * Deterministic even creative rotation: each campaign receives ONE turn and
+ * within that turn the next creative is picked by the campaign's impression
+ * count so far (round-robin). A 5-creative campaign does NOT get five times
+ * the exposure of a 1-creative campaign (D6/D7).
+ */
+export function selectCreative(ad: ParsedAd, impressions: number, stats?: EngineStats): { creative: ParsedCreative | null; count: number; position: number; durationSeconds: number } {
+  const daily = stats?.daily.get(ad.id);
+  const total = impressions + (daily?.impressions ?? 0);
+  const creatives = ad.creatives.filter((item) => item.mediaUrl);
+  if (creatives.length === 0) {
+    return {
+      creative: null,
+      count: 1,
+      position: 1,
+      durationSeconds: 6,
+    };
+  }
+  const index = ((total % creatives.length) + creatives.length) % creatives.length;
+  return {
+    creative: creatives[index],
+    count: creatives.length,
+    position: index + 1,
+    durationSeconds: creatives[index].durationSeconds || 6,
+  };
+}
+
+function campaignImpressions(ad: ParsedAd, stats?: EngineStats): number {
+  const daily = stats?.daily.get(ad.id);
+  return ad.totalImpressions + (daily?.impressions ?? 0);
+}
+
+function isPlacementSpecificHouse(ad: ParsedAd, ctx: ResolvedAdContext): boolean {
+  return ad.placements.includes(ctx.placement);
+}
+
+/**
+ * House/fallback candidates ordered placement-specific first, then global
+ * (D13). Each house turn rotates through the candidates evenly.
+ */
+function selectHouseCandidates(house: ScoredAd[], ctx: ResolvedAdContext, stats?: EngineStats, count = 1): ScoredAd[] {
+  const ordered = [...house].sort((a, b) => {
+    const aSpecific = isPlacementSpecificHouse(a.ad, ctx) ? 1 : 0;
+    const bSpecific = isPlacementSpecificHouse(b.ad, ctx) ? 1 : 0;
+    if (aSpecific !== bSpecific) return bSpecific - aSpecific;
+    const aGlobal = a.ad.isGlobal ? 1 : 0;
+    const bGlobal = b.ad.isGlobal ? 1 : 0;
+    if (aGlobal !== bGlobal) return bGlobal - aGlobal;
+    return a.ad.priority - b.ad.priority;
+  });
+
+  const cumulative = ordered.reduce((sum, candidate) => sum + campaignImpressions(candidate.ad, stats), 0);
+  const picks: ScoredAd[] = [];
+  for (let i = 0; i < count && ordered.length > 0; i++) {
+    picks.push(ordered[(cumulative + i) % ordered.length]);
+  }
+  return picks;
+}
+
 export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: MatchOptions = {}): Promise<AdMatchResult[]> {
   const now = options.now ?? new Date();
   const ads = options.ads ?? (await loadActiveAds(db, now));
   const stats = options.stats ?? (await loadEngineStats(db, ctx, now));
+  const minimumCommercialInventory = Math.max(0, options.minimumCommercialInventory ?? 3);
   const count = Math.max(1, options.count ?? 1);
   const used = options.usedCampaignIds ?? new Set<string>();
 
@@ -438,11 +568,16 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
     else real.push({ ad, score });
   }
 
+  const eligibleCommercial = real.length;
+  const houseBudget = eligibleCommercial >= minimumCommercialInventory ? 0 : Math.max(0, minimumCommercialInventory - eligibleCommercial);
+  const commercialTurns = Math.min(eligibleCommercial, count);
+  const houseTurns = Math.min(houseBudget, Math.max(0, count - commercialTurns));
+
   const picks: ScoredAd[] = [];
 
-  const fill = (pool: ScoredAd[], limit: number) => {
+  const fillCommercial = (limit: number) => {
     while (picks.length < limit) {
-      const band = selectBand(pool, used);
+      const band = selectBand(real, used);
       if (band.length === 0) break;
       const chosen = pickWeighted(band);
       if (!chosen) break;
@@ -451,25 +586,45 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
     }
   };
 
-  fill(real, count);
-  if (picks.length < count) fill(fallback, count);
+  fillCommercial(commercialTurns);
+  if (picks.length < commercialTurns) {
+    const leftovers = real.filter((candidate) => !used.has(candidate.ad.id));
+    for (const candidate of leftovers) {
+      if (picks.length >= commercialTurns) break;
+      picks.push(candidate);
+      used.add(candidate.ad.id);
+    }
+  }
+
+  if (picks.length < count) {
+    const housePicks = selectHouseCandidates(fallback, ctx, stats, Math.min(houseTurns, count - picks.length));
+    picks.push(...housePicks);
+  }
 
   const results: AdMatchResult[] = [];
   for (const pick of picks) {
     const ad = pick.ad;
     const locale = ctx.language;
-    const imageUrl = ctx.deviceType === "mobile"
-      ? (ad.mobileMediaUrl ?? ad.tabletMediaUrl ?? ad.mediaUrl)
+    const channel = ctx.channel ?? "website";
+    const { creative, count: creativeCount, position: creativePosition, durationSeconds } = selectCreative(ad, campaignImpressions(ad, stats), stats);
+    const media = creative ?? {
+      mediaUrl: ad.mediaUrl,
+      mobileMediaUrl: ad.mobileMediaUrl,
+      tabletMediaUrl: ad.tabletMediaUrl,
+      posterUrl: ad.posterUrl,
+    };
+    const imageUrl = channel === "office" || ctx.deviceType === "mobile"
+      ? (media.mobileMediaUrl ?? media.tabletMediaUrl ?? media.mediaUrl)
       : ctx.deviceType === "tablet"
-        ? (ad.tabletMediaUrl ?? ad.mobileMediaUrl ?? ad.mediaUrl)
-        : (ad.mediaUrl ?? ad.mobileMediaUrl ?? "");
+        ? (media.tabletMediaUrl ?? media.mobileMediaUrl ?? media.mediaUrl)
+        : (media.mediaUrl ?? media.mobileMediaUrl ?? "");
     results.push({
       campaignId: ad.id,
       advertiserName: ad.advertiserName,
       campaignType: ad.campaignType,
-      mediaType: ad.mediaType,
+      mediaType: creative?.mediaType ?? ad.mediaType,
       imageUrl,
-      posterUrl: ad.posterUrl,
+      posterUrl: media.posterUrl ?? ad.posterUrl,
       eyebrow: ad.eyebrow[locale],
       title: ad.title[locale],
       accent: ad.accent[locale],
@@ -480,7 +635,15 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       isFeatured: ad.isFeatured,
       isFallback: ad.isFallback,
       placement: ctx.placement,
-      trackingToken: await signTrackingToken({ campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType }, now),
+      channel,
+      creativeId: creative?.id ?? null,
+      creativePosition,
+      creativeCount,
+      durationSeconds,
+      trackingToken: await signTrackingToken(
+        { campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType, creativeId: creative?.id ?? null, channel, inventoryClass: ad.isFallback ? "house" : "commercial" },
+        now,
+      ),
     });
   }
 
@@ -500,3 +663,54 @@ export async function matchAdsBatch(db: D1Database, contexts: ResolvedAdContext[
   }
   return results;
 }
+
+/**
+ * D17/D18 — placement inventory health from the same eligibility pipeline.
+ * Pure over the candidate set so it is unit-testable without a DB.
+ */
+export function computeInventoryHealth(
+  ads: ParsedAd[],
+  ctx: ResolvedAdContext,
+  options: { stats?: EngineStats; now?: Date; minimumCommercialInventory?: number } = {},
+): InventoryHealth {
+  const now = options.now ?? new Date();
+  const stats = options.stats;
+  const minimumCommercialInventory = Math.max(0, options.minimumCommercialInventory ?? 3);
+
+  let eligibleCommercial = 0;
+  let commercialImpressions = 0;
+  let houseImpressions = 0;
+
+  for (const ad of ads) {
+    const isHouse = ad.isFallback;
+    const impressions = campaignImpressions(ad, stats);
+    if (isHouse) houseImpressions += impressions;
+    else commercialImpressions += impressions;
+    if (scoreAd(ad, ctx, now, stats) != null && !isHouse) eligibleCommercial += 1;
+  }
+
+  const totalValidImpressions = commercialImpressions + houseImpressions;
+  const fallbackTurns = eligibleCommercial >= minimumCommercialInventory ? 0 : Math.max(0, minimumCommercialInventory - eligibleCommercial);
+  const fallbackActive = fallbackTurns > 0;
+  const status: InventoryHealth["status"] =
+    eligibleCommercial >= minimumCommercialInventory
+      ? "HEALTHY"
+      : eligibleCommercial > 0
+        ? "PARTIALLY_FILLED"
+        : "NO_COMMERCIAL_INVENTORY";
+
+  return {
+    placement: ctx.placement,
+    channel: ctx.channel ?? "website",
+    eligibleCommercial,
+    fallbackActive,
+    fallbackTurns,
+    status,
+    commercialImpressions,
+    houseImpressions,
+    totalValidImpressions,
+    commercialFillRate: totalValidImpressions > 0 ? commercialImpressions / totalValidImpressions : 0,
+  };
+}
+
+export { statDate };

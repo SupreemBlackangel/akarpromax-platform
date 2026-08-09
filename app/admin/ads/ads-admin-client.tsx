@@ -15,6 +15,31 @@ type Identity = {
   permissions: string[];
 };
 
+type CampaignCreative = {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  mobileMediaUrl: string | null;
+  tabletMediaUrl: string | null;
+  posterUrl: string | null;
+  position: number;
+  durationSeconds: number;
+  status: string;
+};
+
+type CreativeDraft = {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  mobileMediaUrl: string;
+  tabletMediaUrl: string;
+  posterUrl: string;
+  durationSeconds: string;
+};
+
+const MAX_COMMERCIAL_CREATIVES = 5;
+const MAX_HOUSE_CREATIVES = 10;
+
 type Campaign = {
   id: string;
   internalName: string;
@@ -26,12 +51,14 @@ type Campaign = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  channels: string[];
   eyebrow: { ar: string; en: string; tr: string };
   title: { ar: string; en: string; tr: string };
   accent: { ar: string; en: string; tr: string };
   description: { ar: string; en: string; tr: string };
   cta: { ar: string; en: string; tr: string };
   targetUrl: string;
+  creatives: CampaignCreative[];
   countries: string[];
   cities: string[];
   languages: string[];
@@ -114,6 +141,7 @@ type FormState = {
   mobileMediaUrl: string;
   tabletMediaUrl: string;
   posterUrl: string;
+  channels: string[];
   eyebrowAr: string; eyebrowEn: string; eyebrowTr: string;
   titleAr: string; titleEn: string; titleTr: string;
   accentAr: string; accentEn: string; accentTr: string;
@@ -166,6 +194,7 @@ type FormState = {
   isFeatured: boolean;
   isFallback: boolean;
   isGlobal: boolean;
+  creatives: CreativeDraft[];
 };
 
 const countries: [string, string][] = [
@@ -183,6 +212,7 @@ const sectionLabels = Object.fromEntries(
 
 const languageLabels: Record<string, string> = { ar: "العربية", en: "English", tr: "Türkçe" };
 const deviceLabels: Record<string, string> = { desktop: "كمبيوتر", tablet: "جهاز لوحي", mobile: "هاتف" };
+const channelLabels: Record<string, string> = { website: "الموقع", office: "مكتب بروماكس" };
 const pageTypeLabels: Record<string, string> = {
   home: "الرئيسية", listing: "القائمة", details: "التفاصيل", "search-results": "نتائج البحث",
   category: "تصنيف", "provider-profile": "ملف مزوّد", "office-profile": "ملف مكتب",
@@ -235,6 +265,7 @@ function serialisedToForm(c: Campaign): FormState {
     mobileMediaUrl: c.mobileMediaUrl || "",
     tabletMediaUrl: c.tabletMediaUrl || "",
     posterUrl: c.posterUrl || "",
+    channels: c.channels.length ? c.channels : ["website"],
     eyebrowAr: c.eyebrow.ar, eyebrowEn: c.eyebrow.en, eyebrowTr: c.eyebrow.tr,
     titleAr: c.title.ar, titleEn: c.title.en, titleTr: c.title.tr,
     accentAr: c.accent.ar, accentEn: c.accent.en, accentTr: c.accent.tr,
@@ -287,6 +318,15 @@ function serialisedToForm(c: Campaign): FormState {
     isFeatured: c.isFeatured,
     isFallback: c.isFallback,
     isGlobal: c.isGlobal,
+    creatives: (c.creatives ?? []).map((creative) => ({
+      id: creative.id,
+      mediaType: creative.mediaType,
+      mediaUrl: creative.mediaUrl,
+      mobileMediaUrl: creative.mobileMediaUrl || "",
+      tabletMediaUrl: creative.tabletMediaUrl || "",
+      posterUrl: creative.posterUrl || "",
+      durationSeconds: String(creative.durationSeconds || 6),
+    })),
   };
 }
 
@@ -302,6 +342,7 @@ function emptyForm(countriesList: string[]): FormState {
     mobileMediaUrl: "",
     tabletMediaUrl: "",
     posterUrl: "",
+    channels: ["website"],
     eyebrowAr: "", eyebrowEn: "", eyebrowTr: "",
     titleAr: "", titleEn: "", titleTr: "",
     accentAr: "", accentEn: "", accentTr: "",
@@ -354,6 +395,7 @@ function emptyForm(countriesList: string[]): FormState {
     isFeatured: false,
     isFallback: false,
     isGlobal: false,
+    creatives: [],
   };
 }
 
@@ -369,6 +411,7 @@ function toApiBody(form: FormState) {
     mobileMediaUrl: form.mobileMediaUrl || null,
     tabletMediaUrl: form.tabletMediaUrl || null,
     posterUrl: form.posterUrl || null,
+    channels: form.channels.length ? form.channels : ["website"],
     eyebrowAr: form.eyebrowAr, eyebrowEn: form.eyebrowEn, eyebrowTr: form.eyebrowTr,
     titleAr: form.titleAr, titleEn: form.titleEn, titleTr: form.titleTr,
     accentAr: form.accentAr, accentEn: form.accentEn, accentTr: form.accentTr,
@@ -421,6 +464,15 @@ function toApiBody(form: FormState) {
     isFeatured: form.isFeatured,
     isFallback: form.isFallback,
     isGlobal: form.isGlobal,
+    creatives: form.creatives.map((creative) => ({
+      id: creative.id || undefined,
+      mediaType: creative.mediaType,
+      mediaUrl: creative.mediaUrl,
+      mobileMediaUrl: creative.mobileMediaUrl || null,
+      tabletMediaUrl: creative.tabletMediaUrl || null,
+      posterUrl: creative.posterUrl || null,
+      durationSeconds: Number(creative.durationSeconds) || 6,
+    })),
   };
 }
 
@@ -490,7 +542,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm({
       ...emptyForm(initialCountries),
       priority: String(Math.min(999, Math.max(0, ...campaigns.map((item) => item.priority)) + 1)),
-      ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType } : {}),
+      ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType, creatives: [{ id: "", mediaType: asset.mediaType, mediaUrl: asset.url, mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", durationSeconds: "6" }] } : {}),
     });
     setPreviewLocale("ar");
     setWizardStep(1);
@@ -506,7 +558,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setMessage("");
   }
 
-  function toggleList(field: "countries" | "languages" | "devices" | "sectionScopes" | "pageTypes" | "placements" | "regionIds" | "districtIds" | "entityIds" | "categoryIds" | "propertyTypes" | "serviceCategories" | "officeTypes" | "toolCategories" | "operatingSystems", value: string) {
+  function toggleList(field: "countries" | "languages" | "devices" | "channels" | "sectionScopes" | "pageTypes" | "placements" | "regionIds" | "districtIds" | "entityIds" | "categoryIds" | "propertyTypes" | "serviceCategories" | "officeTypes" | "toolCategories" | "operatingSystems", value: string) {
     const current = form[field];
     const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
     setForm({ ...form, [field]: next });
@@ -519,6 +571,29 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
   function setField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  const creativeLimit = form.isFallback ? MAX_HOUSE_CREATIVES : MAX_COMMERCIAL_CREATIVES;
+
+  function addCreative() {
+    setForm((current) => {
+      if (current.creatives.length >= creativeLimit) return current;
+      return {
+        ...current,
+        creatives: [...current.creatives, { id: "", mediaType: "image", mediaUrl: "", mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", durationSeconds: "6" }],
+      };
+    });
+  }
+
+  function updateCreative(index: number, field: keyof CreativeDraft, value: string) {
+    setForm((current) => ({
+      ...current,
+      creatives: current.creatives.map((creative, creativeIndex) => creativeIndex === index ? { ...creative, [field]: value } : creative),
+    }));
+  }
+
+  function removeCreative(index: number) {
+    setForm((current) => ({ ...current, creatives: current.creatives.filter((_, creativeIndex) => creativeIndex !== index) }));
   }
 
   const allowedPlacements = useMemo(() => {
@@ -728,7 +803,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <div className="ads-campaign-list">
             {campaigns.map((campaign) => <article key={campaign.id}>
               <div className="ads-campaign-thumb">{campaign.mediaType === "video" ? <video src={campaign.mediaUrl} poster={campaign.posterUrl || undefined} muted preload="metadata" /> : <img src={campaign.mediaUrl} alt="" />}<span>{campaign.mediaType === "video" ? "فيديو" : "صورة"}</span></div>
-              <div className="ads-campaign-main"><span className={`ads-status ads-status-${campaign.status}`}>{statusLabel(campaign.status)}</span><span className={`ads-badge ads-badge-${campaign.approvalStatus}`}>{approvalLabel(campaign.approvalStatus)}</span><strong>{campaign.internalName}</strong><small>{campaign.advertiserName} • {campaignTypeLabel(campaign.campaignType)}</small><small className="ads-campaign-targets">{campaign.placements.length ? campaign.placements.slice(0, 3).map((placement) => AD_PLACEMENTS[placement]?.label.ar ?? placement).join("، ") : "بدون مواضع"}{campaign.placements.length > 3 ? ` +${campaign.placements.length - 3}` : ""}</small></div>
+              <div className="ads-campaign-main"><span className={`ads-status ads-status-${campaign.status}`}>{statusLabel(campaign.status)}</span><span className={`ads-badge ads-badge-${campaign.approvalStatus}`}>{approvalLabel(campaign.approvalStatus)}</span><strong>{campaign.internalName}</strong><small>{campaign.advertiserName} • {campaignTypeLabel(campaign.campaignType)}</small><small>{campaign.channels.length ? campaign.channels.map((channel) => channelLabels[channel] ?? channel).join(" + ") : "الموقع"}</small><small className="ads-campaign-targets">{campaign.placements.length ? campaign.placements.slice(0, 3).map((placement) => AD_PLACEMENTS[placement]?.label.ar ?? placement).join("، ") : "بدون مواضع"}{campaign.placements.length > 3 ? ` +${campaign.placements.length - 3}` : ""}</small></div>
               <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
               <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
               <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
@@ -769,6 +844,10 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <label><input type="checkbox" checked={form.isGlobal} onChange={(event) => setField("isGlobal", event.target.checked)} />عام (كل الأقسام)</label>
               <label><input type="checkbox" checked={form.isActive} onChange={(event) => setField("isActive", event.target.checked)} />مفعّل الآن</label>
             </fieldset>
+            <fieldset className="ads-bool-row"><legend>قنوات العرض</legend>
+              <label><input type="checkbox" checked={form.channels.includes("website")} onChange={() => toggleList("channels", "website")} />الموقع الإلكتروني</label>
+              <label><input type="checkbox" checked={form.channels.includes("office")} onChange={() => toggleList("channels", "office")} />مكتب بروماكس</label>
+            </fieldset>
           </div></section>
 
           <section className="ads-form-section" hidden={wizardStep !== 2}><div><span>2</span><h3>الصورة أو الفيديو</h3></div>
@@ -784,6 +863,19 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <label>نسخة اللوحي (اختياري)<input dir="ltr" value={form.tabletMediaUrl} onChange={(event) => setField("tabletMediaUrl", event.target.value)} /></label>
               <label>صورة غلاف الفيديو<input dir="ltr" value={form.posterUrl} onChange={(event) => setField("posterUrl", event.target.value)} /></label>
             </div>
+            <fieldset className="ads-choice-fieldset">
+              <legend>وسائط إضافية (دوران) — {form.creatives.length} / {creativeLimit}</legend>
+              {form.creatives.map((creative, index) => (
+                <div className="ads-creative-row" key={index}>
+                  <label>الرابط<input dir="ltr" value={creative.mediaUrl} placeholder="https://cdn.example.com/creative.jpg" onChange={(event) => updateCreative(index, "mediaUrl", event.target.value)} /></label>
+                  <label>المدة (ثوانٍ)<input type="number" min={3} max={15} value={creative.durationSeconds} onChange={(event) => updateCreative(index, "durationSeconds", event.target.value)} /></label>
+                  <label>نسخة الهاتف<input dir="ltr" value={creative.mobileMediaUrl} onChange={(event) => updateCreative(index, "mobileMediaUrl", event.target.value)} /></label>
+                  <label>نسخة اللوحي<input dir="ltr" value={creative.tabletMediaUrl} onChange={(event) => updateCreative(index, "tabletMediaUrl", event.target.value)} /></label>
+                  <button type="button" onClick={() => removeCreative(index)}>إزالة</button>
+                </div>
+              ))}
+              <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (5 للحملة التجارية، 10 للاحتياطية).</small></div>
+            </fieldset>
           </section>
 
           <section className="ads-form-section" hidden={wizardStep !== 3}><div><span>3</span><h3>المحتوى والترجمات</h3></div>
@@ -867,7 +959,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               {form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} autoPlay muted loop playsInline /> : <img src={form.mediaUrl || "/og.png"} alt="" />}
               <div><p>{preview.eyebrow}</p><h2>{preview.title}<br /><strong>{preview.accent}</strong></h2><span>{preview.description}</span><b>{preview.cta} ←</b></div>
             </div>
-            <div className="ads-preview-meta"><span>{form.placements.length} موضع</span><span>{form.sectionScopes.length} قسم</span><span>{form.devices.join("، ")}</span><span>الموازنة: {form.budget} ريال</span></div>
+            <div className="ads-preview-meta"><span>{form.placements.length} موضع</span><span>{form.sectionScopes.length} قسم</span><span>{form.channels.length ? form.channels.map((channel) => channelLabels[channel] ?? channel).join(" + ") : "الموقع"}</span><span>{form.devices.join("، ")}</span><span>الموازنة: {form.budget} ريال</span></div>
           </section>
 
           <footer className="ads-wizard-actions"><button type="button" onClick={() => wizardStep === 1 ? setEditing(false) : setWizardStep((step) => step - 1)}>{wizardStep === 1 ? "إلغاء" : "السابق"}</button>{wizardStep < 7 ? <button className="primary" type="button" onClick={() => setWizardStep((step) => step + 1)}>التالي</button> : <button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button>}</footer>
@@ -888,7 +980,13 @@ function AnalyticsPanel() {
       totalUniqueClicks: number; totalConversions: number;
       spentAmount: number; budget: number; dailyBudget: number;
     }>;
-    placements: Array<{ placement: string; impressions: number }>;
+    placements: Array<{ placement: string; channel: string; inventoryClass: string; impressions: number }>;
+    split: { commercial: number; house: number };
+    inventory: Array<{
+      placement: string; status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_COMMERCIAL_INVENTORY";
+      eligibleCommercial: number; fallbackActive: boolean; fallbackTurns: number;
+      commercialImpressions: number; houseImpressions: number; commercialFillRate: number;
+    }>;
     today: string;
   } | null>(null);
 
@@ -916,13 +1014,21 @@ function AnalyticsPanel() {
     spent: acc.spent + c.spentAmount,
   }), { impressions: 0, uniqueImpressions: 0, clicks: 0, conversions: 0, spent: 0 });
 
+  const trackedImpressions = stats.split.commercial + stats.split.house;
+  const commercialFillRate = trackedImpressions > 0 ? stats.split.commercial / trackedImpressions : 0;
+  const healthStatus: Record<string, string> = {
+    HEALTHY: "ممتلئ تجاريًا",
+    PARTIALLY_FILLED: "امتلاء جزئي",
+    NO_COMMERCIAL_INVENTORY: "بدون مخزون تجاري",
+  };
+
   return (
     <section className="ads-panel">
       <div className="ads-panel-title"><div><p>الأداء</p><h2>تحليلات الحملات</h2></div><span>{stats.today}</span></div>
       <div className="ads-stat-grid">
         <article><span>إجمالي الظهور</span><strong>{totals.impressions.toLocaleString("ar")}</strong><small>{totals.uniqueImpressions.toLocaleString("ar")} فريد</small></article>
         <article><span>النقرات</span><strong>{totals.clicks.toLocaleString("ar")}</strong><small>{totals.impressions ? ((totals.clicks / totals.impressions) * 100).toFixed(2) : "0.00"}% CTR</small></article>
-        <article><span>التحويلات</span><strong>{totals.conversions.toLocaleString("ar")}</strong><small>قيمة 150/تحويل</small></article>
+        <article><span>التجاري / الاحتياطي</span><strong>{stats.split.commercial.toLocaleString("ar")} / {stats.split.house.toLocaleString("ar")}</strong><small>نسبة الامتلاء {Math.round(commercialFillRate * 100)}%</small></article>
         <article><span>الإنفاق</span><strong>{totals.spent.toLocaleString("ar")}</strong><small>من الميزانيات</small></article>
       </div>
       <div className="ads-analytics-list">
@@ -932,10 +1038,15 @@ function AnalyticsPanel() {
         })}
         {!stats.campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد بيانات بعد</strong><p>أنشئ حملات وسجّل الظهور والنقرات لترى الأداء هنا.</p></div>}
       </div>
-      {stats.placements.length > 0 && <div className="ads-panel-title"><div><p>التوزيع</p><h2>الظهور حسب الموضع</h2></div></div>}
-      <div className="ads-placement-bars">{stats.placements.map((p) => {
-        const width = Math.max(3, (p.impressions / Math.max(1, stats.placements[0].impressions)) * 100);
-        return <div className="ads-placement-bar" key={p.placement}><span title={p.placement}>{AD_PLACEMENTS[p.placement]?.label.ar ?? p.placement}</span><div><i style={{ width: `${width}%` }} /></div><b>{p.impressions.toLocaleString("ar")}</b></div>;
+      {stats.inventory.length > 0 && <div className="ads-panel-title"><div><p>المخزون</p><h2>صحة مخزون المواضع</h2></div><span>{stats.inventory.filter((item) => item.status === "HEALTHY").length} سليم</span></div>}
+      <div className="ads-placement-bars">{stats.inventory.map((item) => {
+        const width = Math.max(3, Math.round(item.commercialFillRate * 100));
+        return <div className="ads-placement-bar" key={item.placement}>
+          <span title={item.placement}>{AD_PLACEMENTS[item.placement]?.label.ar ?? item.placement}</span>
+          <div><i style={{ width: `${width}%` }} /></div>
+          <b>{healthStatus[item.status] ?? item.status}</b>
+          <small>{item.commercialImpressions.toLocaleString("ar")} تجاري / {item.houseImpressions.toLocaleString("ar")} احتياطي</small>
+        </div>;
       })}</div>
     </section>
   );

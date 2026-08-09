@@ -26,6 +26,7 @@ function applyEnv(env) {
 function prodEnv() {
   return applyEnv({
     NODE_ENV: "production",
+    DB_PROVIDER: "postgres",
     SESSION_SECRET: VALID_SECRET,
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
     APP_URL: "https://app.akarpromax.com",

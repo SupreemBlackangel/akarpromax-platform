@@ -144,6 +144,7 @@ export async function evaluateReputation(
   reason: string = "scheduled_evaluation",
   adminOverride: boolean = false,
   adminId?: string,
+  options?: { organizationType?: OrganizationType },
 ): Promise<{
   profile: ReputationProfileResult;
   evaluation: ReputationEvaluationResult;
@@ -151,9 +152,15 @@ export async function evaluateReputation(
   demoted: boolean;
 }> {
   const profile = await ensureReputationProfile(entityType, entityId);
-  const score = computeScore(signals);
-  const newLevel = scoreToLevel(score);
+  const policy = getPolicy(entityType, options?.organizationType);
+  const score = computeScoreWithPolicy(signals, policy);
+  const computedLevel = scoreToLevelWithPolicy(score, policy);
+  const promaxCheck = computedLevel === "promax" ? isEligibleForPromax(signals, policy) : { eligible: true, reasons: [] as string[] };
+  const newLevel = computedLevel === "promax" && !promaxCheck.eligible ? "gold" : computedLevel;
   const oldLevel = profile.level as ReputationLevel;
+  const gracePeriodEndsAt = shouldApplyGracePeriod(oldLevel, newLevel, policy)
+    ? getGracePeriodEndsAt(policy)
+    : null;
 
   const { db, end } = getDb();
   try {
@@ -189,6 +196,7 @@ export async function evaluateReputation(
         .set({
           level: newLevel,
           score,
+          gracePeriodEndsAt,
           lastEvaluatedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -198,6 +206,7 @@ export async function evaluateReputation(
         .update(reputationProfiles)
         .set({
           score,
+          gracePeriodEndsAt,
           lastEvaluatedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -438,12 +447,36 @@ export function computeScoreWithPolicy(
   signals: EvaluationSignals,
   policy: ReputationPolicy,
 ): number {
-  let raw = 0;
+  const normalized = normalizeSignalsForPolicy(signals, policy);
+  let weighted = 0;
   for (const [key, weight] of Object.entries(policy.signalWeights)) {
-    const value = (signals as unknown as Record<string, number>)[key] ?? 0;
-    raw += value * weight;
+    const value = normalized[key] ?? 0;
+    weighted += (value / 100) * weight;
   }
-  return Math.max(0, Math.min(1000, Math.round(raw)));
+  return Math.max(0, Math.min(1000, Math.round(weighted * 1000)));
+}
+
+function normalizeSignalsForPolicy(
+  signals: EvaluationSignals,
+  policy: ReputationPolicy,
+): Record<string, number> {
+  const normalizePercent = (value: number) => Math.max(0, Math.min(100, value));
+  const normalizeRelative = (value: number, max: number) => {
+    if (!Number.isFinite(max) || max <= 0) return 0;
+    return Math.max(0, Math.min(100, (value / max) * 100));
+  };
+
+  return {
+    verification: normalizePercent(signals.verification),
+    profileCompleteness: normalizePercent(signals.profileCompleteness),
+    responseRate: normalizePercent(signals.responseRate),
+    completedJobs: normalizeRelative(signals.completedJobs, Math.max(policy.minJobsForPromotion, policy.promaxRequires.minCompletedJobs, 1)),
+    rating: normalizeRelative(signals.rating, Math.max(policy.promaxRequires.minRating, 1)),
+    cancellationRate: normalizePercent(signals.cancellationRate),
+    resolvedDisputes: normalizePercent(signals.resolvedDisputes),
+    policyCompliance: normalizePercent(signals.policyCompliance),
+    recentActivity: normalizePercent(signals.recentActivity),
+  };
 }
 
 export function scoreToLevelWithPolicy(
@@ -517,6 +550,7 @@ export function explainLevel(
   gracePeriodEndsAt: Date | null,
 ): LevelExplanation {
   const policy = getPolicy(entityType, organizationType);
+  const normalized = normalizeSignalsForPolicy(signals, policy);
   const score = computeScoreWithPolicy(signals, policy);
   const level = scoreToLevelWithPolicy(score, policy);
 
@@ -524,7 +558,7 @@ export function explainLevel(
     signal,
     value: (signals as unknown as Record<string, number>)[signal] ?? 0,
     weight,
-    contribution: Math.round(((signals as unknown as Record<string, number>)[signal] ?? 0) * weight),
+    contribution: Math.round(((normalized[signal] ?? 0) / 100) * weight * 1000),
   }));
 
   const promoted = previousLevel ? isPromotion(previousLevel, level) : false;

@@ -15,6 +15,19 @@ import {
 
 export const dynamic = "force-dynamic";
 
+type CreativeRow = {
+  id: string;
+  campaign_id: string;
+  media_type: string;
+  media_url: string;
+  mobile_media_url: string | null;
+  tablet_media_url: string | null;
+  poster_url: string | null;
+  position: number;
+  duration_seconds: number;
+  status: string;
+};
+
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
   if (!value) return fallback;
   try {
@@ -58,7 +71,32 @@ export async function GET() {
     )
     .all<AdminRow>();
   const campaigns = rows.results.map(serialiseCampaign).filter((campaign) => visibleTo(identity, campaign.countries));
-  return NextResponse.json({ identity, campaigns }, { headers: { "Cache-Control": "no-store" } });
+  let listed = campaigns;
+  if (campaigns.length) {
+    const ids = campaigns.map((campaign) => campaign.id);
+    const placeholders = ids.map((_, index) => `?${index + 1}`).join(",");
+    const creativeRows = await db
+      .prepare(`SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status FROM ad_creatives WHERE campaign_id IN (${placeholders}) ORDER BY position ASC`)
+      .bind(...ids)
+      .all<CreativeRow>();
+    const grouped = new Map<string, CreativeRow[]>();
+    for (const row of creativeRows.results) grouped.set(row.campaign_id, [...(grouped.get(row.campaign_id) ?? []), row]);
+    listed = campaigns.map((campaign) => ({
+      ...campaign,
+      creatives: (grouped.get(campaign.id) ?? []).filter((row) => row.status === "active").map((row) => ({
+        id: row.id,
+        mediaType: row.media_type,
+        mediaUrl: row.media_url,
+        mobileMediaUrl: row.mobile_media_url,
+        tabletMediaUrl: row.tablet_media_url,
+        posterUrl: row.poster_url,
+        position: Number(row.position),
+        durationSeconds: Number(row.duration_seconds),
+        status: row.status,
+      })),
+    }));
+  }
+  return NextResponse.json({ identity, campaigns: listed }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -88,7 +126,7 @@ export async function POST(request: NextRequest) {
     .prepare(
       `INSERT INTO ad_campaigns
         (id, internal_name, advertiser_name, campaign_type, status, media_type,
-         media_url, mobile_media_url, tablet_media_url, poster_url,
+         media_url, mobile_media_url, tablet_media_url, poster_url, channels,
          eyebrow_ar, eyebrow_en, eyebrow_tr, title_ar, title_en, title_tr,
          accent_ar, accent_en, accent_tr, description_ar, description_en, description_tr,
          cta_ar, cta_en, cta_tr, target_url, countries, cities, languages, devices,
@@ -108,11 +146,12 @@ export async function POST(request: NextRequest) {
                ?31, ?32, ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40,
                ?41, ?42, ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50,
                ?51, ?52, ?53, ?54, ?55, ?56, ?57, ?58, ?59, ?60,
-               ?61, ?62, ?63, ?64, ?65, ?66, ?67, ?68, ?69, ?70, ?71, ?72, ?73, ?74, ?75)`,
+               ?61, ?62, ?63, ?64, ?65, ?66, ?67, ?68, ?69, ?70, ?71, ?72, ?73, ?74, ?75, ?76)`,
     )
     .bind(
       id, payload.internalName, payload.advertiserName, payload.campaignType, status,
       payload.mediaType, payload.mediaUrl, payload.mobileMediaUrl, payload.tabletMediaUrl, payload.posterUrl,
+      JSON.stringify(payload.channels),
       payload.eyebrowAr, payload.eyebrowEn, payload.eyebrowTr,
       payload.titleAr, payload.titleEn, payload.titleTr,
       payload.accentAr, payload.accentEn, payload.accentTr,
@@ -138,7 +177,13 @@ export async function POST(request: NextRequest) {
       approvedBy, identity.email,
     )
     .run();
-  await writeAudit(db, identity.email, "ad.created", id, { status, approvalStatus, countries: payload.countries });
+  if (payload.creatives.length) {
+    await db.batch(payload.creatives.map((creative) => db.prepare(
+      `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
+    ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status)));
+  }
+  await writeAudit(db, identity.email, "ad.created", id, { status, approvalStatus, countries: payload.countries, creatives: payload.creatives.length });
   return NextResponse.json({ id }, { status: 201 });
 }
 
@@ -175,7 +220,7 @@ export async function PATCH(request: NextRequest) {
 
   const sets: string[] = [
     "internal_name = ?", "advertiser_name = ?", "campaign_type = ?", "status = ?",
-    "media_type = ?", "media_url = ?", "mobile_media_url = ?", "tablet_media_url = ?", "poster_url = ?",
+    "media_type = ?", "media_url = ?", "mobile_media_url = ?", "tablet_media_url = ?", "poster_url = ?", "channels = ?",
     "eyebrow_ar = ?", "eyebrow_en = ?", "eyebrow_tr = ?",
     "title_ar = ?", "title_en = ?", "title_tr = ?",
     "accent_ar = ?", "accent_en = ?", "accent_tr = ?",
@@ -198,6 +243,7 @@ export async function PATCH(request: NextRequest) {
   const values: unknown[] = [
     payload.internalName, payload.advertiserName, payload.campaignType, status,
     payload.mediaType, payload.mediaUrl, payload.mobileMediaUrl, payload.tabletMediaUrl, payload.posterUrl,
+    JSON.stringify(payload.channels),
     payload.eyebrowAr, payload.eyebrowEn, payload.eyebrowTr,
     payload.titleAr, payload.titleEn, payload.titleTr,
     payload.accentAr, payload.accentEn, payload.accentTr,
@@ -232,7 +278,16 @@ export async function PATCH(request: NextRequest) {
     .prepare(`UPDATE ad_campaigns SET ${sets.join(", ")} WHERE id = ?`)
     .bind(...values, id)
     .run();
-  await writeAudit(db, identity.email, "ad.updated", id, { status, approvalStatus });
+  if (Array.isArray(body.creatives)) {
+    await db.prepare("DELETE FROM ad_creatives WHERE campaign_id = ?1").bind(id).run();
+    if (payload.creatives.length) {
+      await db.batch(payload.creatives.map((creative) => db.prepare(
+        `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
+      ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status)));
+    }
+  }
+  await writeAudit(db, identity.email, "ad.updated", id, { status, approvalStatus, creatives: Array.isArray(body.creatives) ? payload.creatives.length : undefined });
   return NextResponse.json({ ok: true });
 }
 
