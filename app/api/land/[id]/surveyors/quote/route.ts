@@ -4,7 +4,8 @@ import { QuoteRequestInput } from "@/lib/land/contracts";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let body: unknown;
   try {
     body = await request.json();
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   const result = requestSurveyorQuote({
-    landId: params.id,
+    landId: id,
     surveyorId: input.surveyorId,
     requesterId: input.requesterId,
     service: input.service,

@@ -9,11 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
-  const org = await getOrganizationById(params.id);
+  const org = await getOrganizationById(id);
   if (!org) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }

@@ -6,7 +6,7 @@ import { isAdChannel } from "@/lib/ads/types";
 export type TrackRequest = MatchRequest & { campaignId?: string; token?: string; conversionType?: string; value?: number };
 
 export type ResolveResult =
-  | { ok: true; ctx: ResolvedAdContext; campaignId: string; creativeId: string | null; channel: string; inventoryClass: "commercial" | "house" }
+  | { ok: true; ctx: ResolvedAdContext; campaignId: string; creativeId: string | null; channel: string; inventoryClass: "commercial" }
   | { ok: false; error: string; status: number };
 
 export async function resolveTrackRequest(body: TrackRequest): Promise<ResolveResult> {

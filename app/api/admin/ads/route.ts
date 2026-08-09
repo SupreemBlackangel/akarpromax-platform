@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       payload.pricingModel, payload.price, payload.budget, payload.dailyBudget,
       payload.maxImpressions, payload.maxClicks, payload.frequencyCapPerUser, payload.frequencyCapPeriod,
       approvalStatus, payload.isActive ? 1 : 0,
-      payload.isSponsored ? 1 : 0, payload.isFeatured ? 1 : 0, payload.isFallback ? 1 : 0, payload.isGlobal ? 1 : 0,
+      0, payload.isFeatured ? 1 : 0, 0, payload.isGlobal ? 1 : 0,
       approvedBy, identity.email,
     )
     .run();
@@ -266,7 +266,7 @@ export async function PATCH(request: NextRequest) {
     payload.maxImpressions, payload.maxClicks, payload.frequencyCapPerUser, payload.frequencyCapPeriod,
     approvalStatus,
     payload.isActive ? 1 : 0,
-    payload.isSponsored ? 1 : 0, payload.isFeatured ? 1 : 0, payload.isFallback ? 1 : 0, payload.isGlobal ? 1 : 0,
+    0, payload.isFeatured ? 1 : 0, 0, payload.isGlobal ? 1 : 0,
   ];
 
   if (approvedBy !== undefined) {

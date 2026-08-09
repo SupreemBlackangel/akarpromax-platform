@@ -87,11 +87,9 @@ export async function GET() {
 
   const split = {
     commercial: 0,
-    house: 0,
   };
   for (const row of classSplit.results) {
-    if (row.inventory_class === "house") split.house += Number(row.impressions);
-    else split.commercial += Number(row.impressions);
+    split.commercial += Number(row.impressions);
   }
 
   const placementKeys = new Set<string>();
@@ -106,21 +104,15 @@ export async function GET() {
     const health = computeInventoryHealth(healthAds, ctx);
     const placementRows = placements.results.filter((row) => row.placement === placement);
     let commercial = 0;
-    let house = 0;
     for (const row of placementRows) {
-      if (row.inventory_class === "house") house += Number(row.impressions);
-      else commercial += Number(row.impressions);
+      commercial += Number(row.impressions);
     }
-    const total = commercial + house;
     return {
       placement,
       status: health.status,
-      eligibleCommercial: health.eligibleCommercial,
-      fallbackActive: health.fallbackActive,
-      fallbackTurns: health.fallbackTurns,
+      eligibleAds: health.eligibleAds,
       commercialImpressions: commercial,
-      houseImpressions: house,
-      commercialFillRate: total > 0 ? commercial / total : 0,
+      fillRate: health.fillRate,
     };
   });
 

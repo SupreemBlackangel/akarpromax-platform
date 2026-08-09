@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 const BASE_URL = process.env.APP_BASE_URL ?? "http://localhost:3000";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const land = getLand(params.id);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const land = getLand(id);
   if (!land) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
@@ -16,8 +17,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json(share);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const land = getLand(params.id);
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const land = getLand(id);
   if (!land) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }

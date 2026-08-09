@@ -107,9 +107,7 @@ export function parseAd(row: AdEngineRow): ParsedAd {
     frequencyCapPeriod: row.frequency_cap_period || "day",
     approvalStatus: row.approval_status,
     isActive: toBool(row.is_active),
-    isSponsored: toBool(row.is_sponsored),
     isFeatured: toBool(row.is_featured),
-    isFallback: toBool(row.is_fallback),
     isGlobal: toBool(row.is_global),
     totalImpressions: toNumber(row.total_impressions),
     totalClicks: toNumber(row.total_clicks),
@@ -467,7 +465,6 @@ export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?:
     category.score +
     ad.priority * 10;
 
-  if (ad.isSponsored) score += 20;
   if (ad.isFeatured) score += 10;
   return score;
 }
@@ -525,61 +522,26 @@ function campaignImpressions(ad: ParsedAd, stats?: EngineStats): number {
   return ad.totalImpressions + (daily?.impressions ?? 0);
 }
 
-function isPlacementSpecificHouse(ad: ParsedAd, ctx: ResolvedAdContext): boolean {
-  return ad.placements.includes(ctx.placement);
-}
-
-/**
- * House/fallback candidates ordered placement-specific first, then global
- * (D13). Each house turn rotates through the candidates evenly.
- */
-function selectHouseCandidates(house: ScoredAd[], ctx: ResolvedAdContext, stats?: EngineStats, count = 1): ScoredAd[] {
-  const ordered = [...house].sort((a, b) => {
-    const aSpecific = isPlacementSpecificHouse(a.ad, ctx) ? 1 : 0;
-    const bSpecific = isPlacementSpecificHouse(b.ad, ctx) ? 1 : 0;
-    if (aSpecific !== bSpecific) return bSpecific - aSpecific;
-    const aGlobal = a.ad.isGlobal ? 1 : 0;
-    const bGlobal = b.ad.isGlobal ? 1 : 0;
-    if (aGlobal !== bGlobal) return bGlobal - aGlobal;
-    return a.ad.priority - b.ad.priority;
-  });
-
-  const cumulative = ordered.reduce((sum, candidate) => sum + campaignImpressions(candidate.ad, stats), 0);
-  const picks: ScoredAd[] = [];
-  for (let i = 0; i < count && ordered.length > 0; i++) {
-    picks.push(ordered[(cumulative + i) % ordered.length]);
-  }
-  return picks;
-}
-
 export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: MatchOptions = {}): Promise<AdMatchResult[]> {
   const now = options.now ?? new Date();
   const ads = options.ads ?? (await loadActiveAds(db, now));
   const stats = options.stats ?? (await loadEngineStats(db, ctx, now));
-  const minimumCommercialInventory = Math.max(0, options.minimumCommercialInventory ?? 3);
   const count = Math.max(1, options.count ?? 1);
   const used = options.usedCampaignIds ?? new Set<string>();
 
-  const real: ScoredAd[] = [];
-  const fallback: ScoredAd[] = [];
+  const allEligible: ScoredAd[] = [];
 
   for (const ad of ads) {
     const score = scoreAd(ad, ctx, now, stats);
     if (score == null) continue;
-    if (ad.isFallback) fallback.push({ ad, score });
-    else real.push({ ad, score });
+    allEligible.push({ ad, score });
   }
-
-  const eligibleCommercial = real.length;
-  const houseBudget = eligibleCommercial >= minimumCommercialInventory ? 0 : Math.max(0, minimumCommercialInventory - eligibleCommercial);
-  const commercialTurns = Math.min(eligibleCommercial, count);
-  const houseTurns = Math.min(houseBudget, Math.max(0, count - commercialTurns));
 
   const picks: ScoredAd[] = [];
 
-  const fillCommercial = (limit: number) => {
+  const fill = (limit: number) => {
     while (picks.length < limit) {
-      const band = selectBand(real, used);
+      const band = selectBand(allEligible, used);
       if (band.length === 0) break;
       const chosen = pickWeighted(band);
       if (!chosen) break;
@@ -588,19 +550,14 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
     }
   };
 
-  fillCommercial(commercialTurns);
-  if (picks.length < commercialTurns) {
-    const leftovers = real.filter((candidate) => !used.has(candidate.ad.id));
+  fill(count);
+  if (picks.length < count) {
+    const leftovers = allEligible.filter((candidate) => !used.has(candidate.ad.id));
     for (const candidate of leftovers) {
-      if (picks.length >= commercialTurns) break;
+      if (picks.length >= count) break;
       picks.push(candidate);
       used.add(candidate.ad.id);
     }
-  }
-
-  if (picks.length < count) {
-    const housePicks = selectHouseCandidates(fallback, ctx, stats, Math.min(houseTurns, count - picks.length));
-    picks.push(...housePicks);
   }
 
   const results: AdMatchResult[] = [];
@@ -633,9 +590,7 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       description: ad.description[locale],
       cta: ad.cta[locale],
       targetUrl: ad.targetUrl,
-      isSponsored: ad.isSponsored,
       isFeatured: ad.isFeatured,
-      isFallback: ad.isFallback,
       placement: ctx.placement,
       channel,
       creativeId: creative?.id ?? null,
@@ -643,7 +598,7 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       creativeCount,
       durationSeconds,
       trackingToken: await signTrackingToken(
-        { campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType, creativeId: creative?.id ?? null, channel, inventoryClass: ad.isFallback ? "house" : "commercial" },
+        { campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType, creativeId: creative?.id ?? null, channel, inventoryClass: "commercial" },
         now,
       ),
     });
@@ -673,45 +628,34 @@ export async function matchAdsBatch(db: D1Database, contexts: ResolvedAdContext[
 export function computeInventoryHealth(
   ads: ParsedAd[],
   ctx: ResolvedAdContext,
-  options: { stats?: EngineStats; now?: Date; minimumCommercialInventory?: number } = {},
+  options: { stats?: EngineStats; now?: Date } = {},
 ): InventoryHealth {
   const now = options.now ?? new Date();
   const stats = options.stats;
-  const minimumCommercialInventory = Math.max(0, options.minimumCommercialInventory ?? 3);
 
-  let eligibleCommercial = 0;
-  let commercialImpressions = 0;
-  let houseImpressions = 0;
+  let eligibleAds = 0;
+  let totalImpressions = 0;
 
   for (const ad of ads) {
-    const isHouse = ad.isFallback;
     const impressions = campaignImpressions(ad, stats);
-    if (isHouse) houseImpressions += impressions;
-    else commercialImpressions += impressions;
-    if (scoreAd(ad, ctx, now, stats) != null && !isHouse) eligibleCommercial += 1;
+    totalImpressions += impressions;
+    if (scoreAd(ad, ctx, now, stats) != null) eligibleAds += 1;
   }
 
-  const totalValidImpressions = commercialImpressions + houseImpressions;
-  const fallbackTurns = eligibleCommercial >= minimumCommercialInventory ? 0 : Math.max(0, minimumCommercialInventory - eligibleCommercial);
-  const fallbackActive = fallbackTurns > 0;
   const status: InventoryHealth["status"] =
-    eligibleCommercial >= minimumCommercialInventory
+    eligibleAds >= 3
       ? "HEALTHY"
-      : eligibleCommercial > 0
+      : eligibleAds > 0
         ? "PARTIALLY_FILLED"
-        : "NO_COMMERCIAL_INVENTORY";
+        : "NO_INVENTORY";
 
   return {
     placement: ctx.placement,
     channel: ctx.channel ?? "website",
-    eligibleCommercial,
-    fallbackActive,
-    fallbackTurns,
+    eligibleAds,
     status,
-    commercialImpressions,
-    houseImpressions,
-    totalValidImpressions,
-    commercialFillRate: totalValidImpressions > 0 ? commercialImpressions / totalValidImpressions : 0,
+    totalImpressions,
+    fillRate: totalImpressions > 0 ? eligibleAds / Math.max(1, totalImpressions) : 0,
   };
 }
 

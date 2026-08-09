@@ -12,12 +12,11 @@ import {
 } from "@/src/constants/advertising";
 
 const statuses = ["draft", "active", "paused", "expired", "archived"] as const;
-const campaignTypes = ["platform", "sponsor", "property", "service", "request"] as const;
+const campaignTypes = ["platform", "property", "service", "request"] as const;
 const mediaTypes = ["image", "video"] as const;
 const supportedLocales = ["ar", "en", "tr"] as const;
 
 export const MAX_COMMERCIAL_CREATIVES = 5;
-export const MAX_HOUSE_CREATIVES = 10;
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -141,9 +140,7 @@ export type CampaignPayload = {
   frequencyCapPerUser: number;
   frequencyCapPeriod: string;
   isActive: boolean;
-  isSponsored: boolean;
   isFeatured: boolean;
-  isFallback: boolean;
   isGlobal: boolean;
 };
 
@@ -167,8 +164,8 @@ export type CreativePayload = {
   status: string;
 };
 
-export function normaliseCreatives(body: Record<string, unknown>, isFallback: boolean): CreativePayload[] {
-  const cap = isFallback ? MAX_HOUSE_CREATIVES : MAX_COMMERCIAL_CREATIVES;
+export function normaliseCreatives(body: Record<string, unknown>): CreativePayload[] {
+  const cap = MAX_COMMERCIAL_CREATIVES;
   if (!Array.isArray(body.creatives)) return [];
   return body.creatives.slice(0, cap).flatMap((item, index) => {
     if (!item || typeof item !== "object") return [];
@@ -195,7 +192,6 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
   const placements = validPlacementsForScopes(cleanList(body.placements, /^[a-z0-9_-]+$/, 60), sectionScopes);
   const channels = cleanList(body.channels, /^(?:website|office)$/, 2);
   if (!channels.length) channels.push("website");
-  const isFallback = Boolean(body.isFallback);
 
   return {
     internalName: clean(body.internalName, 140),
@@ -208,7 +204,7 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
     tabletMediaUrl: cleanUrl(body.tabletMediaUrl),
     posterUrl: cleanUrl(body.posterUrl),
     channels,
-    creatives: normaliseCreatives(body, isFallback),
+    creatives: normaliseCreatives(body),
     eyebrowAr: clean(body.eyebrowAr, 100),
     eyebrowEn: clean(body.eyebrowEn, 100),
     eyebrowTr: clean(body.eyebrowTr, 100),
@@ -267,9 +263,7 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
     frequencyCapPerUser: Math.max(0, cleanNumber(body.frequencyCapPerUser, 0, 1_000_000, 0)),
     frequencyCapPeriod: cleanChoice(body.frequencyCapPeriod, FREQUENCY_PERIODS, "day"),
     isActive: body.isActive !== false,
-    isSponsored: Boolean(body.isSponsored),
     isFeatured: Boolean(body.isFeatured),
-    isFallback: Boolean(body.isFallback),
     isGlobal: Boolean(body.isGlobal),
   };
 }
@@ -508,9 +502,7 @@ export function serialiseCampaign(row: AdminRow) {
     frequencyCapPeriod: row.frequency_cap_period,
     approvalStatus: row.approval_status,
     isActive: Number(row.is_active) === 1,
-    isSponsored: Number(row.is_sponsored) === 1,
     isFeatured: Number(row.is_featured) === 1,
-    isFallback: Number(row.is_fallback) === 1,
     isGlobal: Number(row.is_global) === 1,
     totalImpressions: Number(row.total_impressions),
     totalUniqueImpressions: Number(row.total_unique_impressions),

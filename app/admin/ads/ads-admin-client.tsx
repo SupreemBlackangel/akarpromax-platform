@@ -38,7 +38,6 @@ type CreativeDraft = {
 };
 
 const MAX_COMMERCIAL_CREATIVES = 5;
-const MAX_HOUSE_CREATIVES = 10;
 
 type Campaign = {
   id: string;
@@ -102,9 +101,7 @@ type Campaign = {
   frequencyCapPeriod: string;
   approvalStatus: string;
   isActive: boolean;
-  isSponsored: boolean;
   isFeatured: boolean;
-  isFallback: boolean;
   isGlobal: boolean;
   totalImpressions: number;
   totalUniqueImpressions: number;
@@ -190,9 +187,7 @@ type FormState = {
   frequencyCapPeriod: string;
   approvalStatus: string;
   isActive: boolean;
-  isSponsored: boolean;
   isFeatured: boolean;
-  isFallback: boolean;
   isGlobal: boolean;
   creatives: CreativeDraft[];
 };
@@ -314,9 +309,7 @@ function serialisedToForm(c: Campaign): FormState {
     frequencyCapPeriod: c.frequencyCapPeriod,
     approvalStatus: c.approvalStatus,
     isActive: c.isActive,
-    isSponsored: c.isSponsored,
     isFeatured: c.isFeatured,
-    isFallback: c.isFallback,
     isGlobal: c.isGlobal,
     creatives: (c.creatives ?? []).map((creative) => ({
       id: creative.id,
@@ -391,9 +384,7 @@ function emptyForm(countriesList: string[]): FormState {
     frequencyCapPeriod: "day",
     approvalStatus: "pending",
     isActive: true,
-    isSponsored: false,
     isFeatured: false,
-    isFallback: false,
     isGlobal: false,
     creatives: [],
   };
@@ -460,9 +451,7 @@ function toApiBody(form: FormState) {
     frequencyCapPeriod: form.frequencyCapPeriod,
     approvalStatus: form.approvalStatus,
     isActive: form.isActive,
-    isSponsored: form.isSponsored,
     isFeatured: form.isFeatured,
-    isFallback: form.isFallback,
     isGlobal: form.isGlobal,
     creatives: form.creatives.map((creative) => ({
       id: creative.id || undefined,
@@ -573,7 +562,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  const creativeLimit = form.isFallback ? MAX_HOUSE_CREATIVES : MAX_COMMERCIAL_CREATIVES;
+  const creativeLimit = MAX_COMMERCIAL_CREATIVES;
 
   function addCreative() {
     setForm((current) => {
@@ -839,9 +828,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             <label>الحالة<select value={form.status} onChange={(event) => setField("status", event.target.value)}><option value="draft">مسودة</option>{canPublish && <option value="active">نشطة</option>}<option value="paused">متوقفة</option><option value="expired">منتهية</option></select></label>
             <label>حالة الاعتماد{canApprove ? <select value={form.approvalStatus} onChange={(event) => setField("approvalStatus", event.target.value)}>{APPROVAL_STATUSES.map((status) => <option key={status} value={status}>{approvalLabel(status)}</option>)}</select> : <input disabled value={approvalLabel(form.approvalStatus)} />}</label>
             <fieldset className="ads-bool-row"><legend>خيارات الظهور</legend>
-              <label><input type="checkbox" checked={form.isSponsored} onChange={(event) => setField("isSponsored", event.target.checked)} />معلَّم كرعاية</label>
               <label><input type="checkbox" checked={form.isFeatured} onChange={(event) => setField("isFeatured", event.target.checked)} />مميز</label>
-              <label><input type="checkbox" checked={form.isFallback} onChange={(event) => setField("isFallback", event.target.checked)} />إعلان احتياطي</label>
               <label><input type="checkbox" checked={form.isGlobal} onChange={(event) => setField("isGlobal", event.target.checked)} />عام (كل الأقسام)</label>
               <label><input type="checkbox" checked={form.isActive} onChange={(event) => setField("isActive", event.target.checked)} />مفعّل الآن</label>
             </fieldset>
@@ -875,7 +862,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <button type="button" onClick={() => removeCreative(index)}>إزالة</button>
                 </div>
               ))}
-              <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (5 للحملة التجارية، 10 للاحتياطية).</small></div>
+              <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (حد أقصى 5 وسائط).</small></div>
             </fieldset>
           </section>
 
@@ -982,11 +969,11 @@ function AnalyticsPanel() {
       spentAmount: number; budget: number; dailyBudget: number;
     }>;
     placements: Array<{ placement: string; channel: string; inventoryClass: string; impressions: number }>;
-    split: { commercial: number; house: number };
+    split: { commercial: number };
     inventory: Array<{
-      placement: string; status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_COMMERCIAL_INVENTORY";
-      eligibleCommercial: number; fallbackActive: boolean; fallbackTurns: number;
-      commercialImpressions: number; houseImpressions: number; commercialFillRate: number;
+      placement: string; status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_INVENTORY";
+      eligibleAds: number;
+      commercialImpressions: number; fillRate: number;
     }>;
     today: string;
   } | null>(null);
@@ -1015,12 +1002,12 @@ function AnalyticsPanel() {
     spent: acc.spent + c.spentAmount,
   }), { impressions: 0, uniqueImpressions: 0, clicks: 0, conversions: 0, spent: 0 });
 
-  const trackedImpressions = stats.split.commercial + stats.split.house;
-  const commercialFillRate = trackedImpressions > 0 ? stats.split.commercial / trackedImpressions : 0;
+  const trackedImpressions = stats.split.commercial;
+  const commercialFillRate = trackedImpressions > 0 ? 1 : 0;
   const healthStatus: Record<string, string> = {
-    HEALTHY: "ممتلئ تجاريًا",
+    HEALTHY: "ممتلئ",
     PARTIALLY_FILLED: "امتلاء جزئي",
-    NO_COMMERCIAL_INVENTORY: "بدون مخزون تجاري",
+    NO_INVENTORY: "بدون مخزون",
   };
 
   return (
@@ -1029,7 +1016,7 @@ function AnalyticsPanel() {
       <div className="ads-stat-grid">
         <article><span>إجمالي الظهور</span><strong>{totals.impressions.toLocaleString("ar")}</strong><small>{totals.uniqueImpressions.toLocaleString("ar")} فريد</small></article>
         <article><span>النقرات</span><strong>{totals.clicks.toLocaleString("ar")}</strong><small>{totals.impressions ? ((totals.clicks / totals.impressions) * 100).toFixed(2) : "0.00"}% CTR</small></article>
-        <article><span>التجاري / الاحتياطي</span><strong>{stats.split.commercial.toLocaleString("ar")} / {stats.split.house.toLocaleString("ar")}</strong><small>نسبة الامتلاء {Math.round(commercialFillRate * 100)}%</small></article>
+        <article><span>الظهور المسجلة</span><strong>{stats.split.commercial.toLocaleString("ar")}</strong><small>{Math.round(commercialFillRate * 100)}% نسبة الامتلاء</small></article>
         <article><span>الإنفاق</span><strong>{totals.spent.toLocaleString("ar")}</strong><small>من الميزانيات</small></article>
       </div>
       <div className="ads-analytics-list">
@@ -1041,12 +1028,12 @@ function AnalyticsPanel() {
       </div>
       {stats.inventory.length > 0 && <div className="ads-panel-title"><div><p>المخزون</p><h2>صحة مخزون المواضع</h2></div><span>{stats.inventory.filter((item) => item.status === "HEALTHY").length} سليم</span></div>}
       <div className="ads-placement-bars">{stats.inventory.map((item) => {
-        const width = Math.max(3, Math.round(item.commercialFillRate * 100));
+        const width = Math.max(3, Math.round(item.fillRate * 100));
         return <div className="ads-placement-bar" key={item.placement}>
           <span title={item.placement}>{AD_PLACEMENTS[item.placement]?.label.ar ?? item.placement}</span>
           <div><i style={{ width: `${width}%` }} /></div>
           <b>{healthStatus[item.status] ?? item.status}</b>
-          <small>{item.commercialImpressions.toLocaleString("ar")} تجاري / {item.houseImpressions.toLocaleString("ar")} احتياطي</small>
+          <small>{item.commercialImpressions.toLocaleString("ar")} ظهور • {item.eligibleAds} إعلان مؤهل</small>
         </div>;
       })}</div>
     </section>

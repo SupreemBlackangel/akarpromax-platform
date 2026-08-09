@@ -72,9 +72,9 @@ export async function POST(req: NextRequest) {
   try {
     const db = await getRuntimeDb();
     const campaign = await db
-      .prepare("SELECT is_fallback, channels FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
+      .prepare("SELECT channels FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
       .bind(campaignId)
-      .first<{ is_fallback: number; channels: string | null }>();
+      .first<{ channels: string | null }>();
     if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
 
     let channels: string[] = ["website"];
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       if (verified?.cid !== campaignId) {
         return NextResponse.json({ error: "Tracking token mismatch" }, { status: 400 });
       }
-      const inventoryClass = verified.ic ?? (Number(campaign.is_fallback) === 1 ? "house" : "commercial");
+      const inventoryClass = verified.ic ?? "commercial";
       if (eventType === "click") {
         await recordClick(db, campaignId, ctx, new Date(), { creativeId: verified.cr ?? null, inventoryClass });
       } else {

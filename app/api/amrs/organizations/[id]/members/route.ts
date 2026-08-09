@@ -9,15 +9,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
-  const org = await getOrganizationById(params.id);
+  const org = await getOrganizationById(id);
   if (!org) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
-  const members = await getOrganizationMembers(params.id);
+  const members = await getOrganizationMembers(id);
   if (!canAccessAmrsAdmin(identity) && org.status !== "active") {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
@@ -29,8 +30,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await ensurePgIdentitySchema();
   const identity = await getSessionIdentity();
   const session = await getSession();
@@ -53,22 +55,22 @@ export async function POST(
     return NextResponse.json({ error: "INVALID_ROLE" }, { status: 400 });
   }
 
-  const org = await getOrganizationById(params.id);
+  const org = await getOrganizationById(id);
   if (!org) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
 
-  const inviterRole = await getOrganizationMemberRole(params.id, session.userId);
+  const inviterRole = await getOrganizationMemberRole(id, session.userId);
   if (!inviterRole || !["owner", "admin"].includes(inviterRole)) {
     return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
   }
 
-  const alreadyMember = await isOrganizationMember(params.id, userId);
+  const alreadyMember = await isOrganizationMember(id, userId);
   if (alreadyMember) {
     return NextResponse.json({ error: "ALREADY_MEMBER" }, { status: 409 });
   }
 
-  const membership = await addOrganizationMember(params.id, userId, role as "admin" | "manager" | "agent" | "member", session.userId);
+  const membership = await addOrganizationMember(id, userId, role as "admin" | "manager" | "agent" | "member", session.userId);
   return NextResponse.json({ ok: true, membership }, { status: 201 });
 }
 

@@ -5,8 +5,9 @@ import { SurveyorCandidate, SurveyorQuery } from "@/lib/land/contracts";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const land = getLand(params.id);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const land = getLand(id);
   if (!land) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }

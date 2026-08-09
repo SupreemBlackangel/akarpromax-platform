@@ -11,7 +11,7 @@ export type TrackingPayload = {
   pg: string;
   cr?: string;
   ch?: string;
-  ic?: "commercial" | "house";
+  ic?: "commercial";
   ts: number;
 };
 
@@ -29,7 +29,7 @@ function base64UrlDecode(value: string): string {
 }
 
 export async function signTrackingToken(
-  input: { campaignId: string; placement: string; section: string; pageType: string; creativeId?: string | null; channel?: string; inventoryClass?: "commercial" | "house" },
+  input: { campaignId: string; placement: string; section: string; pageType: string; creativeId?: string | null; channel?: string; inventoryClass?: "commercial" },
   now = new Date(),
 ): Promise<string> {
   const payload = base64UrlEncode(
@@ -57,7 +57,7 @@ export async function verifyTrackingToken(token: string): Promise<TrackingPayloa
     const data = JSON.parse(base64UrlDecode(payload)) as TrackingPayload;
     if (typeof data.cid !== "string" || typeof data.pl !== "string" || typeof data.ts !== "number") return null;
     if (Date.now() - data.ts > TOKEN_TTL_MS) return null;
-    if (data.ic !== undefined && data.ic !== "commercial" && data.ic !== "house") return null;
+    if (data.ic !== undefined && data.ic !== "commercial") return null;
     if (data.ch !== undefined && data.ch !== "website" && data.ch !== "office") return null;
     return data;
   } catch {
@@ -120,7 +120,7 @@ export async function recordImpression(
   campaignId: string,
   ctx: ResolvedAdContext,
   now = new Date(),
-  extra: { creativeId?: string | null; inventoryClass?: "commercial" | "house" } = {},
+  extra: { creativeId?: string | null; inventoryClass?: "commercial" } = {},
 ) {
   const unique = !(await hasSeenBefore(db, campaignId, ctx, frequencyWindowSince("day", now)));
   const inventoryClass = extra.inventoryClass ?? "commercial";
@@ -172,7 +172,7 @@ export async function recordClick(
   campaignId: string,
   ctx: ResolvedAdContext,
   now = new Date(),
-  extra: { creativeId?: string | null; inventoryClass?: "commercial" | "house" } = {},
+  extra: { creativeId?: string | null; inventoryClass?: "commercial" } = {},
 ) {
   const inventoryClass = extra.inventoryClass ?? "commercial";
   await db

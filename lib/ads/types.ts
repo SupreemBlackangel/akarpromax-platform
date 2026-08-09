@@ -191,9 +191,7 @@ export type ParsedAd = {
   frequencyCapPeriod: string;
   approvalStatus: string;
   isActive: boolean;
-  isSponsored: boolean;
   isFeatured: boolean;
-  isFallback: boolean;
   isGlobal: boolean;
   totalImpressions: number;
   totalClicks: number;
@@ -229,9 +227,7 @@ export type AdMatchResult = {
   description: string;
   cta: string;
   targetUrl: string;
-  isSponsored: boolean;
   isFeatured: boolean;
-  isFallback: boolean;
   placement: string;
   channel: AdChannel;
   creativeId: string | null;
@@ -247,18 +243,13 @@ export type MatchOptions = {
   stats?: EngineStats;
   ads?: ParsedAd[];
   now?: Date;
-  minimumCommercialInventory?: number;
 };
 
 export type InventoryHealth = {
   placement: string;
   channel: AdChannel;
-  eligibleCommercial: number;
-  fallbackActive: boolean;
-  fallbackTurns: number;
-  status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_COMMERCIAL_INVENTORY";
-  commercialImpressions: number;
-  houseImpressions: number;
-  totalValidImpressions: number;
-  commercialFillRate: number;
+  eligibleAds: number;
+  status: "HEALTHY" | "PARTIALLY_FILLED" | "NO_INVENTORY";
+  totalImpressions: number;
+  fillRate: number;
 };

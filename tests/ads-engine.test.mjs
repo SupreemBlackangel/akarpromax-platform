@@ -95,9 +95,7 @@ function makeAd(overrides) {
     frequencyCapPeriod: "day",
     approvalStatus: "approved",
     isActive: true,
-    isSponsored: false,
     isFeatured: false,
-    isFallback: false,
     isGlobal: false,
     totalImpressions: 0,
     totalClicks: 0,
@@ -111,51 +109,39 @@ function commercialAds(count, prefix = "com") {
   return Array.from({ length: count }, (_, index) => makeAd({ id: `${prefix}-${index + 1}` }));
 }
 
-function houseAds(count, prefix = "house") {
-  return Array.from({ length: count }, (_, index) => makeAd({ id: `${prefix}-${index + 1}`, isFallback: true }));
-}
-
-test("CASE 1: 3 eligible commercial campaigns -> no House Ad", async () => {
-  const ads = [...commercialAds(3), ...houseAds(1)];
+test("CASE 1: 3 eligible campaigns -> 3 results (all treated equally)", async () => {
+  const ads = commercialAds(3);
   const results = await matchAds(null, FALLBACK_CTX, { count: 3, ads, stats: EMPTY_STATS });
   assert.equal(results.length, 3);
-  assert.ok(results.every((result) => !result.isFallback), "no house ad when 3 commercial eligible");
+  assert.ok(results.every((result) => result.campaignId), "all results have campaign IDs");
 });
 
-test("CASE 2: 2 eligible commercial campaigns -> 1 House turn", async () => {
-  const ads = [...commercialAds(2), ...houseAds(1)];
+test("CASE 2: 2 eligible campaigns -> count met, no special house fill", async () => {
+  const ads = commercialAds(2);
+  const results = await matchAds(null, FALLBACK_CTX, { count: 2, ads, stats: EMPTY_STATS });
+  assert.equal(results.length, 2);
+});
+
+test("CASE 3: 1 eligible campaign -> only 1 returned (no house fill)", async () => {
+  const ads = commercialAds(1);
   const results = await matchAds(null, FALLBACK_CTX, { count: 3, ads, stats: EMPTY_STATS });
-  assert.equal(results.length, 3);
-  assert.equal(results.filter((result) => !result.isFallback).length, 2);
-  assert.equal(results.filter((result) => result.isFallback).length, 1);
+  assert.equal(results.length, 1);
 });
 
-test("CASE 3: 1 eligible commercial campaign -> 2 House turns", async () => {
-  const ads = [...commercialAds(1), ...houseAds(2)];
+test("CASE 4: 0 eligible campaigns -> empty results", async () => {
+  const ads = commercialAds(0);
   const results = await matchAds(null, FALLBACK_CTX, { count: 3, ads, stats: EMPTY_STATS });
-  assert.equal(results.length, 3);
-  assert.equal(results.filter((result) => !result.isFallback).length, 1);
-  assert.equal(results.filter((result) => result.isFallback).length, 2);
+  assert.equal(results.length, 0);
 });
 
-test("CASE 4: 0 eligible commercial campaigns -> House inventory only", async () => {
-  const ads = [...houseAds(2)];
-  const results = await matchAds(null, FALLBACK_CTX, { count: 3, ads, stats: EMPTY_STATS });
-  assert.equal(results.length, 3);
-  assert.ok(results.every((result) => result.isFallback), "house-only fill");
-});
-
-test("CASE 5: 4+ campaigns but only 2 eligible after geo targeting -> fallback still active", async () => {
+test("CASE 5: 4+ campaigns but only 2 eligible after geo targeting", async () => {
   const ctx = { ...FALLBACK_CTX, countryCode: "om" };
   const ads = [
     ...commercialAds(2),
     ...Array.from({ length: 3 }, (_, index) => makeAd({ id: `other-country-${index + 1}`, countries: ["sa"] })),
-    ...houseAds(1),
   ];
   const results = await matchAds(null, ctx, { count: 3, ads, stats: EMPTY_STATS });
-  assert.equal(results.length, 3);
-  assert.equal(results.filter((result) => !result.isFallback).length, 2);
-  assert.equal(results.filter((result) => result.isFallback).length, 1, "fallback still active when only 2 eligible");
+  assert.equal(results.length, 2, "only 2 eligible after geo filter");
 });
 
 test("CASE 6: 5-creative campaign receives same campaign frequency as 1-creative campaign", async () => {
@@ -223,15 +209,13 @@ function officeCtx() {
   return buildContext({ placement: "office_dashboard_hero", section: "office", channel: "office", countryCode: "om", language: "ar", deviceType: "desktop" });
 }
 
-test("CASE 12: house impressions are excluded from commercial advertiser totals", async () => {
-  const commercial = makeAd({ id: "commercial", totalImpressions: 100 });
-  const house = makeAd({ id: "house", isFallback: true, totalImpressions: 40 });
-  const health = computeInventoryHealth([commercial, house], FALLBACK_CTX, { stats: EMPTY_STATS });
-  assert.equal(health.commercialImpressions, 100);
-  assert.equal(health.houseImpressions, 40);
-  assert.equal(health.totalValidImpressions, 140);
-  assert.equal(health.commercialFillRate, 100 / 140);
-  assert.equal(health.status, "PARTIALLY_FILLED", "1 eligible commercial < minimumCommercialInventory 3");
+test("CASE 12: inventory health reports eligible ads and impressions", async () => {
+  const ad1 = makeAd({ id: "ad1", totalImpressions: 100 });
+  const ad2 = makeAd({ id: "ad2", totalImpressions: 40 });
+  const health = computeInventoryHealth([ad1, ad2], FALLBACK_CTX, { stats: EMPTY_STATS });
+  assert.equal(health.eligibleAds, 2);
+  assert.equal(health.totalImpressions, 140);
+  assert.equal(health.status, "PARTIALLY_FILLED", "2 eligible < minimum 3");
 });
 
 test("CASE 11: unsupported admin targeting options are absent from the payload contract", async () => {
