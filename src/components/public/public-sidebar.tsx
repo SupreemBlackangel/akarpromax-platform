@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Translation } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
-import { groupPublicNav, isNavItemActive } from "@/src/config/public-navigation";
+import { isNavItemActive } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
 
 type PublicSidebarProps = {
@@ -13,8 +13,6 @@ type PublicSidebarProps = {
 };
 
 export default function PublicSidebar({ labels, items, currentPath, footer, className = "" }: PublicSidebarProps) {
-  const sections = groupPublicNav(items);
-
   return (
     <aside
       data-public-sidebar-state="expanded"
@@ -38,38 +36,31 @@ export default function PublicSidebar({ labels, items, currentPath, footer, clas
         </div>
 
         <div className="flex-1 overflow-y-auto px-[var(--space-4)] py-[var(--space-5)]">
-          {sections.map((section) => (
-            <div key={section.key} className="mb-[var(--space-6)] last:mb-0">
-              <p className="mb-[var(--space-2)] px-[var(--space-3)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-text-muted)]">
-                {labels[section.labelKey]}
-              </p>
-              <nav aria-label={labels[section.labelKey]} className="sidebar-public-nav flex flex-col gap-[var(--space-1)]">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const label = labels[item.labelKey];
-                  const active = isNavItemActive(item, currentPath);
-                  return (
-                    <a
-                      key={item.key}
-                      href={item.href}
-                      title={label}
-                      aria-label={label}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "inline-flex min-h-11 items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border px-[var(--space-3)] py-[var(--space-2)] text-[var(--font-size-sm)] font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
-                        active
-                          ? "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary-hover)]"
-                          : "border-transparent text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface)] hover:text-[color:var(--color-text-primary)]",
-                      )}
-                    >
-                      <Icon aria-hidden="true" className="size-5 shrink-0" />
-                      <span className="truncate">{label}</span>
-                    </a>
-                  );
-                })}
-              </nav>
-            </div>
-          ))}
+          <nav aria-label={labels.mainNavAria} className="sidebar-public-nav flex flex-col gap-[var(--space-2)]">
+            {items.map((item) => {
+              const Icon = item.icon;
+              const label = labels[item.labelKey];
+              const active = isNavItemActive(item, currentPath);
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  title={label}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "inline-flex min-h-12 items-center gap-[var(--space-3)] rounded-[var(--radius-lg)] border px-[var(--space-3)] py-[var(--space-2)] text-[var(--font-size-sm)] font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
+                    active
+                      ? "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary-hover)]"
+                      : "border-transparent text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface)] hover:text-[color:var(--color-text-primary)]",
+                  )}
+                >
+                  <Icon aria-hidden="true" className="size-5 shrink-0" />
+                  <span className="truncate">{label}</span>
+                </a>
+              );
+            })}
+          </nav>
         </div>
 
         {footer && <div className="border-t border-[color:var(--color-border)] p-[var(--space-4)]">{footer}</div>}

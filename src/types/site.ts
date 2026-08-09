@@ -91,10 +91,18 @@ export type Translation = {
   arrow: string;
   navHome: string;
   navProperties: string;
+  navEngineeringTools: string;
   navServices: string;
   navDirectory: string;
   navOrganizations: string;
   navProviders: string;
+  navRealEstateCompanies: string;
+  navOtherCompanies: string;
+  navCommunity: string;
+  navKnowledge: string;
+  navAdvertise: string;
+  navAbout: string;
+  navContact: string;
   navFindMyLand: string;
   navWorkspace: string;
   navMyRequests: string;

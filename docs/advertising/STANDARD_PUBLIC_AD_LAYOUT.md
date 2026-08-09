@@ -23,12 +23,20 @@ These are real placement IDs, not decorative placeholders.
 ## Eligible Page Families
 
 - `home`
+- `properties`
 - `services`
 - `providers`
 - `provider-detail`
+- `offices`
+- `office-detail`
+- `companies`
+- `company-detail`
 - `organizations`
 - `organization-detail`
 - `directory`
+- `community`
+- `knowledge`
+- `about`
 - `news`
 - `property-detail`
 
@@ -45,6 +53,8 @@ Current explicit safe/no-ad flows:
 - `/service-requests/new`
 - `/service-requests/[id]/offer`
 - `/providers/apply`
+- `/advertise`
+- `/contact`
 
 These routes opt into `adLayout={{ mode: "safe-no-ads" }}`.
 

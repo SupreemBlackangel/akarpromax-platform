@@ -66,7 +66,7 @@ export default function Home() {
   const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
   const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
   const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
-  const publicNav = getPublicNav(viewer);
+  const publicNav = getPublicNav();
 
   const handleLogout = async () => {
     try {

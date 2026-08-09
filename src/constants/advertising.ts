@@ -3,10 +3,16 @@ export const PLATFORM_SECTIONS = {
   PROPERTIES: "properties",
   SERVICES: "services",
   PROVIDERS: "providers",
+  COMPANIES: "companies",
   ORGANIZATIONS: "organizations",
   DIRECTORY: "directory",
   TOOLS: "tools",
   OFFICES: "offices",
+  COMMUNITY: "community",
+  KNOWLEDGE: "knowledge",
+  ABOUT: "about",
+  CONTACT: "contact",
+  ADVERTISE: "advertise",
   ENGINEERING_TOOLS: "engineering-tools",
   CONTRACTORS: "contractors",
   CONSULTATIONS: "consultations",
@@ -32,10 +38,16 @@ export const PLATFORM_SECTIONS_REGISTRY: Record<PlatformSection, SectionMeta> = 
   properties: { key: "properties", label: { ar: "العقارات", en: "Properties", tr: "Gayrimenkuller" }, path: "/properties" },
   services: { key: "services", label: { ar: "الخدمات", en: "Services", tr: "Hizmetler" }, path: "/services" },
   providers: { key: "providers", label: { ar: "المحترفون", en: "Professionals", tr: "Uzmanlar" }, path: "/providers" },
+  companies: { key: "companies", label: { ar: "شركات أخرى", en: "Other Companies", tr: "Diger Sirketler" }, path: "/companies" },
   organizations: { key: "organizations", label: { ar: "الشركات", en: "Companies", tr: "Şirketler" }, path: "/organizations" },
   directory: { key: "directory", label: { ar: "الدليل", en: "Directory", tr: "Dizin" }, path: "/directory" },
   tools: { key: "tools", label: { ar: "الأدوات", en: "Tools", tr: "Araçlar" }, path: "/tools" },
-  offices: { key: "offices", label: { ar: "المكاتب العقارية", en: "Real Estate Offices", tr: "Gayrimenkul Ofisleri" }, path: "/offices" },
+  offices: { key: "offices", label: { ar: "شركات و مكاتب عقارية", en: "Real Estate Companies & Offices", tr: "Emlak Sirketleri ve Ofisleri" }, path: "/offices" },
+  community: { key: "community", label: { ar: "منتدى البناء و العقار", en: "Construction & Real Estate Forum", tr: "Insaat ve Gayrimenkul Forumu" }, path: "/community" },
+  knowledge: { key: "knowledge", label: { ar: "الكتب والبرامج", en: "Books & Software", tr: "Kitaplar ve Yazilimlar" }, path: "/knowledge" },
+  about: { key: "about", label: { ar: "من نحن", en: "About Us", tr: "Hakkimizda" }, path: "/about" },
+  contact: { key: "contact", label: { ar: "اتصل بنا", en: "Contact Us", tr: "Iletisim" }, path: "/contact" },
+  advertise: { key: "advertise", label: { ar: "اعلن معنا", en: "Advertise with Us", tr: "Bizimle Reklam Verin" }, path: "/advertise" },
   "engineering-tools": { key: "engineering-tools", label: { ar: "الأدوات الهندسية", en: "Engineering Tools", tr: "Mühendislik Araçları" }, path: "/engineering-tools" },
   contractors: { key: "contractors", label: { ar: "المقاولون", en: "Contractors", tr: "Müteahhitler" }, path: "/contractors" },
   consultations: { key: "consultations", label: { ar: "الاستشارات", en: "Consultations", tr: "Danışmanlıklar" }, path: "/consultations" },
@@ -50,11 +62,17 @@ export const SECTION_ALIASES: Record<string, PlatformSection[]> = {
   properties: ["properties"],
   services: ["services"],
   providers: ["providers", "contractors"],
+  companies: ["companies", "organizations"],
   contractors: ["contractors", "providers"],
-  organizations: ["organizations", "offices"],
+  organizations: ["organizations", "offices", "companies"],
   offices: ["offices", "organizations"],
   directory: ["directory"],
   tools: ["tools", "engineering-tools"],
+  community: ["community"],
+  knowledge: ["knowledge"],
+  about: ["about"],
+  contact: ["contact"],
+  advertise: ["advertise"],
   "engineering-tools": ["engineering-tools", "tools"],
   consultations: ["consultations"],
   auctions: ["auctions"],
@@ -205,12 +223,20 @@ type StandardWebsitePlacementFamily = {
 
 const STANDARD_WEBSITE_FAMILIES: StandardWebsitePlacementFamily[] = [
   { key: "home", section: "home", label: label("الرئيسية", "Home", "Ana Sayfa"), prefix: "web_home" },
+  { key: "properties", section: "properties", label: label("العقارات", "Properties", "Gayrimenkuller"), prefix: "web_properties" },
   { key: "services", section: "services", label: label("الخدمات", "Services", "Hizmetler"), prefix: "web_services" },
   { key: "providers", section: "providers", label: label("المحترفون", "Professionals", "Uzmanlar"), prefix: "web_providers" },
   { key: "provider-detail", section: "providers", label: label("تفاصيل المحترف", "Professional Detail", "Uzman Detayı"), prefix: "web_provider_detail" },
+  { key: "offices", section: "offices", label: label("شركات و مكاتب عقارية", "Real Estate Companies & Offices", "Emlak Sirketleri ve Ofisleri"), prefix: "web_offices" },
+  { key: "office-detail", section: "offices", label: label("تفاصيل المكتب العقاري", "Real Estate Office Detail", "Emlak Ofisi Detayi"), prefix: "web_office_detail" },
+  { key: "companies", section: "companies", label: label("شركات أخرى", "Other Companies", "Diger Sirketler"), prefix: "web_companies" },
+  { key: "company-detail", section: "companies", label: label("تفاصيل الشركة", "Company Detail", "Sirket Detayi"), prefix: "web_company_detail" },
   { key: "organizations", section: "organizations", label: label("الشركات", "Companies", "Şirketler"), prefix: "web_organizations" },
   { key: "organization-detail", section: "organizations", label: label("تفاصيل الشركة", "Company Detail", "Şirket Detayı"), prefix: "web_organization_detail" },
   { key: "directory", section: "directory", label: label("الدليل", "Directory", "Dizin"), prefix: "web_directory" },
+  { key: "community", section: "community", label: label("منتدى البناء و العقار", "Construction & Real Estate Forum", "Insaat ve Gayrimenkul Forumu"), prefix: "web_community" },
+  { key: "knowledge", section: "knowledge", label: label("الكتب والبرامج", "Books & Software", "Kitaplar ve Yazilimlar"), prefix: "web_knowledge" },
+  { key: "about", section: "about", label: label("من نحن", "About Us", "Hakkimizda"), prefix: "web_about" },
   { key: "news", section: "news", label: label("الأخبار", "News", "Haberler"), prefix: "web_news" },
   { key: "property-detail", section: "properties", label: label("تفاصيل العقار", "Property Detail", "Mülk Detayı"), prefix: "web_property_detail" },
 ];
@@ -299,6 +325,10 @@ export function resolvePageType(section: PlatformSection, pathname: string): Pag
   if (section === PLATFORM_SECTIONS.NEWS && segments.length >= 2) return PAGE_TYPES.ARTICLE;
   if (segments[0] === "search") return PAGE_TYPES.SEARCH_RESULTS;
   if (segments[0] === "admin") return PAGE_TYPES.DASHBOARD;
+  const generalSinglePageSections: PlatformSection[] = [PLATFORM_SECTIONS.COMMUNITY, PLATFORM_SECTIONS.KNOWLEDGE, PLATFORM_SECTIONS.ABOUT, PLATFORM_SECTIONS.CONTACT, PLATFORM_SECTIONS.ADVERTISE];
+  if (segments.length === 1 && generalSinglePageSections.includes(section)) {
+    return PAGE_TYPES.GENERAL;
+  }
 
   const isListing = segments.length === 1 || (segments.length === 2 && segments[1] === "list");
   if (isListing) return PAGE_TYPES.LISTING;
@@ -308,6 +338,7 @@ export function resolvePageType(section: PlatformSection, pathname: string): Pag
     services: PAGE_TYPES.DETAILS,
     providers: PAGE_TYPES.PROVIDER_PROFILE,
     contractors: PAGE_TYPES.PROVIDER_PROFILE,
+    companies: PAGE_TYPES.OFFICE_PROFILE,
     organizations: PAGE_TYPES.OFFICE_PROFILE,
     offices: PAGE_TYPES.OFFICE_PROFILE,
     tools: PAGE_TYPES.TOOL_DETAILS,

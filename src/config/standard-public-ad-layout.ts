@@ -12,12 +12,20 @@ export type StandardPublicAdSlotKey =
 
 export type StandardPublicAdLayoutKey =
   | "home"
+  | "properties"
   | "services"
   | "providers"
   | "provider-detail"
+  | "offices"
+  | "office-detail"
+  | "companies"
+  | "company-detail"
   | "organizations"
   | "organization-detail"
   | "directory"
+  | "community"
+  | "knowledge"
+  | "about"
   | "news"
   | "property-detail";
 
@@ -65,12 +73,20 @@ function createFamily(key: StandardPublicAdLayoutKey, pageLabel: StandardPublicA
 
 export const STANDARD_PUBLIC_AD_LAYOUT_V1: Record<StandardPublicAdLayoutKey, StandardPublicAdLayoutFamily> = {
   home: createFamily("home", { ar: "الرئيسية", en: "Home", tr: "Ana Sayfa" }, "web_home"),
+  properties: createFamily("properties", { ar: "العقارات", en: "Properties", tr: "Gayrimenkuller" }, "web_properties"),
   services: createFamily("services", { ar: "الخدمات", en: "Services", tr: "Hizmetler" }, "web_services"),
   providers: createFamily("providers", { ar: "المحترفون", en: "Professionals", tr: "Uzmanlar" }, "web_providers"),
   "provider-detail": createFamily("provider-detail", { ar: "تفاصيل المحترف", en: "Professional Detail", tr: "Uzman Detayı" }, "web_provider_detail"),
+  offices: createFamily("offices", { ar: "شركات و مكاتب عقارية", en: "Real Estate Companies & Offices", tr: "Emlak Sirketleri ve Ofisleri" }, "web_offices"),
+  "office-detail": createFamily("office-detail", { ar: "تفاصيل المكتب العقاري", en: "Real Estate Office Detail", tr: "Emlak Ofisi Detayi" }, "web_office_detail"),
+  companies: createFamily("companies", { ar: "شركات أخرى", en: "Other Companies", tr: "Diger Sirketler" }, "web_companies"),
+  "company-detail": createFamily("company-detail", { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Sirket Detayi" }, "web_company_detail"),
   organizations: createFamily("organizations", { ar: "الشركات", en: "Companies", tr: "Şirketler" }, "web_organizations"),
   "organization-detail": createFamily("organization-detail", { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Şirket Detayı" }, "web_organization_detail"),
   directory: createFamily("directory", { ar: "الدليل", en: "Directory", tr: "Dizin" }, "web_directory"),
+  community: createFamily("community", { ar: "منتدى البناء و العقار", en: "Construction & Real Estate Forum", tr: "Insaat ve Gayrimenkul Forumu" }, "web_community"),
+  knowledge: createFamily("knowledge", { ar: "الكتب والبرامج", en: "Books & Software", tr: "Kitaplar ve Yazilimlar" }, "web_knowledge"),
+  about: createFamily("about", { ar: "من نحن", en: "About Us", tr: "Hakkimizda" }, "web_about"),
   news: createFamily("news", { ar: "الأخبار", en: "News", tr: "Haberler" }, "web_news"),
   "property-detail": createFamily("property-detail", { ar: "تفاصيل العقار", en: "Property Detail", tr: "Mülk Detayı" }, "web_property_detail"),
 };

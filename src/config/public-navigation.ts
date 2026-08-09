@@ -1,28 +1,47 @@
-import type { Translation, TranslationStringKey, ViewerContext } from "@/src/types/site";
-import { BriefcaseBusiness, Building, Building2, ClipboardList, Home, LayoutDashboard, MapPinned, Newspaper, Search, UserRound, UsersRound, Wrench, type LucideIcon } from "lucide-react";
-import { PERMISSIONS } from "@/src/constants/permissions";
+import type { Translation, TranslationStringKey } from "@/src/types/site";
+import { BriefcaseBusiness, Building2, Hammer, Home, Info, LibraryBig, Megaphone, MessagesSquare, Phone, Wrench, type LucideIcon } from "lucide-react";
+import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 
-/**
- * Single source of truth for public navigation (desktop sidebar, desktop header,
- * mobile drawer, and breadcrumbs). Only real routes or validated in-page anchors
- * may be listed here.
- */
-export type PublicNavSection = "main" | "discover" | "my";
+export type PrimaryPublicNavId =
+  | "home"
+  | "properties"
+  | "engineering-tools"
+  | "services-market"
+  | "real-estate-companies"
+  | "other-companies"
+  | "community"
+  | "knowledge"
+  | "advertise"
+  | "about"
+  | "contact";
+
+export type PublicNavAdPolicy =
+  | { mode: "safe-no-ads" }
+  | { mode: "standard"; family: StandardPublicAdLayoutKey };
 
 export type PublicNavItem = {
-  key: string;
+  key: PrimaryPublicNavId;
   labelKey: TranslationStringKey;
   href: string;
   icon: LucideIcon;
-  section: PublicNavSection;
-  activeWhen?: (currentPath: string) => boolean;
-  visible?: (viewer: ViewerContext) => boolean;
+  pageFamily: string;
+  componentPath: string;
+  adPolicy: PublicNavAdPolicy;
+  activeWhen: (currentPath: string) => boolean;
 };
 
-export const PUBLIC_NAV_SECTIONS: Array<{ key: PublicNavSection; labelKey: TranslationStringKey }> = [
-  { key: "main", labelKey: "navSectionMain" },
-  { key: "discover", labelKey: "navSectionDiscover" },
-  { key: "my", labelKey: "navSectionMy" },
+export const PUBLIC_NAV_CONSTITUTION_IDS: PrimaryPublicNavId[] = [
+  "home",
+  "properties",
+  "engineering-tools",
+  "services-market",
+  "real-estate-companies",
+  "other-companies",
+  "community",
+  "knowledge",
+  "advertise",
+  "about",
+  "contact",
 ];
 
 function splitCurrentPath(currentPath: string): { pathname: string; search: URLSearchParams; hash: string } {
@@ -44,104 +63,126 @@ function hasPathPrefix(target: string, currentPath: string): boolean {
   return pathname === target || pathname.startsWith(`${target}/`);
 }
 
-function isFindMyLandPath(currentPath: string): boolean {
-  const { pathname, search } = splitCurrentPath(currentPath);
-  return pathname === "/tools" && search.get("tool") === "findmyland";
-}
-
-function isAuthenticated(viewer: ViewerContext): boolean {
-  return Boolean(viewer.authenticated);
-}
-
-function canOpenProviderWorkspace(viewer: ViewerContext): boolean {
-  return Boolean(
-    viewer.authenticated && (
-      viewer.role === "service_provider" ||
-      viewer.permissions.includes(PERMISSIONS.SERVICE_PROVIDERS_APPLY) ||
-      viewer.permissions.includes(PERMISSIONS.SERVICE_PROVIDERS_MANAGE) ||
-      viewer.permissions.includes(PERMISSIONS.SERVICE_OFFERS_MANAGE_OWN) ||
-      viewer.permissions.includes(PERMISSIONS.SERVICE_JOBS_MANAGE_OWN)
-    ),
-  );
-}
-
 export const PUBLIC_NAV: PublicNavItem[] = [
-  { key: "home", labelKey: "navHome", href: "/", icon: Home, section: "main" },
+  {
+    key: "home",
+    labelKey: "navHome",
+    href: "/",
+    icon: Home,
+    pageFamily: "home",
+    componentPath: "app/page.tsx",
+    adPolicy: { mode: "standard", family: "home" },
+    activeWhen: (currentPath) => hasPathPrefix("/", currentPath),
+  },
   {
     key: "properties",
     labelKey: "navProperties",
-    href: "/#properties",
+    href: "/properties",
     icon: Building2,
-    section: "main",
-    activeWhen: (currentPath) => hasPathPrefix("/properties", currentPath) || splitCurrentPath(currentPath).hash === "#properties",
-  },
-  { key: "services", labelKey: "navServices", href: "/services", icon: BriefcaseBusiness, section: "main" },
-  { key: "directory", labelKey: "navDirectory", href: "/directory", icon: Search, section: "main" },
-  { key: "organizations", labelKey: "navOrganizations", href: "/organizations", icon: Building, section: "discover" },
-  { key: "providers", labelKey: "navProviders", href: "/providers", icon: UsersRound, section: "discover" },
-  {
-    key: "findmyland",
-    labelKey: "navFindMyLand",
-    href: "/tools?tool=findmyland",
-    icon: MapPinned,
-    section: "discover",
-    activeWhen: (currentPath) => isFindMyLandPath(currentPath),
+    pageFamily: "properties",
+    componentPath: "app/properties/page.tsx",
+    adPolicy: { mode: "standard", family: "properties" },
+    activeWhen: (currentPath) => hasPathPrefix("/properties", currentPath),
   },
   {
-    key: "tools",
-    labelKey: "navTools",
+    key: "engineering-tools",
+    labelKey: "navEngineeringTools",
     href: "/tools",
     icon: Wrench,
-    section: "discover",
-    activeWhen: (currentPath) => hasPathPrefix("/tools", currentPath) && !isFindMyLandPath(currentPath),
-  },
-  { key: "news", labelKey: "navNews", href: "/news", icon: Newspaper, section: "discover" },
-  {
-    key: "workspace",
-    labelKey: "navWorkspace",
-    href: "/dashboard/services",
-    icon: LayoutDashboard,
-    section: "my",
-    visible: isAuthenticated,
+    pageFamily: "engineering-tools",
+    componentPath: "app/tools/page.tsx",
+    adPolicy: { mode: "safe-no-ads" },
+    activeWhen: (currentPath) => hasPathPrefix("/tools", currentPath),
   },
   {
-    key: "my-requests",
-    labelKey: "navMyRequests",
-    href: "/dashboard/services/my-requests",
-    icon: ClipboardList,
-    section: "my",
-    visible: isAuthenticated,
+    key: "services-market",
+    labelKey: "navServices",
+    href: "/services",
+    icon: Hammer,
+    pageFamily: "services",
+    componentPath: "app/services/page.tsx",
+    adPolicy: { mode: "standard", family: "services" },
+    activeWhen: (currentPath) => {
+      const { pathname } = splitCurrentPath(currentPath);
+      return pathname === "/services" || pathname.startsWith("/services/") || pathname.startsWith("/service-requests") || pathname.startsWith("/providers/") || pathname === "/providers/apply";
+    },
   },
   {
-    key: "account",
-    labelKey: "navAccount",
-    href: "/account/security",
-    icon: UserRound,
-    section: "my",
-    visible: isAuthenticated,
+    key: "real-estate-companies",
+    labelKey: "navRealEstateCompanies",
+    href: "/offices",
+    icon: Building2,
+    pageFamily: "real-estate-companies",
+    componentPath: "app/offices/page.tsx",
+    adPolicy: { mode: "standard", family: "offices" },
+    activeWhen: (currentPath) => hasPathPrefix("/offices", currentPath),
   },
   {
-    key: "provider-profile",
-    labelKey: "navApply",
-    href: "/dashboard/services/provider-profile",
+    key: "other-companies",
+    labelKey: "navOtherCompanies",
+    href: "/companies",
     icon: BriefcaseBusiness,
-    section: "my",
-    visible: canOpenProviderWorkspace,
+    pageFamily: "other-companies",
+    componentPath: "app/companies/page.tsx",
+    adPolicy: { mode: "standard", family: "companies" },
+    activeWhen: (currentPath) => hasPathPrefix("/companies", currentPath),
+  },
+  {
+    key: "community",
+    labelKey: "navCommunity",
+    href: "/community",
+    icon: MessagesSquare,
+    pageFamily: "community",
+    componentPath: "app/community/page.tsx",
+    adPolicy: { mode: "standard", family: "community" },
+    activeWhen: (currentPath) => hasPathPrefix("/community", currentPath),
+  },
+  {
+    key: "knowledge",
+    labelKey: "navKnowledge",
+    href: "/knowledge",
+    icon: LibraryBig,
+    pageFamily: "knowledge",
+    componentPath: "app/knowledge/page.tsx",
+    adPolicy: { mode: "standard", family: "knowledge" },
+    activeWhen: (currentPath) => hasPathPrefix("/knowledge", currentPath),
+  },
+  {
+    key: "advertise",
+    labelKey: "navAdvertise",
+    href: "/advertise",
+    icon: Megaphone,
+    pageFamily: "advertise",
+    componentPath: "app/advertise/page.tsx",
+    adPolicy: { mode: "safe-no-ads" },
+    activeWhen: (currentPath) => hasPathPrefix("/advertise", currentPath),
+  },
+  {
+    key: "about",
+    labelKey: "navAbout",
+    href: "/about",
+    icon: Info,
+    pageFamily: "about",
+    componentPath: "app/about/page.tsx",
+    adPolicy: { mode: "standard", family: "about" },
+    activeWhen: (currentPath) => hasPathPrefix("/about", currentPath),
+  },
+  {
+    key: "contact",
+    labelKey: "navContact",
+    href: "/contact",
+    icon: Phone,
+    pageFamily: "contact",
+    componentPath: "app/contact/page.tsx",
+    adPolicy: { mode: "safe-no-ads" },
+    activeWhen: (currentPath) => hasPathPrefix("/contact", currentPath),
   },
 ];
 
-/** Unified search entry point. Rendered by the header/mobile menu only when set (no /search page exists yet). */
 export const SEARCH_ROUTE: string | undefined = undefined;
 
-export function getPublicNav(viewer: ViewerContext): PublicNavItem[] {
-  return PUBLIC_NAV.filter((item) => item.visible?.(viewer) ?? true);
-}
-
-export function groupPublicNav(items: PublicNavItem[]): Array<{ key: PublicNavSection; labelKey: TranslationStringKey; items: PublicNavItem[] }> {
-  return PUBLIC_NAV_SECTIONS.map((section) => ({
-    ...section,
-    items: items.filter((item) => item.section === section.key),
-  })).filter((section) => section.items.length > 0);
+export function getPublicNav(): PublicNavItem[] {
+  return PUBLIC_NAV;
 }
 
 export function isNavPathActive(href: string, pathname: string): boolean {
@@ -149,12 +190,17 @@ export function isNavPathActive(href: string, pathname: string): boolean {
 }
 
 export function isNavItemActive(item: PublicNavItem, currentPath: string): boolean {
-  return item.activeWhen ? item.activeWhen(currentPath) : isNavPathActive(item.href, currentPath);
+  return item.activeWhen(currentPath);
 }
 
 export function shouldUsePublicSidebar(currentPath: string): boolean {
   const { pathname } = splitCurrentPath(currentPath);
   return !(pathname === "/dashboard" || pathname.startsWith("/dashboard/"));
+}
+
+export function shouldShowHeaderPublicNavigation(currentPath: string): boolean {
+  const { pathname } = splitCurrentPath(currentPath);
+  return pathname !== "/dashboard" && !pathname.startsWith("/dashboard/");
 }
 
 export type BreadcrumbItem = {

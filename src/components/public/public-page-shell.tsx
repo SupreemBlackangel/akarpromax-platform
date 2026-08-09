@@ -105,7 +105,7 @@ export default function PublicPageShell({
       country={country}
       city={city}
       deviceType={deviceType}
-      navItems={getPublicNav(viewer)}
+      navItems={getPublicNav()}
       currentPath={currentPath}
       viewer={viewer}
       searchHref={SEARCH_ROUTE}

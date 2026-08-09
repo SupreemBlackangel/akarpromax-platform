@@ -17,7 +17,7 @@ import CookieNotice from "@/src/components/public/cookie-notice";
 import ToastRegion from "@/src/components/public/toast-region";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
-import { shouldUsePublicSidebar } from "@/src/config/public-navigation";
+import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar } from "@/src/config/public-navigation";
 
 type PageHeaderNode = {
   title: string;
@@ -102,6 +102,7 @@ export function PublicShellLayout({
   children,
 }: PublicShellLayoutProps) {
   const showPublicSidebar = shouldUsePublicSidebar(currentPath);
+  const showHeaderNav = shouldShowHeaderPublicNavigation(currentPath);
   const usesStandardAdLayout = adLayout?.mode === "standard";
   const hidesPublicAds = adLayout?.mode === "safe-no-ads";
   const sidebarFooter = viewer.authenticated ? (
@@ -189,7 +190,7 @@ export function PublicShellLayout({
             onLogin={onLogin}
             onLogout={onLogout}
             onOpenMenu={onOpenMenu}
-            showDesktopNavigation={!showPublicSidebar}
+            showDesktopNavigation={showHeaderNav && !showPublicSidebar}
           />
 
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />

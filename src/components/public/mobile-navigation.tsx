@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
-import { groupPublicNav, isNavItemActive } from "@/src/config/public-navigation";
+import { isNavItemActive } from "@/src/config/public-navigation";
 import NavItem from "@/src/components/ui/NavItem";
 import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
 
@@ -76,8 +76,6 @@ export default function MobileNavigation({
 
   if (!open) return null;
 
-  const sections = groupPublicNav(items);
-
   const account: ReactNode = viewer.authenticated ? (
     <>
       <span className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
@@ -148,31 +146,24 @@ export default function MobileNavigation({
           </button>
         </div>
         <div className="flex flex-col gap-[var(--space-5)] p-[var(--space-5)]">
-          {sections.map((section) => (
-            <div key={section.key}>
-              <p className="mb-[var(--space-2)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-text-muted)]">
-                {labels[section.labelKey]}
-              </p>
-              <nav aria-label={labels[section.labelKey]} className="flex flex-col gap-[var(--space-2)]">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavItem
-                      key={item.key}
-                      href={item.href}
-                      active={isNavItemActive(item, currentPath)}
-                      icon={Icon ? <Icon aria-hidden="true" className="size-4" /> : undefined}
-                      title={labels[item.labelKey]}
-                      aria-label={labels[item.labelKey]}
-                      className="min-h-11"
-                    >
-                      {labels[item.labelKey]}
-                    </NavItem>
-                  );
-                })}
-              </nav>
-            </div>
-          ))}
+          <nav aria-label={labels.mainNavAria} className="flex flex-col gap-[var(--space-2)]">
+            {items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavItem
+                  key={item.key}
+                  href={item.href}
+                  active={isNavItemActive(item, currentPath)}
+                  icon={Icon ? <Icon aria-hidden="true" className="size-4" /> : undefined}
+                  title={labels[item.labelKey]}
+                  aria-label={labels[item.labelKey]}
+                  className="min-h-11"
+                >
+                  {labels[item.labelKey]}
+                </NavItem>
+              );
+            })}
+          </nav>
           {searchHref && (
             <a
               href={searchHref}
