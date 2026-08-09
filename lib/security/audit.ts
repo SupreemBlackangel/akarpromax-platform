@@ -37,7 +37,20 @@ export type SecurityEventName =
   | "OFFICE_SYNC_PUSH"
   | "OFFICE_RADAR_SCAN"
   | "OFFICE_AD_IMPRESSION"
-  | "OFFICE_AD_CLICK";
+  | "OFFICE_AD_CLICK"
+  | "ROLE_ASSIGNED"
+  | "ROLE_REMOVED"
+  | "PERMISSION_CHANGED"
+  | "USER_SUSPENDED"
+  | "USER_BANNED"
+  | "USER_RESTORED"
+  | "USER_ROLE_CHANGED"
+  | "ADS_CAMPAIGN_CREATED"
+  | "ADS_CAMPAIGN_UPDATED"
+  | "ADS_CAMPAIGN_DELETED"
+  | "ADS_CAMPAIGN_STATUS_CHANGED"
+  | "PROPERTY_CATEGORY_CHANGED"
+  | "SERVICE_CATEGORY_CHANGED";
 
 export function createRequestId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));

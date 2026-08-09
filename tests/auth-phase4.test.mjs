@@ -27,6 +27,7 @@ import { getEmailRuntimeStatus } from "../lib/email.ts";
 import { redactFields, createRequestId, logSecurityEvent } from "../lib/security/audit.ts";
 import { MemoryRateLimitStore, RateLimiter, RATE_LIMIT_CONFIGS } from "../lib/security/rate-limit.ts";
 import { resolveUserLocale } from "../lib/auth/verification-actions.ts";
+import { hasSponsorPermission, GUEST_IDENTITY } from "../lib/sponsor-auth.ts";
 
 const ONE_HOUR = 60 * 60 * 1000;
 
@@ -301,4 +302,112 @@ test("token expiry minutes and otp code length", () => {
   const code = generateOtpValue();
   assert.equal(code.length, 6);
   assert.match(code, /^\d{6}$/);
+});
+
+test("authorization: normal user cannot access moderator API", () => {
+  const normalUser = {
+    authenticated: true,
+    email: "user@example.com",
+    displayName: "User",
+    role: "viewer",
+    countryCode: "om",
+    permissions: [PERMISSIONS.TOOLS_USE],
+  };
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ADS_VIEW), false);
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ADS_CREATE), false);
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.NEWS_CREATE), false);
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.USERS_VIEW), false);
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.PROPERTIES_MANAGE), false);
+});
+
+test("authorization: ad_manager cannot manage users or roles", () => {
+  const adManager = {
+    authenticated: true,
+    email: "ads@example.com",
+    displayName: "Ads Manager",
+    role: "ad_manager",
+    countryCode: "om",
+    permissions: [
+      PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE,
+      PERMISSIONS.ADS_PUBLISH, PERMISSIONS.ADS_ANALYTICS, PERMISSIONS.MEDIA_UPLOAD,
+      PERMISSIONS.USERS_VIEW,
+    ],
+  };
+  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.ADS_CREATE), true);
+  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.USERS_CREATE), false);
+  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.USERS_DELETE), false);
+  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false);
+});
+
+test("authorization: service_supervisor cannot manage ads or sponsors", () => {
+  const serviceSup = {
+    authenticated: true,
+    email: "svc-sup@example.com",
+    displayName: "Service Supervisor",
+    role: "service_supervisor",
+    countryCode: "om",
+    permissions: [
+      PERMISSIONS.SERVICE_CATEGORIES_MANAGE, PERMISSIONS.SERVICE_PROVIDERS_REVIEW,
+      PERMISSIONS.SERVICE_REQUESTS_MANAGE, PERMISSIONS.SERVICE_OFFERS_MANAGE,
+      PERMISSIONS.SERVICE_JOBS_MANAGE, PERMISSIONS.SERVICE_REPORTS_MANAGE,
+    ],
+  };
+  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), true);
+  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.ADS_CREATE), false);
+  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.ADS_DELETE), false);
+  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.SPONSORS_CREATE), false);
+  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.USERS_DELETE), false);
+});
+
+test("authorization: organization admin cannot gain platform admin rights", () => {
+  const orgAdmin = {
+    authenticated: true,
+    email: "org@example.com",
+    displayName: "Org Admin",
+    role: "sponsor_admin",
+    countryCode: "om",
+    permissions: [
+      PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE,
+      PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_ANALYTICS,
+      PERMISSIONS.REPORTS_VIEW, PERMISSIONS.USERS_VIEW, PERMISSIONS.NEWS_VIEW,
+    ],
+  };
+  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.SPONSORS_CREATE), true);
+  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.USERS_DELETE), false);
+  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.SETTINGS_MANAGE), false);
+  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.PROPERTIES_MANAGE), false);
+  assert.equal(canAccessAdminArea({ authenticated: true, role: "sponsor_admin", permissions: orgAdmin.permissions }), false, "sponsor_admin without dashboard view is denied");
+  assert.equal(canAccessAdminArea({ authenticated: true, role: "super_admin", permissions: ["*"] }), true);
+});
+
+test("authorization: moderator without required action permission is rejected", () => {
+  const moderator = {
+    authenticated: true,
+    email: "mod@example.com",
+    displayName: "Moderator",
+    role: "content_editor",
+    countryCode: "om",
+    permissions: [
+      PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_CREATE, PERMISSIONS.ADS_UPDATE,
+      PERMISSIONS.MEDIA_UPLOAD, PERMISSIONS.NEWS_VIEW, PERMISSIONS.NEWS_CREATE,
+      PERMISSIONS.NEWS_UPDATE,
+    ],
+  };
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_VIEW), true);
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_DELETE), false, "content_editor cannot delete ads");
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_APPROVE), false, "content_editor cannot approve ads");
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.NEWS_DELETE), false, "content_editor cannot delete news");
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false, "content_editor cannot manage service categories");
+  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.USERS_VIEW), false, "content_editor cannot view users");
+});
+
+test("authorization: guest identity has no permissions", () => {
+  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.TOOLS_USE), false);
+  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.ADS_VIEW), false);
+  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.NEWS_VIEW), false);
+  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.USERS_VIEW), false);
+  assert.equal(GUEST_IDENTITY.authenticated, false);
 });
