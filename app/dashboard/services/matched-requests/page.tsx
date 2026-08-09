@@ -41,6 +41,7 @@ export default function MatchedRequestsPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/matched-requests"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

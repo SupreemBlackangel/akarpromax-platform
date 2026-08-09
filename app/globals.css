@@ -43,8 +43,11 @@ a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
 .container { width: min(1140px, calc(100% - 42px)); margin: 0 auto; }
 
-/* The reference layout keeps the admin rail on the right and lets the public canvas breathe beside it. */
-.reference-app { min-height: 100vh; background: var(--paper); }
+/* The reference layout keeps the public navigation visible without covering the hero or content. */
+.reference-app { --reference-sidebar-width: 0px; min-height: 100vh; background: var(--paper); }
+@media (min-width: 768px) {
+  .reference-app { --reference-sidebar-width: 16rem; }
+}
 .right-sidebar { position: fixed; z-index: 20; top: 0; right: 0; bottom: 0; width: 224px; display: flex; flex-direction: column; overflow: hidden; border-left: 1px solid #d5e0f3; background: #eff4ff; color: #657692; box-shadow: -4px 0 18px rgba(29, 72, 142, .06); transform: translateX(calc(100% - 14px)); transition: transform .24s ease; }
 .right-sidebar.sidebar-open { transform: translateX(0); }
 .sidebar-head { min-height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 10px 17px 10px 14px; border-bottom: 1px solid #d5e0f3; background: #f5f8ff; }
@@ -1081,6 +1084,10 @@ html[data-theme="dark"] .ad-slot-badge { background: rgba(216, 175, 85, .92); co
 .side-rail-ad .ad-slot-media { height: 240px; }
 .side-rail-left { left: max(14px, calc((100vw - 1160px) / 2 - 186px)); }
 .side-rail-right { right: max(14px, calc((100vw - 1160px) / 2 - 186px)); }
+html[dir="ltr"] .side-rail-left { left: max(14px, calc(var(--reference-sidebar-width) + ((100vw - var(--reference-sidebar-width) - 1160px) / 2) - 186px)); }
+html[dir="ltr"] .side-rail-right { right: max(14px, calc(((100vw - var(--reference-sidebar-width) - 1160px) / 2) - 186px)); }
+html[dir="rtl"] .side-rail-left { left: max(14px, calc(((100vw - var(--reference-sidebar-width) - 1160px) / 2) - 186px)); }
+html[dir="rtl"] .side-rail-right { right: max(14px, calc(var(--reference-sidebar-width) + ((100vw - var(--reference-sidebar-width) - 1160px) / 2) - 186px)); }
 @media (max-width: 1500px) { .side-rail-ad { display: none; } }
 
 /* ===== Requestable empty slot ===== */

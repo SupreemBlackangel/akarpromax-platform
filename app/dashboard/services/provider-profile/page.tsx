@@ -176,6 +176,7 @@ export default function ProviderProfilePage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/provider-profile"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

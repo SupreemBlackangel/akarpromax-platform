@@ -46,6 +46,7 @@ export default function InboxPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/inbox"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

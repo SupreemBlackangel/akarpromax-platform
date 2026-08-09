@@ -54,6 +54,7 @@ export default function ServicesDashboardPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

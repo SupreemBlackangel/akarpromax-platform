@@ -31,6 +31,7 @@ test("server-renders the AkarPromax public landing page", async () => {
   const html = await response.text();
   assert.match(html, /<title>عقار بروماكس \| منصة العقار الذكية في عُمان<\/title>/);
   assert.match(html, /قرارك العقاري/);
+  assert.match(html, /data-public-sidebar-state="expanded"/);
   assert.match(html, /AkarPromax Office/);
   assert.match(html, /الشريط الإخباري/);
   assert.match(html, /أدوات المنصة/);
@@ -74,8 +75,9 @@ test("does not retain the starter preview or starter metadata", async () => {
 });
 
 test("includes the country sponsor administration and generated campaign art", async () => {
-  const [page, admin, sponsorIdentity, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
+  const [page, publicSidebar, admin, sponsorIdentity, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/SponsorIdentity.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
@@ -102,7 +104,11 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(page, /sponsor-visual-image/);
   assert.match(page, /SponsorIdentity/);
   assert.match(sponsorIdentity, /sponsor-logo-fallback/);
-  assert.match(page, /sidebar-public-nav/);
+  assert.match(page, /PublicSidebar/);
+  assert.match(page, /getPublicNav/);
+  assert.match(publicSidebar, /sidebar-public-nav/);
+  assert.doesNotMatch(page, /right-sidebar/);
+  assert.doesNotMatch(page, /sidebarHovered/);
   assert.doesNotMatch(page, /sidebar-sponsor-admin/);
   assert.doesNotMatch(page, /adminNav/);
   assert.doesNotMatch(page, /sidebar-admin-head/);
@@ -187,7 +193,7 @@ test("includes the region-filtered news ticker, management API and admin panel",
   ]);
 
   assert.match(page, /<NewsTicker copy=\{copy\} locale=\{locale\} country=\{country\} city=\{city\} \/>/);
-  assert.match(page, /sidebar-public-nav/);
+  assert.match(page, /PublicSidebar/);
   assert.doesNotMatch(page, /adminNav/);
   assert.doesNotMatch(page, /sidebar-admin-head/);
   assert.doesNotMatch(page, /admin-chip/);

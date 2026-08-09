@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import type { Translation } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
-import { PUBLIC_NAV, SEARCH_ROUTE, type BreadcrumbItem } from "@/src/config/public-navigation";
+import { SEARCH_ROUTE, getPublicNav, type BreadcrumbItem } from "@/src/config/public-navigation";
 import { PublicShellLayout } from "@/src/components/public/public-shell-layout";
 
 const COOKIE_STORAGE_KEY = "akarpromax-cookie-consent";
@@ -91,7 +91,7 @@ export default function PublicPageShell({
       country={country}
       city={city}
       deviceType={deviceType}
-      navItems={PUBLIC_NAV}
+      navItems={getPublicNav(viewer)}
       currentPath={currentPath}
       viewer={viewer}
       searchHref={SEARCH_ROUTE}

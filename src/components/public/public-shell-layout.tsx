@@ -10,10 +10,12 @@ import NewsTicker from "@/src/components/NewsTicker";
 import AdSlotFrame from "@/src/components/ads/ad-slot-frame";
 import PublicHeader from "@/src/components/public/public-header";
 import PublicFooter from "@/src/components/public/public-footer";
+import PublicSidebar from "@/src/components/public/public-sidebar";
 import MobileNavigation from "@/src/components/public/mobile-navigation";
 import OfficeAppPromotion from "@/src/components/public/office-app-promotion";
 import CookieNotice from "@/src/components/public/cookie-notice";
 import ToastRegion from "@/src/components/public/toast-region";
+import { shouldUsePublicSidebar } from "@/src/config/public-navigation";
 
 type PageHeaderNode = {
   title: string;
@@ -84,6 +86,40 @@ export function PublicShellLayout({
   onCookieManage,
   children,
 }: PublicShellLayoutProps) {
+  const showPublicSidebar = shouldUsePublicSidebar(currentPath);
+  const sidebarFooter = viewer.authenticated ? (
+    <div className="flex flex-col gap-[var(--space-3)]">
+      <div className="min-w-0">
+        <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
+        <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+      >
+        {labels.logout}
+      </button>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-[var(--space-3)]">
+      <button
+        type="button"
+        onClick={onLogin}
+        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+      >
+        {labels.login}
+      </button>
+      <button
+        type="button"
+        onClick={onLogin}
+        className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+      >
+        {labels.register}
+      </button>
+    </div>
+  );
+
   return (
     <div className="public-page-shell">
       <a
@@ -92,17 +128,6 @@ export function PublicShellLayout({
       >
         {labels.skipToContent}
       </a>
-
-      <PublicHeader
-        labels={labels}
-        navItems={navItems}
-        currentPath={currentPath}
-        viewer={viewer}
-        searchHref={searchHref}
-        onLogin={onLogin}
-        onLogout={onLogout}
-        onOpenMenu={onOpenMenu}
-      />
 
       <MobileNavigation
         open={mobileMenuOpen}
@@ -116,61 +141,79 @@ export function PublicShellLayout({
         searchHref={searchHref}
       />
 
-      <NewsTicker copy={labels} locale={locale} country={country} city={city} />
+      <div className="flex min-h-[100dvh] flex-col md:flex-row">
+        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} />}
 
-      <main id="main-content" tabIndex={-1} className="outline-none">
-        {PUBLIC_TOP_AD.used && (
-          <PageContainer className="pt-[var(--space-4)]">
-            <AdSlotFrame
-              config={PUBLIC_TOP_AD}
-              label={labels.adLabel}
-              locale={locale}
-              country={country}
-              city={city}
-              deviceType={deviceType}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <PublicHeader
+            labels={labels}
+            navItems={navItems}
+            currentPath={currentPath}
+            viewer={viewer}
+            searchHref={searchHref}
+            onLogin={onLogin}
+            onLogout={onLogout}
+            onOpenMenu={onOpenMenu}
+            showDesktopNavigation={!showPublicSidebar}
+          />
+
+          <NewsTicker copy={labels} locale={locale} country={country} city={city} />
+
+          <main id="main-content" tabIndex={-1} className="public-main outline-none">
+            {PUBLIC_TOP_AD.used && (
+              <PageContainer className="pt-[var(--space-4)]">
+                <AdSlotFrame
+                  config={PUBLIC_TOP_AD}
+                  label={labels.adLabel}
+                  locale={locale}
+                  country={country}
+                  city={city}
+                  deviceType={deviceType}
+                />
+              </PageContainer>
+            )}
+
+            {breadcrumbs && (
+              <PageContainer className="pt-[var(--space-6)]">
+                <Breadcrumbs items={breadcrumbs} ariaLabel={labels.breadcrumbAria} homeLabel={labels.navHome} />
+              </PageContainer>
+            )}
+
+            {pageHeader && (
+              <PageContainer className="pt-[var(--space-8)]">
+                <PageHeader title={pageHeader.title} description={pageHeader.description} eyebrow={pageHeader.eyebrow} actions={pageHeader.actions} />
+              </PageContainer>
+            )}
+
+            {children}
+
+            {PUBLIC_BOTTOM_AD.used && (
+              <PageContainer className="pb-[var(--space-6)]">
+                <AdSlotFrame
+                  config={PUBLIC_BOTTOM_AD}
+                  label={labels.adLabel}
+                  locale={locale}
+                  country={country}
+                  city={city}
+                  deviceType={deviceType}
+                />
+              </PageContainer>
+            )}
+          </main>
+
+          {officePromotion && (
+            <OfficeAppPromotion
+              labels={labels}
+              cta={officePromotion.cta}
+              description={officePromotion.description}
+              href={officePromotion.href}
+              onCta={officePromotion.onCta}
             />
-          </PageContainer>
-        )}
+          )}
 
-        {breadcrumbs && (
-          <PageContainer className="pt-[var(--space-6)]">
-            <Breadcrumbs items={breadcrumbs} ariaLabel={labels.breadcrumbAria} homeLabel={labels.navHome} />
-          </PageContainer>
-        )}
-
-        {pageHeader && (
-          <PageContainer className="pt-[var(--space-8)]">
-            <PageHeader title={pageHeader.title} description={pageHeader.description} eyebrow={pageHeader.eyebrow} actions={pageHeader.actions} />
-          </PageContainer>
-        )}
-
-        {children}
-
-        {PUBLIC_BOTTOM_AD.used && (
-          <PageContainer className="pb-[var(--space-6)]">
-            <AdSlotFrame
-              config={PUBLIC_BOTTOM_AD}
-              label={labels.adLabel}
-              locale={locale}
-              country={country}
-              city={city}
-              deviceType={deviceType}
-            />
-          </PageContainer>
-        )}
-      </main>
-
-      {officePromotion && (
-        <OfficeAppPromotion
-          labels={labels}
-          cta={officePromotion.cta}
-          description={officePromotion.description}
-          href={officePromotion.href}
-          onCta={officePromotion.onCta}
-        />
-      )}
-
-      <PublicFooter labels={labels} />
+          <PublicFooter labels={labels} />
+        </div>
+      </div>
 
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 

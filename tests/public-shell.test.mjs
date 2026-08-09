@@ -4,10 +4,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { PublicShellLayout } from "../src/components/public/public-shell-layout.tsx";
-import { PUBLIC_NAV, SEARCH_ROUTE, isNavPathActive, buildBreadcrumbs } from "../src/config/public-navigation.ts";
+import { PUBLIC_NAV, SEARCH_ROUTE, buildBreadcrumbs, getPublicNav, isNavItemActive, isNavPathActive, shouldUsePublicSidebar } from "../src/config/public-navigation.ts";
+import { PERMISSIONS } from "../src/constants/permissions.ts";
 import { FOOTER_COLUMNS, FOOTER_SOCIAL } from "../src/config/footer-navigation.ts";
 
 const r = (node) => renderToStaticMarkup(node);
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const labels = {
   brandTitle: "AkarPromax",
@@ -24,12 +26,22 @@ const labels = {
   adLabel: "Ad",
   breadcrumbAria: "Breadcrumb",
   navHome: "Home",
+  navProperties: "Properties",
   navServices: "Services",
-  navCatalog: "Catalog",
-  navRequests: "Requests",
   navDirectory: "Directory",
+  navOrganizations: "Companies",
+  navProviders: "Professionals",
+  navFindMyLand: "Find My Land",
+  navWorkspace: "Workspace",
+  navMyRequests: "My requests",
+  navAccount: "Account",
   navNews: "News",
   navTools: "Tools",
+  navSectionMain: "Main",
+  navSectionDiscover: "Discover",
+  navSectionMy: "My AkarProMax",
+  navCatalog: "Catalog",
+  navRequests: "Requests",
   navApply: "Become a provider",
   ticker: [],
   tickerAria: "News",
@@ -57,19 +69,29 @@ const labels = {
 };
 
 const viewer = { authenticated: false, email: null, displayName: "", role: "guest", countryCode: null, permissions: [] };
+const signedInViewer = { authenticated: true, email: "user@example.com", displayName: "User", role: "viewer", countryCode: "om", permissions: [PERMISSIONS.TOOLS_USE] };
+const providerViewer = {
+  authenticated: true,
+  email: "provider@example.com",
+  displayName: "Provider",
+  role: "service_provider",
+  countryCode: "om",
+  permissions: [PERMISSIONS.TOOLS_USE, PERMISSIONS.SERVICE_PROVIDERS_APPLY, PERMISSIONS.SERVICE_OFFERS_MANAGE_OWN],
+};
 
 const noop = () => {};
 
 function renderShell(props = {}) {
+  const resolvedViewer = props.viewer ?? viewer;
   const merged = {
     labels,
     locale: "en",
     country: "om",
     city: "",
     deviceType: "desktop",
-    navItems: PUBLIC_NAV,
+    navItems: props.navItems ?? getPublicNav(resolvedViewer),
     currentPath: "/services",
-    viewer,
+    viewer: resolvedViewer,
     searchHref: SEARCH_ROUTE,
     onLogin: noop,
     onLogout: noop,
@@ -93,8 +115,8 @@ test("shell renders skip link targeting #main-content and the target exists", ()
 
 test("shell renders the real-route nav links and no broken /properties link", () => {
   const html = renderShell();
-  for (const item of PUBLIC_NAV) {
-    assert.match(html, new RegExp(`href="${item.href}"`), `nav must link ${item.href}`);
+  for (const item of getPublicNav(viewer)) {
+    assert.match(html, new RegExp(`href="${escapeRegExp(item.href)}"`), `nav must link ${item.href}`);
   }
   assert.doesNotMatch(html, /href="\/properties[^a-zA-Z0-9]/, "no broken /properties link");
   assert.doesNotMatch(html, /href="#"/, "no placeholder hash links");
@@ -102,25 +124,67 @@ test("shell renders the real-route nav links and no broken /properties link", ()
 
 test("nav links never include nonexistent routes from the excluded inventory", () => {
   const html = renderShell();
-  for (const bad of ["/about", "/contact", "/search", "/offices", "/providers", "/blog", "/auctions", "/admin"]) {
+  for (const bad of ["/about", "/contact", "/search", "/offices", "/blog", "/auctions", "/admin"]) {
     assert.doesNotMatch(html, new RegExp(`href="${bad.replace("/", "\\/")}"`), `must not link ${bad} exactly`);
   }
 });
 
 test("active route marks aria-current for the current section and its trail", () => {
   const html = renderShell({ currentPath: "/services/catalog" });
-  assert.match(html, /aria-current="page"[^>]*href="\/services\/catalog"|href="\/services\/catalog"[^>]*aria-current="page"/);
   assert.match(html, /aria-current="page"[^>]*href="\/services"|href="\/services"[^>]*aria-current="page"/);
-  assert.doesNotMatch(html, /aria-current="page"[^>]*href="\/service-requests"|href="\/service-requests"[^>]*aria-current="page"/);
+  assert.doesNotMatch(html, /aria-current="page"[^>]*href="\/dashboard\/services\/my-requests"|href="\/dashboard\/services\/my-requests"[^>]*aria-current="page"/);
   assert.doesNotMatch(html, /aria-current="page"[^>]*href="\/"|href="\/"[^>]*aria-current="page"/);
 });
 
-test("isNavPathActive matches home exactly and section prefixes otherwise", () => {
+test("path helpers keep core sections active without false positives", () => {
   assert.equal(isNavPathActive("/", "/"), true);
   assert.equal(isNavPathActive("/", "/services"), false);
   assert.equal(isNavPathActive("/services", "/services"), true);
   assert.equal(isNavPathActive("/services", "/services/catalog"), true);
   assert.equal(isNavPathActive("/services", "/service-requests"), false);
+
+  const propertiesItem = PUBLIC_NAV.find((item) => item.key === "properties");
+  const toolsItem = PUBLIC_NAV.find((item) => item.key === "tools");
+  const findMyLandItem = PUBLIC_NAV.find((item) => item.key === "findmyland");
+  assert.ok(propertiesItem);
+  assert.ok(toolsItem);
+  assert.ok(findMyLandItem);
+  assert.equal(isNavItemActive(propertiesItem, "/properties/test-slug"), true);
+  assert.equal(isNavItemActive(propertiesItem, "/#properties"), true);
+  assert.equal(isNavItemActive(findMyLandItem, "/tools?tool=findmyland"), true);
+  assert.equal(isNavItemActive(toolsItem, "/tools?tool=findmyland"), false);
+  assert.equal(isNavItemActive(toolsItem, "/tools?tool=calculator"), true);
+});
+
+test("desktop public sidebar is rendered by default outside dashboard routes", () => {
+  const html = renderShell();
+  assert.equal(shouldUsePublicSidebar("/services"), true);
+  assert.equal(shouldUsePublicSidebar("/dashboard/services"), false);
+  assert.match(html, /data-public-sidebar-state="expanded"/);
+  assert.match(html, /href="\/organizations"/);
+  assert.match(html, /href="\/providers"/);
+  assert.match(html, /href="\/tools\?tool=findmyland"/);
+});
+
+test("guest and authenticated viewers see only the routes appropriate to them", () => {
+  const guestNav = getPublicNav(viewer).map((item) => item.href);
+  const userNav = getPublicNav(signedInViewer).map((item) => item.href);
+  const providerNav = getPublicNav(providerViewer).map((item) => item.href);
+
+  assert.ok(!guestNav.includes("/dashboard/services"));
+  assert.ok(!guestNav.includes("/account/security"));
+  assert.ok(userNav.includes("/dashboard/services"));
+  assert.ok(userNav.includes("/dashboard/services/my-requests"));
+  assert.ok(userNav.includes("/account/security"));
+  assert.ok(!userNav.includes("/dashboard/services/provider-profile"));
+  assert.ok(providerNav.includes("/dashboard/services/provider-profile"));
+  assert.ok(!providerNav.includes("/admin"));
+});
+
+test("every visible public navigation item has a meaningful icon", () => {
+  for (const entry of PUBLIC_NAV) {
+    assert.ok(entry.icon, `missing icon for ${entry.key}`);
+  }
 });
 
 test("footer renders only real routes and no social/legal placeholders", () => {
@@ -151,6 +215,16 @@ test("mobile navigation is not SSR-rendered when closed", () => {
   const html = renderShell();
   assert.doesNotMatch(html, /role="dialog"/, "closed sheet must not render");
   assert.match(html, /aria-label="Open menu"/, "hamburger trigger always present");
+});
+
+test("mobile navigation renders grouped destinations when opened", () => {
+  const html = renderShell({ mobileMenuOpen: true, currentPath: "/tools?tool=findmyland", navItems: getPublicNav(providerViewer), viewer: providerViewer });
+  assert.match(html, /role="dialog"/);
+  assert.match(html, />Main</);
+  assert.match(html, />Discover</);
+  assert.match(html, />My AkarProMax</);
+  assert.match(html, /href="\/tools\?tool=findmyland"/);
+  assert.match(html, /href="\/dashboard\/services\/provider-profile"/);
 });
 
 test("toast live region is present with a polite announcement", () => {

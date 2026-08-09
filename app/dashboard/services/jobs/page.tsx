@@ -37,6 +37,7 @@ export default function MyJobsPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/jobs"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

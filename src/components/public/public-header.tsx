@@ -20,6 +20,7 @@ type PublicHeaderProps = {
   onLogin: () => void;
   onLogout: () => void;
   onOpenMenu: () => void;
+  showDesktopNavigation?: boolean;
 };
 
 export default function PublicHeader({
@@ -31,6 +32,7 @@ export default function PublicHeader({
   onLogin,
   onLogout,
   onOpenMenu,
+  showDesktopNavigation = true,
 }: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-[var(--layer-header)] border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
@@ -46,11 +48,11 @@ export default function PublicHeader({
           </span>
         </a>
 
-        <DesktopNavigation items={navItems} labels={labels} currentPath={currentPath} />
+        {showDesktopNavigation && <DesktopNavigation items={navItems} labels={labels} currentPath={currentPath} />}
 
         <div className="flex shrink-0 items-center gap-[var(--space-2)]">
           {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
-          <div className="hidden items-center gap-[var(--space-2)] lg:flex">
+          <div className="hidden items-center gap-[var(--space-2)] md:flex">
             {viewer.authenticated ? (
               <>
                 <span className="max-w-[160px] truncate text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)]">
@@ -71,7 +73,7 @@ export default function PublicHeader({
               </>
             )}
           </div>
-          <Button variant="ghost" size="icon" aria-label={labels.showMenu} onClick={onOpenMenu} className="lg:hidden">
+          <Button variant="ghost" size="icon" aria-label={labels.showMenu} onClick={onOpenMenu} className="md:hidden">
             <Menu aria-hidden="true" className="size-5" />
           </Button>
         </div>

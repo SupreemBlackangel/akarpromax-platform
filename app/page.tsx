@@ -13,6 +13,9 @@ import SponsorIdentity from "@/src/components/SponsorIdentity";
 import NewsTicker from "@/src/components/NewsTicker";
 import AdSlot from "@/src/components/AdSlot";
 import AdRequestDialog from "@/src/components/AdRequestDialog";
+import MobileNavigation from "@/src/components/public/mobile-navigation";
+import PublicSidebar from "@/src/components/public/public-sidebar";
+import { getPublicNav } from "@/src/config/public-navigation";
 import type { HeroAdSlide, Locale, PublicAdCampaign, PublicSponsor, ThemeMode, ViewerContext } from "@/src/types/site";
 import {
   citiesForCountry,
@@ -41,7 +44,6 @@ export default function Home() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [themeReady, setThemeReady] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
-  const [sidebarHovered, setSidebarHovered] = useState(false);
   const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
   const [managedHeroAds, setManagedHeroAds] = useState<PublicAdCampaign[]>([]);
   const [featuredProperties, setFeaturedProperties] = useState<PublicProperty[]>([]);
@@ -54,6 +56,7 @@ export default function Home() {
   const [accountMode, setAccountMode] = useState<"login" | "register">("login");
   const [adRequestOpen, setAdRequestOpen] = useState(false);
   const [adRequestPlacement, setAdRequestPlacement] = useState("side_left");
+  const [currentPath, setCurrentPath] = useState("/");
   const dropdownCloseTimers = useRef<Partial<Record<"country" | "city" | "language" | "theme", number>>>({});
   const heroTouchStartX = useRef<number | null>(null);
   const heroSectionRef = useRef<HTMLElement | null>(null);
@@ -73,6 +76,7 @@ export default function Home() {
   const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
   const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
   const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
+  const publicNav = getPublicNav(viewer);
   const fallbackHeroSlides: HeroAdSlide[] = [
     {
       id: "discover",
@@ -126,16 +130,17 @@ export default function Home() {
   })));
   const heroSlides = managedHeroSlides.length ? managedHeroSlides : fallbackHeroSlides;
   const activeHeroSlide = heroSlides[activeHeroIndex % heroSlides.length];
-  const publicNav = [
-    { href: "#main-content", label: locale === "ar" ? "الرئيسية" : locale === "tr" ? "Ana sayfa" : "Home" },
-    { href: "#properties", label: locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkul" : "Properties" },
-    { href: "#services", label: locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmetler Pazarı" : "Services" },
-    { href: "#offices", label: locale === "ar" ? "المكاتب والشركات" : locale === "tr" ? "Ofisler ve şirketler" : "Offices & companies" },
-    { href: "#about", label: locale === "ar" ? "عن المنصة" : locale === "tr" ? "Hakkımızda" : "About" },
-    { href: "#account", label: locale === "ar" ? "انضم إلينا" : locale === "tr" ? "Bize katılın" : "Join us" },
-  ];
-  const sidebarOpen = sidebarPinned || sidebarHovered;
   const selectHeroSlide = (index: number) => setActiveHeroIndex((index + heroSlides.length) % heroSlides.length);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Keep the UI consistent even if the local logout request fails.
+    }
+    setViewer({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
+    setSidebarPinned(false);
+  };
 
   const trackSponsorEvent = (placement: "header" | "content" | "footer", eventType: "impression" | "click") => {
     if (!activeSponsor) return;
@@ -193,6 +198,17 @@ export default function Home() {
     document.documentElement.dir = direction;
     document.title = copy.metaTitle;
   }, [copy.metaTitle, direction, locale]);
+
+  useEffect(() => {
+    const syncPath = () => setCurrentPath(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    syncPath();
+    window.addEventListener("hashchange", syncPath);
+    window.addEventListener("popstate", syncPath);
+    return () => {
+      window.removeEventListener("hashchange", syncPath);
+      window.removeEventListener("popstate", syncPath);
+    };
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
@@ -351,24 +367,75 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="reference-app" id="main-content" dir={direction} data-locale={locale}>
-      <aside id="right-sidebar" className={sidebarOpen ? "right-sidebar sidebar-open" : "right-sidebar"} aria-label={copy.sidebarAria} onMouseEnter={() => setSidebarHovered(true)} onMouseLeave={() => setSidebarHovered(false)}>
-        <div className="sidebar-head"><Brand copy={copy} /><button type="button" aria-label={copy.closeMenu} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>×</button></div>
-        <div className="sidebar-scroll">
-          <nav className="sidebar-public-nav" aria-label={copy.sidebarAria}>
-            {publicNav.map((item, index) => (
-              <a className={index === 0 ? "sidebar-link active" : "sidebar-link"} href={item.href} key={`${locale}-${index}-${item.label}`} onClick={() => { setSidebarPinned(false); setSidebarHovered(false); }}>{item.label}</a>
-            ))}
-          </nav>
-        </div>
-        <div className="sidebar-foot"><strong>{viewer.authenticated ? viewer.displayName : copy.brandTitle}</strong><span>{roleLabels[locale][viewer.role] ?? viewer.role} © 2026</span></div>
-      </aside>
+    <>
+      <MobileNavigation
+        open={sidebarPinned}
+        onClose={() => setSidebarPinned(false)}
+        items={publicNav}
+        labels={copy}
+        currentPath={currentPath}
+        viewer={viewer}
+        onLogin={() => {
+          setAccountMode("login");
+          setAccountOpen(true);
+          setSidebarPinned(false);
+        }}
+        onLogout={handleLogout}
+      />
 
-      <div className="site-canvas">
+      <main className="reference-app md:flex md:min-h-[100dvh]" id="main-content" dir={direction} data-locale={locale}>
+        <PublicSidebar
+          labels={copy}
+          items={publicNav}
+          currentPath={currentPath}
+          className="hidden md:flex"
+          footer={
+            <div className="flex flex-col gap-[var(--space-3)]">
+              <div className="min-w-0">
+                <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.authenticated ? viewer.displayName || viewer.email : copy.brandTitle}</p>
+                <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{viewer.authenticated ? roleLabels[locale][viewer.role] ?? viewer.role : copy.brandSubtitle}</p>
+              </div>
+              {viewer.authenticated ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                >
+                  {copy.logout}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountMode("login");
+                      setAccountOpen(true);
+                    }}
+                    className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                  >
+                    {copy.login}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountMode("register");
+                      setAccountOpen(true);
+                    }}
+                    className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                  >
+                    {copy.register}
+                  </button>
+                </>
+              )}
+            </div>
+          }
+        />
+
+        <div className="site-canvas min-w-0 flex-1">
         <div className="sticky-topbar">
         <header className="reference-header">
           <div className="container header-inner">
-            <button className="menu-trigger" type="button" aria-label={sidebarPinned ? copy.closeMenu : copy.showMenu} aria-controls="right-sidebar" aria-expanded={sidebarPinned} onClick={() => { setSidebarPinned((pinned) => !pinned); setSidebarHovered(false); }}>☰</button>
+            <button className="menu-trigger md:hidden" type="button" aria-label={sidebarPinned ? copy.closeMenu : copy.showMenu} aria-expanded={sidebarPinned} onClick={() => setSidebarPinned((open) => !open)}>☰</button>
             <Brand copy={copy} />
             <div className="header-tools" aria-label={copy.toolsAria}>
               <div className="tool-cluster location-cluster">
@@ -554,6 +621,7 @@ export default function Home() {
         <AccountDialog locale={locale} open={accountOpen} initialMode={accountMode} viewer={viewer} onClose={() => setAccountOpen(false)} onAuthenticated={setViewer} />
         <AdRequestDialog locale={locale} open={adRequestOpen} placement={adRequestPlacement} countryCode={country} onClose={() => setAdRequestOpen(false)} />
       </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -244,6 +244,7 @@ export function ToolsPageClient() {
       country={country}
       city={city}
       deviceType={deviceType}
+      currentPath={activeTool === "findmyland" ? "/tools?tool=findmyland" : "/tools"}
       onLogin={() => requestLogin("login")}
       onLogout={handleLogout}
     >

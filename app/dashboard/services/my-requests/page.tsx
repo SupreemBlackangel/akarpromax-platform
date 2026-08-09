@@ -35,6 +35,7 @@ export default function MyRequestsPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/my-requests"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

@@ -94,7 +94,7 @@ export default function JobDetailPage({ id }: Props) {
 
   if (!viewer.authenticated) {
     return (
-      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} onLogin={() => openLogin("login")} onLogout={handleLogout}>
+      <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath="/dashboard/services/jobs" onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <div dir={dir} className="container py-24 text-center"><div className="text-5xl mb-4">🔒</div></div>
       </PublicPageShell>
     );
@@ -113,6 +113,7 @@ export default function JobDetailPage({ id }: Props) {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/jobs"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

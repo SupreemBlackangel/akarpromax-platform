@@ -54,6 +54,7 @@ export default function ReviewsPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/reviews"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >

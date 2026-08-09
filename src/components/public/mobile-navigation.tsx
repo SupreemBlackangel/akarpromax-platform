@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
-import { isNavPathActive } from "@/src/config/public-navigation";
+import { groupPublicNav, isNavItemActive } from "@/src/config/public-navigation";
 import NavItem from "@/src/components/ui/NavItem";
 import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
 
@@ -20,7 +20,7 @@ type MobileNavigationProps = {
   currentPath: string;
   viewer: ViewerContext;
   onLogin: () => void;
-  onLogout: () => void;
+  onLogout?: () => void;
   searchHref?: string;
 };
 
@@ -76,18 +76,29 @@ export default function MobileNavigation({
 
   if (!open) return null;
 
+  const sections = groupPublicNav(items);
+
   const account: ReactNode = viewer.authenticated ? (
     <>
       <span className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
         {viewer.displayName || viewer.email}
       </span>
-      <button
-        type="button"
-        onClick={onLogout}
-        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
-      >
-        {labels.logout}
-      </button>
+      {onLogout ? (
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+        >
+          {labels.logout}
+        </button>
+      ) : (
+        <a
+          href="/account/security"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+        >
+          {labels.navAccount}
+        </a>
+      )}
     </>
   ) : (
     <>
@@ -111,7 +122,7 @@ export default function MobileNavigation({
   return (
     <>
       <div
-        className="fixed inset-0 z-[var(--layer-overlay)] bg-[color:var(--color-overlay)]"
+        className="fixed inset-0 z-[var(--layer-overlay)] bg-[color:var(--color-overlay)] md:hidden"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -121,7 +132,7 @@ export default function MobileNavigation({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed inset-block-0 inset-inline-start-0 z-[var(--layer-dialog)] flex w-full max-w-[320px] flex-col overflow-y-auto border-e border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-[var(--shadow-overlay)] focus:outline-none"
+        className="fixed inset-block-0 inset-inline-start-0 z-[var(--layer-dialog)] flex w-full max-w-[320px] flex-col overflow-y-auto border-e border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-[var(--shadow-overlay)] focus:outline-none md:hidden"
       >
         <div className="flex items-center justify-between gap-[var(--space-4)] border-b border-[color:var(--color-border)] p-[var(--space-5)]">
           <h2 id={titleId} className="text-[var(--font-size-lg)] font-semibold text-[color:var(--color-text-primary)]">
@@ -136,21 +147,32 @@ export default function MobileNavigation({
             ✕
           </button>
         </div>
-        <nav aria-label={labels.mainNavAria} className="flex flex-col gap-[var(--space-2)] p-[var(--space-5)]">
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavItem
-                key={item.key}
-                href={item.href}
-                active={isNavPathActive(item.href, currentPath)}
-                icon={Icon ? <Icon aria-hidden="true" className="size-4" /> : undefined}
-                className="min-h-11"
-              >
-                {labels[item.labelKey]}
-              </NavItem>
-            );
-          })}
+        <div className="flex flex-col gap-[var(--space-5)] p-[var(--space-5)]">
+          {sections.map((section) => (
+            <div key={section.key}>
+              <p className="mb-[var(--space-2)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-text-muted)]">
+                {labels[section.labelKey]}
+              </p>
+              <nav aria-label={labels[section.labelKey]} className="flex flex-col gap-[var(--space-2)]">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavItem
+                      key={item.key}
+                      href={item.href}
+                      active={isNavItemActive(item, currentPath)}
+                      icon={Icon ? <Icon aria-hidden="true" className="size-4" /> : undefined}
+                      title={labels[item.labelKey]}
+                      aria-label={labels[item.labelKey]}
+                      className="min-h-11"
+                    >
+                      {labels[item.labelKey]}
+                    </NavItem>
+                  );
+                })}
+              </nav>
+            </div>
+          ))}
           {searchHref && (
             <a
               href={searchHref}
@@ -160,7 +182,7 @@ export default function MobileNavigation({
               <span>{labels.searchAria}</span>
             </a>
           )}
-        </nav>
+        </div>
         <div className="mt-auto flex flex-col gap-[var(--space-3)] border-t border-[color:var(--color-border)] p-[var(--space-5)]">
           {account}
         </div>

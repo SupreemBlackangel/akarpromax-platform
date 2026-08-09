@@ -1,6 +1,6 @@
 import type { Translation } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
-import { isNavPathActive } from "@/src/config/public-navigation";
+import { isNavItemActive } from "@/src/config/public-navigation";
 import NavItem from "@/src/components/ui/NavItem";
 
 /**
@@ -15,15 +15,18 @@ type DesktopNavigationProps = {
 
 export default function DesktopNavigation({ items, labels, currentPath }: DesktopNavigationProps) {
   return (
-    <nav aria-label={labels.mainNavAria} className="hidden items-center gap-[var(--space-2)] lg:flex">
+    <nav aria-label={labels.mainNavAria} className="hidden flex-1 flex-wrap items-center justify-center gap-[var(--space-1)] md:flex xl:gap-[var(--space-2)]">
       {items.map((item) => {
         const Icon = item.icon;
         return (
           <NavItem
             key={item.key}
             href={item.href}
-            active={isNavPathActive(item.href, currentPath)}
+            active={isNavItemActive(item, currentPath)}
             icon={Icon ? <Icon aria-hidden="true" className="size-4" /> : undefined}
+            title={labels[item.labelKey]}
+            aria-label={labels[item.labelKey]}
+            className="px-[var(--space-3)] py-[var(--space-2)]"
           >
             {labels[item.labelKey]}
           </NavItem>

@@ -44,11 +44,15 @@ type Props = {
 
 function subscribeToLocation(callback: () => void): () => void {
   window.addEventListener("popstate", callback);
-  return () => window.removeEventListener("popstate", callback);
+  window.addEventListener("hashchange", callback);
+  return () => {
+    window.removeEventListener("popstate", callback);
+    window.removeEventListener("hashchange", callback);
+  };
 }
 
 function getLocationSnapshot(): string {
-  return window.location.pathname;
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
 const EMPTY_SERVER_PATH = "";

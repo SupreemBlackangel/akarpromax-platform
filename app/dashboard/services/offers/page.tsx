@@ -35,6 +35,7 @@ export default function MyOffersPage() {
       viewer={viewer}
       country={country}
       city={city}
+      currentPath="/dashboard/services/offers"
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
     >
