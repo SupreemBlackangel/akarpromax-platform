@@ -116,13 +116,13 @@ test("CASE 1: 3 eligible campaigns -> 3 results (all treated equally)", async ()
   assert.ok(results.every((result) => result.campaignId), "all results have campaign IDs");
 });
 
-test("CASE 2: 2 eligible campaigns -> count met, no special house fill", async () => {
+test("CASE 2: 2 eligible campaigns -> count met, no special fill", async () => {
   const ads = commercialAds(2);
   const results = await matchAds(null, FALLBACK_CTX, { count: 2, ads, stats: EMPTY_STATS });
   assert.equal(results.length, 2);
 });
 
-test("CASE 3: 1 eligible campaign -> only 1 returned (no house fill)", async () => {
+test("CASE 3: 1 eligible campaign -> only 1 returned", async () => {
   const ads = commercialAds(1);
   const results = await matchAds(null, FALLBACK_CTX, { count: 3, ads, stats: EMPTY_STATS });
   assert.equal(results.length, 1);

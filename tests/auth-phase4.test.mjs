@@ -341,7 +341,7 @@ test("authorization: ad_manager cannot manage users or roles", () => {
   assert.equal(hasSponsorPermission(adManager, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false);
 });
 
-test("authorization: service_supervisor cannot manage ads or sponsors", () => {
+test("authorization: service_supervisor cannot manage ads or create sponsors", () => {
   const serviceSup = {
     authenticated: true,
     email: "svc-sup@example.com",

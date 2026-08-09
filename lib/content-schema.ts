@@ -4,6 +4,7 @@ import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
 import { seedServicesMarketplace } from "@services/seed-marketplace";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
+import { ensureCompanySchema } from "@/lib/company-schema";
 import { ensureIntegrationSchema } from "@/lib/integration/schema";
 import { ensureNewsSchema } from "@/lib/news/schema";
 import { isProduction } from "@/lib/config/runtime-env";
@@ -560,6 +561,7 @@ export async function ensureContentSchema(db: D1Database): Promise<void> {
   await ensureServicesSchema(db);
   await ensureServicesMarketplaceSchema(db);
   await ensurePropertiesSchema(db);
+  await ensureCompanySchema(db);
   await ensureIntegrationSchema(db);
   await ensureNewsSchema(db);
 

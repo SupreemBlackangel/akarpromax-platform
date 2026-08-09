@@ -37,7 +37,7 @@ type CreativeDraft = {
   durationSeconds: string;
 };
 
-const MAX_COMMERCIAL_CREATIVES = 5;
+const MAX_AD_CREATIVES = 5;
 
 type Campaign = {
   id: string;
@@ -230,7 +230,7 @@ function approvalLabel(status: string) {
 }
 
 function campaignTypeLabel(type: string) {
-  return ({ platform: "المنصة", sponsor: "راعٍ", property: "عقار مميز", service: "خدمة", request: "طلب إعلان" } as Record<string, string>)[type] ?? type;
+  return ({ platform: "المنصة", property: "عقار مميز", service: "خدمة", request: "طلب إعلان" } as Record<string, string>)[type] ?? type;
 }
 
 function formatSize(bytes: number) {
@@ -562,7 +562,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  const creativeLimit = MAX_COMMERCIAL_CREATIVES;
+  const creativeLimit = MAX_AD_CREATIVES;
 
   function addCreative() {
     setForm((current) => {
@@ -823,7 +823,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <section className="ads-form-section" hidden={wizardStep !== 1}><div><span>1</span><h3>البيانات الأساسية</h3></div><div className="ads-form-grid">
             <label>اسم الحملة الداخلي<input required value={form.internalName} onChange={(event) => setField("internalName", event.target.value)} /></label>
             <label>الجهة المعلنة<input required value={form.advertiserName} onChange={(event) => setField("advertiserName", event.target.value)} /></label>
-            <label>نوع الحملة<select value={form.campaignType} onChange={(event) => setField("campaignType", event.target.value)}><option value="platform">إعلان المنصة</option><option value="sponsor">راعٍ</option><option value="property">عقار مميز</option><option value="service">خدمة</option></select></label>
+            <label>نوع الحملة<select value={form.campaignType} onChange={(event) => setField("campaignType", event.target.value)}><option value="platform">إعلان المنصة</option><option value="property">عقار مميز</option><option value="service">خدمة</option></select></label>
             <label>رابط زر الإجراء<input required dir="ltr" value={form.targetUrl} onChange={(event) => setField("targetUrl", event.target.value)} /></label>
             <label>الحالة<select value={form.status} onChange={(event) => setField("status", event.target.value)}><option value="draft">مسودة</option>{canPublish && <option value="active">نشطة</option>}<option value="paused">متوقفة</option><option value="expired">منتهية</option></select></label>
             <label>حالة الاعتماد{canApprove ? <select value={form.approvalStatus} onChange={(event) => setField("approvalStatus", event.target.value)}>{APPROVAL_STATUSES.map((status) => <option key={status} value={status}>{approvalLabel(status)}</option>)}</select> : <input disabled value={approvalLabel(form.approvalStatus)} />}</label>

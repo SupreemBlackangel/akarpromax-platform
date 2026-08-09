@@ -16,7 +16,7 @@ const campaignTypes = ["platform", "property", "service", "request"] as const;
 const mediaTypes = ["image", "video"] as const;
 const supportedLocales = ["ar", "en", "tr"] as const;
 
-export const MAX_COMMERCIAL_CREATIVES = 5;
+export const MAX_AD_CREATIVES = 5;
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -165,7 +165,7 @@ export type CreativePayload = {
 };
 
 export function normaliseCreatives(body: Record<string, unknown>): CreativePayload[] {
-  const cap = MAX_COMMERCIAL_CREATIVES;
+  const cap = MAX_AD_CREATIVES;
   if (!Array.isArray(body.creatives)) return [];
   return body.creatives.slice(0, cap).flatMap((item, index) => {
     if (!item || typeof item !== "object") return [];

@@ -1,4 +1,29 @@
 export const PROPERTY_TABLES_SQL: string[] = [
+  `CREATE TABLE IF NOT EXISTS property_categories (
+    id VARCHAR(32) PRIMARY KEY NOT NULL,
+    label_ar TEXT NOT NULL,
+    label_en TEXT NOT NULL,
+    label_tr TEXT NOT NULL,
+    icon TEXT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS property_types (
+    id VARCHAR(32) PRIMARY KEY NOT NULL,
+    category_id VARCHAR(32) NOT NULL,
+    label_ar TEXT NOT NULL,
+    label_en TEXT NOT NULL,
+    label_tr TEXT NOT NULL,
+    icon TEXT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    show_in_search INTEGER NOT NULL DEFAULT 1,
+    show_in_add_property INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
   `CREATE TABLE IF NOT EXISTS property_listings (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     slug VARCHAR(200) NULL,
@@ -36,6 +61,7 @@ export const PROPERTY_TABLES_SQL: string[] = [
 ];
 
 export const PROPERTY_INDEXES_SQL: string[] = [
+  `CREATE INDEX IF NOT EXISTS property_types_category_idx ON property_types (category_id)`,
   `CREATE INDEX IF NOT EXISTS property_listings_status_country_idx ON property_listings (status, country_code)`,
   `CREATE INDEX IF NOT EXISTS property_listings_featured_priority_idx ON property_listings (is_featured, priority)`,
   `CREATE INDEX IF NOT EXISTS property_listings_city_idx ON property_listings (country_code, city_id)`,
@@ -57,7 +83,56 @@ export async function ensurePropertiesSchema(db: D1Database): Promise<void> {
       if (!isDuplicateKeyError(message)) throw error;
     }
   }
+  await seedPropertyCategories(db);
+  await seedPropertyTypes(db);
   await seedProperties(db);
+}
+
+const SEED_PROPERTY_CATEGORIES: Array<{ id: string; labelAr: string; labelEn: string; labelTr: string; icon: string; sortOrder: number }> = [
+  { id: "residential", labelAr: "سكني", labelEn: "Residential", labelTr: "Konut", icon: "🏠", sortOrder: 1 },
+  { id: "commercial", labelAr: "تجاري", labelEn: "Commercial", labelTr: "Ticari", icon: "🏪", sortOrder: 2 },
+  { id: "land", labelAr: "أراضي", labelEn: "Land", labelTr: "Arsa", icon: "📐", sortOrder: 3 },
+  { id: "industrial", labelAr: "صناعي", labelEn: "Industrial", labelTr: "Endustriyel", icon: "🏭", sortOrder: 4 },
+];
+
+const SEED_PROPERTY_TYPES: Array<{ id: string; categoryId: string; labelAr: string; labelEn: string; labelTr: string; icon: string; sortOrder: number }> = [
+  { id: "villa", categoryId: "residential", labelAr: "فيلا", labelEn: "Villa", labelTr: "Villa", icon: "🏡", sortOrder: 1 },
+  { id: "apartment", categoryId: "residential", labelAr: "شقة", labelEn: "Apartment", labelTr: "Daire", icon: "🏢", sortOrder: 2 },
+  { id: "townhouse", categoryId: "residential", labelAr: "تاون هاوس", labelEn: "Townhouse", labelTr: "Kasaba Evi", icon: "🏘️", sortOrder: 3 },
+  { id: "compound", categoryId: "residential", labelAr: "كمبوند", labelEn: "Compound", labelTr: "Kompleks", icon: "🏘️", sortOrder: 4 },
+  { id: "office", categoryId: "commercial", labelAr: "مكتب", labelEn: "Office", labelTr: "Ofis", icon: "🏛️", sortOrder: 1 },
+  { id: "shop", categoryId: "commercial", labelAr: "محل تجاري", labelEn: "Shop", labelTr: "Dukkan", icon: "🏬", sortOrder: 2 },
+  { id: "warehouse", categoryId: "commercial", labelAr: "مستودع", labelEn: "Warehouse", labelTr: "Depo", icon: "📦", sortOrder: 3 },
+  { id: "building", categoryId: "commercial", labelAr: "مبنى", labelEn: "Building", labelTr: "Bina", icon: "🏗️", sortOrder: 4 },
+  { id: "residential-land", categoryId: "land", labelAr: "أرض سكنية", labelEn: "Residential Land", labelTr: "Konut Arazisi", icon: "📐", sortOrder: 1 },
+  { id: "commercial-land", categoryId: "land", labelAr: "أرض تجارية", labelEn: "Commercial Land", labelTr: "Ticari Arsa", icon: "📐", sortOrder: 2 },
+  { id: "agricultural-land", categoryId: "land", labelAr: "أرض زراعية", labelEn: "Agricultural Land", labelTr: "Tarim Arazisi", icon: "🌾", sortOrder: 3 },
+  { id: "factory", categoryId: "industrial", labelAr: "مصنع", labelEn: "Factory", labelTr: "Fabrika", icon: "🏭", sortOrder: 1 },
+  { id: "workshop", categoryId: "industrial", labelAr: "ورشة", labelEn: "Workshop", labelTr: "Atolye", icon: "🔧", sortOrder: 2 },
+];
+
+async function seedPropertyCategories(db: D1Database): Promise<void> {
+  const existing = await db.prepare("SELECT COUNT(*) AS count FROM property_categories").first<{ count: number }>();
+  if (existing && Number(existing.count) > 0) return;
+  const stmts = SEED_PROPERTY_CATEGORIES.map((c) =>
+    db.prepare(
+      `INSERT OR IGNORE INTO property_categories (id, label_ar, label_en, label_tr, icon, is_active, sort_order)
+       VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6)`,
+    ).bind(c.id, c.labelAr, c.labelEn, c.labelTr, c.icon, c.sortOrder),
+  );
+  await db.batch(stmts);
+}
+
+async function seedPropertyTypes(db: D1Database): Promise<void> {
+  const existing = await db.prepare("SELECT COUNT(*) AS count FROM property_types").first<{ count: number }>();
+  if (existing && Number(existing.count) > 0) return;
+  const stmts = SEED_PROPERTY_TYPES.map((t) =>
+    db.prepare(
+      `INSERT OR IGNORE INTO property_types (id, category_id, label_ar, label_en, label_tr, icon, is_active, sort_order, show_in_search, show_in_add_property)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7, 1, 1)`,
+    ).bind(t.id, t.categoryId, t.labelAr, t.labelEn, t.labelTr, t.icon, t.sortOrder),
+  );
+  await db.batch(stmts);
 }
 
 type SeedProperty = {

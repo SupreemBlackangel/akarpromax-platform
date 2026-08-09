@@ -88,3 +88,27 @@ export const PERMISSIONS = {
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+export type PermissionScope = {
+  module: string;
+  page?: string;
+  geo?: string;
+  entity?: string;
+};
+
+export type ScopedRole = {
+  role: string;
+  permissions: string[];
+  scopes?: PermissionScope[];
+};
+
+export function hasScopedPermission(
+  identity: { role: string; permissions: string[] },
+  permission: string,
+  scope?: PermissionScope,
+): boolean {
+  if (identity.permissions.includes("*")) return true;
+  if (!identity.permissions.includes(permission)) return false;
+  if (!scope) return true;
+  return true;
+}
