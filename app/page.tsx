@@ -15,6 +15,7 @@ import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layo
 import MobileNavigation from "@/src/components/public/mobile-navigation";
 import PublicSidebar from "@/src/components/public/public-sidebar";
 import { getPublicNav } from "@/src/config/public-navigation";
+import OfficePromoSection from "@/src/components/public/office-promo-section";
 import type { Locale, PublicSponsor, ThemeMode, ViewerContext } from "@/src/types/site";
 import {
   citiesForCountry,
@@ -371,6 +372,28 @@ export default function Home() {
           </div>
         </section>}
 
+        <section className="hero-ad" aria-label={copy.heroAria}>
+          <div className="hero-ad-inner">
+            <div className="hero-ad-copy">
+              <p className="hero-eyebrow">{copy.heroEyebrow}</p>
+              <h2>{copy.heroTitle}<br />{copy.heroAccent}</h2>
+              <span>{copy.heroSub}</span>
+              <div className="hero-ad-actions">
+                <a className="button-primary hero-cta" href="#properties">{copy.heroCta} <b>{copy.arrow}</b></a>
+                <button type="button" className="button-quiet hero-secondary" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.join}</button>
+              </div>
+            </div>
+            <div className="hero-ad-visual" aria-hidden="true">
+              <div className="hero-visual-ring" />
+              <div className="hero-visual-card">
+                <span>{copy.visualTag}</span>
+                <strong>{selectedCountry.id.toUpperCase()}</strong>
+                <small>{selectedCountry.names[locale]}</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="welcome-band" id="about">
           <div className="container welcome-grid">
             <div className="welcome-copy"><p className="section-kicker">{copy.welcomeKicker}</p><h1>{copy.welcomeTitle}<br /><em>{copy.welcomeAccent}</em></h1><p>{copy.welcomeDescription}</p><div className="welcome-actions"><a className="button-primary" href="#properties">{copy.browse} <b>{copy.arrow}</b></a><button type="button" className="button-quiet" onClick={() => { setAccountMode("register"); setAccountOpen(true); }}>{copy.join}</button></div></div>
@@ -418,12 +441,12 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="office-band" id="offices"><div className="container office-grid"><div className="office-copy"><p className="section-kicker">{copy.officeKicker}</p><h2>AkarPromax<br />Office</h2><p>{copy.officeDescription}</p><a className="button-primary" href="#account">{copy.officeCta} <b>{copy.arrow}</b></a></div><div className="office-panel"><span className="panel-orbit orbit-one" /><span className="panel-orbit orbit-two" /><div className="office-panel-label">{copy.officeSync}</div><div className="office-panel-value">24<span>/</span>7</div><div className="office-panel-foot">{copy.officeStats.map((item) => <span key={item}>{item}</span>)}</div></div></div></section>
+        <OfficePromoSection locale={locale} copy={copy} />
 
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
         </StandardPublicAdLayout>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="#main-content" aria-label="Facebook">f</a><a href="#main-content" aria-label="X">𝕏</a><a href="#main-content" aria-label="Instagram">◎</a><a href="#main-content" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3>{copy.quickLinks.map((item) => <a href="#main-content" key={`${locale}-quick-${item}`}>{item}</a>)}</div><div><h3>{copy.usefulTitle}</h3>{copy.usefulLinks.map((item) => <a href="#main-content" key={`${locale}-useful-${item}`}>{item}</a>)}</div><div><h3>{copy.contactTitle}</h3><a href="#main-content">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="#main-content">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="https://facebook.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a><a href="https://x.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="X">𝕏</a><a href="https://instagram.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Instagram">◎</a><a href="https://linkedin.com/company/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3><a href="/">{copy.quickLinks[0]}</a><a href="/properties">{copy.quickLinks[1]}</a><a href="/properties">{copy.quickLinks[2]}</a><a href="/offices">{copy.quickLinks[3]}</a><a href="/services">{copy.quickLinks[4]}</a><a href="/news">{copy.quickLinks[5]}</a></div><div><h3>{copy.usefulTitle}</h3><a href="/about">{copy.usefulLinks[0]}</a><a href="/advertise">{copy.usefulLinks[1]}</a><a href="/contact">{copy.usefulLinks[2]}</a><a href="/legal/terms">{copy.usefulLinks[3]}</a><a href="/legal/privacy">{copy.usefulLinks[4]}</a><a href="#office-app">{copy.usefulLinks[5]}</a><a href="/legal/faq">{copy.usefulLinks[6]}</a></div><div><h3>{copy.contactTitle}</h3><a href="https://maps.google.com/?q=Nizwa,Oman" target="_blank" rel="noopener noreferrer">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="https://wa.me/96890100000" target="_blank" rel="noopener noreferrer">{locale === "ar" ? "واتساب" : locale === "tr" ? "WhatsApp" : "WhatsApp"}　💬</a><a href="/contact">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span><span>{locale === "ar" ? "تابي" : locale === "tr" ? "Tabby" : "Tabby"}</span><span>{locale === "ar" ? "تمارا" : locale === "tr" ? "Tamara" : "Tamara"}</span></div></div></footer>
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
         <AccountDialog locale={locale} open={accountOpen} initialMode={accountMode} viewer={viewer} onClose={() => setAccountOpen(false)} onAuthenticated={setViewer} />
       </div>
