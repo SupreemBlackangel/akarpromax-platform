@@ -4,6 +4,82 @@ import test from "node:test";
 
 import { AD_PLACEMENTS, visibleAdminPlacements } from "../src/constants/advertising.ts";
 import { STANDARD_PUBLIC_AD_LAYOUT_V1, listAllStandardPublicPlacements } from "../src/config/standard-public-ad-layout.ts";
+import { scoreAd } from "../lib/ads/engine.ts";
+import { buildContext } from "../lib/ads/context.ts";
+
+function makeAd(overrides = {}) {
+  return {
+    id: "campaign-standard-test",
+    internalName: "campaign-standard-test",
+    advertiserName: "Test Advertiser",
+    campaignType: "platform",
+    mediaType: "image",
+    mediaUrl: "https://cdn.example.com/test.jpg",
+    mobileMediaUrl: null,
+    tabletMediaUrl: null,
+    posterUrl: null,
+    channels: ["website"],
+    eyebrow: { ar: "", en: "", tr: "" },
+    title: { ar: "عنوان", en: "Title", tr: "Baslik" },
+    accent: { ar: "", en: "", tr: "" },
+    description: { ar: "", en: "", tr: "" },
+    cta: { ar: "", en: "", tr: "" },
+    targetUrl: "/",
+    countries: [],
+    cities: [],
+    languages: ["ar", "en", "tr"],
+    devices: ["desktop", "tablet", "mobile"],
+    priority: 100,
+    weight: 100,
+    startAt: null,
+    endAt: null,
+    sectionScopes: [],
+    pageTypes: [],
+    placements: [],
+    domains: [],
+    regionIds: [],
+    districtIds: [],
+    latitude: null,
+    longitude: null,
+    radiusKm: null,
+    targetAllCountries: false,
+    targetAllRegions: true,
+    targetAllCities: true,
+    targetAllDistricts: true,
+    entityType: null,
+    entityIds: [],
+    categoryIds: [],
+    propertyTypes: [],
+    serviceCategories: [],
+    officeTypes: [],
+    toolCategories: [],
+    operatingSystems: [],
+    dailyStartTime: null,
+    dailyEndTime: null,
+    daysOfWeek: [],
+    rotationGroup: null,
+    pricingModel: "fixed",
+    price: 0,
+    budget: 0,
+    dailyBudget: 0,
+    spentAmount: 0,
+    maxImpressions: 0,
+    maxClicks: 0,
+    frequencyCapPerUser: 0,
+    frequencyCapPeriod: "day",
+    approvalStatus: "approved",
+    isActive: true,
+    isSponsored: false,
+    isFeatured: false,
+    isFallback: false,
+    isGlobal: false,
+    totalImpressions: 0,
+    totalClicks: 0,
+    totalConversions: 0,
+    creatives: [],
+    ...overrides,
+  };
+}
 
 test("STANDARD_PUBLIC_AD_LAYOUT_V1 defines exactly 8 managed placements per eligible page family", () => {
   for (const family of Object.values(STANDARD_PUBLIC_AD_LAYOUT_V1)) {
@@ -25,6 +101,22 @@ test("every standard public placement exists in the central registry and is admi
 test("standard public placements are unique across all families", () => {
   const placements = listAllStandardPublicPlacements().map((slot) => slot.placement);
   assert.equal(new Set(placements).size, placements.length, "duplicate placement ids are forbidden");
+});
+
+test("standard placements enforce exact placement and module targeting", () => {
+  const campaign = makeAd({
+    placements: ["web_services_bottom_02"],
+    sectionScopes: ["services"],
+    pageTypes: ["listing"],
+  });
+
+  const correctCtx = buildContext({ placement: "web_services_bottom_02", path: "/services", section: "services", pageType: "listing", channel: "website", language: "ar", deviceType: "desktop" });
+  const wrongPlacementCtx = buildContext({ placement: "web_services_hero", path: "/services", section: "services", pageType: "listing", channel: "website", language: "ar", deviceType: "desktop" });
+  const wrongModuleCtx = buildContext({ placement: "web_property_detail_bottom_02", path: "/properties/abc", section: "properties", pageType: "details", channel: "website", language: "ar", deviceType: "desktop" });
+
+  assert.notEqual(scoreAd(campaign, correctCtx, new Date(), undefined), null, "correct placement should be eligible");
+  assert.equal(scoreAd(campaign, wrongPlacementCtx, new Date(), undefined), null, "wrong placement must be blocked");
+  assert.equal(scoreAd(campaign, wrongModuleCtx, new Date(), undefined), null, "wrong module must be blocked");
 });
 
 test("enrolled pages use the standard layout while safe-zone flows remove legacy page-owned ad slots", async () => {
