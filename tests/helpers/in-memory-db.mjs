@@ -151,6 +151,12 @@ function evalClause(clause, row, params) {
     return compare(row, col, valueOf(eq[2], params));
   }
 
+  const ne = /^([a-z_][a-z0-9_.]*) != (.+)$/i.exec(c);
+  if (ne) {
+    const col = stripAlias(ne[1]);
+    return !compare(row, col, valueOf(ne[2], params));
+  }
+
   const isNull = /^([a-z_][a-z0-9_.]*) IS NULL$/i.exec(c);
   if (isNull) {
     const col = stripAlias(isNull[1]);

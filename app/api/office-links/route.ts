@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasPermission } from "@/lib/identity-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
 
@@ -10,8 +10,8 @@ function n(v: unknown, m: number) { return typeof v === "string" ? v.trim().slic
 function nc(v: unknown, c: readonly string[], f: string) { const t = n(v, 30); return c.includes(t) ? t : f; }
 
 export async function GET(req: NextRequest) {
-  const id = await getSponsorIdentity();
-  if (!hasSponsorPermission(id, PERMISSIONS.SPONSORS_VIEW)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const id = await getSessionIdentity();
+  if (!hasPermission(id, PERMISSIONS.ADVERTISERS_VIEW)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const db = await getRuntimeDb();
   const lid = req.nextUrl.searchParams.get("id"); const sid = req.nextUrl.searchParams.get("sponsorId");
   if (lid) { const r = await db.prepare("SELECT * FROM office_links WHERE id = ?1").bind(lid).first(); if (!r) return NextResponse.json({ error: "Not found" }, { status: 404 }); return NextResponse.json(r); }
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const id = await getSponsorIdentity();
-  if (!hasSponsorPermission(id, PERMISSIONS.OFFICE_LINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const id = await getSessionIdentity();
+  if (!hasPermission(id, PERMISSIONS.OFFICE_LINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const b = (await req.json()) as Record<string, unknown>;
   const sponsorId = n(b.sponsorId, 80); const licenseKey = n(b.licenseKey, 100);
   if (!sponsorId || !licenseKey) return NextResponse.json({ error: "sponsorId, licenseKey required" }, { status: 400 });
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const id = await getSponsorIdentity();
-  if (!hasSponsorPermission(id, PERMISSIONS.OFFICE_UNLINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const id = await getSessionIdentity();
+  if (!hasPermission(id, PERMISSIONS.OFFICE_UNLINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const b = (await req.json()) as Record<string, unknown>;
   const pk = n(b.id, 80); if (!pk) return NextResponse.json({ error: "id required" }, { status: 400 });
   const db = await getRuntimeDb();
@@ -54,8 +54,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const id = await getSponsorIdentity();
-  if (!hasSponsorPermission(id, PERMISSIONS.OFFICE_UNLINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const id = await getSessionIdentity();
+  if (!hasPermission(id, PERMISSIONS.OFFICE_UNLINK)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const pk = n(req.nextUrl.searchParams.get("id"), 80);
   if (!pk) return NextResponse.json({ error: "id required" }, { status: 400 });
   const db = await getRuntimeDb();

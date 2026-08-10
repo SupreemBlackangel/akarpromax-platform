@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasPermission } from "@/lib/identity-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { roleNameAr } from "@/src/constants/roles";
@@ -33,15 +33,15 @@ function groupBy<T>(rows: T[], key: (row: T) => string): Record<string, number> 
 }
 
 export async function GET() {
-  const identity = await getSponsorIdentity();
-  if (!hasSponsorPermission(identity, PERMISSIONS.ADMIN_DASHBOARD_VIEW) &&
-      !hasSponsorPermission(identity, PERMISSIONS.REPORTS_VIEW)) {
+  const identity = await getSessionIdentity();
+  if (!hasPermission(identity, PERMISSIONS.ADMIN_DASHBOARD_VIEW) &&
+      !hasPermission(identity, PERMISSIONS.REPORTS_VIEW)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const db = await getRuntimeDb();
-  const [sponsorByStatus, sponsorByCountry, campaignByStatus, campaignByType,
-    accessByRole, usersByStatus, sponsorEvents, adEvents, auditRows, plans] = await Promise.all([
+  const [advertiserByStatus, advertiserByCountry, campaignByStatus, campaignByType,
+    accessByRole, usersByStatus, adEventsByCountry, adEvents, auditRows, plans] = await Promise.all([
     countsBy(db, "sponsors", "status"),
     db.prepare(
       `SELECT country_code, COALESCE(SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END), 0) AS impressions,
@@ -70,13 +70,13 @@ export async function GET() {
     db.prepare("SELECT COUNT(*) AS total FROM sponsor_plans").first<{ total: number }>(),
   ]);
 
-  const sponsorImpressions = await db.prepare(
+  const advertiserEvents = await db.prepare(
     `SELECT COALESCE(SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END), 0) AS impressions,
             COALESCE(SUM(CASE WHEN event_type = 'click' THEN 1 ELSE 0 END), 0) AS clicks
      FROM sponsor_events`,
   ).first<{ impressions: number; clicks: number }>();
 
-  const sponsorToday = await db.prepare(
+  const advertiserToday = await db.prepare(
     `SELECT COUNT(*) AS total FROM sponsor_events WHERE date(occurred_at) = date('now')`,
   ).first<{ total: number }>();
   const adToday = await db.prepare(
@@ -85,10 +85,10 @@ export async function GET() {
 
   return NextResponse.json({
     identity,
-    sponsors: {
-      total: Object.values(sponsorByStatus).reduce((sum, n) => sum + n, 0),
-      byStatus: sponsorByStatus,
-      byCountry: sponsorByCountry.results.map((row) => ({
+    advertisers: {
+      total: Object.values(advertiserByStatus).reduce((sum, n) => sum + n, 0),
+      byStatus: advertiserByStatus,
+      byCountry: advertiserByCountry.results.map((row) => ({
         country: row.country_code,
         impressions: Number(row.impressions),
         clicks: Number(row.clicks),
@@ -108,11 +108,11 @@ export async function GET() {
       byStatus: usersByStatus,
     },
     events: {
-      sponsorImpressions: Number(sponsorImpressions?.impressions ?? 0),
-      sponsorClicks: Number(sponsorImpressions?.clicks ?? 0),
+      advertiserImpressions: Number(advertiserEvents?.impressions ?? 0),
+      advertiserClicks: Number(advertiserEvents?.clicks ?? 0),
       adImpressions: Number(adEvents?.impressions ?? 0),
       adClicks: Number(adEvents?.clicks ?? 0),
-      today: Number(sponsorToday?.total ?? 0) + Number(adToday?.total ?? 0),
+      today: Number(advertiserToday?.total ?? 0) + Number(adToday?.total ?? 0),
     },
     plans: Number(plans?.total ?? 0),
     audit: auditRows.results.map((row) => ({

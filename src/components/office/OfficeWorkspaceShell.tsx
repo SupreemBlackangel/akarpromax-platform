@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
-import { getSidebarConfig } from "@/src/config/sidebar";
 
 type OfficeWorkspaceShellProps = {
   activeTab: string;
@@ -20,9 +18,7 @@ const TABS: Array<{ key: string; label: string; href: string; icon: string }> = 
 ];
 
 export function OfficeWorkspaceShell({ activeTab, children }: OfficeWorkspaceShellProps) {
-  const pathname = usePathname();
   const { locale, viewer } = useServicesPage({ loadI18n: false });
-  const sidebarItems = useMemo(() => getSidebarConfig("office").getVisibleItems({ role: viewer.role, permissions: viewer.permissions }), [viewer.role, viewer.permissions]);
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -53,21 +49,15 @@ export function OfficeWorkspaceShell({ activeTab, children }: OfficeWorkspaceShe
                 );
               })}
             </nav>
-            {sidebarItems.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-3">
-                <p className="px-3 pb-2 text-xs font-black uppercase tracking-wider text-gray-400">روابط</p>
-                {sidebarItems.slice(0, 4).map((item) => (
-                  <Link
-                    key={item.key}
-                    href={item.href}
-                    className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.labelKey}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-3">
+              <Link
+                href="/account/security"
+                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                <span>⚙</span>
+                <span>الإعدادات</span>
+              </Link>
+            </div>
           </div>
         </aside>
 
@@ -76,7 +66,7 @@ export function OfficeWorkspaceShell({ activeTab, children }: OfficeWorkspaceShe
             <div>
               <h1 className="text-2xl font-black text-gray-900 dark:text-white">منطقة المكاتب المتصلة</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {pathname} — أجهزة، مزامنة، رادار، وتنبيهات فورية
+                أجهزة، مزامنة، رادار، وتنبيهات فورية
               </p>
             </div>
             {!viewer.authenticated && (

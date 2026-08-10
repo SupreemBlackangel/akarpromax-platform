@@ -263,6 +263,24 @@ export const SERVICES_MARKETPLACE_TABLES_SQL: string[] = [
     read_at TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  `CREATE TABLE IF NOT EXISTS service_message_threads (
+    thread_type VARCHAR(32) NOT NULL,
+    thread_id VARCHAR(36) NOT NULL,
+    title TEXT NULL,
+    context_link TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (thread_type, thread_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS service_message_participants (
+    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    thread_type VARCHAR(32) NOT NULL,
+    thread_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    role VARCHAR(32) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
   `CREATE TABLE IF NOT EXISTS service_outbox_events (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     event_type VARCHAR(64) NOT NULL,
@@ -292,6 +310,9 @@ export const SERVICES_MARKETPLACE_INDEXES_SQL: string[] = [
   `CREATE INDEX IF NOT EXISTS service_reports_target_idx ON service_reports (target_type, target_id)`,
   `CREATE INDEX IF NOT EXISTS service_reports_status_idx ON service_reports (status)`,
   `CREATE INDEX IF NOT EXISTS service_notifications_user_idx ON service_notifications (user_id, is_read, created_at)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS service_message_participants_thread_user_unique ON service_message_participants (thread_type, thread_id, user_id)`,
+  `CREATE INDEX IF NOT EXISTS service_message_participants_user_idx ON service_message_participants (user_id)`,
+  `CREATE INDEX IF NOT EXISTS service_message_threads_updated_idx ON service_message_threads (thread_type, thread_id)`,
   `CREATE INDEX IF NOT EXISTS service_outbox_status_idx ON service_outbox_events (status, created_at)`,
 ];
 

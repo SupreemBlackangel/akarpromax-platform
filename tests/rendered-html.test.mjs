@@ -79,15 +79,14 @@ test("does not retain the starter preview or starter metadata", async () => {
   assert.match(layout, /akarpromax-theme/);
 });
 
-test("includes the sponsor admin, content schema and campaign assets", async () => {
-  const [page, publicSidebar, admin, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
+test("includes the advertiser admin, content schema and campaign assets", async () => {
+  const [page, publicSidebar, admin, schema, advertiserApi, accessApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-sidebar.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/advertisers/advertiser-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/sponsor-assets/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/advertisers/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/advertiser-access/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/sponsor-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/content-schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -99,7 +98,7 @@ test("includes the sponsor admin, content schema and campaign assets", async () 
   ]);
 
   assert.match(page, /\/api\/user-context/);
-  assert.match(page, /\/api\/sponsors\?country=/);
+  assert.doesNotMatch(page, /\/api\/sponsors/);
   assert.match(page, /StandardPublicAdLayout/);
   assert.match(page, /family="home"/);
   assert.doesNotMatch(page, /sponsor-ribbon-visual/);
@@ -120,18 +119,14 @@ test("includes the sponsor admin, content schema and campaign assets", async () 
   assert.match(admin, /مواضع الظهور/);
   assert.match(schema, /sponsorAccess/);
   assert.match(schema, /sponsorEvents/);
-  assert.match(sponsorApi, /sponsor\.created/);
+  assert.match(advertiserApi, /advertiser\.created/);
   assert.match(accessApi, /PERMISSIONS\.USERS_CREATE/);
-  assert.match(sponsorAssetsApi, /MAX_LOGO_BYTES/);
-  assert.match(sponsorAssetsApi, /fileSignatureMatches/);
-  assert.match(sponsorAssetsApi, /sponsor\.logo_uploaded/);
-  assert.match(sponsorAssetsApi, /UPDATE sponsors SET logo_url/);
   assert.match(admin, /admin-campaign-art/);
   assert.match(admin, /admin-campaign-preview-logo/);
-  assert.match(admin, /صورة خلفية شريط الراعي/);
-  assert.match(admin, /payload\.append\("sponsorId", form\.id\)/);
+  assert.match(admin, /صورة خلفية شريط المعلن/);
+  assert.match(admin, /JSON\.stringify\(form\)/);
   assert.match(admin, /admin-dialog-message/);
-  assert.match(admin, /disabled=\{busy \|\| logoUploading\}/);
+  assert.match(admin, /disabled=\{busy\}/);
   assert.doesNotMatch(auth, /admin@localhost\.akarpromax/);
   assert.doesNotMatch(auth, /getChatGPTUser|oai-authenticated-user/);
   assert.match(auth, /getSessionIdentity/);
@@ -250,7 +245,7 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
     readFile(new URL("../app/admin/settings-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/stats/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/analytics/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/advertiser-access/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/constants/roles.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -261,7 +256,7 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
   assert.match(dashboard, /cc-stat-grid/);
 
   assert.match(usersPage, /UsersAdminClient/);
-  assert.match(users, /\/api\/sponsor-access/);
+  assert.match(users, /\/api\/advertiser-access/);
   assert.match(users, /إدارة المستخدمين/);
   assert.match(users, /USERS_DELETE/);
 
@@ -276,9 +271,8 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
   assert.match(reports, /التقارير والإحصاءات/);
 
   assert.match(settingsPage, /SettingsAdminClient/);
-  assert.match(settings, /\/api\/sponsor-plans/);
-  assert.match(settings, /خطط اشتراك الرعاة/);
-  assert.match(settings, /maxAds/);
+  assert.match(settings, /advertiser-admin-header/);
+  assert.match(settings, /الأقسام المتاحة/);
 
   assert.match(statsApi, /ADMIN_DASHBOARD_VIEW/);
   assert.match(statsApi, /GROUP BY/);
@@ -290,7 +284,7 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
 
   assert.match(accessApi, /PERMISSIONS\.USERS_VIEW/);
   assert.match(accessApi, /PERMISSIONS\.USERS_DELETE/);
-  assert.match(accessApi, /sponsor.access.deleted/);
+  assert.match(accessApi, /advertiser\.access\.deleted/);
   assert.match(rolesConstants, /super_admin/);
   assert.match(rolesConstants, /ROLE_CATALOG/);
   assert.match(permissions, /ADMIN_DASHBOARD_VIEW/);

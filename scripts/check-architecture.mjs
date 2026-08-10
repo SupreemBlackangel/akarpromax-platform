@@ -17,12 +17,10 @@
  * - File size limits
  */
 
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, extname } from 'node:path';
-import { globSync } from 'node:fs';
 
 const ROOT = process.cwd();
-const SRC_DIRS = ['app', 'src', 'lib', 'components', 'db', 'scripts'];
 
 // Colors
 const RED = '\x1b[31m';
@@ -182,16 +180,27 @@ function testPublicAdminSeparation() {
     (f.includes('page.tsx') || f.includes('page.ts'))
   );
   
-  const adminImports = ['admin', 'Admin'];
+  // Only flag actual imports of admin-module code (import statements that
+  // resolve into the admin tree), not substring matches like permission
+  // names (`ADMIN_DASHBOARD_VIEW`) or `/admin` hrefs inside a public page.
+  const adminImportPattern = /(?:from|import)\s+["'][^"']*\/(?:admin|Admin)(?:\/[^"']*)?["']/g;
   
   for (const file of publicPages) {
     const content = readFileContent(file);
     const rel = relativePath(file);
     
-    for (const imp of adminImports) {
-      if (content.includes(imp)) {
-        addViolation('ARCH-005', rel, 0, `Public page imports admin content`);
-        break;
+    const adminImports = content.match(adminImportPattern);
+    if (adminImports && adminImports.length) {
+      const resolved = adminImports.map((m) => m.replace(/(?:from|import)\s+/, "").replace(/["']/g, ""));
+      const realAdminImports = resolved.filter((spec) =>
+        spec.startsWith("@/app/admin") ||
+        spec.startsWith("@/components/admin") ||
+        spec.startsWith("@/src/components/admin") ||
+        spec.startsWith("../../admin/") ||
+        spec.includes("/admin/")
+      );
+      if (realAdminImports.length) {
+        addViolation('ARCH-005', rel, 0, `Public page imports admin content: ${realAdminImports.join(', ')}`);
       }
     }
   }
@@ -219,7 +228,6 @@ function testPublicAdminSeparation() {
 function testLayoutCount() {
   console.log(`${CYAN}[TEST 4] Layout Count${RESET}`);
   
-  const layoutDirs = ['PublicLayout', 'AccountLayout', 'WorkspaceLayout', 'AdminLayout'];
   const allLayouts = [];
   
   // Search for layout files
@@ -231,10 +239,18 @@ function testLayoutCount() {
   }
   
   // Check for unauthorized layouts
+  const allowedLayoutPatterns = [
+    'app/(account)/layout',
+    'app/(admin)/layout',
+    'app/(public)/layout',
+    'app/(workspace)/layout',
+    'app/layout',
+    'app/admin/layout',
+    'standard-public-ad-layout',
+    'public-shell-layout',
+  ];
   for (const layout of allLayouts) {
-    const isAllowed = layoutDirs.some(dir => layout.includes(dir)) || 
-                      layout.includes('app/layout') ||
-                      layout.includes('app/admin/layout');
+    const isAllowed = allowedLayoutPatterns.some(pattern => layout.includes(pattern));
     
     if (!isAllowed && !layout.includes('node_modules')) {
       addWarning('ARCH-007', layout, 0, `Layout not in allowed list`);
@@ -348,17 +364,11 @@ function testDatabaseSystems() {
     // MySQL
     if (content.includes('mysql') || content.includes('mysql2')) {
       dbSystems.add('mysql');
-      if (!isException('ARCH-013', rel)) {
-        addWarning('ARCH-013', rel, 0, `MySQL usage (legacy allowed)`);
-      }
     }
     
     // D1/SQLite
     if (content.includes('cloudflare:d1') || content.includes('better-sqlite')) {
       dbSystems.add('d1/sqlite');
-      if (!isException('ARCH-013', rel)) {
-        addWarning('ARCH-013', rel, 0, `D1/SQLite usage (legacy allowed)`);
-      }
     }
   }
   

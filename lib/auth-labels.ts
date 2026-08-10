@@ -47,6 +47,13 @@ export type AuthLabels = {
   onboardingComplete: string;
   accountSecurity: string;
   accountSecuritySubtitle: string;
+  accountTitle: string;
+  accountDescription: string;
+  emailVerification: string;
+  registerDate: string;
+  dashboardTitle: string;
+  providerTitle: string;
+  accountSecurityTitle: string;
   changePasswordTitle: string;
   changePasswordSubmit: string;
   currentPasswordLabel: string;
@@ -123,6 +130,13 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
     onboardingComplete: "الانتهاء",
     accountSecurity: "أمان الحساب",
     accountSecuritySubtitle: "إدارة كلمة المرور والبريد الإلكتروني.",
+    accountTitle: "ملفي الشخصي",
+    accountDescription: "بيانات حسابك على منصة أكار بروماكس.",
+    emailVerification: "توثيق البريد",
+    registerDate: "تاريخ التسجيل",
+    dashboardTitle: "لوحة التحكم",
+    providerTitle: "الملف المهني",
+    accountSecurityTitle: "الأمان",
     changePasswordTitle: "تغيير كلمة المرور",
     changePasswordSubmit: "حفظ",
     currentPasswordLabel: "كلمة المرور الحالية",
@@ -197,6 +211,13 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
     onboardingComplete: "Finish",
     accountSecurity: "Account security",
     accountSecuritySubtitle: "Manage your password and email.",
+    accountTitle: "My profile",
+    accountDescription: "Your account details on the AkarProMax platform.",
+    emailVerification: "Email verification",
+    registerDate: "Member since",
+    dashboardTitle: "Dashboard",
+    providerTitle: "Professional profile",
+    accountSecurityTitle: "Security",
     changePasswordTitle: "Change password",
     changePasswordSubmit: "Save",
     currentPasswordLabel: "Current password",
@@ -271,6 +292,13 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
     onboardingComplete: "Bitir",
     accountSecurity: "Hesap güvenliği",
     accountSecuritySubtitle: "Şifrenizi ve e-postanızı yönetin.",
+    accountTitle: "Profilim",
+    accountDescription: "AkarProMax platformundaki hesap bilgileriniz.",
+    emailVerification: "E-posta doğrulaması",
+    registerDate: "Kayıt tarihi",
+    dashboardTitle: "Panel",
+    providerTitle: "Profesyonel profil",
+    accountSecurityTitle: "Güvenlik",
     changePasswordTitle: "Şifreyi değiştir",
     changePasswordSubmit: "Kaydet",
     currentPasswordLabel: "Mevcut şifre",

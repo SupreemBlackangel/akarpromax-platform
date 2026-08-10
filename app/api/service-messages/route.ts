@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getSessionIdentity } from "@/lib/sponsor-auth";
-import { sendMessageFull } from "@services/marketplace";
-import { getRuntimeDb } from "@/lib/runtime-db";
+import { getSessionIdentity } from "@/lib/identity-auth";
+import { isThreadParticipant, resolveRecipientUserId, sendMessageFull } from "@services/marketplace";
+import { isMessageContext } from "@services/message-contexts";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
@@ -16,27 +16,19 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
-  const threadType = body.threadType === "order" ? "order" : body.threadType === "request" ? "request" : "";
+  const threadType = typeof body.threadType === "string" ? body.threadType.trim() : "";
   const threadId = typeof body.threadId === "string" ? body.threadId.trim() : "";
   const messageBody = typeof body.body === "string" ? body.body.trim().slice(0, 4000) : "";
-  if (!threadType || !threadId || !messageBody) {
+  if (!isMessageContext(threadType) || !threadId || !messageBody) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
 
-  const db = await getRuntimeDb();
-  let recipientUserId: string | null = null;
-  if (threadType === "order") {
-    const order = await db.prepare("SELECT customer_user_id, provider_user_id FROM service_orders WHERE id = ?1").bind(threadId).first<{ customer_user_id: string; provider_user_id: string }>();
-    if (!order) return NextResponse.json({ error: SERVICE_ERROR_CODES.NOT_FOUND }, { status: 404 });
-    if (order.customer_user_id !== identity.email && order.provider_user_id !== identity.email) {
-      return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
-    }
-    recipientUserId = order.customer_user_id === identity.email ? order.provider_user_id : order.customer_user_id;
-  } else {
-    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(threadId).first<{ customer_user_id: string }>();
-    if (!requestRow) return NextResponse.json({ error: SERVICE_ERROR_CODES.NOT_FOUND }, { status: 404 });
-    recipientUserId = requestRow.customer_user_id;
+  const participant = await isThreadParticipant(threadType, threadId, identity.email);
+  if (!participant) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
   }
+
+  const recipientUserId = await resolveRecipientUserId(threadType, threadId, identity.email);
 
   const id = await sendMessageFull(
     {

@@ -11,6 +11,7 @@ import type { ProviderRow } from "@services-ui/ServiceCards";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
+import StartThreadButton from "@/src/components/services/StartThreadButton";
 
 type ReviewRow = Record<string, unknown> & {
   id: string;
@@ -120,9 +121,20 @@ export default function ProviderProfilePage({ id }: Props) {
                   <RatingStars value={profile.rating_avg} count={profile.rating_count} locale={locale} />
                 </div>
               </div>
-              <Button onClick={requestOffer}>
-                {t("services.requestService") ?? "اطلب خدمة"}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <StartThreadButton
+                  threadType="professional"
+                  threadId={id}
+                  title={name}
+                  contextLink={`/providers/${id}`}
+                  participantIds={profile.user_id ? [String(profile.user_id)] : []}
+                  label={t("services.contactProvider") ?? "راسل المختص"}
+                  className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                />
+                <Button onClick={requestOffer}>
+                  {t("services.requestService") ?? "اطلب خدمة"}
+                </Button>
+              </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-3 text-sm">
               <span className="px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">{profile.jobs_completed ?? 0} {t("services.jobsDone") ?? "أعمال منجزة"}</span>

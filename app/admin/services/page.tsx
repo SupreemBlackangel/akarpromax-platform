@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasPermission } from "@/lib/identity-auth";
 import { PermissionGuard } from "@/src/components/PermissionGuard";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import ServicesAdminClient from "./admin-client";
@@ -15,7 +15,7 @@ const REQUIRED_PERMISSIONS = [
 async function ServicesAdminGate() {
   const identity = await getSessionIdentity();
   if (!identity.authenticated) redirect("/");
-  if (!REQUIRED_PERMISSIONS.some((permission) => hasSponsorPermission(identity, permission))) {
+  if (!REQUIRED_PERMISSIONS.some((permission) => hasPermission(identity, permission))) {
     return (
       <div dir="rtl" className="min-h-[50vh] grid place-items-center px-4">
         <div className="text-center max-w-md">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiFetch, formatTime } from "@services-client";
+import { apiFetch, formatTime, messageContextLabel } from "@services-client";
 
 type Message = Record<string, unknown> & {
   id: string;
@@ -13,11 +13,13 @@ type Message = Record<string, unknown> & {
 export default function ThreadMessages({
   threadType,
   threadId,
+  threadTitle,
   viewerEmail,
   t,
 }: {
-  threadType: "request" | "order";
+  threadType: string;
   threadId: string;
+  threadTitle?: string | null;
   viewerEmail: string | null;
   t: (key: string) => string;
 }) {
@@ -66,6 +68,11 @@ export default function ThreadMessages({
 
   return (
     <div className="flex flex-col h-full">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-bold text-gray-400">
+          {messageContextLabel(threadType, "ar")} {threadTitle ? `— ${threadTitle}` : `#${String(threadId).slice(0, 8)}`}
+        </span>
+      </div>
       <div className="flex-1 overflow-y-auto space-y-2 p-3 min-h-[220px] max-h-[380px]">
         {messages.length === 0 && (
           <p className="text-center text-sm text-gray-400 py-10">{t("services.noMessages") ?? "لا توجد رسائل بعد. ابدأ المحادثة."}</p>

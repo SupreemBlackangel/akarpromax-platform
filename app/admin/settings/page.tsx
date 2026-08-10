@@ -1,4 +1,4 @@
-import { requireSessionUser } from "@/lib/sponsor-auth";
+import { requireSessionUser } from "@/lib/identity-auth";
 import { PermissionGuard } from "@/src/components/PermissionGuard";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import SettingsAdminClient from "../settings-admin-client";

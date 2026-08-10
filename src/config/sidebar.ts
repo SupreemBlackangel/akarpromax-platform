@@ -125,7 +125,7 @@ export const adminSidebarConfig: SidebarConfig = {
         { key: "services-settings", labelKey: "admin.services.settings", href: "/admin/services/settings", icon: "⚙" },
       ],
     },
-    { key: "sponsors", labelKey: "admin.sponsors", href: "/admin/sponsors", icon: "▣", requiredPermission: PERMISSIONS.SPONSORS_VIEW },
+    { key: "advertisers", labelKey: "admin.advertisers", href: "/admin/advertisers", icon: "▣", requiredPermission: PERMISSIONS.ADVERTISERS_VIEW },
     { key: "news", labelKey: "admin.news", href: "/admin/news", icon: "➤", requiredPermission: PERMISSIONS.NEWS_VIEW },
     { key: "i18n", labelKey: "admin.i18n", href: "/admin/i18n", icon: "🔤", requiredPermission: PERMISSIONS.I18N_VIEW },
     { key: "ads", labelKey: "admin.ads", href: "/admin/ads", icon: "▤", requiredPermission: PERMISSIONS.ADS_VIEW },

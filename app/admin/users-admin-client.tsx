@@ -67,7 +67,7 @@ export default function UsersAdminClient({
   const canDelete = identity.permissions.includes(PERMISSIONS.USERS_DELETE);
 
   const load = useCallback(async () => {
-    const response = await fetch("/api/sponsor-access", { cache: "no-store" });
+    const response = await fetch("/api/advertiser-access", { cache: "no-store" });
     if (!response.ok) throw new Error("تعذر تحميل قائمة المستخدمين");
     const data = await response.json();
     setIdentity(data.identity);
@@ -88,7 +88,7 @@ export default function UsersAdminClient({
     setBusy(true);
     setMessage("");
     try {
-      const response = await fetch("/api/sponsor-access", {
+      const response = await fetch("/api/advertiser-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -110,7 +110,7 @@ export default function UsersAdminClient({
     setBusy(true);
     setMessage("");
     try {
-      const response = await fetch(`/api/sponsor-access?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const response = await fetch(`/api/advertiser-access?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error || "تعذر إزالة المستخدم");
@@ -126,7 +126,7 @@ export default function UsersAdminClient({
 
   return (
     <>
-      <header className="sponsor-admin-header">
+      <header className="advertiser-admin-header">
         <div><p>الوصول والصلاحيات</p><h1>إدارة المستخدمين</h1></div>
         <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
       </header>
@@ -142,7 +142,7 @@ export default function UsersAdminClient({
 
         <div className="admin-access-grid">
           <div className="admin-panel">
-            <div className="admin-panel-title"><div><p>الحسابات</p><h2>مستخدمو نظام الرعاة</h2></div><span>{users.length} سجل</span></div>
+            <div className="admin-panel-title"><div><p>الحسابات</p><h2>مستخدمو نظام المعلنين</h2></div><span>{users.length} سجل</span></div>
             <div className="admin-access-list">
               {users.map((user) => {
                 const countryCode = user.countryCode;

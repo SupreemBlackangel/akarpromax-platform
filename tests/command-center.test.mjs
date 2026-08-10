@@ -18,7 +18,7 @@ test("command center service exports getCommandCenterOverview", async () => {
 test("command center service has all required metric sections", async () => {
   const service = await readFile(new URL("../lib/command-center/service.ts", import.meta.url), "utf8");
   const requiredSections = [
-    "sponsors:", "ads:", "properties:", "services:", "users:",
+    "advertisers:", "ads:", "properties:", "services:", "users:",
     "integration:", "geo:", "news:", "health:", "audit:",
   ];
   for (const section of requiredSections) {
@@ -124,7 +124,7 @@ test("command center client has auto-refresh", async () => {
 test("command center client has all panel sections", async () => {
   const client = await readFile(new URL("../app/admin/command-center-client.tsx", import.meta.url), "utf8");
   const sections = [
-    "الرعاة", "الحملات الإعلانية", "العقارات", "سوق الخدمات",
+    "المعلنون", "الحملات الإعلانية", "العقارات", "سوق الخدمات",
     "المستخدمون", "التكامل", "جغرافيا", "النظام", "السجل",
   ];
   for (const section of sections) {

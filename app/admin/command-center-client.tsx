@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Overview = {
   generatedAt: string;
-  sponsors: {
+  advertisers: {
     total: number;
     active: number;
     byStatus: Record<string, number>;
@@ -124,7 +124,7 @@ const STATUS_AR: Record<string, string> = {
 };
 
 const ENTITY_AR: Record<string, string> = {
-  sponsor: "راعٍ", campaign: "حملة", user: "مستخدم", ad: "إعلان",
+  advertiser: "معلن", campaign: "حملة", user: "مستخدم", ad: "إعلان",
   service_request: "طلب خدمة", property: "عقار", news: "خبر", device: "جهاز",
 };
 
@@ -281,7 +281,7 @@ export default function CommandCenterOverview() {
 
   return (
     <>
-      <header className="sponsor-admin-header">
+      <header className="advertiser-admin-header">
         <div>
           <p>Unified Command Center</p>
           <h1>مركز الأوامر الموحد</h1>
@@ -315,7 +315,7 @@ export default function CommandCenterOverview() {
 
           {/* ── ROW 1: Primary Metrics ── */}
           <div className="cc-stat-grid cc-stat-grid-6">
-            <MetricCard label="الرعاة" value={data.sponsors.total} note={`${data.sponsors.active} نشط`} href="/admin/sponsors" tone="blue" />
+            <MetricCard label="المعلنون" value={data.advertisers.total} note={`${data.advertisers.active} نشط`} href="/admin/advertisers" tone="blue" />
             <MetricCard label="الحملات" value={data.ads.total} note={`${data.ads.active} نشطة`} href="/admin/ads" tone="purple" />
             <MetricCard label="العقارات" value={data.properties.total} note={`${data.properties.active} نشطة`} href="/api/properties" tone="emerald" />
             <MetricCard label="طلبات الخدمات" value={data.services.totalRequests} note={`${data.services.openRequests} مفتوحة`} href="/admin/services" tone="amber" />
@@ -335,10 +335,10 @@ export default function CommandCenterOverview() {
           <div className="cc-grid-2">
             <section className="admin-panel">
               <div className="admin-panel-title">
-                <div><p>الرعاة</p><h2>توزيع حسب الحالة</h2></div>
-                <Link href="/admin/sponsors">عرض الكل ↗</Link>
+                <div><p>المعلنون</p><h2>توزيع حسب الحالة</h2></div>
+                <Link href="/admin/advertisers">عرض الكل ↗</Link>
               </div>
-              <StatusBars data={data.sponsors.byStatus} total={data.sponsors.total} />
+              <StatusBars data={data.advertisers.byStatus} total={data.advertisers.total} />
             </section>
 
             <section className="admin-panel">

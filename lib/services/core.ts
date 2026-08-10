@@ -510,31 +510,22 @@ export async function resolveDispute(disputeId: string, resolutionNote: string, 
   await writeAudit({ action: "service_dispute.resolve", entityType: "service_disputes", entityId: disputeId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
-/* ---------- Messages ---------- */
+/* ---------- Messages ----------
+ * Single shared messaging core: these legacy helpers delegate to the
+ * generalized seven-context core in marketplace.ts so the module never keeps
+ * a second implementation of thread history / send semantics. */
 
 export async function sendMessage(input: {
-  threadType: "request" | "order";
+  threadType: string;
   threadId: string;
   senderUserId: string;
   body: string;
 }, actor?: ActorContext): Promise<string> {
-  const db = await getServicesDb();
-  if (!input.body.trim()) throw new Error("INVALID_BODY");
-  const id = await insertRow(
-    db,
-    `INSERT INTO service_messages (id, thread_type, thread_id, sender_user_id, body, is_system, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, 0, ?6)`,
-    [crypto.randomUUID(), input.threadType, input.threadId, input.senderUserId, input.body, nowMySqlDateTime()],
-  );
-  await writeAudit({ action: "service_message.send", entityType: `service_messages:${input.threadType}`, entityId: input.threadId, actorUserId: actor?.userId, ipAddress: actor?.ip });
-  return id;
+  const { sendMessageFull } = await import("@services/marketplace");
+  return sendMessageFull(input, actor);
 }
 
-export async function threadMessages(threadType: "request" | "order", threadId: string): Promise<Array<Record<string, unknown>>> {
-  const db = await getServicesDb();
-  const result = await db
-    .prepare("SELECT * FROM service_messages WHERE thread_type = ?1 AND thread_id = ?2 ORDER BY created_at ASC LIMIT 200")
-    .bind(threadType, threadId)
-    .all<Record<string, unknown>>();
-  return result.results ?? [];
+export async function threadMessages(threadType: string, threadId: string): Promise<Array<Record<string, unknown>>> {
+  const { threadMessages: sharedThreadMessages } = await import("@services/marketplace");
+  return sharedThreadMessages(threadType, threadId);
 }

@@ -1,4 +1,4 @@
-import { hasSponsorPermission, type SponsorIdentity } from "@/lib/sponsor-auth";
+import { hasPermission, type UserIdentity } from "@/lib/identity-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import {
   PLATFORM_SECTIONS,
@@ -285,18 +285,18 @@ export function validateCampaignPayload(payload: CampaignPayload): boolean {
   );
 }
 
-export function canManageTargets(identity: SponsorIdentity, countries: string[]): boolean {
+export function canManageTargets(identity: UserIdentity, countries: string[]): boolean {
   if (identity.role === "super_admin" || identity.role === "ad_manager") return true;
   if (!identity.countryCode) return false;
   return countries.length === 1 && countries[0] === identity.countryCode.toLowerCase();
 }
 
-export function resolveApprovalStatus(body: Record<string, unknown>, identity: SponsorIdentity): string {
+export function resolveApprovalStatus(body: Record<string, unknown>, identity: UserIdentity): string {
   const requested = clean(body.approvalStatus, 16);
-  if (APPROVAL_STATUSES.includes(requested as never) && hasSponsorPermission(identity, PERMISSIONS.ADS_APPROVE)) {
+  if (APPROVAL_STATUSES.includes(requested as never) && hasPermission(identity, PERMISSIONS.ADS_APPROVE)) {
     return requested;
   }
-  return hasSponsorPermission(identity, PERMISSIONS.ADS_APPROVE) ? "approved" : "pending";
+  return hasPermission(identity, PERMISSIONS.ADS_APPROVE) ? "approved" : "pending";
 }
 
 export function cleanBoolList(value: unknown, allowed: readonly string[], maxItems = 20): string[] {

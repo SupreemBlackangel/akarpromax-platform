@@ -14,28 +14,28 @@ const permissionGroups: { id: string; labelAr: string; permissions: [keyof typeo
     permissions: [["ADMIN_DASHBOARD_VIEW", "عرض لوحة الإحصاءات"]],
   },
   {
-    id: "sponsors",
-    labelAr: "إدارة الرعاة",
+    id: "advertisers",
+    labelAr: "إدارة المعلنين",
     permissions: [
-      ["SPONSORS_VIEW", "عرض الرعاة"],
-      ["SPONSORS_CREATE", "إنشاء راعٍ"],
-      ["SPONSORS_UPDATE", "تعديل راعٍ"],
-      ["SPONSORS_APPROVE", "الموافقة على راعٍ"],
-      ["SPONSORS_REJECT", "رفض راعٍ"],
-      ["SPONSORS_SUSPEND", "تعليق راعٍ"],
-      ["SPONSORS_ACTIVATE", "تفعيل راعٍ"],
-      ["SPONSORS_DELETE", "أرشفة راعٍ"],
+      ["ADVERTISERS_VIEW", "عرض المعلنين"],
+      ["ADVERTISERS_CREATE", "إنشاء معلن"],
+      ["ADVERTISERS_UPDATE", "تعديل معلن"],
+      ["ADVERTISERS_APPROVE", "الموافقة على معلن"],
+      ["ADVERTISERS_REJECT", "رفض معلن"],
+      ["ADVERTISERS_SUSPEND", "تعليق معلن"],
+      ["ADVERTISERS_ACTIVATE", "تفعيل معلن"],
+      ["ADVERTISERS_DELETE", "أرشفة معلن"],
     ],
   },
   {
-    id: "sponsor_manage",
-    labelAr: "عمليات الرعاة",
+    id: "advertiser_manage",
+    labelAr: "عمليات المعلنين",
     permissions: [
-      ["SPONSOR_USERS_MANAGE", "إدارة مستخدمي الراعي"],
-      ["SPONSOR_BRANCHES_MANAGE", "إدارة فروع الراعي"],
-      ["SPONSOR_CONTRACTS_MANAGE", "إدارة عقود الراعي"],
-      ["SPONSOR_SUBSCRIPTIONS_MANAGE", "إدارة اشتراكات الراعي"],
-      ["SPONSOR_PAYMENTS_MANAGE", "إدارة مدفوعات الراعي"],
+      ["ADVERTISER_USERS_MANAGE", "إدارة مستخدمي المعلن"],
+      ["ADVERTISER_BRANCHES_MANAGE", "إدارة فروع المعلن"],
+      ["ADVERTISER_CONTRACTS_MANAGE", "إدارة عقود المعلن"],
+      ["ADVERTISER_SUBSCRIPTIONS_MANAGE", "إدارة اشتراكات المعلن"],
+      ["ADVERTISER_PAYMENTS_MANAGE", "إدارة مدفوعات المعلن"],
     ],
   },
   {
@@ -280,7 +280,7 @@ export default function RolesAdminClient() {
 
   return (
     <>
-      <header className="sponsor-admin-header">
+      <header className="advertiser-admin-header">
         <div><p>نظام الصلاحيات</p><h1>الأدوار والصلاحيات</h1></div>
         <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
       </header>

@@ -2,7 +2,7 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 
 export type CommandCenterOverview = {
   generatedAt: string;
-  sponsors: {
+  advertisers: {
     total: number;
     active: number;
     byStatus: Record<string, number>;
@@ -134,8 +134,8 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
   const db = await getRuntimeDb();
 
   const [
-    sponsorByStatus,
-    sponsorByCountry,
+    advertiserByStatus,
+    advertiserByCountry,
     campaignByStatus,
     adImpressionsTotal,
     campaignByType,
@@ -267,7 +267,7 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
     ).all<{ city: string; total: number }>(),
   ]);
 
-  const sponsorTotal = Object.values(sponsorByStatus).reduce((s, n) => s + n, 0);
+  const advertiserTotal = Object.values(advertiserByStatus).reduce((s, n) => s + n, 0);
   const adTotal = Object.values(campaignByStatus).reduce((s, n) => s + n, 0);
   const impressions = Number(adImpressionsTotal?.impressions ?? 0);
   const clicks = Number(adImpressionsTotal?.clicks ?? 0);
@@ -283,11 +283,11 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
 
   return {
     generatedAt: new Date().toISOString(),
-    sponsors: {
-      total: sponsorTotal,
-      active: sponsorByStatus.active ?? 0,
-      byStatus: sponsorByStatus,
-      byCountry: sponsorByCountry.results.map((r) => ({ country: r.name, count: Number(r.total) })),
+    advertisers: {
+      total: advertiserTotal,
+      active: advertiserByStatus.active ?? 0,
+      byStatus: advertiserByStatus,
+      byCountry: advertiserByCountry.results.map((r) => ({ country: r.name, count: Number(r.total) })),
     },
     ads: {
       total: adTotal,

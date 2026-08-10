@@ -196,7 +196,7 @@ export default function CompaniesAdminClient() {
       ) : specialties.length === 0 ? (
         <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>لا توجد تصنيفات</div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
               <tr style={{ background: "#f3f4f6" }}>

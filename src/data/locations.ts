@@ -1,4 +1,4 @@
-import type { CityOption, CountryId, CountryOption, CurrencyOption, SponsorTone } from "@/src/types/site";
+import type { CityOption, CountryId, CountryOption, CurrencyOption } from "@/src/types/site";
 
 export const countryOptions: CountryOption[] = [
   { id: "dz", flag: "🇩🇿", names: { ar: "الجزائر", en: "Algeria", tr: "Cezayir" }, timeZones: ["Africa/Algiers"], localeCodes: ["ar-dz", "fr-dz"] },
@@ -50,19 +50,6 @@ export const currenciesByCountry: Record<string, CurrencyOption> = {
   ae: { code: "AED", symbol: "د.إ", names: { ar: "الدرهم الإماراتي", en: "UAE dirham", tr: "BAE dirhemi" } },
   ye: { code: "YER", symbol: "ر.ي", names: { ar: "الريال اليمني", en: "Yemeni rial", tr: "Yemen riyali" } },
   tr: { code: "TRY", symbol: "₺", names: { ar: "الليرة التركية", en: "Turkish lira", tr: "Türk lirası" } },
-};
-
-export const sponsorToneByCountry: Record<string, SponsorTone> = {
-  dz: "emerald", bh: "crimson", km: "emerald", dj: "blue", eg: "gold", iq: "emerald",
-  jo: "crimson", kw: "blue", lb: "crimson", ly: "emerald", mr: "gold", ma: "crimson",
-  om: "gold", ps: "emerald", qa: "crimson", sa: "emerald", so: "blue", sd: "blue",
-  sy: "crimson", tn: "crimson", ae: "gold", ye: "crimson", tr: "crimson",
-};
-
-export const sponsorBannerByCountry: Record<string, string> = {
-  om: "/sponsors/oman-gold.webp",
-  sa: "/sponsors/saudi-emerald.webp",
-  tr: "/sponsors/turkiye-crimson.webp",
 };
 
 export function isVideoAsset(url: string) {

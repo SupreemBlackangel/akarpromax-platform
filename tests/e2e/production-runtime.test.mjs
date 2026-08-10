@@ -134,11 +134,9 @@ if (!BASE_URL) {
     }
   });
 
-  test("production: GET /api/sponsors returns 200 (empty array expected)", async () => {
-    const res = await get("/api/sponsors");
-    assert.equal(res.status, 200);
-    const parsed = j(res.body);
-    assert.deepEqual(parsed.sponsors, [], "sponsors has no seeder → empty array");
+  test("production: GET /api/advertisers requires auth (no silent fallback)", async () => {
+    const res = await get("/api/advertisers");
+    assert.equal(res.status, 403, "advertiser admin API must be auth-gated");
   });
 
   test("production: static CSS/JS under /assets/* return 200 (no 404)", async () => {

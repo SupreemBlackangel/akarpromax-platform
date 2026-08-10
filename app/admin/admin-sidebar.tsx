@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { roleNameAr } from "@/src/constants/roles";
-import type { SponsorIdentity } from "@/lib/sponsor-auth";
+import type { UserIdentity } from "@/lib/identity-auth";
 
 const countries: Record<string, string> = {
   om: "عُمان", sa: "السعودية", ae: "الإمارات", qa: "قطر", kw: "الكويت",
@@ -41,9 +41,7 @@ const navGroups: NavGroup[] = [
       { href: "/admin/services", icon: "✦", label: "سوق الخدمات", permission: SERVICE_PERMISSIONS },
       { href: "/admin/properties", icon: "⌂", label: "تصنيف العقارات", permission: PERMISSIONS.PROPERTIES_VIEW },
       { href: "/admin/companies", icon: "◉", label: "تصنيف الشركات", permission: PERMISSIONS.PROPERTIES_VIEW },
-      { href: "/admin/sponsors", icon: "▣", label: "نظام الرعاة", permission: PERMISSIONS.SPONSORS_VIEW },
-      { href: "/admin/sponsors/requests", icon: "✉", label: "طلبات الرعاة", permission: PERMISSIONS.SPONSORS_APPROVE },
-      { href: "/admin/sponsors/banner", icon: "◈", label: "شريط الرعاة", permission: PERMISSIONS.SPONSORS_VIEW },
+      { href: "/admin/advertisers", icon: "▣", label: "المعلنون", permission: PERMISSIONS.ADVERTISERS_VIEW },
     ],
   },
   {
@@ -81,13 +79,13 @@ function canSee(permission: string | string[] | undefined, granted: string[]): b
     : granted.includes(permission);
 }
 
-export default function AdminSidebar({ identity }: { identity: SponsorIdentity }) {
+export default function AdminSidebar({ identity }: { identity: UserIdentity }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     pathname === href || (href !== "/admin" && pathname.startsWith(href.endsWith("/") ? href : `${href}/`));
 
   return (
-    <aside className="sponsor-admin-sidebar">
+    <aside className="advertiser-admin-sidebar">
       <Link className="admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
       <nav className="admin-nav" aria-label="لوحة الإدارة">
         {navGroups.map((group) => {

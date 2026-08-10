@@ -1,4 +1,4 @@
-import { requireSessionUser } from "@/lib/sponsor-auth";
+import { requireSessionUser } from "@/lib/identity-auth";
 import AdminIntegrationClient from "./admin-integration-client";
 
 export const dynamic = "force-dynamic";

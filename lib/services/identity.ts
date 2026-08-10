@@ -56,6 +56,7 @@ export async function rekeyServiceUserReferences(oldUserKey: string, newUserKey:
   updates.service_orders_customer = await countChanges(db, "UPDATE service_orders SET customer_user_id = ?1 WHERE customer_user_id = ?2", [newUserKey, oldUserKey]);
   updates.service_orders_provider = await countChanges(db, "UPDATE service_orders SET provider_user_id = ?1 WHERE provider_user_id = ?2", [newUserKey, oldUserKey]);
   updates.service_messages_sender = await countChanges(db, "UPDATE service_messages SET sender_user_id = ?1 WHERE sender_user_id = ?2", [newUserKey, oldUserKey]);
+  updates.service_message_participants_user = await countChanges(db, "UPDATE service_message_participants SET user_id = ?1 WHERE user_id = ?2", [newUserKey, oldUserKey]);
   updates.service_reviews_reviewer = await countChanges(db, "UPDATE service_reviews SET reviewer_user_id = ?1 WHERE reviewer_user_id = ?2", [newUserKey, oldUserKey]);
   updates.service_reviews_reviewee = await countChanges(db, "UPDATE service_reviews SET reviewee_user_id = ?1 WHERE reviewee_user_id = ?2", [newUserKey, oldUserKey]);
   updates.service_disputes_opened_by = await countChanges(db, "UPDATE service_disputes SET opened_by_user_id = ?1 WHERE opened_by_user_id = ?2", [newUserKey, oldUserKey]);

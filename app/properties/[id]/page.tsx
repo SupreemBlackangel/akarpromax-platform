@@ -9,7 +9,7 @@ import { detectCountry, detectCity, selectedCountryOf } from "@/src/data/locatio
 import type { ViewerContext } from "@/src/types/site";
 import type { PublicProperty } from "@/lib/properties-format";
 import PageContainer from "@/src/components/layout/PageContainer";
-import Button from "@/src/components/ui/Button";
+import StartThreadButton from "@/src/components/services/StartThreadButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -171,8 +171,14 @@ export default function PropertyPage({ params }: Props) {
           <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-5 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">{t.ask}</p>
             <div className="mt-3 flex flex-col gap-2">
-              <input className="h-10 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-background)] px-3 text-xs font-bold outline-none focus:border-[color:var(--color-border-focus)]" placeholder="name@example.com" aria-label="Email" />
-              <Button type="button" size="sm">{t.ask}</Button>
+              <StartThreadButton
+                threadType="property"
+                threadId={property.id}
+                title={property.title[locale]}
+                contextLink={`/properties/${property.slug || property.id}`}
+                label={t.ask}
+                className="h-10 rounded-lg bg-[color:var(--color-primary)] px-4 text-xs font-black text-white transition hover:opacity-90"
+              />
             </div>
           </div>
         </aside>

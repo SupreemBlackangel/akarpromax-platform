@@ -70,7 +70,7 @@ export default function AdminIntegrationClient() {
             <thead>
               <tr>
                 <th>الجهاز</th>
-                <th>الراعي</th>
+                <th>المعلن</th>
                 <th>الحالة</th>
                 <th>الإصدار</th>
                 <th>آخر اتصال</th>

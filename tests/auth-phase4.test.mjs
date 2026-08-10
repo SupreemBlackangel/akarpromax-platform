@@ -27,7 +27,7 @@ import { getEmailRuntimeStatus } from "../lib/email.ts";
 import { redactFields, createRequestId, logSecurityEvent } from "../lib/security/audit.ts";
 import { MemoryRateLimitStore, RateLimiter, RATE_LIMIT_CONFIGS } from "../lib/security/rate-limit.ts";
 import { resolveUserLocale } from "../lib/auth/verification-actions.ts";
-import { hasSponsorPermission, GUEST_IDENTITY } from "../lib/sponsor-auth.ts";
+import { hasPermission, GUEST_IDENTITY } from "../lib/identity-auth.ts";
 
 const ONE_HOUR = 60 * 60 * 1000;
 
@@ -239,7 +239,7 @@ test("AMRS admin access denies provider-capability sessions and allows sponsor-s
     displayName: "Sponsor Admin",
     role: "sponsor_admin",
     countryCode: null,
-    permissions: [PERMISSIONS.USERS_VIEW, PERMISSIONS.SPONSORS_APPROVE],
+    permissions: [PERMISSIONS.USERS_VIEW, PERMISSIONS.ADVERTISERS_APPROVE],
   };
   const superAdmin = {
     authenticated: true,
@@ -313,12 +313,12 @@ test("authorization: normal user cannot access moderator API", () => {
     countryCode: "om",
     permissions: [PERMISSIONS.TOOLS_USE],
   };
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ADS_VIEW), false);
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ADS_CREATE), false);
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.NEWS_CREATE), false);
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.USERS_VIEW), false);
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.ROLES_MANAGE), false);
-  assert.equal(hasSponsorPermission(normalUser, PERMISSIONS.PROPERTIES_MANAGE), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.ADS_VIEW), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.ADS_CREATE), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.NEWS_CREATE), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.USERS_VIEW), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasPermission(normalUser, PERMISSIONS.PROPERTIES_MANAGE), false);
 });
 
 test("authorization: ad_manager cannot manage users or roles", () => {
@@ -334,11 +334,11 @@ test("authorization: ad_manager cannot manage users or roles", () => {
       PERMISSIONS.USERS_VIEW,
     ],
   };
-  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.ADS_CREATE), true);
-  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.USERS_CREATE), false);
-  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.USERS_DELETE), false);
-  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.ROLES_MANAGE), false);
-  assert.equal(hasSponsorPermission(adManager, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false);
+  assert.equal(hasPermission(adManager, PERMISSIONS.ADS_CREATE), true);
+  assert.equal(hasPermission(adManager, PERMISSIONS.USERS_CREATE), false);
+  assert.equal(hasPermission(adManager, PERMISSIONS.USERS_DELETE), false);
+  assert.equal(hasPermission(adManager, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasPermission(adManager, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false);
 });
 
 test("authorization: service_supervisor cannot manage ads or create sponsors", () => {
@@ -354,11 +354,11 @@ test("authorization: service_supervisor cannot manage ads or create sponsors", (
       PERMISSIONS.SERVICE_JOBS_MANAGE, PERMISSIONS.SERVICE_REPORTS_MANAGE,
     ],
   };
-  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), true);
-  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.ADS_CREATE), false);
-  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.ADS_DELETE), false);
-  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.SPONSORS_CREATE), false);
-  assert.equal(hasSponsorPermission(serviceSup, PERMISSIONS.USERS_DELETE), false);
+  assert.equal(hasPermission(serviceSup, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), true);
+  assert.equal(hasPermission(serviceSup, PERMISSIONS.ADS_CREATE), false);
+  assert.equal(hasPermission(serviceSup, PERMISSIONS.ADS_DELETE), false);
+  assert.equal(hasPermission(serviceSup, PERMISSIONS.ADVERTISERS_CREATE), false);
+  assert.equal(hasPermission(serviceSup, PERMISSIONS.USERS_DELETE), false);
 });
 
 test("authorization: organization admin cannot gain platform admin rights", () => {
@@ -369,16 +369,16 @@ test("authorization: organization admin cannot gain platform admin rights", () =
     role: "sponsor_admin",
     countryCode: "om",
     permissions: [
-      PERMISSIONS.SPONSORS_VIEW, PERMISSIONS.SPONSORS_CREATE, PERMISSIONS.SPONSORS_UPDATE,
-      PERMISSIONS.SPONSORS_APPROVE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_ANALYTICS,
+      PERMISSIONS.ADVERTISERS_VIEW, PERMISSIONS.ADVERTISERS_CREATE, PERMISSIONS.ADVERTISERS_UPDATE,
+      PERMISSIONS.ADVERTISERS_APPROVE, PERMISSIONS.ADS_VIEW, PERMISSIONS.ADS_ANALYTICS,
       PERMISSIONS.REPORTS_VIEW, PERMISSIONS.USERS_VIEW, PERMISSIONS.NEWS_VIEW,
     ],
   };
-  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.SPONSORS_CREATE), true);
-  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.USERS_DELETE), false);
-  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.ROLES_MANAGE), false);
-  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.SETTINGS_MANAGE), false);
-  assert.equal(hasSponsorPermission(orgAdmin, PERMISSIONS.PROPERTIES_MANAGE), false);
+  assert.equal(hasPermission(orgAdmin, PERMISSIONS.ADVERTISERS_CREATE), true);
+  assert.equal(hasPermission(orgAdmin, PERMISSIONS.USERS_DELETE), false);
+  assert.equal(hasPermission(orgAdmin, PERMISSIONS.ROLES_MANAGE), false);
+  assert.equal(hasPermission(orgAdmin, PERMISSIONS.SETTINGS_MANAGE), false);
+  assert.equal(hasPermission(orgAdmin, PERMISSIONS.PROPERTIES_MANAGE), false);
   assert.equal(canAccessAdminArea({ authenticated: true, role: "sponsor_admin", permissions: orgAdmin.permissions }), false, "sponsor_admin without dashboard view is denied");
   assert.equal(canAccessAdminArea({ authenticated: true, role: "super_admin", permissions: ["*"] }), true);
 });
@@ -396,18 +396,18 @@ test("authorization: moderator without required action permission is rejected", 
       PERMISSIONS.NEWS_UPDATE,
     ],
   };
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_VIEW), true);
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_DELETE), false, "content_editor cannot delete ads");
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.ADS_APPROVE), false, "content_editor cannot approve ads");
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.NEWS_DELETE), false, "content_editor cannot delete news");
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false, "content_editor cannot manage service categories");
-  assert.equal(hasSponsorPermission(moderator, PERMISSIONS.USERS_VIEW), false, "content_editor cannot view users");
+  assert.equal(hasPermission(moderator, PERMISSIONS.ADS_VIEW), true);
+  assert.equal(hasPermission(moderator, PERMISSIONS.ADS_DELETE), false, "content_editor cannot delete ads");
+  assert.equal(hasPermission(moderator, PERMISSIONS.ADS_APPROVE), false, "content_editor cannot approve ads");
+  assert.equal(hasPermission(moderator, PERMISSIONS.NEWS_DELETE), false, "content_editor cannot delete news");
+  assert.equal(hasPermission(moderator, PERMISSIONS.SERVICE_CATEGORIES_MANAGE), false, "content_editor cannot manage service categories");
+  assert.equal(hasPermission(moderator, PERMISSIONS.USERS_VIEW), false, "content_editor cannot view users");
 });
 
 test("authorization: guest identity has no permissions", () => {
-  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.TOOLS_USE), false);
-  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.ADS_VIEW), false);
-  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.NEWS_VIEW), false);
-  assert.equal(hasSponsorPermission(GUEST_IDENTITY, PERMISSIONS.USERS_VIEW), false);
+  assert.equal(hasPermission(GUEST_IDENTITY, PERMISSIONS.TOOLS_USE), false);
+  assert.equal(hasPermission(GUEST_IDENTITY, PERMISSIONS.ADS_VIEW), false);
+  assert.equal(hasPermission(GUEST_IDENTITY, PERMISSIONS.NEWS_VIEW), false);
+  assert.equal(hasPermission(GUEST_IDENTITY, PERMISSIONS.USERS_VIEW), false);
   assert.equal(GUEST_IDENTITY.authenticated, false);
 });

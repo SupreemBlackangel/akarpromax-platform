@@ -123,7 +123,7 @@ export default function AuditAdminClient() {
 
   return (
     <>
-      <header className="sponsor-admin-header">
+      <header className="advertiser-admin-header">
         <div><p>سجل النشاط</p><h1>سجل التدقيق</h1></div>
         <div className="admin-header-actions">
           <Link href="/admin" style={{ opacity: 0.7 }}>العودة للوحة الإحصاءات</Link>

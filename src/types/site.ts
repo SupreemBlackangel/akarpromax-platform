@@ -62,15 +62,6 @@ export type Translation = {
   officeStats: string[];
   adLabel: string;
   adDescription: string;
-  sponsorAria: string;
-  sponsorLabel: string;
-  sponsorOfficial: string;
-  sponsorAvailable: string;
-  sponsorDescription: string;
-  sponsorCta: string;
-  sponsorLogo: string;
-  sponsorPage: string;
-  sponsorFooter: string;
   accountKicker: string;
   accountTitle: string;
   accountAccent: string;
@@ -154,21 +145,6 @@ export type CurrencyOption = {
   code: string;
   symbol: string;
   names: Record<Locale, string>;
-};
-
-export type SponsorTone = "gold" | "blue" | "emerald" | "crimson";
-
-export type PublicSponsor = {
-  id: string;
-  countryCode: string;
-  nameAr: string;
-  nameEn: string;
-  nameTr: string;
-  websiteUrl: string | null;
-  logoUrl: string | null;
-  bannerUrl: string;
-  placements: string[];
-  tier: string;
 };
 
 export type HeroAdSlide = {

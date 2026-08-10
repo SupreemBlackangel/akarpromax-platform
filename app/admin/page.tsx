@@ -1,4 +1,4 @@
-import { requireSessionUser } from "@/lib/sponsor-auth";
+import { requireSessionUser } from "@/lib/identity-auth";
 import CommandCenterOverview from "./command-center-client";
 
 export const dynamic = "force-dynamic";

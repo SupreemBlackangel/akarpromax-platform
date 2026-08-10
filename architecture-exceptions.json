@@ -92,14 +92,6 @@
       "expiresAfterPhase": 3
     },
     {
-      "id": "ARCH-LEGACY-018",
-      "rule": "ARCH-009",
-      "path": "app/admin/sponsors/banner/page.tsx",
-      "reason": "Hardcoded ad banner without AdSlot",
-      "targetPhase": "Phase 3",
-      "expiresAfterPhase": 3
-    },
-    {
       "id": "ARCH-LEGACY-021",
       "rule": "ARCH-022",
       "path": "lib/mysql-runtime.ts",

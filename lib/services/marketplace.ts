@@ -3,6 +3,12 @@ import { insertRow, getServicesDb } from "@services/db";
 import { writeAudit } from "@services/audit";
 import { runMatching } from "@services/matching";
 import {
+  MESSAGE_CONTEXT,
+  isMessageContext,
+  contextLinkFor,
+  entityTypeFor,
+} from "@services/message-contexts";
+import {
   REQUEST_STATUS,
   OFFER_STATUS,
   ORDER_STATUS,
@@ -1445,30 +1451,84 @@ export async function getAdminOverview(): Promise<{
 
 /* ============================================================
  * Messages
+ *
+ * ONE shared messaging core for the seven contexts (GENERAL, PROPERTY,
+ * PROPERTY_REQUEST, SERVICE_REQUEST, SERVICE_JOB, PROFESSIONAL, ORGANIZATION).
+ * `request`/`order` are the legacy storage values and keep working unchanged.
  * ============================================================ */
 
-export async function sendMessageFull(input: {
-  threadType: "request" | "order";
+export async function ensureMessageParticipant(threadType: string, threadId: string, userId: string): Promise<void> {
+  const db = await getServicesDb();
+  const existing = await db
+    .prepare("SELECT id FROM service_message_participants WHERE thread_type = ?1 AND thread_id = ?2 AND user_id = ?3 LIMIT 1")
+    .bind(threadType, threadId, userId)
+    .first<{ id: string }>();
+  if (existing) return;
+  await insertRow(
+    db,
+    `INSERT OR IGNORE INTO service_message_participants (id, thread_type, thread_id, user_id, role, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)`,
+    [crypto.randomUUID(), threadType, threadId, userId, "participant", nowMySqlDateTime()],
+  );
+}
+
+export async function ensureContextThread(
+  threadType: string,
+  threadId: string,
+  title?: string | null,
+  contextLink?: string | null,
+): Promise<void> {
+  const db = await getServicesDb();
+  const existing = await db
+    .prepare("SELECT title, context_link FROM service_message_threads WHERE thread_type = ?1 AND thread_id = ?2 LIMIT 1")
+    .bind(threadType, threadId)
+    .first<{ title: string | null; context_link: string | null }>();
+  if (!existing) {
+    await insertRow(
+      db,
+      `INSERT INTO service_message_threads (thread_type, thread_id, title, context_link, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?5)`,
+      [threadType, threadId, title ?? null, contextLink ?? null, nowMySqlDateTime()],
+    );
+    return;
+  }
+  const nextTitle = title ?? existing.title;
+  const nextLink = contextLink ?? existing.context_link;
+  if (nextTitle === existing.title && nextLink === existing.context_link) return;
+  await db
+    .prepare("UPDATE service_message_threads SET title = ?1, context_link = ?2, updated_at = ?3 WHERE thread_type = ?4 AND thread_id = ?5")
+    .bind(nextTitle, nextLink, nowMySqlDateTime(), threadType, threadId)
+    .run();
+}
+
+export type MessageThreadInput = {
+  threadType: string;
   threadId: string;
   senderUserId: string;
   body: string;
   recipientUserId?: string | null;
-}, actor?: ActorContext): Promise<string> {
+};
+
+export async function sendMessageFull(input: MessageThreadInput, actor?: ActorContext): Promise<string> {
   const db = await getServicesDb();
+  if (!input.threadType || !input.threadId || !isMessageContext(input.threadType)) throw new Error("INVALID_THREAD_TYPE");
   if (!input.body.trim()) throw new Error("INVALID_BODY");
+  await ensureMessageParticipant(input.threadType, input.threadId, input.senderUserId);
   const id = await insertRow(
     db,
-    `INSERT INTO service_messages (id, thread_type, thread_id, sender_user_id, body, is_system, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, 0, ?6)`,
+    `INSERT INTO service_messages (id, thread_type, thread_id, sender_user_id, body, is_system, is_read, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, 0, 0, ?6)`,
     [crypto.randomUUID(), input.threadType, input.threadId, input.senderUserId, input.body, nowMySqlDateTime()],
   );
   if (input.recipientUserId) {
+    await ensureMessageParticipant(input.threadType, input.threadId, input.recipientUserId);
+    const link = contextLinkFor(input.threadType, input.threadId);
     await notify(input.recipientUserId, {
       type: "SERVICE_MESSAGE",
       title: "رسالة جديدة",
       body: input.body.slice(0, 120),
-      link: input.threadType === "order" ? `/dashboard/services/jobs/${input.threadId}` : `/service-requests/${input.threadId}`,
-      entityType: input.threadType === "order" ? "service_orders" : "service_requests",
+      link,
+      entityType: entityTypeFor(input.threadType),
       entityId: input.threadId,
     });
     await enqueueOutbox("SERVICE_MESSAGE", { threadType: input.threadType, threadId: input.threadId, senderUserId: input.senderUserId, recipientUserId: input.recipientUserId, body: input.body });
@@ -1477,7 +1537,7 @@ export async function sendMessageFull(input: {
   return id;
 }
 
-export async function threadMessages(threadType: "request" | "order", threadId: string): Promise<Array<Record<string, unknown>>> {
+export async function threadMessages(threadType: string, threadId: string): Promise<Array<Record<string, unknown>>> {
   const db = await getServicesDb();
   const result = await db
     .prepare("SELECT * FROM service_messages WHERE thread_type = ?1 AND thread_id = ?2 ORDER BY created_at ASC LIMIT 200")
@@ -1486,7 +1546,7 @@ export async function threadMessages(threadType: "request" | "order", threadId: 
   return result.results ?? [];
 }
 
-export async function markThreadRead(threadType: "request" | "order", threadId: string, readerUserId: string): Promise<void> {
+export async function markThreadRead(threadType: string, threadId: string, readerUserId: string): Promise<void> {
   const db = await getServicesDb();
   await db
     .prepare("UPDATE service_messages SET is_read = 1, read_at = ?1 WHERE thread_type = ?2 AND thread_id = ?3 AND sender_user_id != ?4 AND is_read = 0")
@@ -1494,22 +1554,175 @@ export async function markThreadRead(threadType: "request" | "order", threadId: 
     .run();
 }
 
+/**
+ * Server-side participant authorization for a conversation.
+ * - Legacy `request`: customer + any non-withdrawn offer provider.
+ * - Legacy `order`: customer + provider.
+ * - Participant contexts: an explicit participant row (seeded by
+ *   `startMessageThread`) OR an implicit owner of the context entity when the
+ *   owning entity lives in the same runtime DB (`professional` →
+ *   `service_provider_profiles.user_id`).
+ */
+export async function isThreadParticipant(threadType: string, threadId: string, userId: string): Promise<boolean> {
+  const db = await getServicesDb();
+  if (threadType === MESSAGE_CONTEXT.SERVICE_JOB) {
+    const order = await db
+      .prepare("SELECT customer_user_id, provider_user_id FROM service_orders WHERE id = ?1")
+      .bind(threadId)
+      .first<{ customer_user_id: string; provider_user_id: string }>();
+    return !!order && (order.customer_user_id === userId || order.provider_user_id === userId);
+  }
+  if (threadType === MESSAGE_CONTEXT.SERVICE_REQUEST) {
+    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(threadId).first<{ customer_user_id: string }>();
+    if (requestRow?.customer_user_id === userId) return true;
+    const offer = await db
+      .prepare("SELECT id FROM service_offers WHERE request_id = ?1 AND provider_user_id = ?2 AND status != 'withdrawn' LIMIT 1")
+      .bind(threadId, userId)
+      .first<{ id: string }>();
+    return !!offer;
+  }
+  const participant = await db
+    .prepare("SELECT id FROM service_message_participants WHERE thread_type = ?1 AND thread_id = ?2 AND user_id = ?3 LIMIT 1")
+    .bind(threadType, threadId, userId)
+    .first<{ id: string }>();
+  if (participant) return true;
+  if (threadType === MESSAGE_CONTEXT.PROFESSIONAL) {
+    const profile = await db.prepare("SELECT user_id FROM service_provider_profiles WHERE id = ?1 LIMIT 1").bind(threadId).first<{ user_id: string }>();
+    return !!profile && profile.user_id === userId;
+  }
+  return false;
+}
+
+/**
+ * Start (or attach to) a conversation for the given context. Writes thread
+ * metadata (title + context reference/link) and seeds the participant list so
+ * every participant sees the thread in the central inbox.
+ */
+/**
+ * Resolve the notification recipient for a conversation.
+ * - Legacy `order`: the other side of the job.
+ * - Legacy `request`: the customer (request owner).
+ * - Participant contexts: the first participant other than the sender.
+ */
+export async function resolveRecipientUserId(threadType: string, threadId: string, senderUserId: string): Promise<string | null> {
+  const db = await getServicesDb();
+  if (threadType === MESSAGE_CONTEXT.SERVICE_JOB) {
+    const order = await db
+      .prepare("SELECT customer_user_id, provider_user_id FROM service_orders WHERE id = ?1")
+      .bind(threadId)
+      .first<{ customer_user_id: string; provider_user_id: string }>();
+    if (!order) return null;
+    if (order.customer_user_id === senderUserId) return order.provider_user_id;
+    return order.customer_user_id;
+  }
+  if (threadType === MESSAGE_CONTEXT.SERVICE_REQUEST) {
+    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(threadId).first<{ customer_user_id: string }>();
+    return requestRow?.customer_user_id ?? null;
+  }
+  const participants = await db
+    .prepare("SELECT user_id FROM service_message_participants WHERE thread_type = ?1 AND thread_id = ?2")
+    .bind(threadType, threadId)
+    .all<{ user_id: string }>();
+  const list = participants.results ?? [];
+  const other = list.find((p) => p.user_id !== senderUserId);
+  if (other) return other.user_id;
+  if (threadType === MESSAGE_CONTEXT.PROFESSIONAL) {
+    const profile = await db.prepare("SELECT user_id FROM service_provider_profiles WHERE id = ?1 LIMIT 1").bind(threadId).first<{ user_id: string }>();
+    if (profile && profile.user_id !== senderUserId) return profile.user_id;
+  }
+  return null;
+}
+
+export async function startMessageThread(input: {
+  threadType: string;
+  threadId: string;
+  title?: string | null;
+  contextLink?: string | null;
+  participantIds: string[];
+  actorUserId: string;
+}): Promise<{ threadType: string; threadId: string; title: string | null; contextLink: string | null; participantCount: number }> {
+  if (!isMessageContext(input.threadType)) throw new Error("INVALID_THREAD_TYPE");
+  if (!input.threadId.trim()) throw new Error("INVALID_THREAD_ID");
+  const participantIds = [...new Set([input.actorUserId, ...input.participantIds.filter(Boolean)])];
+  await ensureContextThread(input.threadType, input.threadId, input.title, input.contextLink ?? contextLinkFor(input.threadType, input.threadId));
+  for (const userId of participantIds) {
+    await ensureMessageParticipant(input.threadType, input.threadId, userId);
+  }
+  return {
+    threadType: input.threadType,
+    threadId: input.threadId,
+    title: input.title ?? null,
+    contextLink: input.contextLink ?? contextLinkFor(input.threadType, input.threadId),
+    participantCount: participantIds.length,
+  };
+}
+
 export async function listInbox(userId: string): Promise<Array<Record<string, unknown>>> {
   const db = await getServicesDb();
-  const result = await db
-    .prepare(
-      `SELECT thread_type, thread_id, COUNT(*) AS message_count, SUM(CASE WHEN sender_user_id != ?1 AND is_read = 0 THEN 1 ELSE 0 END) AS unread_count,
-              MAX(created_at) AS last_message_at
-       FROM service_messages
-       WHERE (thread_type = 'request' AND (thread_id IN (SELECT id FROM service_requests WHERE customer_user_id = ?1)
-              OR thread_id IN (SELECT request_id FROM service_offers WHERE provider_user_id = ?1 AND status != 'withdrawn')))
-          OR (thread_type = 'order' AND thread_id IN (SELECT id FROM service_orders WHERE customer_user_id = ?1 OR provider_user_id = ?1))
-       GROUP BY thread_type, thread_id
-       ORDER BY last_message_at DESC`,
-    )
-    .bind(userId, userId, userId, userId)
-    .all<Record<string, unknown>>();
-  return result.results ?? [];
+  const keys = new Set<string>();
+
+  const customerRequests = await db
+    .prepare("SELECT id FROM service_requests WHERE customer_user_id = ?1")
+    .bind(userId)
+    .all<{ id: string }>();
+  for (const r of customerRequests.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.id}`);
+
+  const providerRequests = await db
+    .prepare("SELECT request_id FROM service_offers WHERE provider_user_id = ?1 AND status != 'withdrawn'")
+    .bind(userId)
+    .all<{ request_id: string }>();
+  for (const r of providerRequests.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.request_id}`);
+
+  const orders = await db
+    .prepare("SELECT id FROM service_orders WHERE customer_user_id = ?1 OR provider_user_id = ?1")
+    .bind(userId, userId)
+    .all<{ id: string }>();
+  for (const r of orders.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_JOB}:${r.id}`);
+
+  const participantRows = await db
+    .prepare("SELECT thread_type, thread_id FROM service_message_participants WHERE user_id = ?1")
+    .bind(userId)
+    .all<{ thread_type: string; thread_id: string }>();
+  for (const p of participantRows.results ?? []) {
+    if (!p.thread_type || !p.thread_id) continue;
+    keys.add(`${p.thread_type}:${p.thread_id}`);
+  }
+
+  const threads: Array<Record<string, unknown>> = [];
+  for (const key of keys) {
+    const sep = key.indexOf(":");
+    if (sep <= 0) continue;
+    const threadType = key.slice(0, sep);
+    const threadId = key.slice(sep + 1);
+    const messages = await db
+      .prepare("SELECT sender_user_id, is_read, created_at FROM service_messages WHERE thread_type = ?1 AND thread_id = ?2 ORDER BY created_at ASC")
+      .bind(threadType, threadId)
+      .all<{ sender_user_id: string; is_read: number | null; created_at: string }>();
+    const rows = messages.results ?? [];
+    if (rows.length === 0) continue;
+    let unreadCount = 0;
+    let lastMessageAt: string | null = null;
+    for (const m of rows) {
+      if (m.sender_user_id !== userId && !Number(m.is_read)) unreadCount++;
+      if (!lastMessageAt || String(m.created_at) > lastMessageAt) lastMessageAt = String(m.created_at);
+    }
+    const meta = await db
+      .prepare("SELECT title, context_link FROM service_message_threads WHERE thread_type = ?1 AND thread_id = ?2 LIMIT 1")
+      .bind(threadType, threadId)
+      .first<{ title: string | null; context_link: string | null }>();
+    threads.push({
+      thread_type: threadType,
+      thread_id: threadId,
+      message_count: rows.length,
+      unread_count: unreadCount,
+      last_message_at: lastMessageAt,
+      title: meta?.title ?? null,
+      context_link: meta?.context_link ?? null,
+    });
+  }
+
+  threads.sort((a, b) => String(b.last_message_at ?? "").localeCompare(String(a.last_message_at ?? "")));
+  return threads;
 }
 
 /* ============================================================

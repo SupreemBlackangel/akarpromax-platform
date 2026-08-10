@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Stats = {
-  sponsors: {
+  advertisers: {
     total: number;
     byStatus: Record<string, number>;
     byCountry: { country: string; impressions: number; clicks: number }[];
@@ -12,7 +12,7 @@ type Stats = {
   campaigns: { total: number; byStatus: Record<string, number>; byType: Record<string, number> };
   access: { total: number; byRole: Record<string, { label: string; count: number }> };
   members: { total: number; byStatus: Record<string, number> };
-  events: { sponsorImpressions: number; sponsorClicks: number; adImpressions: number; adClicks: number; today: number };
+  events: { advertiserImpressions: number; advertiserClicks: number; adImpressions: number; adClicks: number; today: number };
   plans: number;
   audit: { action: string; entityType: string; entityId: string | null; createdAt: string }[];
 };
@@ -31,14 +31,14 @@ const statusLabels: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
-  platform: "المنصة", sponsor: "رعاة", property: "عقارات", service: "خدمات",
+  platform: "المنصة", advertiser: "معلنون", property: "عقارات", service: "خدمات",
 };
 
 const actionLabels: Record<string, string> = {
-  "sponsor.created": "إنشاء راعٍ", "sponsor.updated": "تعديل راعٍ",
-  "sponsor.archived": "أرشفة راعٍ", "sponsor.logo_uploaded": "رفع شعار راعٍ",
-  "sponsor.access.updated": "تحديث صلاحية مستخدم",
-  "sponsor.access.deleted": "إزالة صلاحية مستخدم",
+  "advertiser.created": "إنشاء معلن", "advertiser.updated": "تعديل معلن",
+  "advertiser.archived": "أرشفة معلن", "advertiser.logo_uploaded": "رفع شعار معلن",
+  "advertiser.access.updated": "تحديث صلاحية مستخدم",
+  "advertiser.access.deleted": "إزالة صلاحية مستخدم",
   "campaign.created": "إنشاء حملة", "campaign.updated": "تعديل حملة",
   "campaign.archived": "أرشفة حملة",
 };
@@ -69,15 +69,15 @@ export default function DashboardAdminClient() {
   }
 
   const totals = stats ? [
-    { label: "الرعاة النشطون", value: stats.sponsors.byStatus.active ?? 0, note: `من أصل ${stats.sponsors.total}` },
+    { label: "المعلنون النشطون", value: stats.advertisers.byStatus.active ?? 0, note: `من أصل ${stats.advertisers.total}` },
     { label: "الحملات النشطة", value: stats.campaigns.byStatus.active ?? 0, note: `من أصل ${stats.campaigns.total}` },
-    { label: "مستخدمو الرعاة", value: stats.access.total, note: `${stats.plans} خطط متاحة` },
+    { label: "مستخدمو المعلنين", value: stats.access.total, note: `${stats.plans} خطط متاحة` },
     { label: "أعضاء المنصة", value: stats.members.total, note: `${stats.events.today} حدث اليوم` },
   ] : [];
 
   return (
     <>
-      <header className="sponsor-admin-header">
+      <header className="advertiser-admin-header">
           <div><p>نظرة عامة على الأنظمة</p><h1>لوحة الإحصاءات</h1></div>
           <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
         </header>
@@ -103,20 +103,20 @@ export default function DashboardAdminClient() {
               <section className="admin-panel">
                 <div className="admin-panel-title"><div><p>الأداء</p><h2>الانطباعات والنقرات</h2></div></div>
                 <div className="admin-kpi-rows">
-                  <div><span>انطباعات الرعاة</span><b>{stats.events.sponsorImpressions.toLocaleString("ar-EG")}</b></div>
-                  <div><span>نقرات الرعاة</span><b>{stats.events.sponsorClicks.toLocaleString("ar-EG")}</b></div>
+                  <div><span>انطباعات المعلنين</span><b>{stats.events.advertiserImpressions.toLocaleString("ar-EG")}</b></div>
+                  <div><span>نقرات المعلنين</span><b>{stats.events.advertiserClicks.toLocaleString("ar-EG")}</b></div>
                   <div><span>انطباعات الإعلانات</span><b>{stats.events.adImpressions.toLocaleString("ar-EG")}</b></div>
                   <div><span>نقرات الإعلانات</span><b>{stats.events.adClicks.toLocaleString("ar-EG")}</b></div>
                 </div>
               </section>
 
               <section className="admin-panel">
-                <div className="admin-panel-title"><div><p>الرعاة حسب الحالة</p><h2>توزيع حملات الرعاة</h2></div></div>
+                <div className="admin-panel-title"><div><p>المعلنون حسب الحالة</p><h2>توزيع حملات المعلنين</h2></div></div>
                 <div className="admin-bar-list">
-                  {Object.entries(stats.sponsors.byStatus).map(([status, count]) => (
+                  {Object.entries(stats.advertisers.byStatus).map(([status, count]) => (
                     <div key={status}>
                       <span>{statusLabels[status] ?? status}</span>
-                      <div className="admin-bar-track"><i className={`bar-${status}`} style={{ width: `${stats.sponsors.total ? (count / stats.sponsors.total) * 100 : 0}%` }} /></div>
+                      <div className="admin-bar-track"><i className={`bar-${status}`} style={{ width: `${stats.advertisers.total ? (count / stats.advertisers.total) * 100 : 0}%` }} /></div>
                       <b>{count}</b>
                     </div>
                   ))}
@@ -152,18 +152,18 @@ export default function DashboardAdminClient() {
               <section className="admin-panel admin-panel-wide">
                 <div className="admin-panel-title"><div><p>أسواق</p><h2>أفضل الدول حسب الانطباعات</h2></div></div>
                 <div className="admin-analytics-list">
-                  {stats.sponsors.byCountry.map((row) => {
+                  {stats.advertisers.byCountry.map((row) => {
                     const rate = row.impressions ? ((row.clicks / row.impressions) * 100).toFixed(1) : "0.0";
                     return (
                       <article key={row.country}>
-                        <div><strong>{countries[row.country] ?? row.country.toUpperCase()}</strong><small>رعاة</small></div>
+                        <div><strong>{countries[row.country] ?? row.country.toUpperCase()}</strong><small>معلنون</small></div>
                         <span>{row.impressions.toLocaleString("ar-EG")} ظهور</span>
                         <span>{row.clicks.toLocaleString("ar-EG")} نقرة</span>
                         <b>{rate}% CTR</b>
                       </article>
                     );
                   })}
-                  {!stats.sponsors.byCountry.length && <div className="admin-empty"><span>◇</span><strong>لا توجد أحداث بعد</strong><p>ستظهر الانطباعات فور بدء تشغيل حملات الرعاة.</p></div>}
+                  {!stats.advertisers.byCountry.length && <div className="admin-empty"><span>◇</span><strong>لا توجد أحداث بعد</strong><p>ستظهر الانطباعات فور بدء تشغيل حملات المعلنين.</p></div>}
                 </div>
               </section>
 

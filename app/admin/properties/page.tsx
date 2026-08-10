@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasPermission } from "@/lib/identity-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import PropertiesAdminClient from "./properties-admin-client";
 
@@ -10,7 +10,7 @@ const REQUIRED_PERMISSIONS = [PERMISSIONS.PROPERTIES_VIEW, PERMISSIONS.PROPERTIE
 async function PropertiesAdminGate() {
   const identity = await getSessionIdentity();
   if (!identity.authenticated) redirect("/");
-  if (!REQUIRED_PERMISSIONS.some((p) => hasSponsorPermission(identity, p))) {
+  if (!REQUIRED_PERMISSIONS.some((p) => hasPermission(identity, p))) {
     return (
       <div dir="rtl" className="min-h-[50vh] grid place-items-center px-4">
         <div className="text-center max-w-md">

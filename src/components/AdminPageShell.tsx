@@ -21,7 +21,7 @@ const adminSidebarItems = [
   { label: "Properties", href: "/admin/properties", icon: "🏢" },
   { label: "Services", href: "/admin/services", icon: "🔧" },
   { label: "News", href: "/admin/news", icon: "📰" },
-  { label: "Sponsors", href: "/admin/sponsors", icon: "🤝" },
+  { label: "Advertisers", href: "/admin/advertisers", icon: "🤝" },
   { label: "Ads", href: "/admin/ads", icon: "📢" },
   { label: "Settings", href: "/admin/settings", icon: "⚙️" },
 ];

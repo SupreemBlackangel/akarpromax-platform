@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @next/next/no-img-element -- Sponsor logos and country flags are runtime-managed URLs. */
+/* eslint-disable @next/next/no-img-element -- Country flags are runtime-managed URLs. */
 
 import { useEffect, useRef, useState } from "react";
 import React from "react";
@@ -15,7 +15,7 @@ import MobileNavigation from "@/src/components/public/mobile-navigation";
 import PublicSidebar from "@/src/components/public/public-sidebar";
 import { getPublicNav } from "@/src/config/public-navigation";
 import OfficePromoSection from "@/src/components/public/office-promo-section";
-import type { Locale, PublicSponsor, ThemeMode, ViewerContext } from "@/src/types/site";
+import type { Locale, ThemeMode, ViewerContext } from "@/src/types/site";
 import {
   citiesForCountry,
   countryOptions,
@@ -41,7 +41,6 @@ export default function Home() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [themeReady, setThemeReady] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(false);
-  const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
   const [featuredProperties, setFeaturedProperties] = useState<PublicProperty[]>([]);
   const [offices, setOffices] = useState<{ id: string; nameAr?: string; nameEn?: string; type?: string; city?: string; country?: string }[]>([]);
   const [companies, setCompanies] = useState<{ id: string; nameAr?: string; nameEn?: string; type?: string; city?: string; country?: string }[]>([]);
@@ -172,15 +171,6 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/sponsors?country=${encodeURIComponent(country)}`, { cache: "no-store", signal: controller.signal })
-      .then((response) => response.ok ? response.json() : { sponsors: [] })
-      .then((data: { sponsors?: PublicSponsor[] }) => setActiveSponsor(data.sponsors?.[0] ?? null))
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [country]);
-
-  useEffect(() => {
-    const controller = new AbortController();
     fetch(`/api/properties?country=${encodeURIComponent(country)}&featured=1&limit=3`, { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : { properties: [] })
       .then((data: { properties?: PublicProperty[] }) => setFeaturedProperties(data.properties ?? []))
@@ -223,19 +213,6 @@ export default function Home() {
       .catch(() => undefined);
     return () => controller.abort();
   }, [country]);
-
-  useEffect(() => {
-    if (!activeSponsor) return;
-    activeSponsor.placements.forEach((placement) => {
-      if (!["header", "content", "footer"].includes(placement)) return;
-      void fetch("/api/sponsor-events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sponsorId: activeSponsor.id, countryCode: country, placement, eventType: "impression" }),
-        keepalive: true,
-      }).catch(() => undefined);
-    });
-  }, [activeSponsor, country]);
 
   useEffect(() => () => {
     Object.values(dropdownCloseTimers.current).forEach((timer) => {
@@ -321,7 +298,7 @@ export default function Home() {
                   <CountryFlag country={selectedCountry} /><span>{selectedCountry.names[locale]}</span><span className="country-chevron" aria-hidden="true">⌄</span>
                 </button>
                 <div className="country-dropdown" role="menu" hidden={!countryOpen}>
-                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitemradio" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-checked={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setActiveSponsor(null); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
+                  {countryOptions.map((option) => <button key={option.id} type="button" role="menuitemradio" className={country === option.id ? "country-option active" : "country-option"} aria-label={option.names[locale]} aria-checked={country === option.id} onClick={() => { const nextCity = detectCity(option.id); setCountry(option.id); setCity(nextCity); setCountryOpen(false); window.localStorage.setItem("akarpromax-country", option.id); window.localStorage.setItem("akarpromax-city", nextCity); }}><CountryFlag country={option} /><span>{option.names[locale]}</span>{option.id === "om" && <small>{copy.country}</small>}</button>)}
                 </div>
               </div>
               <div className="city-switcher" aria-label={copy.cityAria} onMouseEnter={() => cancelDropdownClose("city")} onMouseLeave={() => scheduleDropdownClose("city", () => setCityOpen(false))} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) { cancelDropdownClose("city"); setCityOpen(false); } }}>
@@ -338,7 +315,6 @@ export default function Home() {
                 countryName={selectedCountry.names[locale]}
                 cityName={selectedCity.names[locale]}
                 onApply={(fields) => {
-                  setActiveSponsor(null);
                   setCountry(fields.countryCode);
                   setCity(detectCity(fields.countryCode));
                   setCountryOpen(false);
@@ -446,7 +422,7 @@ export default function Home() {
             </div>
             <div className="property-grid reference-cards">
               {offices.map((office) => (
-                <article className="reference-card" key={office.id}>
+                <article className="reference-card card-office" key={office.id}>
                   <div className="card-body">
                     <span className="section-kicker" style={{ fontSize: "var(--font-size-xs)" }}>{office.type ?? "real_estate"}</span>
                     <h3>{locale === "ar" ? (office.nameAr || office.nameEn) : (office.nameEn || office.nameAr)}</h3>
@@ -486,7 +462,7 @@ export default function Home() {
             </div>
             <div className="property-grid reference-cards">
               {companies.map((company) => (
-                <article className="reference-card" key={company.id}>
+                <article className="reference-card card-company" key={company.id}>
                   <div className="card-body">
                     <span className="section-kicker" style={{ fontSize: "var(--font-size-xs)" }}>{company.type ?? "business"}</span>
                     <h3>{locale === "ar" ? (company.nameAr || company.nameEn) : (company.nameEn || company.nameAr)}</h3>
@@ -510,7 +486,7 @@ export default function Home() {
             </div>
             <div className="property-grid reference-cards">
               {newsItems.map((item) => (
-                <article className="reference-card" key={item.id}>
+                <article className="reference-card card-news" key={item.id}>
                   <div className="card-body">
                     <p style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString(locale === "ar" ? "ar-OM" : locale === "tr" ? "tr-TR" : "en-US") : ""}</p>
                     <h3>{locale === "ar" ? (item.titleAr || item.title) : (item.title || item.titleAr)}</h3>
@@ -530,22 +506,22 @@ export default function Home() {
               <h2 id="stats-title">{locale === "ar" ? "أرقام تتحدث" : locale === "tr" ? "Kendinden Konuşan Rakamlar" : "Numbers That Speak"}</h2>
             </div>
           </div>
-          <div className="property-grid reference-cards" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-            <article className="reference-card">
-              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
-                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{propertyCount !== null ? propertyCount.toLocaleString() : "—"}</h3>
+          <div className="stats-grid property-grid reference-cards">
+            <article className="reference-card stats-card">
+                <div className="card-body">
+                <h3>{propertyCount !== null ? propertyCount.toLocaleString() : "—"}</h3>
                 <p>{locale === "ar" ? "عقار متاح" : locale === "tr" ? "Mevcut Mülk" : "Properties Listed"}</p>
               </div>
             </article>
-            <article className="reference-card">
-              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
-                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{offices.length > 0 ? offices.length : "—"}</h3>
+            <article className="reference-card stats-card">
+              <div className="card-body">
+                <h3>{offices.length > 0 ? offices.length : "—"}</h3>
                 <p>{locale === "ar" ? "مكتب عقاري" : locale === "tr" ? "Emlak Ofisi" : "Real Estate Offices"}</p>
               </div>
             </article>
-            <article className="reference-card">
-              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
-                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{companies.length > 0 ? companies.length : "—"}</h3>
+            <article className="reference-card stats-card">
+              <div className="card-body">
+                <h3>{companies.length > 0 ? companies.length : "—"}</h3>
                 <p>{locale === "ar" ? "شركة شريكة" : locale === "tr" ? "Orak Şirket" : "Partner Companies"}</p>
               </div>
             </article>
