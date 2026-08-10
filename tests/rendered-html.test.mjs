@@ -50,12 +50,17 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(html, /theme-dropdown/);
   assert.match(html, /tool-cluster location-cluster/);
   assert.match(html, /tool-cluster preference-cluster/);
-  assert.match(html, /country-sponsor/);
+  assert.doesNotMatch(html, /country-sponsor/);
   assert.doesNotMatch(html, /sponsor-inline/);
   assert.doesNotMatch(html, /footer-sponsor/);
   assert.doesNotMatch(html, /side-rail-ad/);
-  assert.match(html, /data-sponsor-country="om"/);
-  assert.match(html, /partners@akarpromax\.om/);
+  assert.doesNotMatch(html, /data-sponsor-country/);
+  assert.doesNotMatch(html, /Official Sponsor/i);
+  assert.doesNotMatch(html, /House Ad/i);
+  assert.doesNotMatch(html, /sponsor-ribbon/);
+  assert.match(html, /data-standard-public-ad-layout/);
+  assert.match(html, /public-page-shell|reference-app/);
+  assert.match(html, /sidebar-public-nav/);
 });
 
 test("does not retain the starter preview or starter metadata", async () => {
@@ -74,12 +79,11 @@ test("does not retain the starter preview or starter metadata", async () => {
   assert.match(layout, /akarpromax-theme/);
 });
 
-test("includes the country sponsor administration and generated campaign art", async () => {
-  const [page, publicSidebar, admin, sponsorIdentity, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
+test("includes the sponsor admin, content schema and campaign assets", async () => {
+  const [page, publicSidebar, admin, schema, sponsorApi, accessApi, sponsorAssetsApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/sponsors/sponsor-admin-client.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/SponsorIdentity.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsors/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/sponsor-access/route.ts", import.meta.url), "utf8"),
@@ -98,10 +102,11 @@ test("includes the country sponsor administration and generated campaign art", a
   assert.match(page, /\/api\/sponsors\?country=/);
   assert.match(page, /StandardPublicAdLayout/);
   assert.match(page, /family="home"/);
-  assert.match(page, /sponsor-ribbon-visual/);
-  assert.match(page, /sponsor-visual-image/);
-  assert.match(page, /SponsorIdentity/);
-  assert.match(sponsorIdentity, /sponsor-logo-fallback/);
+  assert.doesNotMatch(page, /sponsor-ribbon-visual/);
+  assert.doesNotMatch(page, /sponsor-visual-image/);
+  assert.doesNotMatch(page, /Official Sponsor/i);
+  assert.doesNotMatch(page, /House Ad/i);
+  assert.doesNotMatch(page, /sponsor-ribbon/);
   assert.match(page, /PublicSidebar/);
   assert.match(page, /getPublicNav/);
   assert.match(publicSidebar, /sidebar-public-nav/);

@@ -133,7 +133,7 @@ export default function ServicesHubPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.requests")}</p>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{locale === "ar" ? "الطلبات" : locale === "tr" ? "Talepler" : "Requests"}</p>
               <h2 className="text-2xl font-black text-gray-900 dark:text-white">{recentRequestsLabel}</h2>
             </div>
             <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">

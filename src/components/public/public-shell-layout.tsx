@@ -73,6 +73,8 @@ export type PublicShellLayoutProps = {
   onCookieAccept: () => void;
   onCookieReject: () => void;
   onCookieManage: () => void;
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
   children: ReactNode;
 };
 
@@ -99,6 +101,8 @@ export function PublicShellLayout({
   onCookieAccept,
   onCookieReject,
   onCookieManage,
+  sidebarCollapsed,
+  onToggleSidebar,
   children,
 }: PublicShellLayoutProps) {
   const showPublicSidebar = shouldUsePublicSidebar(currentPath);
@@ -157,7 +161,7 @@ export function PublicShellLayout({
   );
 
   return (
-    <div className="public-page-shell">
+    <div className="public-page-shell" data-sidebar-state={sidebarCollapsed ? "collapsed" : "expanded"}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:inset-x-0 focus:top-0 focus:z-[var(--layer-toast)] focus:bg-[color:var(--color-primary)] focus:px-[var(--space-5)] focus:py-[var(--space-3)] focus:text-center focus:text-[var(--font-size-md)] focus:font-semibold focus:text-[color:var(--color-primary-foreground)]"
@@ -178,7 +182,7 @@ export function PublicShellLayout({
       />
 
       <div className="flex min-h-[100dvh] flex-col md:flex-row">
-        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} />}
+        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <PublicHeader

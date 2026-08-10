@@ -9,7 +9,6 @@ import LocationChip from "@/src/components/LocationChip";
 import AccountDialog from "@/src/components/AccountDialog";
 import Brand from "@/src/components/Brand";
 import CountryFlag from "@/src/components/CountryFlag";
-import SponsorIdentity from "@/src/components/SponsorIdentity";
 import NewsTicker from "@/src/components/NewsTicker";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
 import MobileNavigation from "@/src/components/public/mobile-navigation";
@@ -27,8 +26,6 @@ import {
   isVideoAsset,
   selectedCityOf,
   selectedCountryOf,
-  sponsorBannerByCountry,
-  sponsorToneByCountry,
 } from "@/src/data/locations";
 import { languageOptions, roleLabels, themeOptions, translations } from "@/src/data/translations";
 import type { PublicProperty } from "@/lib/properties-format";
@@ -63,14 +60,6 @@ export default function Home() {
   const selectedCountry = selectedCountryOf(country);
   const selectedCity = selectedCityOf(country, city);
   const selectedCurrency = currenciesByCountry[country] ?? currenciesByCountry.om;
-  const selectedSponsorTone = sponsorToneByCountry[country] ?? "blue";
-  const sponsorContactHref = `mailto:partners@akarpromax.om?subject=${encodeURIComponent(`AkarPromax sponsor — ${selectedCountry.names.en}`)}`;
-  const sponsorBannerUrl = activeSponsor?.bannerUrl || sponsorBannerByCountry[country] || "/sponsors/arab-blue.webp";
-  const sponsorLogoUrl = activeSponsor?.logoUrl || null;
-  const sponsorName = activeSponsor ? (locale === "ar" ? activeSponsor.nameAr : locale === "tr" ? activeSponsor.nameTr : activeSponsor.nameEn) : copy.sponsorAvailable;
-  const sponsorTargetHref = activeSponsor?.websiteUrl || sponsorContactHref;
-  const sponsorActionLabel = activeSponsor ? (locale === "ar" ? "زيارة الراعي" : locale === "tr" ? "Sponsoru ziyaret et" : "Visit sponsor") : copy.sponsorCta;
-  const sponsorPlacements = activeSponsor?.placements ?? ["header", "content", "footer"];
   const publicNav = getPublicNav();
 
   const handleLogout = async () => {
@@ -82,17 +71,6 @@ export default function Home() {
     setViewer({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
     setSidebarPinned(false);
   };
-
-  const trackSponsorEvent = (placement: "header" | "content" | "footer", eventType: "impression" | "click") => {
-    if (!activeSponsor) return;
-    void fetch("/api/sponsor-events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sponsorId: activeSponsor.id, countryCode: country, placement, eventType }),
-      keepalive: true,
-    }).catch(() => undefined);
-  };
-
 
   const cancelDropdownClose = (key: "country" | "city" | "language" | "theme") => {
     const timer = dropdownCloseTimers.current[key];
@@ -404,14 +382,6 @@ export default function Home() {
         <NewsTicker copy={copy} locale={locale} country={country} city={city} />
         </div>
         <StandardPublicAdLayout family="home" label={copy.adLabel} locale={locale} country={country} city={city} deviceType={deviceType} path="/">
-        {sponsorPlacements.includes("header") && <section className="country-sponsor container" id="sponsors" aria-label={copy.sponsorAria} data-sponsor-country={country}>
-          <div className={`sponsor-ribbon sponsor-tone-${selectedSponsorTone} sponsor-ribbon-image`}>
-            <div className="sponsor-ribbon-visual" aria-hidden="true">{isVideoAsset(sponsorBannerUrl) ? <video className="sponsor-visual-image" src={sponsorBannerUrl} autoPlay muted loop playsInline preload="metadata" /> : <img className="sponsor-visual-image" src={sponsorBannerUrl} alt="" decoding="async" />}</div>
-            <div className="sponsor-copy"><p>{copy.sponsorLabel}</p><h2>{copy.sponsorOfficial} {selectedCountry.names[locale]}</h2><span>{copy.sponsorDescription}</span><a className="sponsor-cta" href={sponsorTargetHref} target={activeSponsor?.websiteUrl ? "_blank" : undefined} rel={activeSponsor?.websiteUrl ? "sponsored noopener" : undefined} onClick={() => trackSponsorEvent("header", "click")}>{sponsorActionLabel} <b>{copy.arrow}</b></a></div>
-            <div className="sponsor-brand-placeholder"><SponsorIdentity logoUrl={sponsorLogoUrl} name={sponsorName} countryCode={selectedCountry.id} /><div className="sponsor-brand-details"><small>{sponsorLogoUrl ? copy.sponsorLogo : locale === "ar" ? "هوية الراعي" : locale === "tr" ? "Sponsor kimliği" : "Sponsor identity"}</small><strong>{sponsorName}</strong></div><span className="sponsor-country-chip"><CountryFlag country={selectedCountry} />{selectedCountry.names[locale]}</span></div>
-          </div>
-        </section>}
-
         <section className="hero-ad" aria-label={copy.heroAria}>
           <div className="hero-ad-inner">
             <div className="hero-ad-copy">

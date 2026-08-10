@@ -9,6 +9,7 @@ import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-
 import { PublicShellLayout } from "@/src/components/public/public-shell-layout";
 
 const COOKIE_STORAGE_KEY = "akarpromax-cookie-consent";
+const SIDEBAR_STORAGE_KEY = "akarpromax-sidebar-collapsed";
 
 type PageHeaderNode = {
   title: string;
@@ -35,10 +36,6 @@ type PublicAdLayout =
       tags?: string[];
     };
 
-/**
- * Client state wrapper over the pure PublicShellLayout: owns the mobile menu
- * open state and cookie-consent visibility (persisted in localStorage).
- */
 type PublicPageShellProps = {
   locale: Locale;
   copy: Translation;
@@ -75,26 +72,28 @@ export default function PublicPageShell({
   children,
 }: PublicPageShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cookieVisible, setCookieVisible] = useState(false);
-
-  useEffect(() => {
-    if (!cookieNotice) return;
-    let stored: string | null = null;
+  const [cookieVisible, setCookieVisible] = useState(() => {
+    if (!cookieNotice || typeof window === "undefined") return false;
     try {
-      stored = window.localStorage.getItem(COOKIE_STORAGE_KEY);
-    } catch {
-      stored = null;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe mount-once localStorage read
-    setCookieVisible(stored !== "accepted" && stored !== "rejected" && stored !== "managed");
-  }, [cookieNotice]);
+      const stored = window.localStorage.getItem(COOKIE_STORAGE_KEY);
+      return stored !== "accepted" && stored !== "rejected" && stored !== "managed";
+    } catch { return false; }
+  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"; } catch { return false; }
+  });
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
 
   const persistCookieChoice = (choice: "accepted" | "rejected" | "managed") => {
-    try {
-      window.localStorage.setItem(COOKIE_STORAGE_KEY, choice);
-    } catch {
-      // localStorage unavailable (private mode); banner simply disappears for this session.
-    }
+    try { window.localStorage.setItem(COOKIE_STORAGE_KEY, choice); } catch { /* ignore */ }
     setCookieVisible(false);
   };
 
@@ -122,6 +121,8 @@ export default function PublicPageShell({
       onCookieAccept={() => persistCookieChoice("accepted")}
       onCookieReject={() => persistCookieChoice("rejected")}
       onCookieManage={() => persistCookieChoice("managed")}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={toggleSidebar}
     >
       {children}
     </PublicShellLayout>
