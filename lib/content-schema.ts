@@ -180,6 +180,17 @@ export const CONTENT_TABLES_SQL: string[] = [
     status TEXT NOT NULL DEFAULT 'active',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  `CREATE TABLE IF NOT EXISTS moderator_scopes (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL,
+    module TEXT NOT NULL,
+    country_code TEXT,
+    city_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX IF NOT EXISTS moderator_scopes_user_idx ON moderator_scopes (user_id)`,
+  `CREATE INDEX IF NOT EXISTS moderator_scopes_module_idx ON moderator_scopes (module)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS sponsor_access_email_unique ON sponsor_access (email)`,
   `CREATE INDEX IF NOT EXISTS sponsor_access_role_country_idx ON sponsor_access (role, country_code)`,
   `CREATE INDEX IF NOT EXISTS sponsors_country_status_priority_idx ON sponsors (country_code, status, priority)`,

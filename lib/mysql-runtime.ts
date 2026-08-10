@@ -360,6 +360,17 @@ const MYSQL_SCHEMA_SQL: string[] = [
     spent_amount INT NOT NULL DEFAULT 0,
     PRIMARY KEY (campaign_id, stat_date)
   )`,
+  `CREATE TABLE IF NOT EXISTS moderator_scopes (
+    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    module VARCHAR(64) NOT NULL,
+    country_code VARCHAR(8) NULL,
+    city_id VARCHAR(100) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX moderator_scopes_user_idx ON moderator_scopes (user_id)`,
+  `CREATE INDEX moderator_scopes_module_idx ON moderator_scopes (module)`,
   `CREATE UNIQUE INDEX sponsor_access_email_unique ON sponsor_access (email)`,
   `CREATE INDEX sponsor_access_role_country_idx ON sponsor_access (role, country_code)`,
   `CREATE INDEX sponsors_country_status_priority_idx ON sponsors (country_code, status, priority)`,

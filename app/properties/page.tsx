@@ -10,13 +10,15 @@ import SearchInput from "@/src/components/ui/SearchInput";
 import { DEMO_PROPERTIES } from "@/src/data/demo-properties";
 import type { PublicProperty } from "@/lib/properties-format";
 
-const PROPERTY_TYPES = [
-  { id: "all", ar: "الكل", en: "All", tr: "Tümü" },
-  { id: "villa", ar: "فيلا", en: "Villa", tr: "Villa" },
-  { id: "apartment", ar: "شقة", en: "Apartment", tr: "Daire" },
-  { id: "land", ar: "أرض", en: "Land", tr: "Arazi" },
-  { id: "commercial", ar: "تجاري", en: "Commercial", tr: "Ticari" },
+const FALLBACK_PROPERTY_TYPES = [
+  { id: "all", label_en: "All", label_ar: "الكل", label_tr: "Tümü" },
+  { id: "villa", label_en: "Villa", label_ar: "فيلا", label_tr: "Villa" },
+  { id: "apartment", label_en: "Apartment", label_ar: "شقة", label_tr: "Daire" },
+  { id: "land", label_en: "Land", label_ar: "أرض", label_tr: "Arazi" },
+  { id: "commercial", label_en: "Commercial", label_ar: "تجاري", label_tr: "Ticari" },
 ];
+
+type TaxonomyType = { id: string; slug: string; label_en: string; label_ar: string; label_tr: string; category_slug: string };
 
 const LISTING_TYPES = [
   { id: "all", ar: "الكل", en: "All", tr: "Tümü" },
@@ -34,7 +36,32 @@ export default function PropertiesPage() {
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<"all" | "for-sale" | "for-rent">("all");
   const [propertyType, setPropertyType] = useState("all");
+  const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(`/api/admin/properties/taxonomy`, { cache: "no-store", signal: controller.signal });
+        if (response.ok) {
+          const data = (await response.json()) as { categories?: Array<{ types: TaxonomyType[] }> };
+          const types: TaxonomyType[] = [];
+          for (const cat of data.categories ?? []) {
+            for (const t of cat.types ?? []) {
+              types.push(t);
+            }
+          }
+          if (types.length > 0 && !controller.signal.aborted) setDbTypes(types);
+        }
+      } catch { /* use fallback */ }
+    })();
+    return () => controller.abort();
+  }, []);
+
+  const propertyTypes = dbTypes.length > 0
+    ? [{ id: "all", label_en: "All", label_ar: "الكل", label_tr: "Tümü", slug: "all", category_id: "", category_slug: "" }, ...dbTypes.map((t) => ({ id: t.slug, label_en: t.label_en, label_ar: t.label_ar, label_tr: t.label_tr }))]
+    : FALLBACK_PROPERTY_TYPES;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -115,14 +142,14 @@ export default function PropertiesPage() {
             <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {locale === "ar" ? "نوع العقار:" : locale === "tr" ? "Mülk türü:" : "Property:"}
             </span>
-            {PROPERTY_TYPES.map((pt) => (
+            {propertyTypes.map((pt) => (
               <button
                 key={pt.id}
                 type="button"
                 onClick={() => setPropertyType(pt.id)}
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === pt.id ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
               >
-                {pt[locale]}
+                {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
               </button>
             ))}
           </div>

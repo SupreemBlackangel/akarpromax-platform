@@ -46,6 +46,10 @@ export default function Home() {
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [activeSponsor, setActiveSponsor] = useState<PublicSponsor | null>(null);
   const [featuredProperties, setFeaturedProperties] = useState<PublicProperty[]>([]);
+  const [offices, setOffices] = useState<{ id: string; nameAr?: string; nameEn?: string; type?: string; city?: string; country?: string }[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; nameAr?: string; nameEn?: string; type?: string; city?: string; country?: string }[]>([]);
+  const [newsItems, setNewsItems] = useState<{ id: string; title?: string; titleAr?: string; summary?: string; summaryAr?: string; publishedAt?: string }[]>([]);
+  const [propertyCount, setPropertyCount] = useState<number | null>(null);
   const [deviceType, setDeviceType] = useState<"desktop" | "mobile">("desktop");
   const [viewer, setViewer] = useState<ViewerContext>({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
   const [accountOpen, setAccountOpen] = useState(false);
@@ -202,6 +206,42 @@ export default function Home() {
     fetch(`/api/properties?country=${encodeURIComponent(country)}&featured=1&limit=3`, { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : { properties: [] })
       .then((data: { properties?: PublicProperty[] }) => setFeaturedProperties(data.properties ?? []))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [country]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/amrs/organizations?type=real_estate&status=active&limit=4`, { cache: "no-store", signal: controller.signal })
+      .then((r) => r.ok ? r.json() : { organizations: [] })
+      .then((d: { organizations?: typeof offices }) => setOffices(d.organizations ?? []))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/amrs/organizations?type=business&status=active&limit=3`, { cache: "no-store", signal: controller.signal })
+      .then((r) => r.ok ? r.json() : { organizations: [] })
+      .then((d: { organizations?: typeof companies }) => setCompanies(d.organizations ?? []))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/news/feed?channel=WEBSITE_NEWS&country=${encodeURIComponent(country)}&limit=3`, { cache: "no-store", signal: controller.signal })
+      .then((r) => r.ok ? r.json() : { items: [] })
+      .then((d: { items?: typeof newsItems }) => setNewsItems(d.items ?? []))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [country]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/properties?country=${encodeURIComponent(country)}&limit=1`, { cache: "no-store", signal: controller.signal })
+      .then((r) => r.ok ? r.json() : { total: 0 })
+      .then((d: { total?: number }) => setPropertyCount(d.total ?? 0))
       .catch(() => undefined);
     return () => controller.abort();
   }, [country]);
@@ -425,6 +465,30 @@ export default function Home() {
           </div>
         </section>
 
+        {offices.length > 0 && (
+          <section className="content-section container" id="offices" aria-labelledby="offices-title">
+            <div className="section-title-row">
+              <div>
+                <p className="section-kicker">{locale === "ar" ? "المكاتب العقارية" : locale === "tr" ? "Emlak Ofisleri" : "Real Estate Offices"}</p>
+                <h2 id="offices-title">{locale === "ar" ? "شركاؤنا العقاريون" : locale === "tr" ? "Emlak Ortaklarımız" : "Our Real Estate Partners"}</h2>
+              </div>
+              <Link className="section-link" href="/offices">{locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all"} <b>{copy.arrow}</b></Link>
+            </div>
+            <div className="property-grid reference-cards">
+              {offices.map((office) => (
+                <article className="reference-card" key={office.id}>
+                  <div className="card-body">
+                    <span className="section-kicker" style={{ fontSize: "var(--font-size-xs)" }}>{office.type ?? "real_estate"}</span>
+                    <h3>{locale === "ar" ? (office.nameAr || office.nameEn) : (office.nameEn || office.nameAr)}</h3>
+                    <p>{[office.city, office.country].filter(Boolean).join(", ")}</p>
+                    <Link href={`/offices/${office.id}`}>{locale === "ar" ? "التفاصيل" : locale === "tr" ? "Detaylar" : "Details"} <b>{copy.arrow}</b></Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="services-band" id="services" aria-labelledby="services-title">
           <div className="container"><div className="section-title-row"><div><p className="section-kicker">{copy.servicesKicker}</p><h2 id="services-title">{copy.servicesTitle}<br />{copy.servicesAccent}</h2></div><span className="muted-note">{copy.servicesNote.split("\n").map((line) => <span key={line}>{line}<br /></span>)}</span></div>
             <div className="service-grid">{copy.services.map((service, index) => service.href ? (
@@ -441,12 +505,89 @@ export default function Home() {
           </div>
         </section>
 
+        {companies.length > 0 && (
+          <section className="content-section container" id="companies" aria-labelledby="companies-title">
+            <div className="section-title-row">
+              <div>
+                <p className="section-kicker">{locale === "ar" ? "الشركات" : locale === "tr" ? "Şirketler" : "Companies"}</p>
+                <h2 id="companies-title">{locale === "ar" ? "شركاؤنا التجاريون" : locale === "tr" ? "Ticari Ortaklarımız" : "Business Partners"}</h2>
+              </div>
+              <Link className="section-link" href="/companies">{locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all"} <b>{copy.arrow}</b></Link>
+            </div>
+            <div className="property-grid reference-cards">
+              {companies.map((company) => (
+                <article className="reference-card" key={company.id}>
+                  <div className="card-body">
+                    <span className="section-kicker" style={{ fontSize: "var(--font-size-xs)" }}>{company.type ?? "business"}</span>
+                    <h3>{locale === "ar" ? (company.nameAr || company.nameEn) : (company.nameEn || company.nameAr)}</h3>
+                    <p>{[company.city, company.country].filter(Boolean).join(", ")}</p>
+                    <Link href={`/companies/${company.id}`}>{locale === "ar" ? "التفاصيل" : locale === "tr" ? "Detaylar" : "Details"} <b>{copy.arrow}</b></Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {newsItems.length > 0 && (
+          <section className="content-section container" id="news" aria-labelledby="news-title">
+            <div className="section-title-row">
+              <div>
+                <p className="section-kicker">{locale === "ar" ? "آخر الأخبار" : locale === "tr" ? "Son Haberler" : "Latest News"}</p>
+                <h2 id="news-title">{locale === "ar" ? "الإعلانات والأخبار" : locale === "tr" ? "Duyurular ve Haberler" : "Announcements & News"}</h2>
+              </div>
+              <Link className="section-link" href="/news">{locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all"} <b>{copy.arrow}</b></Link>
+            </div>
+            <div className="property-grid reference-cards">
+              {newsItems.map((item) => (
+                <article className="reference-card" key={item.id}>
+                  <div className="card-body">
+                    <p style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-muted)" }}>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString(locale === "ar" ? "ar-OM" : locale === "tr" ? "tr-TR" : "en-US") : ""}</p>
+                    <h3>{locale === "ar" ? (item.titleAr || item.title) : (item.title || item.titleAr)}</h3>
+                    <p>{locale === "ar" ? (item.summaryAr || item.summary) : (item.summary || item.summaryAr)}</p>
+                    <Link href={`/news/${item.id}`}>{locale === "ar" ? "اقرأ المزيد" : locale === "tr" ? "Daha Fazla" : "Read more"} <b>{copy.arrow}</b></Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="content-section container" id="stats" aria-labelledby="stats-title">
+          <div className="section-title-row">
+            <div>
+              <p className="section-kicker">{locale === "ar" ? "إنجازاتنا" : locale === "tr" ? "Başarılarımız" : "Our Numbers"}</p>
+              <h2 id="stats-title">{locale === "ar" ? "أرقام تتحدث" : locale === "tr" ? "Kendinden Konuşan Rakamlar" : "Numbers That Speak"}</h2>
+            </div>
+          </div>
+          <div className="property-grid reference-cards" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+            <article className="reference-card">
+              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
+                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{propertyCount !== null ? propertyCount.toLocaleString() : "—"}</h3>
+                <p>{locale === "ar" ? "عقار متاح" : locale === "tr" ? "Mevcut Mülk" : "Properties Listed"}</p>
+              </div>
+            </article>
+            <article className="reference-card">
+              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
+                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{offices.length > 0 ? offices.length : "—"}</h3>
+                <p>{locale === "ar" ? "مكتب عقاري" : locale === "tr" ? "Emlak Ofisi" : "Real Estate Offices"}</p>
+              </div>
+            </article>
+            <article className="reference-card">
+              <div className="card-body" style={{ textAlign: "center", padding: "var(--space-8)" }}>
+                <h3 style={{ fontSize: "var(--font-size-3xl)", color: "var(--color-primary)" }}>{companies.length > 0 ? companies.length : "—"}</h3>
+                <p>{locale === "ar" ? "شركة شريكة" : locale === "tr" ? "Orak Şirket" : "Partner Companies"}</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <OfficePromoSection locale={locale} copy={copy} />
 
         <section className="account-band" id="account"><div className="container account-inner"><div><p className="section-kicker">{copy.accountKicker}</p><h2>{copy.accountTitle}<br />{copy.accountAccent}</h2></div><div className="account-copy"><p>{copy.accountDescription}</p><a className="button-primary" href="mailto:hello@akarpromax.om?subject=Join%20request">{copy.accountCta} <b>{copy.arrow}</b></a></div></div></section>
         </StandardPublicAdLayout>
 
-        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="https://facebook.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a><a href="https://x.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="X">𝕏</a><a href="https://instagram.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Instagram">◎</a><a href="https://linkedin.com/company/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3><a href="/">{copy.quickLinks[0]}</a><a href="/properties">{copy.quickLinks[1]}</a><a href="/properties">{copy.quickLinks[2]}</a><a href="/offices">{copy.quickLinks[3]}</a><a href="/services">{copy.quickLinks[4]}</a><a href="/news">{copy.quickLinks[5]}</a></div><div><h3>{copy.usefulTitle}</h3><a href="/about">{copy.usefulLinks[0]}</a><a href="/advertise">{copy.usefulLinks[1]}</a><a href="/contact">{copy.usefulLinks[2]}</a><a href="/legal/terms">{copy.usefulLinks[3]}</a><a href="/legal/privacy">{copy.usefulLinks[4]}</a><a href="#office-app">{copy.usefulLinks[5]}</a><a href="/legal/faq">{copy.usefulLinks[6]}</a></div><div><h3>{copy.contactTitle}</h3><a href="https://maps.google.com/?q=Nizwa,Oman" target="_blank" rel="noopener noreferrer">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="https://wa.me/96890100000" target="_blank" rel="noopener noreferrer">{locale === "ar" ? "واتساب" : locale === "tr" ? "WhatsApp" : "WhatsApp"}　💬</a><a href="/contact">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span><div className="payments"><span>Visa</span><span>Mastercard</span><span>{locale === "ar" ? "تابي" : locale === "tr" ? "Tabby" : "Tabby"}</span><span>{locale === "ar" ? "تمارا" : locale === "tr" ? "Tamara" : "Tamara"}</span></div></div></footer>
+        <footer className="reference-footer"><div className="container footer-grid"><div className="footer-about"><Brand copy={copy} /><p>{copy.footerDescription}</p><div className="socials"><a href="https://facebook.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a><a href="https://x.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="X">𝕏</a><a href="https://instagram.com/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="Instagram">◎</a><a href="https://linkedin.com/company/akarpromax" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">in</a></div></div><div><h3>{copy.quickTitle}</h3><Link href="/">{copy.quickLinks[0]}</Link><Link href="/properties">{copy.quickLinks[1]}</Link><Link href="/properties">{copy.quickLinks[2]}</Link><Link href="/offices">{copy.quickLinks[3]}</Link><a href="/services">{copy.quickLinks[4]}</a><a href="/news">{copy.quickLinks[5]}</a></div><div><h3>{copy.usefulTitle}</h3><a href="/about">{copy.usefulLinks[0]}</a><a href="/advertise">{copy.usefulLinks[1]}</a><a href="/contact">{copy.usefulLinks[2]}</a><Link href="/legal/terms">{copy.usefulLinks[3]}</Link><Link href="/legal/privacy">{copy.usefulLinks[4]}</Link><a href="#office-app">{copy.usefulLinks[5]}</a><Link href="/legal/faq">{copy.usefulLinks[6]}</Link></div><div><h3>{copy.contactTitle}</h3><a href="https://maps.google.com/?q=Nizwa,Oman" target="_blank" rel="noopener noreferrer">{copy.contactLocation}　⌖</a><a href="mailto:info@akarpromax.om">{copy.contactEmail}　✉</a><a href="https://wa.me/96890100000" target="_blank" rel="noopener noreferrer">{locale === "ar" ? "واتساب" : locale === "tr" ? "WhatsApp" : "WhatsApp"}　💬</a><a href="/contact">{copy.contactTeam}</a></div></div><div className="container footer-bottom"><span>{copy.footerRights}</span><span>{copy.footerTagline}</span></div></footer>
         <a className="floating-chat" href="mailto:hello@akarpromax.om" aria-label={copy.chatAria}>⌁</a>
         <AccountDialog locale={locale} open={accountOpen} initialMode={accountMode} viewer={viewer} onClose={() => setAccountOpen(false)} onAuthenticated={setViewer} />
       </div>

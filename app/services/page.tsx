@@ -40,6 +40,21 @@ export default function ServicesHubPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
+  const heroKicker = locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmet Pazarı" : "Services Market";
+  const heroTitle = locale === "ar" ? "اختر خدمة أو اطلبها بسهولة" : locale === "tr" ? "Bir hizmet seçin veya kolayca talep edin" : "Choose a service or request one easily";
+  const heroSubtitle = locale === "ar" ? "استعرض مقدمي الخدمات الموثوقين، أو انشر طلبك واستقبل عروضاً مخصصة." : locale === "tr" ? "Güvenilir hizmet sağlayıcılarını keşfedin, talebinizi yayınlayın ve size özel teklifler alın." : "Browse trusted service providers, post your request, and receive tailored offers.";
+  const postRequestLabel = locale === "ar" ? "انشر طلباً" : locale === "tr" ? "Talep Yayınla" : "Post a Request";
+  const becomeProviderLabel = locale === "ar" ? "انضم كمقدم خدمة" : locale === "tr" ? "Hizmet Sağlayıcı Ol" : "Become a Provider";
+  const categoriesLabel = locale === "ar" ? "التصنيفات" : locale === "tr" ? "Kategoriler" : "Categories";
+  const browseByCategoryLabel = locale === "ar" ? "تصفح حسب التصنيف" : locale === "tr" ? "Kategoriye Göz At" : "Browse by Category";
+  const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
+  const providersLabel = locale === "ar" ? "مقدمو الخدمات" : locale === "tr" ? "Hizmet Sağlayıcıları" : "Service Providers";
+  const featuredProvidersLabel = locale === "ar" ? "مقدمو خدمات موثوقون" : locale === "tr" ? "Güvenilir Hizmet Sağlayıcıları" : "Trusted Service Providers";
+  const recentRequestsLabel = locale === "ar" ? "أحدث الطلبات" : locale === "tr" ? "Son Talepler" : "Recent Requests";
+  const providerCtaLabel = locale === "ar" ? "هل أنت مقدم خدمة محترف؟" : locale === "tr" ? "Profesyonel bir hizmet sağlayıcı mısınız?" : "Are you a professional service provider?";
+  const providerCtaSubLabel = locale === "ar" ? "أنشئ ملفك الشخصي، واستقبل طلبات مناسبة لمنطقتك، وواصل النمو مع عقار بروماكس." : locale === "tr" ? "Profilinizi oluşturun, bölgenize uygun talepleri alın ve AkarPromax ile büyümeye devam edin." : "Create your profile, receive requests suited to your area, and keep growing with AkarPromax.";
+  const applyNowLabel = locale === "ar" ? "قدم الآن" : locale === "tr" ? "Şimdi Başvur" : "Apply Now";
+
   return (
     <PublicPageShell
       locale={locale}
@@ -57,18 +72,18 @@ export default function ServicesHubPage() {
 
         <section className="rounded-2xl border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-blue-950/40 dark:via-gray-900 dark:to-emerald-950/30 p-8 md:p-12 text-center">
           <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
-            ✨ {t("services.kicker") ?? "سوق الخدمات"}
+            ✨ {heroKicker}
           </p>
-          <h1 className="mt-4 text-3xl md:text-4xl font-black text-gray-900 dark:text-white">{t("services.title") ?? "اختر خدمة أو اطلبها بسهولة"}</h1>
+          <h1 className="mt-4 text-3xl md:text-4xl font-black text-gray-900 dark:text-white">{heroTitle}</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-gray-500 dark:text-gray-400">
-            {t("services.subtitle") ?? "استعرض مقدمي الخدمات الموثوقين، أو انشر طلبك واستقبل عروضاً مخصصة."}
+            {heroSubtitle}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/service-requests/new" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition">
-              ➕ {t("services.postRequest") ?? "انشر طلباً"}
+              ➕ {postRequestLabel}
             </Link>
             <Link href="/providers/apply" className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition hover:border-blue-300">
-              👨‍🔧 {t("services.becomeProvider") ?? "انضم كمقدم خدمة"}
+              👨‍🔧 {becomeProviderLabel}
             </Link>
           </div>
         </section>
@@ -76,11 +91,11 @@ export default function ServicesHubPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.categories") ?? "التصنيفات"}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.browseByCategory") ?? "تصفح حسب التصنيف"}</h2>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{categoriesLabel}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{browseByCategoryLabel}</h2>
             </div>
             <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {t("services.viewAll") ?? "عرض الكل"} ←
+              {viewAllLabel} ←
             </Link>
           </div>
           <Grid columns={3}>
@@ -98,11 +113,11 @@ export default function ServicesHubPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.providers") ?? "مقدمو الخدمات"}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.featuredProviders") ?? "مقدمو خدمات موثوقون"}</h2>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{providersLabel}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{featuredProvidersLabel}</h2>
             </div>
             <Link href="/providers" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {t("services.viewAll") ?? "عرض الكل"} ←
+              {viewAllLabel} ←
             </Link>
           </div>
           <Grid columns={3}>
@@ -118,11 +133,11 @@ export default function ServicesHubPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
             <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.requests") ?? "الطلبات"}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.recentRequests") ?? "أحدث الطلبات"}</h2>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{t("services.requests")}</p>
+              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{recentRequestsLabel}</h2>
             </div>
             <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {t("services.viewAll") ?? "عرض الكل"} ←
+              {viewAllLabel} ←
             </Link>
           </div>
           <Grid columns={3}>
@@ -136,12 +151,12 @@ export default function ServicesHubPage() {
         </section>
 
         <section className="mt-12 rounded-2xl bg-gray-900 dark:bg-gray-950 p-8 md:p-12 text-center text-white">
-          <h2 className="text-2xl md:text-3xl font-black">{t("services.providerCta") ?? "هل أنت مقدم خدمة محترف؟"}</h2>
+          <h2 className="text-2xl md:text-3xl font-black">{providerCtaLabel}</h2>
           <p className="mx-auto mt-3 max-w-lg text-sm text-gray-300">
-            {t("services.providerCtaSub") ?? "أنشئ ملفك الشخصي، واستقبل طلبات مناسبة لمنطقتك، وواصل النمو مع عقار بروماكس."}
+            {providerCtaSubLabel}
           </p>
           <Link href="/providers/apply" className="mt-6 inline-block px-6 py-3 rounded-xl bg-white text-gray-900 text-sm font-bold transition hover:bg-amber-300">
-            {t("services.applyProvider") ?? "قدم الآن"}
+            {applyNowLabel}
           </Link>
         </section>
       </PageContainer>

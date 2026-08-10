@@ -39,6 +39,8 @@ const navGroups: NavGroup[] = [
     label: "الخدمات والمنظمات",
     items: [
       { href: "/admin/services", icon: "✦", label: "سوق الخدمات", permission: SERVICE_PERMISSIONS },
+      { href: "/admin/properties", icon: "⌂", label: "تصنيف العقارات", permission: PERMISSIONS.PROPERTIES_VIEW },
+      { href: "/admin/companies", icon: "◉", label: "تصنيف الشركات", permission: PERMISSIONS.PROPERTIES_VIEW },
       { href: "/admin/sponsors", icon: "▣", label: "نظام الرعاة", permission: PERMISSIONS.SPONSORS_VIEW },
       { href: "/admin/sponsors/requests", icon: "✉", label: "طلبات الرعاة", permission: PERMISSIONS.SPONSORS_APPROVE },
       { href: "/admin/sponsors/banner", icon: "◈", label: "شريط الرعاة", permission: PERMISSIONS.SPONSORS_VIEW },
@@ -61,6 +63,10 @@ const navGroups: NavGroup[] = [
   {
     label: "النظام المتصل",
     items: [{ href: "/admin/integration", icon: "🔗", label: "مركز التكامل", permission: PERMISSIONS.OFFICE_ADMIN_VIEW }],
+  },
+  {
+    label: "التدقيق والمراجعة",
+    items: [{ href: "/admin/audit", icon: "📓", label: "سجل التدقيق", permission: PERMISSIONS.ADMIN_DASHBOARD_VIEW }],
   },
   {
     label: "إعدادات النظام",

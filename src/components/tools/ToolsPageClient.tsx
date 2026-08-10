@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
+import Link from "next/link";
+import { Search, X, Wrench, Star, ArrowLeft } from "lucide-react";
 import { languageOptions, translations } from "@/src/data/translations";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import PublicPageShell from "@/src/components/PublicPageShell";
@@ -20,7 +22,7 @@ const CATEGORY_LABELS: Record<ToolCategory, Record<string, string>> = {
 };
 
 const SORT_OPTIONS = ["default", "az", "za", "newest"] as const;
-type SortOption = typeof SORT_OPTIONS[number];
+type SortOption = (typeof SORT_OPTIONS)[number];
 
 const SORT_LABELS: Record<SortOption, Record<string, string>> = {
   default: { ar: "الترتيب الافتراضي", en: "Default", tr: "Varsayılan sıralama" },
@@ -29,7 +31,7 @@ const SORT_LABELS: Record<SortOption, Record<string, string>> = {
   newest: { ar: "الأحدث أولاً", en: "Newest first", tr: "En yeni" },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lazy components have varying prop types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TOOL_COMPONENTS: Record<string, React.ComponentType<any>> = {
   concrete: lazy(() => import("@/src/components/tools/ConcreteCalc").then((m) => ({ default: m.ConcreteCalc }))),
   beam: lazy(() => import("@/src/components/tools/BeamCalc").then((m) => ({ default: m.BeamCalc }))),
@@ -70,6 +72,9 @@ function readActiveToolParam(): string | null {
   const tool = new URLSearchParams(window.location.search).get("tool");
   return tool && TOOLS_DATA.some((t) => t.id === tool) ? tool : null;
 }
+
+const FLAGSHIP_ID = "findmyland";
+const FLAGSHIP = TOOLS_DATA.find((t) => t.id === FLAGSHIP_ID)!;
 
 export function ToolsPageClient() {
   const [locale, setLocale] = useState<Locale>(() => {
@@ -148,24 +153,15 @@ export function ToolsPageClient() {
     setShowLogin(true);
   }, []);
 
-  const getToolName = useCallback(
-    (id: string) => {
-      const tool = TOOLS_DATA.find((t) => t.id === id);
-      if (!tool) return id;
-      return locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
-    },
-    [locale],
-  );
-
   const getToolNameForSearch = useCallback(
-    (tool: typeof TOOLS_DATA[number]) => {
+    (tool: (typeof TOOLS_DATA)[number]) => {
       return [tool.ar, tool.en, tool.tr, tool.descAr, tool.descEn, tool.descTr].join(" ").toLowerCase();
     },
     [],
   );
 
   const filteredTools = useMemo(() => {
-    let result = [...TOOLS_DATA];
+    let result = TOOLS_DATA.filter((t) => t.id !== FLAGSHIP_ID);
 
     if (selectedCategory !== "all") {
       result = result.filter((t) => t.category === selectedCategory);
@@ -202,6 +198,15 @@ export function ToolsPageClient() {
     return result;
   }, [searchQuery, selectedCategory, sortBy, locale, getToolNameForSearch]);
 
+  const showFlagship = useMemo(() => {
+    if (selectedCategory !== "all" && FLAGSHIP.category !== selectedCategory) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return getToolNameForSearch(FLAGSHIP).includes(q);
+    }
+    return true;
+  }, [selectedCategory, searchQuery, getToolNameForSearch]);
+
   const clearFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedCategory("all");
@@ -234,6 +239,8 @@ export function ToolsPageClient() {
     return Array.from(cats);
   }, []);
 
+  const totalTools = TOOLS_DATA.length;
+
   return (
     <PublicPageShell
       locale={locale}
@@ -250,14 +257,57 @@ export function ToolsPageClient() {
       <div dir={dir} className="tc-page">
         <ToolsGate locale={locale} state={gateState} onRequestLogin={() => requestLogin("login")}>
           <div className="container">
-            {/* Engineering Catalog Toolbar */}
+
+            {/* ===== HERO ===== */}
+            <section className="tc-hero">
+              <span className="tc-hero-icon">
+                <Wrench size={28} strokeWidth={1.6} />
+              </span>
+              <h1 className="tc-hero-title">
+                {locale === "ar" ? "الأدوات الهندسية" : locale === "tr" ? "Mühendislik Araçları" : "Engineering Tools"}
+              </h1>
+              <p className="tc-hero-desc">
+                {locale === "ar"
+                  ? "أدوات احترافية للمهندسين والمقاولين وشركات التشييد — مجانية ودقيقة"
+                  : locale === "tr"
+                    ? "Mühendisler ve müteahhitler için profesyonel araçlar — ücretsiz ve hassas"
+                    : "Professional tools for engineers and contractors — free and accurate"}
+              </p>
+            </section>
+
+            {/* ===== FLAGSHIP CARD ===== */}
+            {showFlagship && (
+              <Link
+                href={`/tools?tool=${FLAGSHIP.id}`}
+                className="tc-flagship"
+                aria-label={locale === "ar" ? FLAGSHIP.ar : locale === "tr" ? FLAGSHIP.tr : FLAGSHIP.en}
+              >
+                <div className="tc-flagship-badge">
+                  <Star size={12} strokeWidth={2.2} />
+                  <span>{locale === "ar" ? "الأداة الرئيسية" : locale === "tr" ? "Ana Araç" : "Flagship Tool"}</span>
+                </div>
+                <div className="tc-flagship-body">
+                  <div className="tc-flagship-icon">
+                    <Star size={32} strokeWidth={1.5} />
+                  </div>
+                  <div className="tc-flagship-text">
+                    <h2 className="tc-flagship-title">{FLAGSHIP.ar}</h2>
+                    <p className="tc-flagship-sub">{FLAGSHIP.en} — {FLAGSHIP.tr}</p>
+                    <p className="tc-flagship-desc">{FLAGSHIP.descAr}</p>
+                  </div>
+                  <div className="tc-flagship-cta">
+                    <span>{locale === "ar" ? "جرّبها الآن" : locale === "tr" ? "Hemen Dene" : "Try It Now"}</span>
+                    <ArrowLeft size={16} strokeWidth={2} />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* ===== TOOLBAR ===== */}
             <div className="tc-toolbar" role="search" aria-label={locale === "ar" ? "البحث والتصفية" : locale === "tr" ? "Arama ve filtreleme" : "Search and filter"}>
               <div className="tc-toolbar-row">
                 <div className="tc-search-wrapper">
-                  <svg className="tc-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
+                  <Search className="tc-search-icon" size={16} strokeWidth={2} aria-hidden="true" />
                   <input
                     type="search"
                     className="tc-search-input"
@@ -273,7 +323,7 @@ export function ToolsPageClient() {
                       onClick={() => setSearchQuery("")}
                       aria-label={locale === "ar" ? "مسح البحث" : locale === "tr" ? "Aramayı temizle" : "Clear search"}
                     >
-                      ×
+                      <X size={14} strokeWidth={2.2} />
                     </button>
                   )}
                 </div>
@@ -313,9 +363,13 @@ export function ToolsPageClient() {
               </div>
               <div className="tc-toolbar-info">
                 <span className="tc-results-count">
-                  {filteredTools.length === TOOLS_DATA.length
-                    ? (locale === "ar" ? `${TOOLS_DATA.length} أداة` : locale === "tr" ? `${TOOLS_DATA.length} araç` : `${TOOLS_DATA.length} tools`)
-                    : (locale === "ar" ? `${filteredTools.length} من ${TOOLS_DATA.length} أداة` : locale === "tr" ? `${filteredTools.length} / ${TOOLS_DATA.length} araç` : `${filteredTools.length} of ${TOOLS_DATA.length} tools`)}
+                  {filteredTools.length + (showFlagship ? 1 : 0) === totalTools
+                    ? (locale === "ar" ? `${totalTools} أداة` : locale === "tr" ? `${totalTools} araç` : `${totalTools} tools`)
+                    : (locale === "ar"
+                        ? `${filteredTools.length + (showFlagship ? 1 : 0)} من ${totalTools} أداة`
+                        : locale === "tr"
+                          ? `${filteredTools.length + (showFlagship ? 1 : 0)} / ${totalTools} araç`
+                          : `${filteredTools.length + (showFlagship ? 1 : 0)} of ${totalTools} tools`)}
                 </span>
                 {(searchQuery || selectedCategory !== "all" || sortBy !== "default") && (
                   <button type="button" className="tc-clear-filters" onClick={clearFilters}>
@@ -325,16 +379,14 @@ export function ToolsPageClient() {
               </div>
             </div>
 
-            {/* Tools Grid */}
-            {filteredTools.length > 0 ? (
+            {/* ===== TOOLS GRID ===== */}
+            {filteredTools.length > 0 || showFlagship ? (
               <div className="tc-grid">
                 {filteredTools.map((tool) => (
                   <ToolCard
                     key={tool.id}
                     tool={tool}
                     locale={locale}
-                    isActive={activeTool === tool.id}
-                    onSelect={handleSelectTool}
                   />
                 ))}
               </div>
@@ -342,11 +394,17 @@ export function ToolsPageClient() {
               <ToolsEmptyState locale={locale} onClear={clearFilters} />
             )}
 
-            {/* Active Tool Area */}
+            {/* ===== ACTIVE TOOL AREA ===== */}
             {activeTool && (
               <div ref={toolAreaRef} className="tc-active-tool" id="active-tool">
                 <div className="tc-active-tool-header">
-                  <h2 className="tc-active-tool-title">{getToolName(activeTool)}</h2>
+                  <h2 className="tc-active-tool-title">
+                    {(() => {
+                      const tool = TOOLS_DATA.find((t) => t.id === activeTool);
+                      if (!tool) return activeTool;
+                      return locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
+                    })()}
+                  </h2>
                   <button
                     type="button"
                     className="tc-active-tool-close"
