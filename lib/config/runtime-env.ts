@@ -102,16 +102,18 @@ const DB_PROVIDER_VALUES: DbProvider[] = ["postgres", "mysql", "d1"];
 function parseDbProvider(raw: string | undefined, isProduction: boolean): DbProvider {
   const value = (raw ?? "").trim().toLowerCase();
   if (!value) {
-    if (isProduction) {
-      fail("DB_PROVIDER", "missing (required: postgres for production)");
-    }
+    // Production converges on MySQL (WEB-03). D1 remains available for Cloudflare
+    // Workers deployments (WEB-05); dev/test default to D1.
+    if (isProduction) return "mysql";
     return "d1";
   }
   if (!DB_PROVIDER_VALUES.includes(value as DbProvider)) {
     fail("DB_PROVIDER", `invalid value "${value}" (expected postgres, mysql, or d1)`);
   }
-  if (isProduction && value !== "postgres") {
-    fail("DB_PROVIDER", `production only supports postgres (got "${value}")`);
+  if (isProduction && value === "postgres") {
+    // Postgres is deprecated as a production backend (WEB-03). MySQL is the
+    // target; D1 is still supported for Cloudflare Workers (WEB-05).
+    fail("DB_PROVIDER", `production no longer supports postgres (got "${value}"); use mysql or d1`);
   }
   return value as DbProvider;
 }

@@ -114,6 +114,30 @@
       "reason": "D1 runtime imports services-schema",
       "targetPhase": "Phase 5",
       "expiresAfterPhase": 5
+    },
+    {
+      "id": "WEB-03",
+      "rule": "DB-provider-decision",
+      "path": "lib/config/runtime-env.ts",
+      "reason": "Resolved: production DB_PROVIDER converges on MySQL (parseDbProvider defaults to mysql; postgres rejected). D1 retained for Cloudflare Workers (WEB-05). Auth migration to MySQL is a separate follow-up.",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "WEB-05",
+      "rule": "vendor-abstraction",
+      "path": "lib/runtime-db.ts",
+      "reason": "Resolved: Cloudflare/D1 abstraction retained for now. cloudflare:workers import and D1 binding path kept alongside MySQL production path.",
+      "targetPhase": "Phase 5",
+      "expiresAfterPhase": 5
+    },
+    {
+      "id": "WEB-10",
+      "rule": "package-name",
+      "path": "package.json",
+      "reason": "Accepted as-is: package.json name stays 'site-creator-vinext-starter' per user decision. Low severity, cosmetic only.",
+      "targetPhase": "N/A",
+      "expiresAfterPhase": 0
     }
   ]
 }

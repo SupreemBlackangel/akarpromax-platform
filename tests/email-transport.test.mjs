@@ -70,7 +70,7 @@ test("runtime env: APP_PUBLIC_URL takes precedence over APP_URL for appOrigin", 
     APP_PUBLIC_URL: "https://prod.akarpromax.om",
     APP_URL: "http://localhost:3000",
     TRUSTED_ORIGINS: "https://prod.akarpromax.om",
-    DB_PROVIDER: "postgres",
+    DB_PROVIDER: "mysql",
   });
   assert.equal(prod.appOrigin, "https://prod.akarpromax.om");
 });
@@ -82,7 +82,7 @@ test("runtime env: invalid EMAIL_TRANSPORT is rejected in production", () => {
     DATABASE_URL: "postgres://user:pass@localhost:5432/db",
     APP_PUBLIC_URL: "https://prod.akarpromax.om",
     TRUSTED_ORIGINS: "https://prod.akarpromax.om",
-    DB_PROVIDER: "postgres",
+    DB_PROVIDER: "mysql",
     EMAIL_TRANSPORT: "carrier-pigeon",
   };
   assert.throws(() => validateRuntimeEnv(base), (error) => error instanceof RuntimeEnvError && error.variable === "EMAIL_TRANSPORT");
