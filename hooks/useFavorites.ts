@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 export function useFavorites(propertyId: string) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
+  const checked = useRef(false);
 
-  const checkFavorite = async () => {
+  const checkFavorite = useCallback(async () => {
+    if (checked.current) return;
+    checked.current = true;
     try {
       const res = await fetch(`/api/properties/favorites?propertyId=${propertyId}`);
       const data = await res.json();
       setIsFavorite(data.isFavorite || false);
-    } catch (error) {
-      console.error('Error checking favorite:', error);
+    } catch {
+      // Silently ignore — guest users or network errors.
     }
-  };
+  }, [propertyId]);
 
   const toggleFavorite = async () => {
+    if (!checked.current) await checkFavorite();
     setLoading(true);
     try {
       const method = isFavorite ? 'DELETE' : 'POST';
@@ -26,16 +30,12 @@ export function useFavorites(propertyId: string) {
       if (res.ok) {
         setIsFavorite(!isFavorite);
       }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
+    } catch {
+      // Silently ignore.
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    (async () => { await checkFavorite(); })();
-  }, [propertyId]);
 
   return { isFavorite, loading, toggleFavorite };
 }
