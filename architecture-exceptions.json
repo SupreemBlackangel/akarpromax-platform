@@ -7,7 +7,7 @@
       "id": "ARCH-LEGACY-002",
       "rule": "ARCH-012",
       "path": "lib/mysql-runtime.ts",
-      "reason": "Hardcoded admin email in seed function",
+      "reason": "Resolved (WEB-04): admin email now read from SEED_ADMIN_EMAIL env with a localhost dev fallback; no secret hardcoded.",
       "targetPhase": "Phase 3",
       "expiresAfterPhase": 3
     },
@@ -15,7 +15,15 @@
       "id": "ARCH-LEGACY-003",
       "rule": "ARCH-012",
       "path": "scripts/seed-services.ts",
-      "reason": "Hardcoded admin email in seed script",
+      "reason": "Resolved (WEB-04): admin email now read from SEED_ADMIN_EMAIL env with a localhost dev fallback; no secret hardcoded.",
+      "targetPhase": "Phase 3",
+      "expiresAfterPhase": 3
+    },
+    {
+      "id": "ARCH-LEGACY-023",
+      "rule": "ARCH-012",
+      "path": "scripts/seed-auth-admin.ts",
+      "reason": "Resolved (WEB-04): removed hardcoded DEFAULT_PASSWORD 'ChangeMe123!'; password now from SEED_ADMIN_PASSWORD env or generated one-time (printed once, never persisted). Admin email env-driven via SEED_ADMIN_EMAIL (default admin@localhost.akarpromax).",
       "targetPhase": "Phase 3",
       "expiresAfterPhase": 3
     },

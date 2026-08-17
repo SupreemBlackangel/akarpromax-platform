@@ -3,7 +3,7 @@ import { createCategory, createListing, createRequest } from "@/lib/services/cor
 import { upsertTranslations, invalidateTranslationCache } from "@/lib/i18n/db";
 import { LOCALES } from "@/lib/i18n/keys";
 
-const ADMIN = "admin@localhost.akarpromax";
+const ADMIN = (process.env.SEED_ADMIN_EMAIL ?? "admin@localhost.akarpromax").trim().toLowerCase();
 const COUNTRY = "OM";
 const CITY = "om-muscat";
 

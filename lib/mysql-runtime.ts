@@ -649,7 +649,7 @@ async function ensureMysqlSchema(db: D1Database): Promise<void> {
 }
 
 async function seedLocalAdminAccess(db: D1Database) {
-  const email = "admin@localhost.akarpromax";
+  const email = (process.env.SEED_ADMIN_EMAIL ?? "admin@localhost.akarpromax").trim().toLowerCase();
   const existing = await db.prepare("SELECT COUNT(*) AS count FROM sponsor_access WHERE lower(email) = ?1").bind(email).first<{ count: number }>();
   if (existing && Number(existing.count) > 0) return;
   await db

@@ -1,18 +1,25 @@
+import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 
 import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 
-const DEFAULT_EMAIL = "admin@akarpromax.om";
-const DEFAULT_PASSWORD = "ChangeMe123!";
+const DEFAULT_EMAIL = "admin@localhost.akarpromax";
 
 async function main() {
   const email = (process.env.SEED_ADMIN_EMAIL ?? DEFAULT_EMAIL).trim().toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD ?? DEFAULT_PASSWORD;
 
-  if (password.length < 8) {
-    throw new Error("SEED_ADMIN_PASSWORD must be at least 8 characters");
+  let password = process.env.SEED_ADMIN_PASSWORD;
+  if (!password || password.length < 8) {
+    // No usable password supplied: generate a strong one-time bootstrap
+    // password. It is printed exactly once and never persisted anywhere.
+    password = randomBytes(12).toString("base64url");
+    console.log(
+      `\n[Bootstrap admin] No SEED_ADMIN_PASSWORD provided — generated a one-time password ` +
+        `(shown once, never stored):\n  email:    ${email}\n  password: ${password}\n` +
+        `Rotate it after first login.\n`,
+    );
   }
 
   const { db, end } = getDb();
