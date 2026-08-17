@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
+import dynamic from "next/dynamic";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
-import type { BreadcrumbItem, PublicNavItem } from "@/src/config/public-navigation";
 import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD } from "@/src/config/ad-placements";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import PageHeader from "@/src/components/ui/PageHeader";
-import NewsTicker from "@/src/components/NewsTicker";
-import AdSlotFrame from "@/src/components/ads/ad-slot-frame";
 import PublicHeader from "@/src/components/public/public-header";
 import PublicFooter from "@/src/components/public/public-footer";
 import PublicSidebar from "@/src/components/public/public-sidebar";
@@ -18,6 +16,11 @@ import ToastRegion from "@/src/components/public/toast-region";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
 import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar } from "@/src/config/public-navigation";
+
+const LocationBar = dynamic(() => import("@/src/components/public/LocationBar"), { ssr: false });
+const PwaManager = dynamic(() => import("@/src/components/public/PwaManager"), { ssr: false });
+const NewsTicker = dynamic(() => import("@/src/components/NewsTicker"), { ssr: false });
+const AdSlotFrame = dynamic(() => import("@/src/components/ads/ad-slot-frame"), { ssr: false });
 
 type PageHeaderNode = {
   title: string;
@@ -46,7 +49,7 @@ type PublicAdLayout =
 
 /**
  * Pure shell composition (SSR-safe, unit-testable via renderToStaticMarkup).
- * Holds no state; the client wrapper (public-page-shell.tsx) owns mobile menu
+ * Holds no state; the client wrapper (public-page-shell-client.tsx) owns mobile menu
  * and cookie-consent state and passes it in. All nav/footer/ad data comes from
  * src/config/* single sources of truth.
  */
@@ -128,16 +131,9 @@ export function PublicShellLayout({
       <button
         type="button"
         onClick={onLogin}
-        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
-      >
-        {labels.login}
-      </button>
-      <button
-        type="button"
-        onClick={onLogin}
         className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
       >
-        {labels.register}
+        {labels.login}
       </button>
     </div>
   );
@@ -196,6 +192,9 @@ export function PublicShellLayout({
             onOpenMenu={onOpenMenu}
             showDesktopNavigation={showHeaderNav && !showPublicSidebar}
           />
+
+          <PwaManager />
+          <LocationBar />
 
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />
 
