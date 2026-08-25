@@ -1055,6 +1055,9 @@ export function FindMyLand({ locale }: Props) {
   // Stamped when an analysis completes, so the result carries its own date.
   const [analysedAt, setAnalysedAt] = useState("");
 
+  /** Coordinate table view: original document values or projected UTM. */
+  const [coordinateView, setCoordinateView] = useState<"wgs84" | "utm">("wgs84");
+
   /* ---- Manual Geometry Recovery state ---- */
   const [manualDraft, setManualDraft] = useState<ManualDraft | null>(null);
   const [manualDraftAnalysis, setManualDraftAnalysis] = useState<AnalysisPayload | null>(null);
@@ -2429,7 +2432,7 @@ export function FindMyLand({ locale }: Props) {
             )}
 
             {/* --- Summary --- */}
-            <section className="fml-summary" hidden>
+            <section className="fml-summary">
               <div className="fml-summary-card">
                 <p className="fml-summary-label">{t("نقاط الحدود", "Boundary points", "Sınır noktaları")}</p>
                 <p className="fml-summary-value">{points.length || "—"}</p>
@@ -2462,6 +2465,24 @@ export function FindMyLand({ locale }: Props) {
                   {area.value ? <span className="fml-summary-unit">م²</span> : null}
                 </p>
               </div>
+            </section>
+
+            {/* --- MAP --- */}
+            <section className="fml-map-card">
+              <div className="fml-map-head">
+                <div className="fml-map-title">
+                  <MapPin size={17} />
+                  <h3>{t("رسم القطعة على الخريطة", "Parcel on map", "Parsel haritası")}</h3>
+                </div>
+              </div>
+              {coordinateRows.length > 0 && analysis.result.center ? (
+                <div ref={mapRef} className="fml-map" aria-label={t("خريطة موقع الأرض", "Land map", "Arazi haritası")} />
+              ) : (
+                <div className="fml-map-empty">
+                  <MapPin size={34} />
+                  <p>{t("لا توجد إحداثيات كافية للرسم.", "There are not enough coordinates to draw the parcel.", "Parseli çizmek için yeterli koordinat yok.")}</p>
+                </div>
+              )}
             </section>
 
             {analysis.result.utmOutOfRange && (
@@ -2566,68 +2587,41 @@ export function FindMyLand({ locale }: Props) {
               />
             )}
 
-            {/* --- ORIGINAL COORDINATES FROM THE DOCUMENT --- */}
+            {/* --- COORDINATES (WGS84/original document view switches with UTM, they don't stack) --- */}
             {coordinateRows.length > 0 && (
               <section className="fml-coords">
                 <div className="fml-coords-head">
                   <div className="fml-coords-title">
                     <Navigation size={16} />
-                    <h3>{t("الإحداثيات الأصلية (من المستند)", "Original coordinates (from document)", "Özgün koordinatlar (belgeden)")}</h3>
+                    <h3>
+                      {coordinateView === "wgs84"
+                        ? t("الإحداثيات الأصلية (من المستند)", "Original coordinates (from document)", "Özgün koordinatlar (belgeden)")
+                        : t("إحداثيات ماركيتور العالمي (UTM)", "Universal Transverse Mercator coordinates (UTM)", "UTM koordinatları")}
+                    </h3>
                   </div>
-                </div>
-                <div className="fml-table-wrap">
-                  {sourceProjectedRows.length > 0 ? (
-                    <table className="fml-table" dir="ltr">
-                      <thead>
-                        <tr>
-                          <th># / LINE</th>
-                          <th>X / Easting</th>
-                          <th>Y / Northing</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sourceProjectedRows.map((point, index) => (
-                          <tr key={`${point.label}-${index}`}>
-                            <td className="fml-cell-label">{point.label}</td>
-                            <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
-                            <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <table className="fml-table" dir="ltr">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>N / Latitude</th>
-                          <th>E / Longitude</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {coordinateRows.map((point, index) => (
-                          <tr key={`${point.label}-${index}`}>
-                            <td className="fml-cell-label">{point.label}</td>
-                            <td className="fml-cell-lat select-all">{point.latText}</td>
-                            <td className="fml-cell-lon select-all">{point.lonText}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {utmRows.length > 0 && (
+                    <div role="tablist" className="fml-coords-tabs" aria-label={t("عرض الإحداثيات", "Coordinate view", "Koordinat görünümü")}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={coordinateView === "wgs84"}
+                        className={`fml-tab${coordinateView === "wgs84" ? " fml-tab--active" : ""}`}
+                        onClick={() => setCoordinateView("wgs84")}
+                      >
+                        {t("الأصلية", "Original", "Özgün")}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={coordinateView === "utm"}
+                        className={`fml-tab${coordinateView === "utm" ? " fml-tab--active" : ""}`}
+                        onClick={() => setCoordinateView("utm")}
+                      >
+                        UTM
+                      </button>
+                    </div>
                   )}
-                </div>
-              </section>
-            )}
-
-            {/* --- UTM COORDINATES --- */}
-            {utmRows.length > 0 && (
-              <section className="fml-coords">
-                <div className="fml-coords-head">
-                  <div className="fml-coords-title">
-                    <Navigation size={16} />
-                    <h3>{t("إحداثيات ماركيتور العالمي (UTM)", "Universal Transverse Mercator coordinates (UTM)", "UTM koordinatları")}</h3>
-                  </div>
-                  {isOmanResult && sourceProjectedRows.length > 0 && (
+                  {coordinateView === "utm" && isOmanResult && sourceProjectedRows.length > 0 && (
                     <label className="fml-field" style={{ minWidth: 132 }}>
                       <span className="fml-field-label">UTM Zone</span>
                       <select
@@ -2643,47 +2637,71 @@ export function FindMyLand({ locale }: Props) {
                   )}
                 </div>
                 <div className="fml-table-wrap">
-                  <table className="fml-table" dir="ltr">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Zone</th>
-                        <th>X / Easting</th>
-                        <th>Y / Northing</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {utmRows.map((point, index) => (
-                        <tr key={`${point.label}-${index}`}>
-                          <td className="fml-cell-label">{point.label}</td>
-                          <td>{formatUtmZone(point.zone, point.hemisphere)}</td>
-                          <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
-                          <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                  {coordinateView === "wgs84" ? (
+                    sourceProjectedRows.length > 0 ? (
+                      <table className="fml-table" dir="ltr">
+                        <thead>
+                          <tr>
+                            <th># / LINE</th>
+                            <th>X / Easting</th>
+                            <th>Y / Northing</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sourceProjectedRows.map((point, index) => (
+                            <tr key={`${point.label}-${index}`}>
+                              <td className="fml-cell-label">{point.label}</td>
+                              <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
+                              <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <table className="fml-table" dir="ltr">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>N / Latitude</th>
+                            <th>E / Longitude</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {coordinateRows.map((point, index) => (
+                            <tr key={`${point.label}-${index}`}>
+                              <td className="fml-cell-label">{point.label}</td>
+                              <td className="fml-cell-lat select-all">{point.latText}</td>
+                              <td className="fml-cell-lon select-all">{point.lonText}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )
+                  ) : (
+                    <table className="fml-table" dir="ltr">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Zone</th>
+                          <th>X / Easting</th>
+                          <th>Y / Northing</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {utmRows.map((point, index) => (
+                          <tr key={`${point.label}-${index}`}>
+                            <td className="fml-cell-label">{point.label}</td>
+                            <td>{formatUtmZone(point.zone, point.hemisphere)}</td>
+                            <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
+                            <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </section>
             )}
-
-            {/* --- MAP --- */}
-            <section className="fml-map-card">
-              <div className="fml-map-head">
-                <div className="fml-map-title">
-                  <MapPin size={17} />
-                  <h3>{t("رسم القطعة على الخريطة", "Parcel on map", "Parsel haritası")}</h3>
-                </div>
-              </div>
-              {coordinateRows.length > 0 && analysis.result.center ? (
-                <div ref={mapRef} className="fml-map" aria-label={t("خريطة موقع الأرض", "Land map", "Arazi haritası")} />
-              ) : (
-                <div className="fml-map-empty">
-                  <MapPin size={34} />
-                  <p>{t("لا توجد إحداثيات كافية للرسم.", "There are not enough coordinates to draw the parcel.", "Parseli çizmek için yeterli koordinat yok.")}</p>
-                </div>
-              )}
-            </section>
 
             {coordinateRows.length > 0 && (
               <div className="fml-actions">
@@ -2710,6 +2728,14 @@ export function FindMyLand({ locale }: Props) {
                 <button type="button" onClick={shareToMessenger} className="fml-action" disabled={!googleMapsUrl}>
                   {copiedTarget === "share" ? <CheckCircle2 size={16} /> : <Send size={16} />}
                   {copiedTarget === "share" ? t("نُسخ الرابط", "Link copied", "Bağlantı kopyalandı") : t("مشاركة", "Share", "Paylaş")}
+                </button>
+                <button type="button" onClick={copySummary} className="fml-action">
+                  {copiedTarget === "all" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                  {copiedTarget === "all" ? t("تم النسخ", "Copied", "Kopyalandı") : t("نسخ الملخص", "Copy summary", "Özeti kopyala")}
+                </button>
+                <button type="button" onClick={copyExport} className="fml-action" disabled={!exportPayload}>
+                  {copiedTarget === "export" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                  {copiedTarget === "export" ? t("تم النسخ", "Copied", "Kopyalandı") : t("تصدير البيانات", "Export data", "Verileri dışa aktar")}
                 </button>
               </div>
             )}
@@ -2757,7 +2783,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Document data --- */}
             {details.length > 0 && (
-              <details className="fml-advanced" hidden>
+              <details className="fml-advanced">
                 <summary>{t("بيانات الوثيقة", "Document data", "Belge verileri")}</summary>
                 <div className="fml-advanced-body">
                   <dl className="fml-details">
@@ -2774,7 +2800,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Source evidence inspector, for the surveyor --- */}
             {analysis.result.parcel && (
-              <details className="fml-advanced" data-evidence-inspector hidden>
+              <details className="fml-advanced" data-evidence-inspector>
                 <summary>{t("تفاصيل الاستخراج", "Extraction details", "Çıkarma ayrıntıları")}</summary>
                 <div className="fml-advanced-body">
                   <p className="fml-hint">
@@ -2907,7 +2933,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Technical analysis --- */}
             {strategy && (
-              <details className="fml-advanced" data-analysis-strategy hidden>
+              <details className="fml-advanced" data-analysis-strategy>
                 <summary>
                   {t("تفاصيل التحليل والتحقق", "Analysis and verification details", "Analiz ve doğrulama ayrıntıları")}
                   <span className={`fml-chip ${strategy.requiresReview ? "fml-chip--warn" : "fml-chip--ok"}`}>
@@ -2990,8 +3016,8 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Land services --- */}
             {coordinateRows.length > 0 && analysis.result.center && (
-              <details className="fml-advanced" hidden>
-                <summary hidden>{t("خدمات الأرض والمساحين", "Land services and surveyors", "Arazi hizmetleri ve haritacılar")}</summary>
+              <details className="fml-advanced">
+                <summary>{t("خدمات الأرض والمساحين", "Land services and surveyors", "Arazi hizmetleri ve haritacılar")}</summary>
                 <div className="fml-advanced-body">
                   {!savedLand ? (
                     <>

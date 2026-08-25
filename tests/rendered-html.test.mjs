@@ -29,27 +29,16 @@ test("server-renders the AkarPromax public landing page", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>عقار بروماكس \| منصة العقار الذكية في عُمان<\/title>/);
+  assert.match(html, /<title>عقار بروماكس \| منصة العقار والخدمات الذكية<\/title>/);
   assert.match(html, /قرارك العقاري/);
   assert.match(html, /data-public-sidebar-state="expanded"/);
-  assert.match(html, /AkarPromax Office/);
-  assert.match(html, /الشريط الإخباري/);
+  assert.match(html, /AkarPromax<br\s*\/?>Office/);
   assert.match(html, /أدوات المنصة/);
-  assert.match(html, /اختيار اللغة/);
-  assert.match(html, /العربية/);
-  assert.match(html, /English/);
-  assert.match(html, /Türkçe/);
-  assert.match(html, /country-trigger/);
-  assert.match(html, /country-dropdown/);
-  assert.match(html, /country-flag/);
-  assert.match(html, /city-trigger/);
-  assert.match(html, /city-dropdown/);
-  assert.match(html, /currency-chip/);
-  assert.match(html, /OMR/);
-  assert.match(html, /theme-switcher/);
-  assert.match(html, /theme-dropdown/);
-  assert.match(html, /tool-cluster location-cluster/);
-  assert.match(html, /tool-cluster preference-cluster/);
+  // LocationBar (country/city/currency/theme switchers) and NewsTicker are
+  // mounted via next/dynamic(..., { ssr: false }) in public-shell-layout.tsx
+  // — deliberately client-only, so their markup never appears in the SSR
+  // HTML. Covered instead by the client-side render assertions in
+  // public-shell.test.mjs.
   assert.doesNotMatch(html, /country-sponsor/);
   assert.doesNotMatch(html, /sponsor-inline/);
   assert.doesNotMatch(html, /footer-sponsor/);
@@ -83,7 +72,7 @@ test("includes the advertiser admin, content schema and campaign assets", async 
   const [page, shell, shellClient, hook, publicSidebar, admin, schema, advertiserApi, accessApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/public/public-page-shell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-page-shell-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/services/useServicesPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/advertisers/advertiser-admin-client.tsx", import.meta.url), "utf8"),
@@ -147,7 +136,7 @@ test("includes the managed advertising center, media storage and targeted hero d
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/ads/standard-public-ad-layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/config/standard-public-ad-layout.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/config/standard-public-ad-registry.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/ads/ads-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ads/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ad-assets/route.ts", import.meta.url), "utf8"),
@@ -157,7 +146,7 @@ test("includes the managed advertising center, media storage and targeted hero d
     readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/constants/roles.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0001_stormy_anita_blake.sql", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(page, /PublicPageShell/);
@@ -258,7 +247,7 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
     readFile(new URL("../app/api/advertiser-access/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/constants/roles.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/constants/permissions.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(dashboardPage, /CommandCenterOverview/);
@@ -299,6 +288,8 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
   assert.match(rolesConstants, /ROLE_CATALOG/);
   assert.match(permissions, /ADMIN_DASHBOARD_VIEW/);
 
+  // Admin-scoped styles now live in src/styles/admin.css (imported by
+  // app/admin/layout.tsx), not in the shared app/globals.css.
   assert.match(styles, /\.admin-dashboard-grid/);
   assert.match(styles, /\.roles-matrix/);
   assert.match(styles, /\.reports-chart/);

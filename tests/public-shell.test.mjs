@@ -236,18 +236,24 @@ test("toast live region is present with a polite announcement", () => {
   assert.match(html, /aria-label="Notifications"/);
 });
 
-test("ad frames render their placement skeleton in SSR output", () => {
-  const html = renderShell();
-  assert.match(html, /ad-slot-skeleton/, "public top ad region renders");
+// AdSlotFrame (src/components/ads/ad-slot-frame.tsx) is loaded via
+// next/dynamic(..., { ssr: false }), so its markup — including
+// `ad-slot-skeleton` and the `standard-public-ad-*` class names it applies —
+// never appears in server-rendered HTML, only after client hydration. These
+// tests check the structural containers StandardPublicAdLayout itself
+// renders server-side instead of the ad-slot internals it can't SSR.
+test("ad layout container mounts with the requested family in SSR output", () => {
+  const html = renderShell({ adLayout: { mode: "standard", family: "home" } });
+  assert.match(html, /data-standard-public-ad-layout="home"/, "public ad layout container renders");
 });
 
-test("standard public ad layout renders the managed 8-slot shell and replaces legacy top/bottom ads", () => {
+test("standard public ad layout renders the managed 8-slot container structure and replaces legacy top/bottom ads", () => {
   const html = renderShell({ adLayout: { mode: "standard", family: "services" }, currentPath: "/services" });
   assert.match(html, /data-standard-public-ad-layout="services"/);
-  assert.equal((html.match(/standard-public-ad-hero/g) ?? []).length, 1, "one hero slot");
-  assert.equal((html.match(/standard-public-ad-bottom/g) ?? []).length, 3, "three bottom slots");
-  assert.equal((html.match(/class="public-ad-slot standard-public-ad-rail"/g) ?? []).length, 4, "four desktop rail slots");
-  assert.equal((html.match(/class="public-ad-slot standard-public-ad-inline"/g) ?? []).length, 4, "four responsive inline rail slots");
+  assert.equal((html.match(/public-ad-layout-container pt-\[var\(--space-6\)\]/g) ?? []).length, 1, "one hero container (heroEnabled)");
+  assert.equal((html.match(/standard-public-ad-rail hidden xl:flex/g) ?? []).length, 2, "two desktop rail columns (left + right)");
+  assert.match(html, /standard-public-ad-grid/, "desktop rail grid renders");
+  assert.match(html, /xl:hidden pb-\[var\(--space-6\)\]/, "responsive inline rail container renders");
 });
 
 test("safe-no-ads suppresses inherited shell advertising on sensitive pages", () => {

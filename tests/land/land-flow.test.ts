@@ -354,7 +354,7 @@ describe("Land Quote Request", () => {
     assert.match(source, /aria-label="UTM Zone"/);
     assert.match(source, /utmHemisphereInput/);
     assert.match(source, /dir=\{dir\}/);
-    assert.match(source, /تم تحديد الإحداثيات بثقة/);
+    assert.match(source, /تم التحليل بنجاح/);
     assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
     assert.match(source, /تعذر استخراج إحداثيات صالحة/);
   });

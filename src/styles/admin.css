@@ -640,3 +640,4 @@ html[data-theme="dark"] .cc-status-warn { color: #fbbf24 !important; }
 /* Command Center RTL/LTR */
 html[dir="ltr"] .cc-bar-label { text-align: right; }
 html[dir="ltr"] .cc-bar-value { text-align: left; }
+html[dir="ltr"] .cc-metric-label { text-align: right; }

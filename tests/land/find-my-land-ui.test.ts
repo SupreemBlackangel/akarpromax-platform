@@ -107,7 +107,7 @@ describe("Find My Land launch visuals", () => {
 
   it("keeps the three plain-language verdicts", async () => {
     const source = await readComponent();
-    assert.match(source, /تم تحديد الإحداثيات بثقة/);
+    assert.match(source, /تم التحليل بنجاح/);
     assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
     assert.match(source, /تعذر استخراج إحداثيات صالحة/);
   });

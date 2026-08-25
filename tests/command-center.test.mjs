@@ -181,7 +181,7 @@ test("command center client has system health UI", async () => {
 });
 
 test("command center CSS has responsive breakpoints", async () => {
-  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8");
   assert.match(css, /@media.*max-width.*1100px/, "must have 1100px breakpoint");
   assert.match(css, /@media.*max-width.*780px/, "must have 780px breakpoint");
   assert.match(css, /@media.*max-width.*480px/, "must have 480px breakpoint");
@@ -192,7 +192,7 @@ test("command center CSS has responsive breakpoints", async () => {
 });
 
 test("command center CSS has dark mode support", async () => {
-  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8");
   assert.match(css, /html\[data-theme="dark"\]\s+\.cc-metric/, "must have dark mode metric styles");
   assert.match(css, /html\[data-theme="dark"\]\s+\.cc-bar-track/, "must have dark mode bar styles");
   assert.match(css, /html\[data-theme="dark"\]\s+\.cc-status-ok/, "must have dark mode status styles");
@@ -200,7 +200,7 @@ test("command center CSS has dark mode support", async () => {
 });
 
 test("command center CSS has RTL support", async () => {
-  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../src/styles/admin.css", import.meta.url), "utf8");
   assert.match(css, /html\[dir="ltr"\]\s+\.cc-bar-label/, "must have LTR bar label styles");
   assert.match(css, /html\[dir="ltr"\]\s+\.cc-bar-value/, "must have LTR bar value styles");
   assert.match(css, /html\[dir="ltr"\]\s+\.cc-metric-label/, "must have LTR metric label styles");

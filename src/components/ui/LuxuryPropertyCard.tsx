@@ -101,7 +101,7 @@ export default function LuxuryPropertyCard({ property, className = "" }: { prope
         type="button"
         aria-label={isFavorite ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
         onClick={() => toggleFavorite()}
-        className="absolute top-6 left-6 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-overlay)] backdrop-blur-md text-white transition hover:bg-[var(--color-surface)] hover:text-red-500"
+        className="absolute top-6 left-6 z-[var(--layer-sticky)] flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-overlay)] backdrop-blur-md text-white transition hover:bg-[var(--color-surface)] hover:text-red-500"
       >
         <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
       </button>

@@ -19,12 +19,17 @@ function drizzleColumns(table: unknown): Record<string, unknown> {
   return ((table as Record<PropertyKey, unknown>)[DRIZZLE_COLUMNS] as Record<string, unknown>) ?? {};
 }
 
+// The AMRS foundation tables are created in 0003_legal_cerise.sql. Later
+// migrations (e.g. 0013_organizations_hardening_f1.sql) ALTER these tables
+// but don't re-declare them, so this must target that specific file rather
+// than "whichever migration sorts last" — new unrelated migrations are
+// added to drizzle-pg/ over time and would otherwise silently break this.
 function readLatestMigration(): string {
   const migrationDir = join(process.cwd(), "drizzle-pg");
+  const amrsFoundationMigration = "0003_legal_cerise.sql";
   const files = readdirSync(migrationDir).filter((f: string) => f.endsWith(".sql"));
-  const latest = files.sort().pop();
-  assert.ok(latest, "at least one migration file must exist");
-  return readFileSync(join(migrationDir, latest), "utf8");
+  assert.ok(files.includes(amrsFoundationMigration), `${amrsFoundationMigration} must exist in drizzle-pg/`);
+  return readFileSync(join(migrationDir, amrsFoundationMigration), "utf8");
 }
 
 // ─── INVARIANT 1: Organizations table has all required columns ───
