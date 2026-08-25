@@ -33,7 +33,7 @@ new primitives consume tokens directly.
 ## Usage rules
 
 - New components must reference tokens (`var(--color-*)`), never raw hex/rgb.
-- New components must use layer tokens for z-index (`z-[var(--layer-*)]`), never `z-10`/`z-[999]`.
+- New components must use layer tokens for z-index (e.g. `z-[var(--layer-dialog)]`), never `z-10`/`z-[999]`.
 - Spacing via `--space-*`; radius via `--radius-*`; shadows via `--shadow-*`; motion via `--motion-*`.
 - Legacy `app/globals.css` selectors are intentionally untouched (token backfill is Phase 2+).
 

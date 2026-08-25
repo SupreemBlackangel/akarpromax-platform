@@ -1,0 +1,73 @@
+source_path,symbol,line_start,line_end,evidence_type,confidence,notes
+src/pages/AdminEmperor.tsx,AdminEmperor,1,370,SOURCE_EXPLICIT,high,Read-only dashboard with 5 sections
+src/pages/AdminEmperor.tsx,bigCounters,100,130,SOURCE_EXPLICIT,high,8 counter cards
+src/pages/AdminEmperor.tsx,conversionThresholds,259,265,SOURCE_EXPLICIT,high,5%/2% thresholds
+src/pages/AdminEmperor.tsx,retentionThresholds,303,309,SOURCE_EXPLICIT,high,40%/20% thresholds
+src/pages/AdminEmperor.tsx,activationTargets,329,356,SOURCE_EXPLICIT,high,200/50/500 targets
+src/pages/AdminEliteLeads.tsx,AdminEliteLeads,1,144,SOURCE_EXPLICIT,high,Elite lead management
+src/pages/AdminEliteLeads.tsx,InquiryItem,19,23,SOURCE_EXPLICIT,high,Data model with isEliteLead
+src/pages/AdminEliteLeads.tsx,markMutation,29,56,SOURCE_EXPLICIT,high,PATCH toggle elite
+src/pages/AdminMatchmaking.tsx,AdminMatchmaking,1,138,SOURCE_EXPLICIT,high,Request↔project matching
+src/pages/AdminMatchmaking.tsx,projectTypeLabels,27,31,SOURCE_EXPLICIT,high,residential/commercial/mixed
+src/pages/AdminMembership.tsx,AdminMembership,1,544,SOURCE_EXPLICIT,high,14 API endpoints NO AUTH
+src/pages/AdminMembership.tsx,NO_AUTH,90,99,SOURCE_EXPLICIT,critical,Only useAuth() token - no role check
+src/pages/AdminMembership.tsx,extendDays,385,385,SOURCE_EXPLICIT,high,Hardcoded 30 days
+src/pages/AdminMembership.tsx,fallbackAmount,385,385,SOURCE_EXPLICIT,high,100 SAR fallback
+src/pages/AdminMembership.tsx,tierOptions,427,429,SOURCE_EXPLICIT,high,basic/premium/full
+src/hooks/useSmartLanding.ts,useSmartLanding,1,190,SOURCE_EXPLICIT,high,URL param parsing + geo context
+src/hooks/useSmartLanding.ts,CAT_ALIASES,30,65,SOURCE_EXPLICIT,high,10 categories 26 aliases
+src/hooks/useSmartLanding.ts,CITY_MAP,67,95,SOURCE_EXPLICIT,high,20 cities 7 countries
+src/hooks/useSmartLanding.ts,analyticsTrack,155,175,SOURCE_EXPLICIT,high,POST /api/analytics/track
+src/components/SmartLandingBanner.tsx,BANNER_CONFIGS,30,160,SOURCE_EXPLICIT,high,8 category configs
+src/components/SmartLandingBanner.tsx,dismissal,164,167,SOURCE_EXPLICIT,high,Session-only dismiss
+src/components/GeoAdBanner.tsx,tierStyles,17,46,SOURCE_EXPLICIT,high,4 tiers: platinum/gold/silver/standard
+src/components/GeoAdBanner.tsx,positionClassification,58,63,SOURCE_EXPLICIT,high,sidebar/banner/sticky/hero
+src/components/GeoAdBanner.tsx,languageFilter,51,54,SOURCE_EXPLICIT,high,both OR current lang
+src/components/GeoAdBanner.tsx,viewTracking,65,70,SOURCE_EXPLICIT,high,Deduplicated per instance
+src/components/UnifiedInbox.tsx,UnifiedInbox,1,516,SOURCE_EXPLICIT,high,4-type inbox
+src/components/UnifiedInbox.tsx,dataSources,50,100,SOURCE_EXPLICIT,high,chat localStorage + appt + quote + inquiry localStorage
+src/components/UnifiedInbox.tsx,appointmentFlow,200,250,SOURCE_EXPLICIT,high,pending→confirmed→completed
+src/components/UnifiedInbox.tsx,quoteFlow,250,300,SOURCE_EXPLICIT,high,pending→quoted→accepted/rejected
+src/components/AccountSwitcher.tsx,AccountSwitcher,1,68,SOURCE_EXPLICIT,high,Personal↔Company switch
+src/components/AccountSwitcher.tsx,setActiveAccount,16,21,SOURCE_EXPLICIT,high,Account type + company ID
+src/components/EliteBadge.tsx,EliteBadge,1,53,SOURCE_EXPLICIT,high,Only phd+engineer render
+src/components/EliteBadge.tsx,phdStyle,18,33,SOURCE_EXPLICIT,high,Blue-gold gradient
+src/components/EliteBadge.tsx,engineerStyle,35,50,SOURCE_EXPLICIT,high,Blue gradient
+src/components/EliteBadge.tsx,otherReturns_null,52,52,SOURCE_EXPLICIT,high,All other titles return null
+src/components/InvestmentGauge.tsx,computeScore,10,40,SOURCE_EXPLICIT,high,Base 50 + category/type/city/area modifiers
+src/components/InvestmentGauge.tsx,scoreLabels,42,55,SOURCE_EXPLICIT,high,>=70 High / 50-69 Moderate / <50 Family
+src/components/PropertyFinanceTools.tsx,mortgageTab,57,106,SOURCE_EXPLICIT,high,PMT formula with sliders
+src/components/PropertyFinanceTools.tsx,flexibleTab,109,180,SOURCE_EXPLICIT,high,Equal split no interest
+src/components/PropertyFinanceTools.tsx,fixedTab,183,246,SOURCE_EXPLICIT,high,Fixed + last payment adjustment
+src/components/MortgageCalculator.tsx,pmtFormula,30,55,SOURCE_EXPLICIT,high,PMT (duplicated from PropertyFinanceTools)
+src/components/SaveSearchButton.tsx,saveSearch,40,44,SOURCE_EXPLICIT,high,POST /saved-searches
+src/components/SaveSearchButton.tsx,filterCleaning,26,30,SOURCE_EXPLICIT,high,Strip empty/all/null values
+src/components/MapMyDeed.tsx,MapMyDeed,1,595,SOURCE_EXPLICIT,high,OCR deed → UTM → WGS84 → Leaflet
+src/components/MapMyDeed.tsx,utmConversion,200,250,SOURCE_EXPLICIT,high,proj4 UTM zone 37 default
+src/components/MapMyDeed.tsx,confidenceLevel,160,170,SOURCE_EXPLICIT,high,text length thresholds 200/50
+src/components/ShareModal.tsx,shareChannels,60,100,SOURCE_EXPLICIT,high,WA/FB/X/TG + copy
+src/components/ShareButton.tsx,buildShareText,10,30,SOURCE_EXPLICIT,high,Verified badge append
+server/api/prisma/schema.prisma,47Models,1,1315,SOURCE_EXPLICIT,high,47 Prisma models
+server/api/src/routes/admin.ts,adminRouter,1,610,SOURCE_EXPLICIT,high,All routes require admin role
+server/api/src/routes/auth.ts,jwtFallback,212,212,SOURCE_EXPLICIT,critical,Fallback secret if env not set
+server/api/src/routes/payments.ts,fakeVerify,50,54,SOURCE_EXPLICIT,critical,Always returns verified:true
+server/api/src/routes/desktop.ts,resetHwidNoAuth,231,239,SOURCE_EXPLICIT,high,No auth on HWID reset
+server/api/src/routes/plans.ts,noRoleCheck,1,44,SOURCE_EXPLICIT,high,Any user can CRUD plans
+server/api/src/routes/coupons.ts,noRoleCheck,1,62,SOURCE_EXPLICIT,high,Any user can CRUD coupons
+server/api/src/routes/inquiries.ts,noRoleCheck,7,7,SOURCE_EXPLICIT,high,Any auth user sees all inquiries
+server/chat-server.ts,chatServer,1,791,SOURCE_EXPLICIT,high,Socket.IO + SQLite chat
+server/encryption.ts,aesGcm,1,51,SOURCE_EXPLICIT,high,AES-256-GCM with scrypt key derivation
+server/api/src/middleware/auth.ts,requireRole,45,68,SOURCE_EXPLICIT,high,JWT + role-based middleware
+src/components/arch/*,34 engines,1,18697,SOURCE_EXPLICIT,high,34 functional engineering engines
+src/components/arch/BOQEngine.tsx,boqCalculations,100,300,SOURCE_EXPLICIT,high,Concrete rebar masonry facade openings MEP
+src/components/arch/PriceManager.tsx,vatContingency,200,250,SOURCE_EXPLICIT,high,15% VAT 10% contingency 8% eng fees
+src/components/arch/SeismicProtectionEngine.tsx,pgaRanges,50,100,SOURCE_EXPLICIT,high,6 seismic levels PGA ranges
+src/components/arch/ClimateGeoEngine.tsx,codeMapping,30,100,SOURCE_EXPLICIT,high,IBC/SBC/TSE/BS-EN/ASCE
+src/components/arch/MedicalGradeMEPEngine.tsx,leadShielding,200,250,SOURCE_EXPLICIT,high,NCRP 151 lead mm calculation
+src/components/arch/MosqueEngine.tsx,qiblaAlignment,30,60,SOURCE_EXPLICIT,high,15 country Qibla degrees
+src/lib/api.ts,MOCK_CREDENTIALS,1,1170,SOURCE_EXPLICIT,high,admin@akarpromax.com/admin123 hardcoded
+src/services/landAnalysisService.ts,analyzePipeline,1,563,SOURCE_EXPLICIT,high,PDF→OCR→ONNX→coords
+src/services/dxfExportService.ts,generateDXF,1,209,SOURCE_EXPLICIT,high,Room data → DXF R12
+src/contexts/ChatContext.tsx,chatProvider,1,324,SOURCE_EXPLICIT,high,WebSocket real-time messaging
+src/contexts/GeoContext.tsx,geoProvider,1,195,SOURCE_EXPLICIT,high,GPS→IP→fallback chain
+src/contexts/GeoAdsContext.tsx,geoAdsProvider,1,107,SOURCE_EXPLICIT,high,5min cache geo-targeted ads

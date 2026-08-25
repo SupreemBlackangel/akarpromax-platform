@@ -90,3 +90,99 @@ rg -n "postgres|neon|drizzle|mysql2|cloudflare|@/lib/db" lib/services/   # → n
 # Confirm all access flows through the seam
 rg -n "getServicesDb\(\)|getRuntimeDb\(\)" lib/services/
 ```
+
+## L1C-0 — canonical Services persistence (2026-08-21)
+
+L1C-0 removed the **second, parallel Services store** that had been reachable
+from active production routes. There is now exactly one Services Marketplace
+persistence truth.
+
+### Canonical Services core
+
+| Layer | Path |
+|---|---|
+| Schema (base tables) | `lib/services-schema.ts` (`service_categories`, `service_listings`, `service_requests`, `service_offers`, `service_orders`, `service_messages`, `service_reviews`, `service_disputes`, `service_bookmarks`) |
+| Schema (marketplace extension) | `lib/services-marketplace-schema.ts` (ALTERs the tables above + `service_provider_*`, `service_request_*`, `service_offer_revisions`, `service_job_timeline`, `service_reports`, `service_notifications`, `service_message_*`, `service_outbox_events`, `service_marketplace_settings`) |
+| Domain service | `lib/services/marketplace.ts` (+ `lib/services/core.ts`, `lib/services/matching.ts`) |
+| Access seam | `lib/services/db.ts` → `getServicesDb()` |
+
+### Deprecated parallel model — OWNER-DEFERRED, NOT DELETED
+
+`lib/db/schemas/services-schema.ts` (Drizzle/PG) declares `service_categories`,
+`service_requests`, `service_offers`, `service_reviews` with the **same table
+names but incompatible columns**, plus `service_providers`, `service_jobs`,
+`service_portfolio`. It has no migration and is not canonical.
+
+Active consumers **before** L1C-0:
+
+| Consumer | Kind |
+|---|---|
+| `app/api/services/route.ts` | LEGACY ACTIVE — read *and wrote* `service_requests` in the deprecated shape |
+| `app/api/service-analytics/route.ts` | LEGACY ACTIVE — counted deprecated rows, keyed on the session uuid |
+| `lib/services/matching/professional.matcher.ts` | LEGACY INACTIVE — zero importers |
+| `lib/land/integration/professional-integration.ts` | LEGACY INACTIVE — zero importers |
+| `drizzle.config.ts` | tooling only — schema list for `drizzle-kit generate`; no request path |
+
+Active consumers **after** L1C-0: **none**. Both routes now reach the canonical
+core; the two zero-importer modules are annotated `LEGACY INACTIVE /
+OWNER-DEFERRED` and are kept in source for product archaeology (Product
+Constitution: capability preservation).
+
+### Compatibility surface
+
+`/api/services*` remains a public compatibility surface. It owns no storage:
+
+```
+/api/services                -> lib/services/compat/services-api.ts -> lib/services/marketplace.ts
+/api/services/categories     -> proxy -> /api/service-categories
+/api/services/requests       -> proxy -> /api/service-requests
+/api/services/reviews        -> proxy -> /api/service-reviews
+/api/services/messages       -> proxy -> /api/service-messages
+/api/services/orders/*       -> proxy -> /api/service-orders/*  (target route absent - pre-existing 404, no storage)
+/api/services/disputes       -> proxy -> /api/service-disputes   (target route absent - pre-existing 404, no storage)
+/api/services/listings*      -> lib/services/core.ts (canonical store)
+/api/service-analytics       -> getUserServiceAnalytics() in lib/services/marketplace.ts
+```
+
+Deliberate contract deviations on `/api/services` (documented, not accidental):
+
+- `GET` lists only publicly visible statuses (`published`, `receiving_offers`)
+  and redacts `userId` / `latitude` / `longitude`, matching the canonical
+  `/api/service-requests` behaviour. The old route leaked them.
+- `POST` requires `SERVICE_REQUESTS_MANAGE_OWN` or `SERVICE_REQUESTS_MANAGE_ALL`
+  (was session-only) and creates through the canonical `createRequestFull` →
+  `publishRequest` lifecycle, so history, matching and audit all run.
+- The legacy `governorate` scalar round-trips through the canonical
+  `short_address`; `radius` has no canonical counterpart and is always `null`.
+
+### Guards
+
+- `tests/services-canonical-truth.test.mjs` — behavioural: one category store,
+  compatibility-created requests visible on the canonical path, exactly one row
+  per create, response-shape compatibility, canonical analytics counters.
+- `tests/services-architecture-legacy-guard.test.mjs` — static: no active route
+  imports the deprecated model, the two owner-deferred modules stay dead, and
+  exactly one `/api/services` compatibility adapter exists.
+
+### Not changed by L1C-0
+
+No migration, no Neon mutation, no seed change, no new table, no UI redesign,
+no dispute-domain expansion, and no L1C-1 taxonomy work (`node_type`, GROUP /
+PROFESSION / SPECIALIZATION / SERVICE, aliases, translations) — `service_categories`
+keeps its current `country_code` + `code` shape.
+
+### Remaining Services debt (out of L1C-0 scope)
+
+- `app/api/services/orders/*` and `app/api/services/disputes` proxy to
+  `/api/service-orders/*` and `/api/service-disputes`, which do not exist
+  (`/api/service-jobs/*` is the canonical job surface). These proxies 404
+  today. Pre-existing; they write nothing, so they are not a second
+  persistence truth.
+- `drizzle.config.ts` still lists `lib/db/schemas/services-schema.ts`, so a
+  future `drizzle-kit generate` would emit DDL for the deprecated colliding
+  tables. Left untouched in L1C-0 (no migration work in this phase); needs an
+  architecture-lead decision.
+- `tests/services-api.test.mjs` "service categories support the full CRUD
+  lifecycle" fails because the in-memory test adapter cannot parse
+  `listCategoriesFull`'s LEFT JOIN sub-queries. Pre-existing, unchanged by
+  L1C-0.

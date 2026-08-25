@@ -1,0 +1,71 @@
+action_id,page,component,label_ar,label_en,actor,action,precondition,api,database_effect,notification_effect,permission,next_state,next_screen,evidence
+AUTH_001,Login,LoginForm,تسجيل الدخول,Login,guest,submit,form valid,POST /api/auth/login,JWT token,none,ALLOW,authenticated,redirect to dashboard,Login.tsx
+AUTH_002,Register,RegisterForm,تسجيل,Register,guest,submit,form valid + zod,POST /api/auth/register,user created,verification email,ALLOW,authenticated,redirect to verify,Register.tsx
+AUTH_003,JoinFounders,JoinForm,انضم كمؤسس,Join as Founder,guest,submit,form valid + pledge,POST /api/auth/register,user created,none,ALLOW,authenticated,success screen,JoinFounders.tsx
+AUTH_004,ResetPassword,ResetForm,إعادة تعيين,Reset,guest,submit,token valid,POST /api/reset-password,password updated,none,ALLOW,login page,redirect,ResetPassword.tsx
+AUTH_005,VerifyEmail,VerifyEmail,تحقق من البريد,Verify,guest,auto,token in URL,POST /api/verify,email verified,none,ALLOW,dashboard,redirect,VerifyEmail.tsx
+PROP_001,SubmitProperty,PropertyForm,نشر عقار,Submit Property,user,submit,auth + form,POST /api/properties,property created (pending),admin notification,ALLOW,my properties,dashboard,SubmitProperty.tsx
+PROP_002,Properties,SaveSearchButton,حفظ البحث,Save Search,user,click,auth + has filters,POST /saved-searches,search saved,none,ALLOW,saved searches,dashboard,SaveSearchButton.tsx
+PROP_003,PropertyDetail,InquiryForm,استفسار,Inquire,user,submit,auth,POST /inquiries,inquiry created,office notification,ALLOW,inbox,none,PropertyDetail.tsx
+PROP_004,PropertyDetail,ShareModal,مشاركة,Share,any,click,none,clipboard/share API,none,none,ALLOW,copied/shared,none,ShareModal.tsx
+PROP_005,ModeratorPanel,ApproveButton,موافقة,Approve,moderator,click,auth + role,POST /api/properties/:id/approve,status→approved,owner notification,MODERATOR,approved,list,ModeratorPanel.tsx
+PROP_006,ModeratorPanel,RejectButton,رفض,Reject,moderator,click,auth + role,POST /api/properties/:id/reject,status→rejected,owner notification,MODERATOR,rejected,list,ModeratorPanel.tsx
+AUCT_001,AuctionDetail,BidForm,زايد,Bid,user,submit,auth + auction active,POST /api/auctions/:id/bid,bid created,auction update,ALLOW,bid list,none,AuctionDetail.tsx
+AUCT_002,AuctionDetail,JoinButton,انضم للزايدة,Join Auction,user,click,auth,PATCH /api/auctions/:id/join,participant added,none,ALLOW,joined,none,AuctionDetail.tsx
+AUCT_003,AuctionDetail,ReportButton,إبلاغ,Report,user,click,auth,POST /api/auctions/:id/report,report created,admin notification,ALLOW,reported,none,AuctionDetail.tsx
+AUCT_004,DashboardAuctions,CreateAuction,إنشاء مزاد,Create Auction,user,submit,auth + office,POST /api/auctions,auction created,none,ALLOW,my auctions,dashboard,DashboardAuctions.tsx
+AUCT_005,DashboardAuctions,CancelAuction,إلغاء مزاد,Cancel Auction,owner,click,auth + ownership,PATCH /api/auctions/:id/cancel,status→cancelled,none,OWNER,cancelled,dashboard,DashboardAuctions.tsx
+AUCT_006,AuctionDetail,AutoBid,زايد تلقائي,Auto Bid,user,click,auth + auction active,POST /api/auctions/:id/auto-bid,auto-bid enabled,none,ALLOW,enabled,none,AutoBidToggle.tsx
+AUCT_007,DashboardAuctions,SaleProof,إثبات البيع,Proof of Sale,owner,submit,auth + sold,POST /api/auctions/:id/proof,proof uploaded,admin review,ALLOW,pending review,dashboard,SaleProofForm.tsx
+TEND_001,TenderCreate,TenderForm,إنشاء مناقصة,Create Tender,user,submit,auth,POST /api/tenders,tender created,matching artisans,TENDER,tender detail,none,TenderCreate.tsx
+TEND_002,TenderDetail,BidForm,تقديم عرض,Submit Bid,artisan,submit,auth,POST /api/tenders/:id/bid,bid created,tender owner,TENDER,bid list,none,TenderDetail.tsx
+TEND_003,TenderDetail,AwardButton,منح المناقصة,Award Tender,owner,click,auth + ownership,POST /api/tenders/:id/award,status→awarded,bidder notified,OWNER,awarded,dashboard,TenderDetail.tsx
+TEND_004,TenderDetail,CloseButton,إغلاق المناقصة,Close Tender,owner,click,auth + ownership,POST /api/tenders/:id/close,status→closed,none,OWNER,closed,dashboard,TenderDetail.tsx
+CHAT_001,Messages,ChatInput,إرسال رسالة,Send Message,auth,submit,auth + conversation,WS send_message,message stored,recipient push,ALLOW,message bubble,none,ChatInput.tsx
+CHAT_002,Messages,VoiceRecorder,رسالة صوتية,Voice Message,auth,record + send,auth + conversation,WS send_voice,audio stored,recipient push,ALLOW,message bubble,none,VoiceRecorder.tsx
+CHAT_003,Messages,BlockUser,حظر المستخدم,Block,auth,click,auth,WS block_user,blocked,none,ALLOW,blocked,none,ChatContext.tsx
+CHAT_004,Messages,ReportChat,إبلاغ عن محادثة,Report Chat,auth,click,auth,WS report_chat,moderation request,moderator alert,ALLOW,reported,none,ChatContext.tsx
+MOD_001,AdminChat,CloseConversation,إغلاق محادثة,Close Chat,admin,click,auth + role,chatAdminService.closeConversation,closed,participant notify,ADMIN,closed,none,AdminChat.tsx
+MOD_002,AdminChat,FlagUser,تحديد مستخدم,Flag User,admin,click,auth + role,chatAdminService.flagUser,flagged,none,ADMIN,flagged,none,AdminChat.tsx
+MOD_003,AdminChat,SendSystemMessage,رسالة نظام,System Message,admin,submit,auth + role,chatAdminService.sendSystemMessage,message sent,conversation notify,ADMIN,sent,none,AdminChat.tsx
+LEAD_001,AdminEliteLeads,MarkElite,تحديد كعميل مميز,Mark Elite,admin,click,auth + admin role,PATCH /elite-leads/:id/mark,isEliteLead→true,none,ADMIN,elite,none,AdminEliteLeads.tsx
+LEAD_002,AdminEliteLeads,RemoveElite,إزالة التمييز,Remove Elite,admin,click,auth + admin role,PATCH /elite-leads/:id/mark,isEliteLead→false,none,ADMIN,not elite,none,AdminEliteLeads.tsx
+MEMB_001,AdminMembership,SetRank,تغيير الرتبة,Set Rank,any_auth,select change,auth (NO role),PUT /admin/users/:id/rank,rank updated,none,ANY_USER,updated,none,AdminMembership.tsx
+MEMB_002,AdminMembership,SetBadge,تغيير الشارة,Set Badge,any_auth,select change,auth (NO role),PUT /admin/users/:id/rank,badge updated,none,ANY_USER,updated,none,AdminMembership.tsx
+MEMB_003,AdminMembership,BanUser,حظر المستخدم,Ban,any_auth,click + confirm,auth (NO role),PUT /admin/users/:id/status,status→banned,none,ANY_USER,banned,none,AdminMembership.tsx
+MEMB_004,AdminMembership,UnbanUser,فك الحظر,Unban,any_auth,click,auth (NO role),PUT /admin/users/:id/status,status→active,none,ANY_USER,active,none,AdminMembership.tsx
+MEMB_005,AdminMembership,ExtendSub,+30 يوم,Extend,any_auth,click,auth (NO role),PUT /admin/users/:id/subscription,+30 days,none,ANY_USER,extended,none,AdminMembership.tsx
+MEMB_006,AdminMembership,ClearSub,مسح الاشتراك,Clear,any_auth,click,auth (NO role),PUT /admin/users/:id/subscription,cleared,none,ANY_USER,cleared,none,AdminMembership.tsx
+MEMB_007,AdminMembership,CreatePromo,إنشاء كود خصم,Create Promo,any_auth,submit,auth (NO role),POST /admin/promo-codes,promo created,none,ANY_USER,created,none,AdminMembership.tsx
+MEMB_008,AdminMembership,DeletePromo,حذف كود خصم,Delete Promo,any_auth,click + confirm,auth (NO role),DELETE /admin/promo-codes/:id,deleted,none,ANY_USER,deleted,none,AdminMembership.tsx
+MEMB_009,AdminMembership,TogglePromo,تفعيل/تعطيل,Toggle Promo,any_auth,click,auth (NO role),PUT /admin/promo-codes/:id/toggle,toggled,none,ANY_USER,toggled,none,AdminMembership.tsx
+MEMB_010,AdminMembership,CreateOverride,إنشاء سعر بديل,Create Override,any_auth,submit,auth (NO role),POST /admin/plan-overrides,override created,none,ANY_USER,created,none,AdminMembership.tsx
+MEMB_011,AdminMembership,DeleteOverride,حذف سعر بديل,Delete Override,any_auth,click + confirm,auth (NO role),DELETE /admin/plan-overrides/:id,deleted,none,ANY_USER,deleted,none,AdminMembership.tsx
+MEMB_012,AdminMembership,SaveFreeTrial,حفظ فترة تجريبية,Save Free Trial,any_auth,click,auth (NO role),PUT /admin/settings/free_trial_days,setting updated,none,ANY_USER,updated,none,AdminMembership.tsx
+ADMD_001,AdminEmperor,Refresh,تحديث,Refresh,admin,click,admin role,GET /api/admin/emperor,data refreshed,none,ADMIN,updated,none,AdminEmperor.tsx
+ADMM_001,AdminMatchmaking,RunAll,تشغيل كامل,Run Full Matching,admin,click,admin role,POST /api/matchmaking/run-all,matching triggered,none,ADMIN,completed,none,AdminMatchmaking.tsx
+ADMM_002,AdminMatchmaking,RunSingle,تشغيل للمشروع,Run for Project,admin,click,admin role,POST /api/matchmaking/run/:id,matching triggered,none,ADMIN,completed,none,AdminMatchmaking.tsx
+ADMP_001,AdminPayments,ConfirmPayment,تأكيد,Confirm,admin,click,admin role,PATCH /admin/subscriptions/:id/confirm,status→active,none,ADMIN,confirmed,none,AdminPayments.tsx
+ADMP_002,AdminPayments,RejectPayment,رفض,Reject,admin,click,admin role,PATCH /admin/subscriptions/:id/reject,status→rejected,none,ADMIN,rejected,none,AdminPayments.tsx
+ADML_001,AdminLicenseKeys,GenerateFree,إنشاء مجاني,Generate Free,admin,click,admin role,POST /admin/license/generate-free,license created,none,ADMIN,created,none,AdminLicenseKeys.tsx
+ADML_002,AdminLicenseKeys,ResetHWID,إعادة تعيين HWID,Reset HWID,admin,click,admin role,POST /admin/license/:id/reset-hwid,hwid cleared,none,ADMIN,unlocked,none,AdminLicenseKeys.tsx
+ADML_003,AdminLicenseKeys,Revoke,إلغاء,Revoke,admin,click,admin role,POST /admin/license/:id/revoke,status→revoked,none,ADMIN,revoked,none,AdminLicenseKeys.tsx
+ADML_004,AdminLicenseKeys,ConvertYearly,تحويل سنوي,Convert Yearly,admin,click,admin role,POST /admin/license/:id/convert-to-yearly,type→yearly,none,ADMIN,yearly,none,AdminLicenseKeys.tsx
+PART_001,PartnerDashboard,CreateCampaign,إنشاء حملة,Create Campaign,partner,submit,partner_key,POST /api/partners/campaigns,campaign created,none,PARTNER,campaign detail,dashboard,PartnerDashboard.tsx
+PART_002,PartnerDashboard,ViewLeads,عرض العملاء المحتملين,View Leads,partner,click,partner_key,GET /api/partners/campaigns/:id/leads,leads list,none,PARTNER,leads list,dashboard,PartnerDashboard.tsx
+MKT_001,MarketerRegister,Register,تسجيل مسوّق,Register Marketer,user,submit,auth,POST /api/marketer/register,marketer created,admin notification,ALLOW,pending review,none,MarketerRegister.tsx
+MKT_002,AvailableProperties,Propose,تقديم عرض تسويق,Propose Marketing,marketer,submit,auth + marketer,POST /api/marketer/proposals,proposal created,advertiser notify,MARKETER,pending,none,AvailableProperties.tsx
+MKT_003,AdvertiserContracts,SignContract,توقيع العقد,Sign Contract,advertiser,click,auth + contract owner,POST /api/marketer/contracts/:id/sign-advertiser,status→active,marketer notify,OWNER,active,none,AdvertiserContracts.tsx
+MKT_004,AdvertiserProposals,AcceptProposal,قبول العرض,Accept Proposal,advertiser,click,auth + owner,POST /api/marketer/proposals/:id/respond,status→accepted,marketer notify,OWNER,accepted,none,AdvertiserProposals.tsx
+TECH_001,TechnicianInbox,AcceptJob,قبول العمل,Accept Job,technician,click,auth + technician,POST /api/service-hub/inbox/accept,status→accepted,client notify,TECHNICIAN,accepted,inbox,TechnicianInbox.tsx
+TECH_002,TechnicianInbox,RejectJob,رفض العمل,Reject Job,technician,click,auth + technician,POST /api/service-hub/inbox/reject,status→rejected,client notify,TECHNICIAN,rejected,inbox,TechnicianInbox.tsx
+TECH_003,TechnicianInbox,CompleteJob,إتمام العمل,Complete Job,technician,click,auth + technician,POST /api/service-hub/inbox/complete,status→completed,review prompt,TECHNICIAN,completed,inbox,TechnicianInbox.tsx
+PROJ_001,ProjectVerify,VerifyCode,تحقق من المشروع,Verify Project,any,submit,code entered,GET /api/diwan/verify/:code,verification result,none,ALLOW,result page,none,ProjectVerify.tsx
+LIC_001,BuyLicense,Purchase,شراء رخصة,License Purchase,auth,submit,auth + payment,POST /api/licenses,license created,none,ALLOW,license key,none,BuyLicense.tsx
+LIC_002,VerifyLicense,Validate,تحقق من الرخصة,Validate License,any,submit,key entered,POST /api/licenses/validate,validation result,none,ALLOW,result,none,VerifyLicense.tsx
+DOWN_001,Download,DownloadApp,تحميل التطبيق,Download App,any,click,none,static download,none,none,ALLOW,downloading,none,Download.tsx
+SVC_001,MyServiceDashboard,CreateService,نشر خدمة,Create Service,auth,submit,auth,POST /api/services,service created,none,ALLOW,my services,dashboard,MyServiceDashboard.tsx
+SVC_002,MyServiceDashboard,DeleteService,حذف خدمة,Delete Service,owner,click,auth + ownership,DELETE /api/services/:id,service deleted,none,OWNER,deleted,dashboard,MyServiceDashboard.tsx
+VEH_001,VehicleServices,RequestService,طلب خدمة سيارة,Vehicle Request,any,submit,form valid,POST /api/vehicle-services/contact,request created,provider notify,ALLOW,confirmation,none,VehicleServices.tsx
+NEWS_001,Blog,WritePost,كتابة مقال,Write Blog,auth,click,auth,/write-blog,rich editor,none,ALLOW,editor page,none,Blog.tsx
+BLOG_001,BlogPostDetail,AddComment,إضافة تعليق,Add Comment,auth,submit,auth + localStorage,localStorage only,comment stored,none,ALLOW,comment list,none,BlogPostDetail.tsx

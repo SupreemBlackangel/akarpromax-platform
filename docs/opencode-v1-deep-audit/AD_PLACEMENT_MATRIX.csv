@@ -1,0 +1,13 @@
+placement_code,v1_page,v1_component,dimensions_if_known,desktop_or_web,current_equivalent,status,notes
+hero,Home,HeroSlider,1200x400,Web,HERO,ACTIVE,Hero banner on homepage
+sidebar_left,All pages,AdSidebar,180x225,Web,LEFT_01/LEFT_02,ACTIVE,Left sidebar ads
+sidebar_right,All pages,AdSidebar,180x225,Web,RIGHT_01/RIGHT_02,ACTIVE,Right sidebar ads
+footer,All pages,AdBottom,600x200,Web,BOTTOM_01/BOTTOM_02/BOTTOM_03,ACTIVE,Footer ads
+ad-slot-01,Properties,AdSlot,Various,Web,N/A,MISSING,Property listing slot
+properties_hero,Properties,AdHero,1200x400,Web,HERO (properties),ACTIVE,Properties hero
+offices_hero,Offices,AdHero,1200x400,Web,HERO (offices),ACTIVE,Offices hero
+desktop_zones,Desktop,DesktopAd,Various,Desktop,office section,ACTIVE,Desktop ad zones
+hero_surrounding,Home,AdHero,1200x400,Web,HERO,ACTIVE,Hero surrounding cards
+inline,Various,AdInline,Various,Web,N/A,MISSING,Inline ad slots
+top_banner,Home,AdBanner,728x90,Web,N/A,MISSING,Top banner ad
+news_ticker,All pages,NewsTicker,N/A,Web,NewsTicker,ACTIVE,News ticker bar

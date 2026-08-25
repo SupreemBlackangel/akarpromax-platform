@@ -1,0 +1,91 @@
+domain,resource,action,guest,user,professional,office_member,moderator,admin,special_condition,source_evidence
+auth,login,submit,ALLOW,ALLOW,DENY,DENY,DENY,DENY,,server/auth.ts POST /login
+auth,register,submit,ALLOW,ALLOW,DENY,DENY,DENY,DENY,,server/auth.ts POST /register
+auth,password_reset,request,ALLOW,ALLOW,DENY,DENY,DENY,DENY,,server/auth.ts POST /forgot-password
+auth,password_reset/execute,execute,ALLOW,ALLOW,DENY,DENY,DENY,DENY,,server/auth.ts POST /reset-password
+auth,me,read,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/auth.ts GET /me
+auth,api_key,generate,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/auth.ts POST /api-key
+property,list,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/properties.ts
+property,detail,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/properties.ts
+property,submit,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/properties.ts POST /submit
+property,approve,update,NONE,NONE,NONE,NONE,ALLOW,ALLOW,moderator+admin,server/routes/properties.ts POST /:id/approve
+property,reject,update,NONE,NONE,NONE,NONE,ALLOW,ALLOW,moderator+admin,server/routes/properties.ts POST /:id/reject
+property,mark_sold,update,NONE,NONE,NONE,NONE,ALLOW,ALLOW,moderator+admin,server/routes/properties.ts PUT /:id/mark-sold
+property,mine,read,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/properties.ts GET /mine
+property,pending,read,NONE,NONE,NONE,NONE,ALLOW,ALLOW,moderator+admin,server/routes/properties.ts GET /pending
+office,list,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/offices.ts
+office,detail,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/offices.ts
+auction,list,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/auctions.ts
+auction,detail,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/auctions.ts
+auction,create,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/auctions.ts POST /
+auction,bid,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/auctions.ts POST /:id/bid
+auction,join,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/auctions.ts POST /:id/join
+auction,report,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/auctions.ts POST /:id/report
+auction,suspend,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin only,server/routes/auctions.ts POST /:id/suspend
+auction,unsuspend,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin only,server/routes/auctions.ts POST /:id/unsuspend
+auction,end,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin only,server/routes/auctions.ts POST /:id/end
+auction,proof,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/auctions.ts POST /:id/proof
+tender,create,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/tenders.ts POST /
+tender,list,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/tenders.ts GET /
+tender,detail,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/tenders.ts GET /:id
+tender,bid,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/tenders.ts POST /:id/bid
+tender,award,update,NONE,ALLOW,NONE,NONE,NONE,NONE,owner only,server/routes/tenders.ts POST /:id/award
+tender,close,update,NONE,ALLOW,NONE,NONE,NONE,NONE,owner only,server/routes/tenders.ts POST /:id/close
+tender,admin_cancel,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin token,server/routes/tenders.ts PATCH /tenders/admin/:id/cancel
+inquiry,create,create,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/inquiries.ts POST /
+inquiry,list_all,read,NONE,ALLOW,NONE,NONE,NONE,NONE,no role check,server/routes/inquiries.ts GET /all
+service,create,create,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/services.ts POST /
+service,list,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/services.ts GET /
+service,detail,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/services.ts GET /:id
+service,update,update,NONE,ALLOW,NONE,NONE,NONE,NONE,owner/admin,server/routes/services.ts PUT /:id
+service,delete,delete,NONE,ALLOW,NONE,NONE,NONE,NONE,owner/admin,server/routes/services.ts DELETE /:id
+admin,users,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /users
+admin,users/approve,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PATCH /users/:id/approve
+admin,users/reject,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PATCH /users/:id/reject
+admin,users/role,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /users/:id/role
+admin,users/rank,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /users/:id/rank (STUB)
+admin,users/status,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /users/:id/status
+admin,users/subscription,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /users/:id/subscription
+admin,settings,read,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /settings
+admin,settings/update,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /settings/free_trial_days
+admin,promo_codes,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /promo-codes
+admin,promo_codes,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /promo-codes
+admin,promo_codes/toggle,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /promo-codes/:id/toggle
+admin,promo_codes,delete,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts DELETE /promo-codes/:id
+admin,plan_overrides,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /plan-overrides
+admin,plan_overrides,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /plan-overrides
+admin,plan_overrides,delete,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts DELETE /plan-overrides/:id
+admin,subscriptions,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /subscriptions
+admin,subscriptions/confirm,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PATCH /subscriptions/:id/confirm
+admin,subscriptions/reject,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PATCH /subscriptions/:id/reject
+admin,subscriptions/manual_activate,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /manual-activate
+admin,roles,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /roles
+admin,roles,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /roles
+admin,roles,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts PUT /roles/:id
+admin,roles,delete,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts DELETE /roles/:id
+admin,moderators,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /moderators
+admin,moderators,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /moderators
+admin,moderators,delete,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts DELETE /moderators/:id
+admin,licenses,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /license/desktop
+admin,licenses/generate,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license/generate-free
+admin,licenses/convert,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license/:id/convert-to-yearly
+admin,licenses/reset_hwid,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license/:id/reset-hwid
+admin,licenses/revoke,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license/:id/revoke
+admin,license_codes,list,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts GET /license-codes
+admin,license_codes,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license-codes
+admin,license_codes,revoke,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /license-codes/:id/revoke
+admin,news_ticker,crud,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role (frontend no auth),server/routes/admin.ts + frontend NO AUTH
+admin,tokens/grant,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /tokens/grant
+admin,oversight,create,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /oversight
+admin,plans/bulk_adjust,update,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/admin.ts POST /plans/bulk-adjust
+plan,crud,CRUD,NONE,ALLOW,NONE,NONE,NONE,NONE,no role check,server/routes/plans.ts (ANY user can CRUD)
+coupon,crud,CRUD,NONE,ALLOW,NONE,NONE,NONE,NONE,no role check,server/routes/coupons.ts (ANY user can CRUD)
+ads,public,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/ads.ts GET /public
+ads,hero,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/ads.ts GET /hero
+ads,crud,CRUD,NONE,NONE,NONE,NONE,NONE,ALLOW,admin role,server/routes/ads.ts CRUD
+ads,click,track,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/ads.ts POST /:id/click
+ads,view,track,NONE,ALLOW,NONE,NONE,NONE,NONE,token required,server/routes/ads.ts POST /:id/view
+desktop,license/validate,execute,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,HWID-based,server/routes/desktop.ts POST /license/validate
+desktop,license/reset_hwid,execute,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,NO AUTH,server/routes/desktop.ts (CRITICAL)
+desktop,version,read,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,ALLOW,,server/routes/desktop.ts GET /version
+desktop,sync,execute,NONE,ALLOW,NONE,NONE,NONE,NONE,DESKTOP_SIGNATURE,server/routes/desktop.ts POST /sync

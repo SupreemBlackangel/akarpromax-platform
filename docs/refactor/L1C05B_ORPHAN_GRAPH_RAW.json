@@ -1,0 +1,73 @@
+{
+  "probe": {
+    "mode": "BEGIN READ ONLY -> deliberate ROLLBACK",
+    "read_only_enforced": true,
+    "transaction_closed_with": "ROLLBACK (deliberate)",
+    "generated_at_utc": "2026-08-21T19:15:02.379Z",
+    "privacy": "No raw identity or user content emitted. Only fingerprints, counts, timestamps, statuses, structural relations, and boolean test-like flags."
+  },
+  "errors": [],
+  "customer_like_orphan": {
+    "fingerprint_md5": "d55c8863abb98177063772f2b5382944",
+    "request_count": "5",
+    "first_request_at": "2026-08-07T13:19:08.000Z",
+    "last_request_at": "2026-08-07T13:39:01.000Z",
+    "requests_with_test_like_content": "0",
+    "request_contact_email_matches_existing_user": "0",
+    "request_status_distribution": {
+      "completed": "1",
+      "published": "4"
+    },
+    "request_country_distribution": {
+      "OM": "5"
+    },
+    "status_history_rows": "5",
+    "answer_rows": "18",
+    "attachment_rows": "0",
+    "match_rows": "4",
+    "offer_rows": "1",
+    "order_rows": "1",
+    "order_customer_rows": "1",
+    "first_order_at": "2026-08-07T13:21:39.000Z",
+    "last_order_at": "2026-08-07T13:21:39.000Z",
+    "reviewer_rows": "1",
+    "reviewee_rows": "1",
+    "first_review_at": "2026-08-07T13:21:39.000Z",
+    "last_review_at": "2026-08-07T13:21:39.000Z",
+    "reviews_with_test_like_comment": "0",
+    "orders_consistent_with_same_orphan_request_owner": "1",
+    "orphan_customer_orders_with_offer": "1"
+  },
+  "provider_like_orphan": {
+    "fingerprint_md5": "9312923a4d2d6294eabd2fa129217a6d",
+    "profile_count": "1",
+    "first_profile_at": "2026-08-07T07:45:43.000Z",
+    "last_profile_at": "2026-08-07T07:45:43.000Z",
+    "approved_profiles": "1",
+    "draft_profiles": "0",
+    "business_profiles": "1",
+    "profiles_with_test_like_name": "0",
+    "contact_email_matches_existing_user": "0",
+    "profile_country_distribution": {
+      "OM": "1"
+    },
+    "provider_category_rows": "4",
+    "provider_document_rows": "1",
+    "provider_portfolio_rows": "1",
+    "request_match_rows": "1",
+    "offer_rows_with_same_identity": "0",
+    "order_rows_with_same_identity": "0",
+    "revision_rows_with_same_identity": "0"
+  },
+  "classification_inputs": {
+    "customer_like": {
+      "test_like_identity_from_previous_probe": true,
+      "data_graph_is_multi_table": true
+    },
+    "provider_like": {
+      "test_like_identity_from_previous_probe": true,
+      "isolated_to_profile_identity": true
+    },
+    "note": "These are evidence inputs only. The script does not decide whether deletion, mapping, or preservation is correct."
+  }
+}

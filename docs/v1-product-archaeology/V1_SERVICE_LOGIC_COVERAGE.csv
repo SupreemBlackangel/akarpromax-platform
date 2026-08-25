@@ -1,0 +1,32 @@
+file_path,feature,domain,classification,lines,api_calls,notes
+server/api/prisma/schema.prisma,DB Schema,data,L4_END_TO_END_WIRED,1315,no,47 Prisma models (server)
+server/api/src/middleware/auth.ts,Auth Middleware,auth,L4_END_TO_END_WIRED,68,no,JWT + requireAuth + requireRole (server)
+server/api/src/services/auction-contract.ts,Auction Contract PDF,server,L4_END_TO_END_WIRED,92,no,pdf-lib A4 contract gen (server)
+server/api/src/services/auction-intelligence.ts,Auction Intelligence,server,L4_END_TO_END_WIRED,294,no,Office rating + anomaly scan (server)
+server/api/src/services/auction-socket.ts,Auction Socket,server,L4_END_TO_END_WIRED,38,yes (WS),Authenticated Socket.IO auction namespace with join/leave rooms and event emission
+server/api/src/services/notification-sender.ts,Notification Sender,server,L4_END_TO_END_WIRED,200,yes (push/email),DB + web push + email (server)
+server/chat-server.ts,Chat Server,server,L4_END_TO_END_WIRED,791,yes (WS),Socket.IO + SQLite chat (server)
+server/encryption.ts,Encryption,security,L4_END_TO_END_WIRED,51,no,AES-256-GCM encrypt/decrypt (server)
+src/lib/adLocations.ts,Ad Locations,advertising,L1_UI_ONLY,34,no,Ad region definitions
+src/lib/api.ts,Mock API Layer,api,L3_PARTIAL_FLOW,1268,no,In-memory CRUD mock (1170 lines)
+src/lib/arabCountries.ts,Arab Countries Data,geo,L1_UI_ONLY,313,no,22 countries + governorates
+src/lib/artisanData.ts,Artisan Data,service,L1_UI_ONLY,289,no,8 hardcoded artisan profiles
+src/lib/chatNotifications.ts,Chat Notifications,notification,L4_END_TO_END_WIRED,31,no,Notification sound + desktop
+src/lib/citiesData.json,Cities Data,geo,L1_UI_ONLY,1192,no,Static city data
+src/lib/citiesData.ts,Cities Data Loader,geo,L2_DATA_MODEL_ONLY,7,no,Typed lookup wrapper over citiesData.json
+src/lib/i18n.ts,i18n Config,i18n,L2_DATA_MODEL_ONLY,59,no,i18next initialization
+src/lib/locationsData.json,Locations Data,geo,L1_UI_ONLY,409,no,Static location data
+src/lib/routePrefetch.ts,Route Prefetch,ui,L2_DATA_MODEL_ONLY,109,no,Route preloading
+src/lib/scrollUtils.ts,Scroll Utils,ui,L2_DATA_MODEL_ONLY,32,no,Scroll helpers
+src/lib/sessionId.ts,Session ID,browser,L2_DATA_MODEL_ONLY,13,no,sessionStorage ID generator
+src/lib/updateAd.ts,Ad Updater,advertising,L3_PARTIAL_FLOW,96,no,DOM-based ad slot updater
+src/lib/utils.ts,Shared Utilities,ui,L2_DATA_MODEL_ONLY,76,no,Class-name merging and locale-aware date formatting helpers
+src/lib/workspace-api-client-stub.ts,API Client Stub,api,L3_PARTIAL_FLOW,509,yes,Replit API react-query hooks
+src/services/auditService.ts,Audit Service,engineering,L2_DATA_MODEL_ONLY,61,no,localStorage audit trail
+src/services/chatAdminService.ts,Chat Admin Service,admin,L4_END_TO_END_WIRED,34,yes,6 admin chat API endpoints
+src/services/dxfExportService.ts,DXF Export Service,engineering,L4_END_TO_END_WIRED,234,no,Room data → DXF R12 file
+src/services/imagePreprocessor.ts,Image Preprocessor,engineering,L4_END_TO_END_WIRED,289,no,Canvas grayscale/Otsu/deskew
+src/services/landAnalysisService.ts,Land Analysis Service,engineering,L4_END_TO_END_WIRED,639,no,PDF→OCR→ONNX→coords pipeline
+src/services/ocrProcessor.ts,OCR Processor,engineering,L4_END_TO_END_WIRED,157,no,Tesseract.js ara+eng
+src/services/onnxProcessor.ts,ONNX Processor,engineering,L4_END_TO_END_WIRED,159,no,ONNX Runtime diagram analysis
+src/services/pdfProcessor.ts,PDF Processor,engineering,L4_END_TO_END_WIRED,61,no,pdfjs-dist text + render

@@ -1,0 +1,105 @@
+file_path,feature,domain,classification,lines,parent_component,notes
+src/components/AccountSwitcher.tsx,Account Switcher,identity,L4_END_TO_END_WIRED,68,root,Personal↔Company switch via CompanyContext
+src/components/AdBanner.tsx,Ad Banner,advertising,L3_PARTIAL_FLOW,0,root,Ad display component
+src/components/AdSlot.tsx,Ad Slot,advertising,L3_PARTIAL_FLOW,0,root,Ad slot wrapper
+src/components/AuthGate.tsx,Auth Gate,auth,L4_END_TO_END_WIRED,0,root,Conditional render by auth state
+src/components/BlogCard.tsx,Blog Card,content,L1_UI_ONLY,0,root,Blog post card display
+src/components/EliteBadge.tsx,Elite Badge,identity,L2_DATA_MODEL_ONLY,53,root,Only phd+engineer titles render (2 of claimed 8)
+src/components/ErrorBoundary.tsx,Error Boundary,ui,L4_END_TO_END_WIRED,0,root,React error boundary
+src/components/ForgotPasswordModal.tsx,Forgot Password,auth,L3_PARTIAL_FLOW,0,root,Password reset modal
+src/components/GeoAdBanner.tsx,Geo Ad Banner,advertising,L4_END_TO_END_WIRED,135,root,Geo-targeted ad display with tier styling
+src/components/HeroAdsBanner.tsx,Hero Ads Banner,advertising,L3_PARTIAL_FLOW,0,root,Hero section ad
+src/components/HeroSection.tsx,Hero Section,public,L1_UI_ONLY,0,root,Homepage hero
+src/components/HeroSectionAd.tsx,Hero Section Ad,advertising,L1_UI_ONLY,0,root,Hero ad variant
+src/components/HeroSlideshow.tsx,Hero Slideshow,public,L3_PARTIAL_FLOW,0,root,Image slideshow
+src/components/InstallPWA.tsx,PWA Install,public,L3_PARTIAL_FLOW,0,root,Install prompt
+src/components/InvestmentGauge.tsx,Investment Gauge,property,L4_END_TO_END_WIRED,80,root,Investment scoring gauge (base 50 + modifiers)
+src/components/LocationPicker.tsx,Location Picker,geo,L4_END_TO_END_WIRED,0,root,Country/gov/city selection
+src/components/LoginForm.tsx,Login Form,auth,L4_END_TO_END_WIRED,0,root,Login form with API
+src/components/MapMyDeed.tsx,Map My Deed,engineering,L4_END_TO_END_WIRED,595,root,OCR deed→UTM→WGS84→Leaflet polygon
+src/components/MobileStickyContact.tsx,Mobile Sticky Contact,ui,L1_UI_ONLY,0,root,Mobile CTA bar
+src/components/MortgageCalculator.tsx,Mortgage Calculator,property,L4_END_TO_END_WIRED,116,root,PMT formula (duplicated in PropertyFinanceTools)
+src/components/NotificationPermissionBanner.tsx,Notification Banner,notification,L3_PARTIAL_FLOW,0,root,Push permission request
+src/components/OfficeCard.tsx,Office Card,office,L1_UI_ONLY,0,root,Office display card
+src/components/PageHeroBanner.tsx,Page Hero Banner,public,L1_UI_ONLY,0,root,Page hero banner
+src/components/PageHeroGallery.tsx,Page Hero Gallery,public,L1_UI_ONLY,0,root,Image gallery
+src/components/PageHeroSlideshow.tsx,Page Hero Slideshow,public,L3_PARTIAL_FLOW,0,root,Slideshow with data
+src/components/PageWithAds.tsx,Page With Ads,advertising,L4_END_TO_END_WIRED,0,root,Ad slot injection wrapper
+src/components/PropertyAdBanner.tsx,Property Ad Banner,advertising,L3_PARTIAL_FLOW,0,root,Property page ad
+src/components/PropertyCard.tsx,Property Card,property,L1_UI_ONLY,0,root,Property display card
+src/components/PropertyFinanceTools.tsx,Property Finance Tools,property,L4_END_TO_END_WIRED,255,root,3-tab: Mortgage + Flexible + Fixed
+src/components/PropertyListingForm.tsx,Property Listing Form,property,L4_END_TO_END_WIRED,0,root,Property creation form
+src/components/ProtectedRoute.tsx,Protected Route,auth,L4_END_TO_END_WIRED,0,root,Route guard by auth
+src/components/RichTextEditor.tsx,Rich Text Editor,ui,L1_UI_ONLY,0,root,Content editor
+src/components/RotatingAd.tsx,Rotating Ad,advertising,L3_PARTIAL_FLOW,0,root,Ad rotation display
+src/components/SaveSearchButton.tsx,Save Search Button,property,L4_END_TO_END_WIRED,116,root,POST /saved-searches with dialog
+src/components/SectionErrorBoundary.tsx,Section Error Boundary,ui,L4_END_TO_END_WIRED,0,root,Section-level error boundary
+src/components/SeoHead.tsx,SEO Head,seo,L4_END_TO_END_WIRED,0,root,Meta tag injection
+src/components/ShareButton.tsx,Share Button,sharing,L4_END_TO_END_WIRED,70,root,Web Share API + clipboard
+src/components/ShareModal.tsx,Share Modal,sharing,L4_END_TO_END_WIRED,131,root,WA/FB/X/TG share channels
+src/components/SmartLandingBanner.tsx,Smart Landing Banner,marketing,L4_END_TO_END_WIRED,279,root,Category-targeted CTA banner
+src/components/ThemeToggle.tsx,Theme Toggle,ui,L2_DATA_MODEL_ONLY,0,root,Dark/light switch
+src/components/UnifiedInbox.tsx,Unified Inbox,service,L4_END_TO_END_WIRED,516,root,4-type inbox (chat/appt/quote/inquiry)
+src/components/WelcomeBanner.tsx,Welcome Banner,ui,L1_UI_ONLY,0,root,First-visit banner
+src/components/arch/AcademicSpecialtyEngine.tsx,Academic Specialty Engine,engineering,L4_END_TO_END_WIRED,566,arch,ISO 11428 sightlines + Sabine RT60
+src/components/arch/BankingSecurityEngine.tsx,Banking Security Engine,engineering,L4_END_TO_END_WIRED,569,arch,Vault/ballistic/seismic calcs
+src/components/arch/BilingualPDFContract.tsx,Bilingual PDF Contract,engineering,L3_PARTIAL_FLOW,388,arch,Print-ready bilingual contract
+src/components/arch/BIMViewer.tsx,BIM Viewer,engineering,L4_END_TO_END_WIRED,323,arch,Three.js 3D BIM from DXF
+src/components/arch/BOQEngine.tsx,BOQ Engine,engineering,L4_END_TO_END_WIRED,643,arch,Full bill of quantities
+src/components/arch/Building3DVisualizer.tsx,3D Building Visualizer,engineering,L4_END_TO_END_WIRED,227,arch,Three.js facade preview
+src/components/arch/CADGeometryEngine.ts,CAD Geometry Engine,engineering,L4_END_TO_END_WIRED,373,arch,DXF take-off + BOQ delta
+src/components/arch/CADParser.ts,CAD Parser,engineering,L4_END_TO_END_WIRED,268,arch,ASCII DXF parser
+src/components/arch/CADProcessor.tsx,CAD Processor,engineering,L4_END_TO_END_WIRED,433,arch,Upload→parse→map→takeoff→3D
+src/components/arch/ClimateGeoEngine.tsx,Climate Geo Engine,engineering,L4_END_TO_END_WIRED,748,arch,IBC/SBC/TSE code mapping
+src/components/arch/ConsultantTitleBlockPDF.tsx,Consultant Title Block,engineering,L3_PARTIAL_FLOW,254,arch,QR verification title block
+src/components/arch/ConsultantValidationEngine.tsx,Consultant Validation,engineering,L4_END_TO_END_WIRED,822,arch,5-pillar stamp workflow
+src/components/arch/ContractGenerator.tsx,Contract Generator,engineering,L3_PARTIAL_FLOW,460,arch,Print-ready contract
+src/components/arch/ContractPackager.tsx,Contract Packager,engineering,L3_PARTIAL_FLOW,376,arch,BOQ split into packages
+src/components/arch/CostEstimator.tsx,Cost Estimator,engineering,L4_END_TO_END_WIRED,323,arch,BOQ × market rates + VAT
+src/components/arch/DrawingEngine.tsx,Drawing Engine,engineering,L4_END_TO_END_WIRED,713,arch,Full DXF drawing set gen
+src/components/arch/DXFWriter.ts,DXF Writer,engineering,L4_END_TO_END_WIRED,121,arch,DXF file serializer
+src/components/arch/FireSafetyEngine.tsx,Fire Safety Engine,engineering,L4_END_TO_END_WIRED,483,arch,NFPA sprinkler/FD/smoke calcs
+src/components/arch/GlobalConfiguratorPanel.tsx,Global Configurator,engineering,L4_END_TO_END_WIRED,722,arch,Style→cost/time delta
+src/components/arch/HighRiseStructuralEngine.tsx,High Rise Structural,engineering,L4_END_TO_END_WIRED,394,arch,Wind/drift/TMD analysis
+src/components/arch/IndustrialEngine.tsx,Industrial Engine,engineering,L4_END_TO_END_WIRED,356,arch,Crane/hazmat/floor load
+src/components/arch/InstitutionalSovereignEngine.tsx,Institutional Sovereign,engineering,L4_END_TO_END_WIRED,634,arch,STC/security/redundancy
+src/components/arch/K12SchoolEngine.tsx,K12 School Engine,engineering,L4_END_TO_END_WIRED,339,arch,Daylight/capacity/ventilation
+src/components/arch/LandGeometryModule.tsx,Land Geometry Module,engineering,L4_END_TO_END_WIRED,541,arch,Shoelace formula area calc
+src/components/arch/LandscapeIrrigationEngine.tsx,Landscape Irrigation,engineering,L4_END_TO_END_WIRED,354,arch,PET-based water demand
+src/components/arch/LayerMapper.tsx,Layer Mapper,engineering,L3_PARTIAL_FLOW,315,arch,DXF layer mapping UI
+src/components/arch/MedicalGradeMEPEngine.tsx,Medical Grade MEP,engineering,L4_END_TO_END_WIRED,533,arch,ASHRAE 170 + lead shielding
+src/components/arch/MedSpecialtyEngine.tsx,Medical Specialty,engineering,L4_END_TO_END_WIRED,655,arch,Star rating + gas points
+src/components/arch/MEPEngine.tsx,MEP Engine,engineering,L4_END_TO_END_WIRED,281,arch,Core MEP quantities
+src/components/arch/MEPLayoutEngine.ts,MEP Layout Engine,engineering,L4_END_TO_END_WIRED,112,arch,DXF MEP fixture placement
+src/components/arch/MosqueEngine.tsx,Mosque Engine,engineering,L4_END_TO_END_WIRED,374,arch,Qibla + capacity + acoustics
+src/components/arch/PriceManager.tsx,Price Manager,engineering,L4_END_TO_END_WIRED,401,arch,BOQ pricing + VAT + contingency
+src/components/arch/ProjectEnginePassport.tsx,Project Passport,engineering,L1_UI_ONLY,294,arch,Module status display
+src/components/arch/ResidentialFloorPlanDXF.ts,Residential Floor Plan DXF,engineering,L4_END_TO_END_WIRED,784,arch,Complete floor plan DXF gen
+src/components/arch/RetailMallEngine.tsx,Retail Mall Engine,engineering,L4_END_TO_END_WIRED,789,arch,Anchor/egress/BOH calcs
+src/components/arch/SectionElevationEngine.ts,Section Elevation Engine,engineering,L4_END_TO_END_WIRED,199,arch,Section/elevation DXF gen
+src/components/arch/SeismicProtectionEngine.tsx,Seismic Protection,engineering,L4_END_TO_END_WIRED,574,arch,Isolator BOQ + SDC calcs
+src/components/arch/SovereignEthicsShield.tsx,Sovereign Ethics Shield,engineering,L1_UI_ONLY,128,arch,Ethical policy display
+src/components/arch/StructuralConfigurator.tsx,Structural Configurator,engineering,L4_END_TO_END_WIRED,327,arch,Load profiles + rebar ratios
+src/components/arch/UserPreferences.ts,User Preferences,engineering,L2_DATA_MODEL_ONLY,182,arch,localStorage prefs persistence
+src/components/auctions/AuctionBidForm.tsx,Auction Bid Form,auction,L4_END_TO_END_WIRED,0,auctions,Bid submission
+src/components/auctions/AuctionBidsList.tsx,Auction Bids List,auction,L3_PARTIAL_FLOW,0,auctions,Bid listing
+src/components/auctions/AuctionCard.tsx,Auction Card,auction,L1_UI_ONLY,0,auctions,Auction display card
+src/components/auctions/AuctionCountdown.tsx,Auction Countdown,auction,L4_END_TO_END_WIRED,0,auctions,Real-time countdown
+src/components/auctions/AuctionReportButton.tsx,Auction Report,auction,L4_END_TO_END_WIRED,0,auctions,Report button
+src/components/auctions/AuctionStatusBadge.tsx,Auction Status Badge,auction,L1_UI_ONLY,0,auctions,Status display
+src/components/auctions/AutoBidToggle.tsx,Auto Bid Toggle,auction,L4_END_TO_END_WIRED,0,auctions,Auto-bid enable/disable
+src/components/auctions/CreateAuctionForm.tsx,Create Auction,auction,L4_END_TO_END_WIRED,0,auctions,Auction creation form
+src/components/auctions/SaleProofForm.tsx,Sale Proof Form,auction,L4_END_TO_END_WIRED,0,auctions,Proof of sale upload
+src/components/chat/ChatApp.tsx,Chat App,messaging,L4_END_TO_END_WIRED,0,chat,Main chat application
+src/components/chat/ChatInput.tsx,Chat Input,messaging,L4_END_TO_END_WIRED,0,chat,Message input + voice
+src/components/chat/ChatList.tsx,Chat List,messaging,L3_PARTIAL_FLOW,0,chat,Conversation list
+src/components/chat/ChatWidget.tsx,Chat Widget,messaging,L4_END_TO_END_WIRED,0,chat,Floating chat widget
+src/components/chat/ChatWindow.tsx,Chat Window,messaging,L4_END_TO_END_WIRED,0,chat,Message display + send
+src/components/chat/MessageBubble.tsx,Message Bubble,messaging,L1_UI_ONLY,0,chat,Single message display
+src/components/chat/VoiceRecorder.tsx,Voice Recorder,messaging,L4_END_TO_END_WIRED,0,chat,Audio recording + send
+src/components/layout/AppSidebar.tsx,App Sidebar,layout,L2_DATA_MODEL_ONLY,0,layout,Navigation sidebar
+src/components/layout/Footer.tsx,Footer,layout,L1_UI_ONLY,0,layout,Site footer
+src/components/layout/Layout.tsx,Layout,layout,L4_END_TO_END_WIRED,0,layout,Page wrapper with nav+footer
+src/components/layout/Navbar.tsx,Navbar,layout,L3_PARTIAL_FLOW,0,layout,Navigation bar
+src/components/layout/NewsTicker.tsx,News Ticker,layout,L3_PARTIAL_FLOW,0,layout,Scrolling news
+src/components/layout/StatsBar.tsx,Stats Bar,layout,L3_PARTIAL_FLOW,0,layout,Platform stats display

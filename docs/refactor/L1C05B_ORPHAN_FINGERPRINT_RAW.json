@@ -1,0 +1,52 @@
+{
+  "probe": {
+    "mode": "BEGIN READ ONLY -> deliberate ROLLBACK",
+    "read_only_enforced": true,
+    "transaction_closed_with": "ROLLBACK (deliberate)",
+    "generated_at_utc": "2026-08-21T19:08:31.492Z",
+    "privacy": "No raw identity values emitted; md5(normalized identity) is computed inside PostgreSQL."
+  },
+  "errors": [],
+  "unresolved_identities": [
+    {
+      "fingerprint_md5": "d55c8863abb98177063772f2b5382944",
+      "row_occurrences": "13",
+      "required_owner_rows": "8",
+      "nullable_actor_rows": "5",
+      "source_count": 5,
+      "sources": [
+        "service_orders.customer_user_id",
+        "service_request_status_history.changed_by",
+        "service_requests.customer_user_id",
+        "service_reviews.reviewee_user_id",
+        "service_reviews.reviewer_user_id"
+      ],
+      "value_length": 29,
+      "email_like": true,
+      "uuid_like": false,
+      "reserved_test_domain": false,
+      "test_like_localpart": true
+    },
+    {
+      "fingerprint_md5": "9312923a4d2d6294eabd2fa129217a6d",
+      "row_occurrences": "1",
+      "required_owner_rows": "1",
+      "nullable_actor_rows": "0",
+      "source_count": 1,
+      "sources": [
+        "service_provider_profiles.user_id"
+      ],
+      "value_length": 30,
+      "email_like": true,
+      "uuid_like": false,
+      "reserved_test_domain": false,
+      "test_like_localpart": true
+    }
+  ],
+  "summary": {
+    "unique_unresolved_identities": 2,
+    "total_required_owner_rows": 9,
+    "total_nullable_actor_rows": 5,
+    "clearly_test_like_identities": 2
+  }
+}

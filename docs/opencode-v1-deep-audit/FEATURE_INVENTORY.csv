@@ -1,0 +1,86 @@
+feature_id,domain,feature,subfeature,v1_status,v1_evidence,current_status,current_evidence,desktop_status,security_status,test_status,decision,priority,recommended_phase,notes
+F001,Auth,Registration,Individual,FULL,Register.tsx,FULL,app/register/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Standard registration
+F002,Auth,Registration,Professional,FULL,Register.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,1,Professional registration
+F003,Auth,Registration,Company,FULL,Register.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,1,Company registration
+F004,Auth,Login,Email/Password,FULL,Login.tsx,FULL,app/login/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Standard login
+F005,Auth,Login,Social Login,MISSING,N/A,FULL,app/login/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP_AND_IMPROVE,LOW,1,Google + Facebook OAuth
+F006,Auth,Password,Reset,FULL,ForgotPassword.tsx,FULL,app/forgot-password/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Email-based reset
+F007,Auth,Email,Verification,FULL,VerifyEmail.tsx,FULL,app/verify-email/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Token-based verification
+F008,Auth,Profile,Editing,FULL,DashboardProfile.tsx,FULL,app/dashboard/profile/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Profile management
+F009,Auth,Profile,Portfolio,FULL,api/profile.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,2,Portfolio image upload
+F010,Auth,Identity,Verification,FULL,AdminVerification.tsx,PARTIAL,verification_challenges table,N/A,SAFE,PARTIAL,KEEP_AND_IMPROVE,HIGH,2,KYC verification
+F011,Auth,Roles,User,Moderator/Admin,FULL,AuthContext.tsx,FULL,src/constants/roles.ts,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Role-based access
+F012,Auth,Moderators,Assignment,FULL,moderators table,PARTIAL,role field on users,N/A,SAFE,PARTIAL,MERGE_INTO_NEW_CORE,HIGH,2,Moderator management
+F013,Auth,Banning,User Ban,FULL,AdminUsers.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,User banning workflow
+F014,Auth,Security,IP Blocking,FULL,blocked_ips table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,IP-based blocking
+F015,Auth,Security,Login Tracking,FULL,login_attempts table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Brute force protection
+F016,Auth,Activity,Logging,FULL,activity_logs table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Audit trail
+F017,Property,CRUD,Create,Submit,FULL,SubmitProperty.tsx,FULL,app/dashboard/properties/new/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property creation
+F018,Property,CRUD,Edit,Update,FULL,Dashboard.tsx,FULL,app/dashboard/properties/[id]/edit/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property editing
+F019,Property,CRUD,Delete,FULL,api/properties.ts,FULL,api/properties/[id]/route.ts,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property deletion
+F020,Property,Images,Upload,FULL,SubmitProperty.tsx,FULL,property_media table,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Image upload
+F021,Property,Featured,Toggle,FULL,api/properties.ts,FULL,properties.is_featured,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Featured properties
+F022,Property,Search,Text,Category,Type,City,Price,FULL,Properties.tsx,FULL,app/properties/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property search
+F023,Property,Requests,Create,FULL,MyPropertyRequests.tsx,FULL,app/dashboard/properties/property-requests/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property requests
+F024,Property,Requests,Offers,FULL,api/property-requests.ts,FULL,property_request_offers table,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property offers
+F025,Property,Favorites,Add/Remove,FULL,useFavorites.ts,FULL,property_favorites table,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property favorites
+F026,Property,Saved Searches,Create,Alert,FULL,api/property-requests.ts,FULL,saved_searches table,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Saved searches
+F027,Property,Elite Leads,Flagging,FULL,AdminEliteLeads.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,High-value leads
+F028,Property,Bookings,Viewing,FULL,bookings table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Property viewings
+F029,Property,Notifications,City-Matched,FULL,server-side,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Auto notifications
+F030,Auction,Fixed Price,Auction,FULL,AuctionDetail.tsx,FULL,app/auctions/[id]/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Fixed auctions
+F031,Auction,Open,Auction,FULL,AuctionDetail.tsx,FULL,app/auctions/[id]/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Open auctions
+F032,Auction,Bidding,Place Bid,FULL,api/auctions.ts,FULL,api/auctions/[id]/route.ts,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Bid placement
+F033,Auction,Bidding,Auto-Bid,FULL,api/auctions.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Auto-bidding
+F034,Auction,Fraud,Suspicious Relist,FULL,suspicious_relsits table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,CRITICAL,2,Fraud detection
+F035,Auction,Fraud,Early Warning,FULL,early_warnings table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Proactive alerts
+F036,Auction,Reputation,Office Scoring,FULL,office_rating_snapshots table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Multi-factor scoring
+F037,Auction,History,Price Tracking,FULL,auction_price_history table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Price timeline
+F038,Service Hub,Profile,Provider,FULL,ServiceHub.tsx,FULL,app/providers/[id]/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Provider profiles
+F039,Service Hub,Requests,Create,Accept,Complete,FULL,api/service-hub.ts,FULL,app/dashboard/services/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Service requests
+F040,Service Hub,Ratings,Provider,FULL,api/service-hub.ts,FULL,service_ratings table,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Provider ratings
+F041,Service Hub,Feedback,Client,FULL,api/service-hub.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Client feedback
+F042,Service Hub,Dispatching,GPS,FULL,api/service-hub.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Real-time dispatch
+F043,Tender,Create,Tender,FULL,TenderCreate.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Tender creation
+F044,Tender,Bidding,Artisan Bid,FULL,api/tenders.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Tender bidding
+F045,Marketing,Profile,Marketer,FULL,MarketerRegister.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Marketer profiles
+F046,Marketing,Contracts,Create,FULL,marketing_contracts table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Marketing contracts
+F047,Marketing,Commissions,Track,FULL,commissions table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Commission tracking
+F048,Advertising,Geo-Targeting,Country/Region/City,FULL,ads table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,CRITICAL,2,Geo-targeted ads
+F049,Advertising,Sponsors,Tiers,FULL,ads table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Platinum/Gold/Silver
+F050,Advertising,Rotation,Configurable,FULL,ads table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Ad rotation
+F051,Advertising,Limits,Views/Clicks,FULL,ads table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Campaign limits
+F052,Chat,Conversations,Private/Group,FULL,chat-server.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,CRITICAL,2,Real-time chat
+F053,Chat,Messages,Text/Image/Voice/File,FULL,chat-server.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,CRITICAL,2,Message types
+F054,Chat,Encryption,AES-256-GCM,FULL,chat-server.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,E2E encryption
+F055,Chat,Moderation,Oversight,FULL,chat-server.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Chat moderation
+F056,Content,Blog,CRUD,FULL,WriteBlog.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Blog system
+F057,Content,Suppliers,Directory,FULL,Suppliers.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Supplier directory
+F058,Content,Software,Directory,Licensing,FULL,Software.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Software licensing
+F059,Content,News Ticker,Display,FULL,AdminNewsTicker.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,News ticker
+F060,Organization,Offices,CRUD,Verification,FULL,Offices.tsx,FULL,app/offices/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Office management
+F061,Organization,Companies,CRUD,Account Switching,FULL,CreateCompany.tsx,FULL,app/dashboard/company/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Company management
+F062,Organization,Reputation,Office Scoring,FULL,office_rating_snapshots table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Multi-factor scoring
+F063,Engineering,BOQ,Bill of Quantities,FULL,BOQEngine.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,8-section BOQ
+F064,Engineering,3D,Visualization,FULL,Building3DVisualizer.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Three.js 3D
+F065,Engineering,CAD,DXF Export,FULL,DXFWriter.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,LOW,4,AutoCAD export
+F066,Engineering,Contracts,Bilingual,FULL,BilingualPDFContract.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Contract generator
+F067,Engineering,Specialized,10+ Engines,FULL,arch/ directory,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,LOW,4,Specialized engines
+F068,Desktop,License,Validation,HWID,FULL,api/desktop.ts,PARTIAL,lib/integration,N/A,SAFE,PARTIAL,KEEP_AND_IMPROVE,HIGH,2,License management
+F069,Desktop,Sync,Property,FULL,api/desktop.ts,FULL,lib/integration/sync.ts,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Property sync
+F070,Desktop,Sync,Ad/News,FULL,api/desktop.ts,PARTIAL,lib/integration,N/A,SAFE,PARTIAL,KEEP_AND_IMPROVE,MEDIUM,3,Ad/news sync
+F071,Payment,Thawani,Gateway,FULL,api/payments.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Payment gateway
+F072,Payment,Tap,Gateway,FULL,api/payments.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Payment gateway
+F073,Payment,Subscriptions,Plans,FULL,plans table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Subscription plans
+F074,Payment,Coupons,Discount,FULL,coupons table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,LOW,4,Coupon system
+F075,Notifications,Push,Web Push VAPID,FULL,usePushNotifications.ts,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Push notifications
+F076,Notifications,Email,Email Alerts,FULL,email_logs table,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Email notifications
+F077,Admin,Activity Log,Audit Trail,FULL,AdminActivityLog.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Activity logging
+F078,Admin,Emperor,Panel,FULL,AdminEmperor.tsx,MISSING,MISSING,N/A,SAFE,MISSING,PRODUCT_OWNER_DECISION,UNKNOWN,5,Unknown purpose
+F079,Admin,Matchmaking,Property,FULL,AdminMatchmaking.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,MEDIUM,3,Property matching
+F080,Admin,Elite Leads,Management,FULL,AdminEliteLeads.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,High-value leads
+F081,Admin,Relist Monitoring,Fraud,FULL,AdminRelistMonitoring.tsx,MISSING,MISSING,N/A,SAFE,MISSING,RESTORE,HIGH,2,Fraud monitoring
+F082,Engineering,Land Analysis,AI/OCR,FULL,landAnalysisService.ts,PARTIAL,app/tools/find-my-land,N/A,SAFE,PARTIAL,KEEP_AND_IMPROVE,MEDIUM,3,Land analysis
+F083,Engineering,FindMyLand,Parcel Finder,MISSING,N/A,FULL,app/tools/find-my-land/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,AMRS integration
+F084,Content,Knowledge Base,Books/Software,MISSING,N/A,FULL,app/knowledge/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Knowledge base
+F085,Content,Community Forum,Topics/Posts,MISSING,N/A,FULL,app/community/page.tsx,N/A,SAFE,TEST_VERIFIED,KEEP,LOW,1,Community forum

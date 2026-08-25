@@ -1,0 +1,73 @@
+role,permission,domain,action,scope_type,v1_evidence,current_equivalent,recommended_final_permission
+user,browse_properties,properties,read,NONE,AuthContext.tsx,user role,properties.read
+user,create_property,properties,create,NONE,SubmitProperty.tsx,user role,properties.create
+user,edit_own_property,properties,update,OWN,api/properties.ts,user role,properties.update.own
+user,delete_own_property,properties,delete,OWN,api/properties.ts,user role,properties.delete.own
+user,favorite_property,favorites,create,NONE,useFavorites.ts,user role,favorites.create
+user,remove_favorite,favorites,delete,NONE,useFavorites.ts,user role,favorites.delete
+user,create_request,requests,create,NONE,MyPropertyRequests.tsx,user role,requests.create
+user,submit_offer,offers,create,NONE,api/property-requests.ts,user role,offers.create
+user,message_member,messages,create,NONE,chat-server.ts,MISSING,messages.create
+user,message_professional,messages,create,NONE,chat-server.ts,MISSING,messages.create.professional
+user,message_office,messages,create,NONE,chat-server.ts,MISSING,messages.create.office
+user,request_service,services,create,NONE,api/service-hub.ts,user role,services.request.create
+user,complete_job,services,update,OWN,api/service-hub.ts,user role,services.job.complete
+user,review_provider,reviews,create,NONE,api/service-hub.ts,user role,reviews.create
+user,review_customer,reviews,create,NONE,api/service-hub.ts,user role,reviews.create.customer
+user,browse_properties,properties,read,NONE,AuthContext.tsx,user role,properties.read
+professional,create_property,properties,create,NONE,Register.tsx,MISSING,properties.create.professional
+professional,edit_own_property,properties,update,OWN,api/properties.ts,user role,properties.update.own
+professional,provide_service,services,create,NONE,api/service-hub.ts,user role,services.provider.create
+professional,manage_availability,services,update,OWN,api/service-hub.ts,user role,services.availability.update
+professional,upload_cv,profile,update,OWN,api/service-hub.ts,MISSING,profile.cv.upload
+professional,view_requests,requests,read,NONE,api/service-hub.ts,user role,requests.read
+professional,accept_request,requests,update,NONE,api/service-hub.ts,user role,requests.accept
+professional,view_leads,leads,read,NONE,api/service-hub.ts,MISSING,leads.read
+office_member,view_office_properties,properties,read,ORGANIZATION,api/properties.ts,MISSING,properties.read.office
+office_member,create_property,properties,create,ORGANIZATION,api/properties.ts,MISSING,properties.create.office
+office_member,edit_property,properties,update,ORGANIZATION,api/properties.ts,MISSING,properties.update.office
+office_member,view_leads,leads,read,ORGANIZATION,api/properties.ts,MISSING,leads.read.office
+office_member,view_messages,messages,read,ORGANIZATION,chat-server.ts,MISSING,messages.read.office
+office_member,view_analytics,analytics,read,ORGANIZATION,api/properties.ts,MISSING,analytics.read.office
+office_manager,manage_members,members,manage,ORGANIZATION,AdminMembership.tsx,MISSING,members.manage.office
+office_manager,invite_members,members,invite,ORGANIZATION,AdminMembership.tsx,MISSING,members.invite.office
+office_manager,remove_members,members,remove,ORGANIZATION,AdminMembership.tsx,MISSING,members.remove.office
+office_manager,manage_office_profile,profile,update,ORGANIZATION,Offices.tsx,MISSING,profile.update.office
+office_manager,view_analytics,analytics,read,ORGANIZATION,api/properties.ts,MISSING,analytics.read.office
+office_owner,manage_office,office,manage,ORGANIZATION,Offices.tsx,MISSING,office.manage
+office_owner,verify_office,verification,manage,ORGANIZATION,AdminVerification.tsx,MISSING,verification.manage.office
+office_owner,create_auction,auctions,create,ORGANIZATION,AuctionDetail.tsx,MISSING,auctions.create.office
+company_member,view_company_properties,properties,read,ORGANIZATION,api/properties.ts,MISSING,properties.read.company
+company_member,view_members,members,read,ORGANIZATION,CompanyContext.tsx,MISSING,members.read.company
+company_manager,manage_members,members,manage,ORGANIZATION,CompanyContext.tsx,MISSING,members.manage.company
+company_manager,invite_members,members,invite,ORGANIZATION,CompanyContext.tsx,MISSING,members.invite.company
+company_manager,remove_members,members,remove,ORGANIZATION,CompanyContext.tsx,MISSING,members.remove.company
+company_manager,manage_company_profile,profile,update,ORGANIZATION,CompanyContext.tsx,MISSING,profile.update.company
+company_owner,manage_company,company,manage,ORGANIZATION,CompanyContext.tsx,MISSING,company.manage
+moderator,approve_property,properties,approve,NONE,AdminProperties.tsx,MISSING,properties.approve
+moderator,reject_property,properties,reject,NONE,AdminProperties.tsx,MISSING,properties.reject
+moderator,approve_verification,verification,approve,NONE,AdminVerification.tsx,MISSING,verification.approve
+moderator,reject_verification,verification,reject,NONE,AdminVerification.tsx,MISSING,verification.reject
+moderator,ban_user,users,suspend,NONE,AdminUsers.tsx,MISSING,users.suspend
+moderator,view_reports,reports,read,NONE,AdminReports.tsx,MISSING,reports.read
+moderator,resolve_reports,reports,update,NONE,AdminReports.tsx,MISSING,reports.resolve
+moderator,view_activity_log,audit,read,NONE,AdminActivityLog.tsx,MISSING,audit.read
+moderator,view_chat,chat,read,NONE,AdminChat.tsx,MISSING,chat.read
+admin,manage_users,users,manage,NONE,AdminUsers.tsx,USERS_MANAGE,users.manage
+admin,manage_roles,roles,manage,NONE,AdminModerators.tsx,MISSING,roles.manage
+admin,manage_moderators,moderators,manage,NONE,AdminModerators.tsx,MISSING,moderators.manage
+admin,manage_properties,properties,manage,NONE,AdminProperties.tsx,PROPERTIES_MANAGE,properties.manage
+admin,manage_ads,ads,manage,NONE,AdminAds.tsx,ADS_MANAGE,ads.manage
+admin,manage_organizations,organizations,manage,NONE,AdminMembership.tsx,ORGANIZATIONS_MANAGE,organizations.manage
+admin,manage_content,content,manage,NONE,AdminBlog.tsx,CONTENT_MANAGE,content.manage
+admin,view_analytics,analytics,read,NONE,AdminAnalytics.tsx,ANALYTICS_VIEW,analytics.read
+admin,manage_settings,settings,manage,NONE,AdminSettings.tsx,SETTINGS_MANAGE,settings.manage
+admin,manage_verification,verification,manage,NONE,AdminVerification.tsx,VERIFICATION_MANAGE,verification.manage
+admin,view_audit_log,audit,read,NONE,AdminActivityLog.tsx,MISSING,audit.read
+admin,manage_translations,translations,manage,NONE,MISSING,MISSING,translations.manage
+super_admin,all_permissions,all,manage,NONE,AuthContext.tsx,super_admin role,all.manage
+super_admin,assign_roles,roles,assign,NONE,AdminModerators.tsx,MISSING,roles.assign
+super_admin,revoke_roles,roles,revoke,NONE,AdminModerators.tsx,MISSING,roles.revoke
+super_admin,manage_admins,admins,manage,NONE,AuthContext.tsx,super_admin role,admins.manage
+super_admin,view_system_logs,system,read,NONE,MISSING,MISSING,system.read
+super_admin,manage_integrations,integrations,manage,NONE,MISSING,MISSING,integrations.manage

@@ -1,0 +1,124 @@
+file_path,feature,domain,classification,auth_required,api_endpoint,lines,notes
+src/pages/About.tsx,About Page,public,L1_UI_ONLY,no,none,283,Static content page
+src/pages/AdminActivityLog.tsx,Activity Log,admin,L4_END_TO_END_WIRED,admin role,GET /activity-log,138,Read-only audit trail
+src/pages/AdminAds.tsx,Ad Management,admin,L4_END_TO_END_WIRED,admin role,CRUD /ads,1926,Full ad campaign management with approval
+src/pages/AdminAnalytics.tsx,Market Analytics,admin,L4_END_TO_END_WIRED,admin role,GET /api/analytics/*,310,Trends + reports + landing entries
+src/pages/AdminArtisans.tsx,Artisan Admin,admin,L1_UI_ONLY,NONE,localStorage only,234,No auth guard
+src/pages/AdminAuctions.tsx,Auction Admin,admin,L3_PARTIAL_FLOW,token only,GET/PATCH /auctions/admin/*,325,Cancel + block but no role guard
+src/pages/AdminBlog.tsx,Blog Admin,admin,L1_UI_ONLY,NONE,localStorage only,247,No auth guard
+src/pages/AdminCategories.tsx,Category Admin,admin,L4_END_TO_END_WIRED,NONE,CRUD /api/categories,212,Category CRUD with no auth
+src/pages/AdminChat.tsx,Chat Monitor,admin,L4_END_TO_END_WIRED,NONE,chatAdminService,791,Full chat moderation with no auth
+src/pages/AdminContent.tsx,Content CMS,admin,L1_UI_ONLY,NONE,localStorage only,212,Static content editor
+src/pages/AdminDiscounts.tsx,Coupon Admin,admin,L3_PARTIAL_FLOW,token only,CRUD /coupons,406,No role guard
+src/pages/AdminEliteLeads.tsx,Elite Leads,admin,L4_END_TO_END_WIRED,admin role,GET/PATCH /elite-leads,114,Manual elite toggle
+src/pages/AdminEmperor.tsx,Emperor Dashboard,admin,L4_END_TO_END_WIRED,admin role,GET /api/admin/emperor,370,Read-only analytics dashboard
+src/pages/AdminFreeResources.tsx,Free Resources,admin,L3_PARTIAL_FLOW,NONE,GET/DELETE /free-resources,196,Delete + localStorage mutations
+src/pages/AdminLicenseKeys.tsx,License Key Admin,admin,L4_END_TO_END_WIRED,token only,CRUD /admin/license/*,560,Full license lifecycle
+src/pages/AdminLookups.tsx,Lookup Admin,admin,L1_UI_ONLY,NONE,localStorage only,451,Dropdown data management
+src/pages/AdminMarketRates.tsx,Market Rates,admin,L4_END_TO_END_WIRED,admin role (soft),GET/PUT /api/market-rates,308,Rate editing
+src/pages/AdminMatchmaking.tsx,Matchmaking,admin,L4_END_TO_END_WIRED,admin role,GET/POST /api/matchmaking/*,138,Request↔project matching trigger
+src/pages/AdminMembership.tsx,Membership Admin,admin,L4_END_TO_END_WIRED,NONE (CRITICAL),CRUD /admin/*,544,14 endpoints with no auth guard
+src/pages/AdminModerators.tsx,Moderator Admin,admin,L4_END_TO_END_WIRED,NONE,CRUD /admin/roles + /admin/moderators,681,Role-based access control
+src/pages/AdminNewsTicker.tsx,News Ticker,admin,L4_END_TO_END_WIRED,NONE,CRUD /admin/news-ticker,422,News ticker CRUD
+src/pages/AdminNotifications.tsx,Push Notifications,admin,L1_UI_ONLY,NONE,localStorage only,267,Push notification composer
+src/pages/AdminPayments.tsx,Payment Admin,admin,L4_END_TO_END_WIRED,admin role,GET/PATCH /admin/subscriptions,330,Payment review + method toggle
+src/pages/AdminPlans.tsx,Plan Admin,admin,L3_PARTIAL_FLOW,token only,CRUD /plans,469,No role guard on plan CRUD
+src/pages/AdminProperties.tsx,Property Moderation,admin,L3_PARTIAL_FLOW,NONE,GET /properties + localStorage,401,Hybrid API+localStorage
+src/pages/AdminRelistMonitoring.tsx,Relist Monitor,admin,L4_END_TO_END_WIRED,token only,GET/POST /relist-monitoring,386,Suspicious relist detection
+src/pages/AdminReports.tsx,Report Moderation,admin,L1_UI_ONLY,NONE,localStorage only,373,Content report queue
+src/pages/AdminSEO.tsx,SEO Manager,admin,L1_UI_ONLY,NONE,localStorage only,608,Page meta + robots.txt editor
+src/pages/AdminServiceMarket.tsx,Service Category Admin,admin,L4_END_TO_END_WIRED,NONE,CRUD /admin/services/*,425,Service hub categories
+src/pages/AdminServiceReviews.tsx,Review Moderation,admin,L4_END_TO_END_WIRED,token only,GET/DELETE/PATCH /service-hub/admin/*,307,Rating review + blacklist
+src/pages/AdminSettings.tsx,System Settings,admin,L1_UI_ONLY,NONE,localStorage only,509,Global site settings
+src/pages/AdminSoftwareLicenses.tsx,Software License Admin,admin,L4_END_TO_END_WIRED,admin role,CRUD /admin/licenses,205,License lifecycle
+src/pages/AdminTenders.tsx,Tender Admin,admin,L3_PARTIAL_FLOW,token only,GET/PATCH /tenders/admin/*,103,Cancel tenders only
+src/pages/AdminTickets.tsx,Support Tickets,admin,L1_UI_ONLY,NONE,localStorage only,424,Ticket management
+src/pages/AdminUsers.tsx,User Management,admin,L3_PARTIAL_FLOW,NONE,localStorage + apiRequest,1049,Mass user operations
+src/pages/AdminUsersPage.tsx,EMPTY FILE,admin,STUB,NONE,none,0,Empty 0-byte file
+src/pages/AdminVerification.tsx,Verification Review,admin,L4_END_TO_END_WIRED,admin role,GET/PATCH /api/verification/requests,197,Badge approval
+src/pages/Advertise.tsx,Ad Submission,public,L1_UI_ONLY,no,none (form),373,Ad request form
+src/pages/ArchitecturalConsultant.tsx,Engineering Configurator,engineering,L4_END_TO_END_WIRED,no,local engines,2384,20+ lazy-loaded engineering engines
+src/pages/ArtisanDashboard.tsx,Artisan Dashboard,artisan,L4_END_TO_END_WIRED,token,lib/artisanData,399,Reviews + appointments + quotes
+src/pages/AuctionDetail.tsx,Auction Detail,auction,L4_END_TO_END_WIRED,no (bid requires auth),/api/auctions/:id,410,Countdown + bidding + bids list
+src/pages/AuctionFAQ.tsx,Auction FAQ,auction,L1_UI_ONLY,no,none,162,Static FAQ
+src/pages/AuctionHistory.tsx,Auction History,auction,L3_PARTIAL_FLOW,no,/api/auctions?status=SOLD,173,Completed auctions + price charts
+src/pages/Auctions.tsx,Auction Listing,auction,L3_PARTIAL_FLOW,no,/api/auctions,196,Public listing with filters
+src/pages/AuctionStats.tsx,Auction Stats,auction,L3_PARTIAL_FLOW,no,/api/auction-enhancements/stats,183,Platform statistics + PDF export
+src/pages/AuctionTerms.tsx,Auction Terms,auction,L1_UI_ONLY,no,none,205,Static terms
+src/pages/Blog.tsx,Blog Listing,content,L3_PARTIAL_FLOW,no,/api/blog,199,Category filter + search
+src/pages/BlogPostDetail.tsx,Blog Detail,content,L3_PARTIAL_FLOW,no (comment requires auth),/api/blog/:id,257,Post + localStorage comments
+src/pages/BuyLicense.tsx,License Purchase,monetization,L4_END_TO_END_WIRED,no (auth for purchase),/api/payments/*,482,PayPal/Thawani/bank transfer
+src/pages/ConsultantDashboard.tsx,Consultant Dashboard,engineering,L1_UI_ONLY,no,mock data,463,Mock project review UI
+src/pages/Contact.tsx,Contact Form,public,L1_UI_ONLY,no,none (setTimeout mock),124,Static form with mock submit
+src/pages/CreateCompany.tsx,Create Company,office,L3_PARTIAL_FLOW,token,CompanyContext.createCompany,97,localStorage company creation
+src/pages/Dashboard.tsx,User Dashboard,user,L4_END_TO_END_WIRED,token,/api/properties/mine + /api/auth/*,487,Property management + API key
+src/pages/DashboardAuctions.tsx,My Auctions,auction,L4_END_TO_END_WIRED,token,/api/auctions/my,264,User's auction CRUD
+src/pages/DashboardBids.tsx,My Bids,auction,L3_PARTIAL_FLOW,token,/api/auctions/my-bids,194,Bid tracking
+src/pages/DashboardPage.tsx,EMPTY FILE,unknown,STUB,NONE,none,0,Empty 0-byte file
+src/pages/DashboardProfile.tsx,Profile Editor,user,L3_PARTIAL_FLOW,token,/api/profile PUT,194,Avatar upload
+src/pages/DashboardTenderBids.tsx,My Tender Bids,tender,L3_PARTIAL_FLOW,token,/api/tenders/my/bids,94,Bid tracking
+src/pages/DashboardTenders.tsx,My Tenders,tender,L4_END_TO_END_WIRED,token,/api/tenders/my/list,126,Tender CRUD
+src/pages/DevLogin.tsx,Dev Login,dev,L1_UI_ONLY,prod-blocked,localStorage,68,Blocked in production
+src/pages/Download.tsx,App Download,public,L3_PARTIAL_FLOW,optional auth,/api/auth/trial-license,426,Desktop download + trial license
+src/pages/Estates.tsx,Estate Listings,property,L3_PARTIAL_FLOW,no,/api/auctions,416,Estate listings + auction cards
+src/pages/FreeResources.tsx,Free Resources,content,L3_PARTIAL_FLOW,no (admin for upload),/api/free-resources,457,Books + software downloads
+src/pages/Home.tsx,Homepage,public,L3_PARTIAL_FLOW,no,useGetFeaturedProperties,186,Hero slideshow + featured properties
+src/pages/InboxPage.tsx,Unified Inbox,service,L1_UI_ONLY,no,delegates to UnifiedInbox,16,Wrapper page
+src/pages/InvestmentRadar.tsx,Investment Radar,property,L3_PARTIAL_FLOW,no,/api/investment-radar,473,City investment scoring + radar charts
+src/pages/JoinFounders.tsx,Founder Registration,auth,L4_END_TO_END_WIRED,no,/api/auth/register,420,Full registration with validation
+src/pages/LandingCorporates.tsx,Corporate Landing,marketing,L1_UI_ONLY,no,none,147,Marketing page
+src/pages/LandingOffices.tsx,Office Landing,marketing,L1_UI_ONLY,no,none,202,Marketing page
+src/pages/LandingProfessionals.tsx,Professional Landing,marketing,L1_UI_ONLY,no,none,147,Marketing page
+src/pages/Login.tsx,Login,auth,L1_UI_ONLY,no,delegates to LoginForm,117,Login wrapper
+src/pages/MarketHistory.tsx,Market History,property,L3_PARTIAL_FLOW,no,/api/market/history,278,Price history charts + PDF
+src/pages/Messages.tsx,Messages,messaging,L1_UI_ONLY,no,delegates to ChatApp,21,Chat wrapper
+src/pages/ModeratorPanel.tsx,Moderator Panel,moderation,L4_END_TO_END_WIRED,moderator role,/api/properties/pending + approve/reject,148,Property approval queue
+src/pages/MyCompanies.tsx,My Companies,office,L3_PARTIAL_FLOW,token,CompanyContext,123,localStorage company management
+src/pages/MyPropertyRequests.tsx,My Requests,property,L4_END_TO_END_WIRED,token,/api/property-requests/mine,189,Property requests + office offers
+src/pages/MyServiceDashboard.tsx,Service Provider Dashboard,service,L4_END_TO_END_WIRED,token,/api/services/*,475,Service listing CRUD
+src/pages/not-found.tsx,404 Page,public,L1_UI_ONLY,no,none,26,Static
+src/pages/OfficeDetail.tsx,Office Detail,office,L3_PARTIAL_FLOW,no,/api/offices/:id,254,Office profile + properties
+src/pages/OfficeRequests.tsx,Office Requests,office,L4_END_TO_END_WIRED,token,/api/property-requests,183,Office-side request management
+src/pages/Offices.tsx,Office Listing,office,L3_PARTIAL_FLOW,no,useListOffices,384,Public listing with search + compare
+src/pages/OtherServices.tsx,Other Services,service,L3_PARTIAL_FLOW,no,/api/other-services,234,Service marketplace
+src/pages/PartnerDashboard.tsx,Partner Dashboard,partner,L4_END_TO_END_WIRED,partner_key,/api/partners/*,507,Campaigns + leads + analytics
+src/pages/PartnerPortal.tsx,Partner Portal,partner,L1_UI_ONLY,no,/api/partners/login,117,Partner login
+src/pages/PaymentReturn.tsx,Payment Callback,monetization,L3_PARTIAL_FLOW,no,/api/payments/thawani/tap/verify,95,Payment verification callback
+src/pages/Pricing.tsx,Subscription Plans,monetization,L3_PARTIAL_FLOW,no,/api/coupons/public,331,Plan listing + promo codes
+src/pages/PricingComingSoon.tsx,Pricing Placeholder,monetization,L1_UI_ONLY,no,none,68,Placeholder
+src/pages/Privacy.tsx,Privacy Policy,public,L1_UI_ONLY,no,none,195,Static bilingual
+src/pages/Profile.tsx,Public Profile,user,L3_PARTIAL_FLOW,no,/api/profile/:username,960,Rank badges gallery contact
+src/pages/ProfilePage.tsx,Profile View,user,L3_PARTIAL_FLOW,no,/api/profile/:username,197,Alternative profile view
+src/pages/ProjectVerify.tsx,Project Verification,engineering,L4_END_TO_END_WIRED,no,/api/diwan/verify/:code,235,QR code verification
+src/pages/Properties.tsx,Property Search,property,L4_END_TO_END_WIRED,no (auth for save),useListProperties + /api/save-search,1732,Map + filters + compare + favorites
+src/pages/PropertyDetail.tsx,Property Detail,property,L4_END_TO_END_WIRED,no (auth for actions),useGetProperty + /api/inquiries,770,Gallery + map + finance + inquiry
+src/pages/Register.tsx,Registration,auth,L4_END_TO_END_WIRED,no,/api/auth/register,812,Full registration form
+src/pages/ResetPassword.tsx,Password Reset,auth,L3_PARTIAL_FLOW,token-based,resetPassword(),122,Email token reset
+src/pages/ServiceDetail.tsx,Service Detail,service,L3_PARTIAL_FLOW,no,/api/other-services/:id,182,Service listing detail
+src/pages/ServiceHub.tsx,Service Hub,service,L4_END_TO_END_WIRED,token,/api/service-hub/*,2530,Massive artisan hub
+src/pages/ServiceHubPage.tsx,EMPTY FILE,service,STUB,NONE,none,0,EMPTY/STUB — 0-byte file; retained for complete physical coverage
+src/pages/Software.tsx,Software Products,monetization,L1_UI_ONLY,no,useListSoftwareProducts,175,Product showcase
+src/pages/SubmitProperty.tsx,Property Submission,property,L4_END_TO_END_WIRED,token,/api/properties POST,552,Property creation form
+src/pages/Subscribe.tsx,Subscription Purchase,monetization,L4_END_TO_END_WIRED,auth,useCreateSubscription + PayPal,774,Payment gateway selection
+src/pages/SupplierDetail.tsx,Supplier Detail,supplier,L3_PARTIAL_FLOW,no,useGetSupplier,129,Supplier profile + products
+src/pages/Suppliers.tsx,Supplier Listing,supplier,L3_PARTIAL_FLOW,no,useListSuppliers,230,Supplier marketplace
+src/pages/TechnicianInbox.tsx,Technician Inbox,service,L4_END_TO_END_WIRED,token,/api/service-hub/inbox,745,Real-time job inbox + ringing
+src/pages/TechnicianSettings.tsx,Technician Settings,service,L3_PARTIAL_FLOW,token,/api/service-hub/profile,319,Notification + hours + location
+src/pages/TenderCreate.tsx,Create Tender,tender,L4_END_TO_END_WIRED,token,/api/tenders POST,134,Tender creation form
+src/pages/TenderDetail.tsx,Tender Detail,tender,L4_END_TO_END_WIRED,token,/api/tenders/:id + /bid,318,Bid submission + award
+src/pages/Tenders.tsx,Tender Listing,tender,L3_PARTIAL_FLOW,no (auth for create),/api/tenders,183,Public listing
+src/pages/Terms.tsx,Terms of Service,public,L1_UI_ONLY,no,none,160,Static bilingual
+src/pages/Tools.tsx,Engineering Tools,engineering,L4_END_TO_END_WIRED,no (auth for some),/api/land/*,2034,Coordinate + UTM + area + deed map
+src/pages/UpgradeToArtisan.tsx,Upgrade to Artisan,service,L3_PARTIAL_FLOW,token,/api/services/tabs,164,Account type upgrade
+src/pages/VehicleServices.tsx,Vehicle Services,service,L4_END_TO_END_WIRED,no,/api/vehicle-services/*,1192,Vehicle service marketplace
+src/pages/VerifyEmail.tsx,Email Verify,auth,L3_PARTIAL_FLOW,token-based,verifyEmail(),76,Email verification link
+src/pages/VerifyLicense.tsx,License Verify,monetization,L3_PARTIAL_FLOW,no,useValidateLicense,150,License key validation
+src/pages/WriteBlog.tsx,Blog Editor,content,L4_END_TO_END_WIRED,token,/api/blog POST,139,Rich text blog editor
+src/pages/marketer/AdminMarketers.tsx,Marketer Admin,admin,L4_END_TO_END_WIRED,admin role,/api/admin/marketers/*,287,Marketer approval + ranks
+src/pages/marketer/AdvertiserContracts.tsx,Advertiser Contracts,marketer,L4_END_TO_END_WIRED,token,/api/marketer/contracts/advertiser,120,Contract sign/decline
+src/pages/marketer/AdvertiserProposals.tsx,Advertiser Proposals,marketer,L4_END_TO_END_WIRED,token,/api/marketer/proposals/advertiser,128,Proposal accept/reject
+src/pages/marketer/AvailableProperties.tsx,Available Properties,marketer,L3_PARTIAL_FLOW,token,/api/marketer/available-properties,141,Property browsing for marketers
+src/pages/marketer/MarketerContracts.tsx,Marketer Contracts,marketer,L4_END_TO_END_WIRED,token,/api/marketer/contracts/marketer,122,Contract management
+src/pages/marketer/MarketerProfile.tsx,Marketer Profile,marketer,L3_PARTIAL_FLOW,token,/api/marketer/profile,155,Profile view
+src/pages/marketer/MarketerProposals.tsx,Marketer Proposals,marketer,L3_PARTIAL_FLOW,token,/api/marketer/proposals/marketer,84,Proposal tracking
+src/pages/marketer/MarketerRegister.tsx,Marketer Registration,marketer,L4_END_TO_END_WIRED,token,/api/marketer/register,222,Registration + code of conduct

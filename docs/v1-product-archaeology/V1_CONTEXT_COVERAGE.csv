@@ -1,0 +1,10 @@
+file_path,feature,domain,classification,lines,api_calls,notes
+src/contexts/AuthContext.tsx,Auth Provider,auth,L4_END_TO_END_WIRED,204,yes,Login/register/session management
+src/contexts/ChatContext.tsx,Chat Provider,messaging,L4_END_TO_END_WIRED,324,yes (WS),WebSocket chat + oversight
+src/contexts/ChatSettingsContext.tsx,Chat Settings,ui,L2_DATA_MODEL_ONLY,51,no,Font/color preferences
+src/contexts/CompanyContext.tsx,Company Provider,office,L4_END_TO_END_WIRED,111,no,localStorage company CRUD + supervisors
+src/contexts/GeoAdsContext.tsx,Geo Ads Provider,advertising,L4_END_TO_END_WIRED,107,yes,Geo-targeted ad fetching + caching
+src/contexts/GeoContext.tsx,Geo Provider,geo,L4_END_TO_END_WIRED,195,yes,GPS/IP/fallback geolocation
+src/contexts/LocationContext.tsx,Location Provider,geo,L4_END_TO_END_WIRED,340,no,Country/governorate/city state
+src/contexts/LoginModalContext.tsx,Login Modal,ui,L2_DATA_MODEL_ONLY,59,no,Global login dialog trigger
+src/contexts/SidebarContext.tsx,Sidebar State,ui,L2_DATA_MODEL_ONLY,33,no,Sidebar open/close

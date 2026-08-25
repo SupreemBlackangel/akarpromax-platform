@@ -1,0 +1,26 @@
+desktop_file,class,method,http_method,url,request_type,response_type,auth,retry,offline,web_route,match_status
+api/desktop.ts,DesktopController,GET /version,GET,/api/desktop/version,None,VersionResponse,NO,NO,NO,N/A,OBSOLETE
+api/desktop.ts,DesktopController,GET /subscription-status,GET,/api/desktop/subscription-status,SignatureVerified,SubscriptionStatus,YES,NO,NO,N/A,OBSOLETE
+api/desktop.ts,DesktopController,POST /sync,POST,/api/desktop/sync,SyncRequest,SyncResponse,YES,YES,YES,lib/integration/sync.ts,MATCHED
+api/desktop.ts,DesktopController,POST /properties/draft,POST,/api/desktop/properties/draft,PropertyDraft,PropertyResponse,YES,NO,NO,api/properties,MATCHED
+api/desktop.ts,DesktopController,GET /property-requests,GET,/api/desktop/property-requests,None,PropertyRequests[],YES,NO,NO,api/properties/property-requests,MATCHED
+api/desktop.ts,DesktopController,GET /news-ticker,GET,/api/desktop/news-ticker,None,NewsTickerItems[],NO,NO,YES,N/A,OBSOLETE
+api/desktop.ts,DesktopController,GET /ads/placement/:zone,GET,/api/desktop/ads/placement/:zone,ZoneParam,Ads[],NO,NO,YES,api/ads/match,MATCHED
+api/desktop.ts,DesktopController,POST /ads/:id/view,POST,/api/desktop/ads/:id/view,ViewEvent,None,NO,NO,NO,api/ads/match,MATCHED
+api/desktop.ts,DesktopController,POST /ads/:id/click,POST,/api/desktop/ads/:id/click,ClickEvent,None,NO,NO,NO,api/ads/match,MATCHED
+api/desktop.ts,DesktopController,POST /license/validate,POST,/api/desktop/license/validate,LicenseValidation,LicenseStatus,YES,NO,NO,N/A,OBSOLETE
+api/desktop.ts,DesktopController,POST /license/reset-hwid,POST,/api/desktop/license/reset-hwid,HWIDReset,None,YES,NO,NO,N/A,OBSOLETE
+api/desktop.ts,DesktopController,GET /sync/ads,GET,/api/desktop/sync/ads,None,AdsSyncData,YES,YES,YES,N/A,OBSOLETE
+api/desktop.ts,DesktopController,POST /sync/batch,POST,/api/desktop/sync/batch,BatchSyncRequest,BatchSyncResponse,YES,YES,YES,N/A,OBSOLETE
+api/desktop.ts,DesktopController,POST /free-trial-license,POST,/api/desktop/free-trial-license,FreeTrialRequest,LicenseKey,NO,NO,NO,N/A,OBSOLETE
+AkarApp_LIVE,SubscriptionManager,CheckSubscription,POST,/api/desktop/subscription-status,Signature,Status,YES,NO,NO,N/A,OBSOLETE
+AkarApp_LIVE,SyncManager,SyncProperties,POST,/api/desktop/sync,SyncData,SyncResult,YES,YES,YES,lib/integration/sync.ts,MATCHED
+AkarApp_LIVE,SyncManager,SubmitDraft,POST,/api/desktop/properties/draft,DraftData,Property,YES,NO,NO,api/properties,MATCHED
+AkarApp_LIVE,SyncManager,FetchRequests,GET,/api/desktop/property-requests,None,Requests[],YES,NO,NO,api/properties/property-requests,MATCHED
+AkarApp_LIVE,AdManager,FetchAds,GET,/api/desktop/ads/placement/:zone,Zone,Ads[],NO,NO,YES,api/ads/match,MATCHED
+AkarApp_LIVE,AdManager,TrackView,POST,/api/desktop/ads/:id/view,ViewEvent,None,NO,NO,NO,api/ads/match,MATCHED
+AkarApp_LIVE,AdManager,TrackClick,POST,/api/desktop/ads/:id/click,ClickEvent,None,NO,NO,NO,api/ads/match,MATCHED
+AkarApp_LIVE,LicenseManager,ValidateLicense,POST,/api/desktop/license/validate,HWID,Status,YES,NO,NO,N/A,OBSOLETE
+AkarApp_LIVE,LicenseManager,ResetHWID,POST,/api/desktop/license/reset-hwid,HWID,None,YES,NO,NO,N/A,OBSOLETE
+AkarApp_LIVE,NewsManager,FetchNews,GET,/api/desktop/news-ticker,None,NewsItems[],NO,NO,YES,N/A,OBSOLETE
+AkarApp_LIVE,SyncManager,BatchSync,POST,/api/desktop/sync/batch,BatchData,BatchResult,YES,YES,YES,N/A,OBSOLETE

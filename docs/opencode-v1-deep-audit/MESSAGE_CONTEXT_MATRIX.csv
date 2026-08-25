@@ -1,0 +1,10 @@
+context,initiator,recipient,entry_point,thread_identity,participant_resolution,privacy_rule,old_endpoint,current_endpoint,status,risk,recommended_core
+PROPERTY,buyer,property owner/agent,PropertyDetail.tsx,property_id,property.userId,Private conversation,/api/messages,/api/properties/[id]/comments,MISSING,MEDIUM,threads.context_type=property
+PROPERTY_REQUEST,customer,office,MyPropertyRequests.tsx,request_id,request.officeId,Private conversation,/api/messages,MISSING,MISSING,MEDIUM,threads.context_type=property_request
+SERVICE_REQUEST,customer,provider,ServiceHub.tsx,request_id,request.providerId,Private conversation,/api/messages,MISSING,MISSING,LOW,threads.context_type=service_request
+SERVICE_JOB,customer,provider,ServiceHub.tsx,job_id,job.providerId,Private conversation,/api/messages,MISSING,MISSING,LOW,threads.context_type=service_job
+PROFESSIONAL,member,professional,Profile.tsx,user_id,user.id,Private conversation,/api/messages,MISSING,MISSING,LOW,threads.context_type=professional
+ORGANIZATION,member,office/company,OfficeDetail.tsx,org_id,org.id,Private conversation,/api/messages,MISSING,MISSING,LOW,threads.context_type=organization
+GENERAL,any user,any user,ChatWidget.tsx,user_id,user.id,Private conversation,/api/messages,MISSING,MISSING,LOW,threads.context_type=general
+SUPPORT,user,admin,Support page,ticket_id,ticket.agentId,Support conversation,MISSING,MISSING,MISSING,MEDIUM,threads.context_type=support
+DISPUTE,user,moderator,Dispute page,dispute_id,dispute.moderatorId,Moderated conversation,MISSING,MISSING,MISSING,LOW,threads.context_type=dispute

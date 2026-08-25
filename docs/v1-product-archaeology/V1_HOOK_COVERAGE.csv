@@ -1,0 +1,14 @@
+file_path,feature,domain,classification,lines,api_calls,notes
+src/hooks/use-mobile.tsx,Mobile Detection,ui,L2_DATA_MODEL_ONLY,15,no,Breakpoint hook
+src/hooks/use-toast.ts,Toast Queue,ui,L4_END_TO_END_WIRED,161,no,Toast state management
+src/hooks/useAuth.tsx,EMPTY FILE,auth,STUB,0,no,0 bytes - dead file
+src/hooks/useCurrency.ts,Currency Formatting,i18n,L3_PARTIAL_FLOW,86,no,GeoContext-based currency
+src/hooks/useDateFormat.ts,Date Formatting,i18n,L2_DATA_MODEL_ONLY,24,no,Country-aware date format
+src/hooks/useEnterKeyNavigation.ts,Enter Key Navigation,ui,L4_END_TO_END_WIRED,111,no,Smart form navigation
+src/hooks/useFavorites.ts,Favorites,property,L2_DATA_MODEL_ONLY,22,no,localStorage favorite IDs
+src/hooks/useHeroSliders.ts,Hero Sliders,data,L4_END_TO_END_WIRED,176,yes,API hero slider fetch
+src/hooks/useLanguage.ts,Language,i18n,L2_DATA_MODEL_ONLY,24,no,i18next wrapper
+src/hooks/usePushNotifications.ts,Push Notifications,notification,L4_END_TO_END_WIRED,86,yes,VAPID subscription
+src/hooks/useRingtone.ts,Ringtone Player,ui,L4_END_TO_END_WIRED,131,no,AudioContext tones
+src/hooks/useSmartLanding.ts,Smart Landing,marketing,L4_END_TO_END_WIRED,190,yes (analytics),URL param → geo context
+src/hooks/useTheme.ts,Theme Toggle,ui,L2_DATA_MODEL_ONLY,56,no,Dark/light/localStorage

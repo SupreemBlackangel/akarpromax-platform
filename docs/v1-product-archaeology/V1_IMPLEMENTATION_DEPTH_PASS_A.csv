@@ -1,0 +1,192 @@
+feature,level,ui,api,db,logic,admin,tests,evidence
+AdminEmperor,L4_END_TO_END_WIRED,yes,yes GET,yes (read),threshold logic,no,no,AdminEmperor.tsx:370
+AdminEliteLeads,L4_END_TO_END_WIRED,yes,yes GET+PATCH,yes,no,no,no,AdminEliteLeads.tsx:144
+AdminMatchmaking,L4_END_TO_END_WIRED,yes,yes GET+POST×2,no,matching trigger,no,no,AdminMatchmaking.tsx:138
+AdminMembership,L4_END_TO_END_WIRED,yes,yes 14 endpoints,yes,rank/badge/subscription mgmt,no (CRITICAL no auth),no,AdminMembership.tsx:544
+AdminActivityLog,L4_END_TO_END_WIRED,yes,yes GET,no,read-only,no,no,AdminActivityLog.tsx:138
+AdminAds,L4_END_TO_END_WIRED,yes,yes CRUD+approve/reject,yes,approval workflow,no,no,AdminAds.tsx:1926
+AdminAnalytics,L4_END_TO_END_WIRED,yes,yes GET+POST,yes,report generation,no,no,AdminAnalytics.tsx:310
+AdminArtisans,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminArtisans.tsx:234
+AdminAuctions,L3_PARTIAL_FLOW,yes,yes GET+PATCH,yes,cancel/block only,no role guard,no,AdminAuctions.tsx:325
+AdminBlog,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminBlog.tsx:247
+AdminCategories,L4_END_TO_END_WIRED,yes,yes CRUD,yes,CRUD,NONE (no auth),no,AdminCategories.tsx:212
+AdminChat,L4_END_TO_END_WIRED,yes,yes via service,yes,moderation,NONE (no auth),no,AdminChat.tsx:791
+AdminContent,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminContent.tsx:212
+AdminDiscounts,L3_PARTIAL_FLOW,yes,yes CRUD,yes,no role guard,token only,no,AdminDiscounts.tsx:406
+AdminFreeResources,L3_PARTIAL_FLOW,yes,yes GET+DELETE,yes,delete + localStorage,NONE,no,AdminFreeResources.tsx:196
+AdminLicenseKeys,L4_END_TO_END_WIRED,yes,yes CRUD,yes,HWID lifecycle,token only,no,AdminLicenseKeys.tsx:560
+AdminLookups,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminLookups.tsx:451
+AdminMarketRates,L4_END_TO_END_WIRED,yes,yes GET+PUT,yes,rate editing,admin (soft useEffect),no,AdminMarketRates.tsx:308
+AdminModerators,L4_END_TO_END_WIRED,yes,yes CRUD,yes,role management,NONE (no auth),no,AdminModerators.tsx:681
+AdminNewsTicker,L4_END_TO_END_WIRED,yes,yes CRUD,yes,ticker CRUD,NONE (no auth),no,AdminNewsTicker.tsx:422
+AdminNotifications,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminNotifications.tsx:267
+AdminPayments,L4_END_TO_END_WIRED,yes,yes GET+PATCH,yes,confirm/reject,admin role,no,AdminPayments.tsx:330
+AdminPlans,L3_PARTIAL_FLOW,yes,yes CRUD,yes,no role guard,token only,no,AdminPlans.tsx:469
+AdminProperties,L3_PARTIAL_FLOW,yes,yes GET + localStorage,yes,approve/reject,NONE,no,AdminProperties.tsx:401
+AdminRelistMonitoring,L4_END_TO_END_WIRED,yes,yes GET+POST,yes,verify/reject/clear,token only,no,AdminRelistMonitoring.tsx:386
+AdminReports,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminReports.tsx:373
+AdminSEO,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminSEO.tsx:608
+AdminServiceMarket,L4_END_TO_END_WIRED,yes,yes CRUD,yes,category management,NONE,no,AdminServiceMarket.tsx:425
+AdminServiceReviews,L4_END_TO_END_WIRED,yes,yes GET+DELETE+PATCH,yes,blacklist,token only,no,AdminServiceReviews.tsx:307
+AdminSettings,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminSettings.tsx:509
+AdminSoftwareLicenses,L4_END_TO_END_WIRED,yes,yes CRUD,yes,license lifecycle,admin role,no,AdminSoftwareLicenses.tsx:205
+AdminTenders,L3_PARTIAL_FLOW,yes,yes GET+PATCH,yes,cancel only,token only,no,AdminTenders.tsx:103
+AdminTickets,L1_UI_ONLY,yes,no (localStorage),no,no,NONE,no,AdminTickets.tsx:424
+AdminUsers,L3_PARTIAL_FLOW,yes,localStorage + apiRequest,yes,mass operations,NONE,no,AdminUsers.tsx:1049
+AdminUsersPage,L0_IDEA_ONLY,no,no,no,no,no,no,Empty 0-byte file
+AdminVerification,L4_END_TO_END_WIRED,yes,yes GET+PATCH,yes,approve/reject,admin role,no,AdminVerification.tsx:197
+About,L1_UI_ONLY,yes,no,no,no,no,no,About.tsx:283
+Advertise,L1_UI_ONLY,yes,no,no,no,no,no,Advertise.tsx:373
+ArchitecturalConsultant,L4_END_TO_END_WIRED,yes,no (local engines),no,20+ engineering engines,no,no,ArchitecturalConsultant.tsx:2384
+ArtisanDashboard,L4_END_TO_END_WIRED,yes,yes via lib,yes,artisan data mgmt,token,no,ArtisanDashboard.tsx:399
+AuctionDetail,L4_END_TO_END_WIRED,yes,yes GET+POST,yes,bidding + countdown,no (auth for bid),no,AuctionDetail.tsx:410
+AuctionFAQ,L1_UI_ONLY,yes,no,no,no,no,no,AuctionFAQ.tsx:162
+AuctionHistory,L3_PARTIAL_FLOW,yes,yes GET,yes,price history,no,no,AuctionHistory.tsx:173
+Auctions,L3_PARTIAL_FLOW,yes,yes GET,yes,filters,no,no,Auctions.tsx:196
+AuctionStats,L3_PARTIAL_FLOW,yes,yes GET,yes,PDF export,no,no,AuctionStats.tsx:183
+AuctionTerms,L1_UI_ONLY,yes,no,no,no,no,no,AuctionTerms.tsx:205
+Blog,L3_PARTIAL_FLOW,yes,yes GET,yes,category filter,no,no,Blog.tsx:199
+BlogPostDetail,L3_PARTIAL_FLOW,yes,yes GET,yes,comments (localStorage),no,no,BlogPostDetail.tsx:257
+BuyLicense,L4_END_TO_END_WIRED,yes,yes multiple,yes,PayPal/Thawani/bank,no (auth for purchase),no,BuyLicense.tsx:482
+ConsultantDashboard,L1_UI_ONLY,yes,no (mock),no,no,no,no,ConsultantDashboard.tsx:463
+Contact,L1_UI_ONLY,yes,no (mock),no,no,no,no,Contact.tsx:124
+CreateCompany,L3_PARTIAL_FLOW,yes,yes context,yes,localStorage company,no,no,CreateCompany.tsx:97
+Dashboard,L4_END_TO_END_WIRED,yes,yes multiple,yes,property mgmt + API key,token,no,Dashboard.tsx:487
+DashboardAuctions,L4_END_TO_END_WIRED,yes,yes multiple,yes,create/cancel/proof,token,no,DashboardAuctions.tsx:264
+DashboardBids,L3_PARTIAL_FLOW,yes,yes GET,yes,bid tracking,token,no,DashboardBids.tsx:194
+DashboardPage,L0_IDEA_ONLY,no,no,no,no,no,no,Empty 0-byte file
+DashboardProfile,L3_PARTIAL_FLOW,yes,yes PUT,yes,avatar upload,token,no,DashboardProfile.tsx:194
+DashboardTenderBids,L3_PARTIAL_FLOW,yes,yes GET,yes,bid tracking,token,no,DashboardTenderBids.tsx:94
+DashboardTenders,L4_END_TO_END_WIRED,yes,yes GET+POST+DELETE,yes,tender CRUD,token,no,DashboardTenders.tsx:126
+DevLogin,L1_UI_ONLY,yes,no (localStorage),no,blocked in prod,prod-blocked,no,DevLogin.tsx:68
+Download,L3_PARTIAL_FLOW,yes,yes multiple,yes,trial license gen,optional auth,no,Download.tsx:426
+Estates,L3_PARTIAL_FLOW,yes,yes multiple,yes,listings + auctions,no,no,Estates.tsx:416
+FreeResources,L3_PARTIAL_FLOW,yes,yes GET+DELETE,yes,download + block,no (admin for upload),no,FreeResources.tsx:457
+Home,L3_PARTIAL_FLOW,yes,yes GET,yes,hero slideshow + featured,no,no,Home.tsx:186
+InboxPage,L1_UI_ONLY,yes,no (delegates),no,no,no,no,InboxPage.tsx:16
+InvestmentRadar,L3_PARTIAL_FLOW,yes,yes GET,yes,city scoring + radar,no,no,InvestmentRadar.tsx:473
+JoinFounders,L4_END_TO_END_WIRED,yes,yes POST,yes,registration form,no,no,JoinFounders.tsx:420
+LandingCorporates,L1_UI_ONLY,yes,no,no,no,no,no,LandingCorporates.tsx:147
+LandingOffices,L1_UI_ONLY,yes,no,no,no,no,no,LandingOffices.tsx:202
+LandingProfessionals,L1_UI_ONLY,yes,no,no,no,no,no,LandingProfessionals.tsx:147
+Login,L1_UI_ONLY,yes,no (delegates),no,no,no,no,Login.tsx:117
+MarketHistory,L3_PARTIAL_FLOW,yes,yes GET,yes,charts + PDF,no,no,MarketHistory.tsx:278
+Messages,L1_UI_ONLY,yes,no (delegates),no,no,no,no,Messages.tsx:21
+ModeratorPanel,L4_END_TO_END_WIRED,yes,yes GET+POST,yes,property approval,moderator role,no,ModeratorPanel.tsx:148
+MyCompanies,L3_PARTIAL_FLOW,yes,yes context,yes,company mgmt,token,no,MyCompanies.tsx:123
+MyPropertyRequests,L4_END_TO_END_WIRED,yes,yes GET+POST,yes,request + offer mgmt,token,no,MyPropertyRequests.tsx:189
+MyServiceDashboard,L4_END_TO_END_WIRED,yes,yes CRUD,yes,service CRUD,token,no,MyServiceDashboard.tsx:475
+not-found,L1_UI_ONLY,yes,no,no,no,no,no,not-found.tsx:26
+OfficeDetail,L3_PARTIAL_FLOW,yes,yes GET,yes,office profile,no,no,OfficeDetail.tsx:254
+OfficeRequests,L4_END_TO_END_WIRED,yes,yes multiple,yes,request + offer mgmt,token,no,OfficeRequests.tsx:183
+Offices,L3_PARTIAL_FLOW,yes,yes GET,yes,favorites + compare,no,no,Offices.tsx:384
+OtherServices,L3_PARTIAL_FLOW,yes,yes GET,yes,service listing,no,no,OtherServices.tsx:234
+PartnerDashboard,L4_END_TO_END_WIRED,yes,yes multiple,yes,campaigns + leads + analytics,partner_key,no,PartnerDashboard.tsx:507
+PartnerPortal,L1_UI_ONLY,yes,yes POST (login),no,no,no,no,PartnerPortal.tsx:117
+PaymentReturn,L3_PARTIAL_FLOW,yes,yes GET (verify),yes,payment verification,no,no,PaymentReturn.tsx:95
+Pricing,L3_PARTIAL_FLOW,yes,yes GET,yes,plan listing + promos,no,no,Pricing.tsx:331
+PricingComingSoon,L1_UI_ONLY,yes,no,no,no,no,no,PricingComingSoon.tsx:68
+Privacy,L1_UI_ONLY,yes,no,no,no,no,no,Privacy.tsx:195
+Profile,L3_PARTIAL_FLOW,yes,yes GET,yes,ranks + badges + gallery,no,no,Profile.tsx:960
+ProfilePage,L3_PARTIAL_FLOW,yes,yes GET,yes,alternative profile view,no,no,ProfilePage.tsx:197
+ProjectVerify,L4_END_TO_END_WIRED,yes,yes GET,yes,QR verification chain,no,no,ProjectVerify.tsx:235
+Properties,L4_END_TO_END_WIRED,yes,yes multiple,yes,map + filters + compare + favorites + save_search,no (auth for save),no,Properties.tsx:1732
+PropertyDetail,L4_END_TO_END_WIRED,yes,yes multiple,yes,gallery + map + finance + inquiry,no (auth for actions),no,PropertyDetail.tsx:770
+Register,L4_END_TO_END_WIRED,yes,yes POST,yes,registration form,no,no,Register.tsx:812
+ResetPassword,L3_PARTIAL_FLOW,yes,yes POST,yes,token reset,no,no,ResetPassword.tsx:122
+ServiceDetail,L3_PARTIAL_FLOW,yes,yes GET,yes,service detail,no,no,ServiceDetail.tsx:182
+ServiceHub,L4_END_TO_END_WIRED,yes,yes multiple,yes,artisan hub + bookings + reviews,token,no,ServiceHub.tsx:2530
+ServiceHubPage,L0_IDEA_ONLY,no,no,no,no,no,no,ServiceHubPage.tsx — empty 0-byte file
+Software,L1_UI_ONLY,yes,yes GET,no,product showcase,no,no,Software.tsx:175
+SubmitProperty,L4_END_TO_END_WIRED,yes,yes POST,yes,property creation form,token,no,SubmitProperty.tsx:552
+Subscribe,L4_END_TO_END_WIRED,yes,yes multiple,yes,payment gateway,auth,no,Subscribe.tsx:774
+SupplierDetail,L3_PARTIAL_FLOW,yes,yes GET,yes,supplier profile,no,no,SupplierDetail.tsx:129
+Suppliers,L3_PARTIAL_FLOW,yes,yes GET,yes,marketplace listing,no,no,Suppliers.tsx:230
+TechnicianInbox,L4_END_TO_END_WIRED,yes,yes multiple,yes,real-time job inbox + ringing,token,no,TechnicianInbox.tsx:745
+TechnicianSettings,L3_PARTIAL_FLOW,yes,yes PUT,yes,settings update,token,no,TechnicianSettings.tsx:319
+TenderCreate,L4_END_TO_END_WIRED,yes,yes POST,yes,tender creation form,token,no,TenderCreate.tsx:134
+TenderDetail,L4_END_TO_END_WIRED,yes,yes multiple,yes,bid submission + award,token,no,TenderDetail.tsx:318
+Tenders,L3_PARTIAL_FLOW,yes,yes GET,yes,listing with filters,no (auth for create),no,Tenders.tsx:183
+Terms,L1_UI_ONLY,yes,no,no,no,no,no,Terms.tsx:160
+Tools,L4_END_TO_END_WIRED,yes,yes multiple,yes,coordinate + UTM + area + deed,no (auth for some),no,Tools.tsx:2034
+UpgradeToArtisan,L3_PARTIAL_FLOW,yes,yes GET,yes,account upgrade,token,no,UpgradeToArtisan.tsx:164
+VehicleServices,L4_END_TO_END_WIRED,yes,yes multiple,yes,vehicle service marketplace,no,no,VehicleServices.tsx:1192
+VerifyEmail,L3_PARTIAL_FLOW,yes,yes POST,yes,token verification,no,no,VerifyEmail.tsx:76
+VerifyLicense,L3_PARTIAL_FLOW,yes,yes POST,yes,license validation,no,no,VerifyLicense.tsx:150
+WriteBlog,L4_END_TO_END_WIRED,yes,yes POST,yes,blog creation form,token,no,WriteBlog.tsx:139
+AdminMarketers,L4_END_TO_END_WIRED,yes,yes multiple,yes,marketer approval + ranks,admin role,no,marketer/AdminMarketers.tsx:287
+AdvertiserContracts,L4_END_TO_END_WIRED,yes,yes multiple,yes,contract sign/decline,token,no,marketer/AdvertiserContracts.tsx:120
+AdvertiserProposals,L4_END_TO_END_WIRED,yes,yes multiple,yes,proposal accept/reject,token,no,marketer/AdvertiserProposals.tsx:128
+AvailableProperties,L3_PARTIAL_FLOW,yes,yes GET+POST,yes,property browsing + proposals,token,no,marketer/AvailableProperties.tsx:141
+MarketerContracts,L4_END_TO_END_WIRED,yes,yes multiple,yes,contract management,token,no,marketer/MarketerContracts.tsx:122
+MarketerProfile,L3_PARTIAL_FLOW,yes,yes GET,yes,profile view,token,no,marketer/MarketerProfile.tsx:155
+MarketerProposals,L3_PARTIAL_FLOW,yes,yes GET,yes,proposal tracking,token,no,marketer/MarketerProposals.tsx:84
+MarketerRegister,L4_END_TO_END_WIRED,yes,yes POST,yes,registration + code of conduct,token,no,marketer/MarketerRegister.tsx:222
+SmartLanding,L4_END_TO_END_WIRED,no,yes (analytics POST),no,URL param → geo + analytics,no,no,useSmartLanding.ts:190
+SmartLandingBanner,L4_END_TO_END_WIRED,yes,no,no,category → CTA banner,no,no,SmartLandingBanner.tsx:279
+GeoAdBanner,L4_END_TO_END_WIRED,yes,yes POST (track),no,tier display + tracking,no,no,GeoAdBanner.tsx:135
+UnifiedInbox,L4_END_TO_END_WIRED,yes,no (lib + localStorage),no,4-type inbox + status flow,no,no,UnifiedInbox.tsx:516
+AccountSwitcher,L4_END_TO_END_WIRED,yes,no (context),no,personal↔company switch,no,no,AccountSwitcher.tsx:68
+EliteBadge,L2_DATA_MODEL_ONLY,yes,no,no,2 title values only,no,no,EliteBadge.tsx:53
+InvestmentGauge,L4_END_TO_END_WIRED,yes,no,no,scoring formula (base 50 + mods),no,no,InvestmentGauge.tsx:80
+PropertyFinanceTools,L4_END_TO_END_WIRED,yes,no,no,PMT + flexible + fixed formulas,no,no,PropertyFinanceTools.tsx:255
+MortgageCalculator,L4_END_TO_END_WIRED,yes,no,no,PMT formula (duplicated),no,no,MortgageCalculator.tsx:116
+SaveSearchButton,L4_END_TO_END_WIRED,yes,yes POST,yes,filter cleaning + dialog,no,no,SaveSearchButton.tsx:116
+MapMyDeed,L4_END_TO_END_WIRED,yes,yes (dynamic import),no,OCR → UTM → WGS84 → Leaflet,no,no,MapMyDeed.tsx:595
+ShareButton,L4_END_TO_END_WIRED,yes,no,no,Web Share API + clipboard,no,no,ShareButton.tsx:70
+ShareModal,L4_END_TO_END_WIRED,yes,no,no,4 share channels + clipboard,no,no,ShareModal.tsx:131
+ChatApp,L4_END_TO_END_WIRED,yes,yes (WS via context),no,real-time messaging,no,no,ChatApp (via ChatContext)
+BOQEngine,L4_END_TO_END_WIRED,yes,no,no,BOQ quantities from project config,no,no,BOQEngine.tsx:643
+DrawingEngine,L4_END_TO_END_WIRED,yes,no,no,DXF drawing set generation,no,no,DrawingEngine.tsx:713
+PriceManager,L4_END_TO_END_WIRED,yes,no,no,BOQ × rates + VAT + contingency,no,no,PriceManager.tsx:401
+ConsultantValidationEngine,L4_END_TO_END_WIRED,yes,no,no,5-pillar stamp workflow + hash,no,no,ConsultantValidationEngine.tsx:822
+ClimateGeoEngine,L4_END_TO_END_WIRED,yes,no,no,IBC/SBC/TSE code mapping,no,no,ClimateGeoEngine.tsx:748
+SeismicProtectionEngine,L4_END_TO_END_WIRED,yes,no,no,isolator BOQ + SDC calcs,no,no,SeismicProtectionEngine.tsx:574
+RetailMallEngine,L4_END_TO_END_WIRED,yes,no,no,anchor/egress/BOH calcs,no,no,RetailMallEngine.tsx:789
+MedSpecialtyEngine,L4_END_TO_END_WIRED,yes,no,no,star rating + gas points,no,no,MedSpecialtyEngine.tsx:655
+InstitutionalSovereignEngine,L4_END_TO_END_WIRED,yes,no,no,STC/security/redundancy,no,no,InstitutionalSovereignEngine.tsx:634
+BankingSecurityEngine,L4_END_TO_END_WIRED,yes,no,no,vault/ballistic/seismic calcs,no,no,BankingSecurityEngine.tsx:569
+FireSafetyEngine,L4_END_TO_END_WIRED,yes,no,no,NFPA sprinkler/FD/smoke,no,no,FireSafetyEngine.tsx:483
+AcademicSpecialtyEngine,L4_END_TO_END_WIRED,yes,no,no,ISO 11428 + Sabine RT60,no,no,AcademicSpecialtyEngine.tsx:566
+CADGeometryEngine,L4_END_TO_END_WIRED,yes,no,no,DXF take-off + BOQ delta,no,no,CADGeometryEngine.ts:373
+CADParser,L4_END_TO_END_WIRED,no,no,no,ASCII DXF parsing,no,no,CADParser.ts:268
+BIMViewer,L4_END_TO_END_WIRED,yes,no,no,Three.js 3D from DXF,no,no,BIMViewer.tsx:323
+Building3DVisualizer,L4_END_TO_END_WIRED,yes,no,no,Three.js facade preview,no,no,Building3DVisualizer.tsx:227
+LandGeometryModule,L4_END_TO_END_WIRED,yes,no,no,Shoelace formula area calc,no,no,LandGeometryModule.tsx:541
+MosqueEngine,L4_END_TO_END_WIRED,yes,no,no,Qibla + capacity + acoustics,no,no,MosqueEngine.tsx:374
+K12SchoolEngine,L4_END_TO_END_WIRED,yes,no,no,daylight/capacity/ventilation,no,no,K12SchoolEngine.tsx:339
+IndustrialEngine,L4_END_TO_END_WIRED,yes,no,no,crane/hazmat/floor load,no,no,IndustrialEngine.tsx:356
+HighRiseStructuralEngine,L4_END_TO_END_WIRED,yes,no,no,wind/drift/TMD analysis,no,no,HighRiseStructuralEngine.tsx:394
+LandscapeIrrigationEngine,L4_END_TO_END_WIRED,yes,no,no,PET-based water demand,no,no,LandscapeIrrigationEngine.tsx:354
+GlobalConfiguratorPanel,L4_END_TO_END_WIRED,yes,no,no,style→cost/time delta,no,no,GlobalConfiguratorPanel.tsx:722
+StructuralConfigurator,L4_END_TO_END_WIRED,yes,no,no,load profiles + rebar ratios,no,no,StructuralConfigurator.tsx:327
+MedicalGradeMEPEngine,L4_END_TO_END_WIRED,yes,no,no,ASHRAE 170 + lead shielding,no,no,MedicalGradeMEPEngine.tsx:533
+MEPEngine,L4_END_TO_END_WIRED,yes,no,no,core MEP quantities,no,no,MEPEngine.tsx:281
+ResidentialFloorPlanDXF,L4_END_TO_END_WIRED,no,no,no,floor plan DXF generation,no,no,ResidentialFloorPlanDXF.ts:784
+MEPLayoutEngine,L4_END_TO_END_WIRED,no,no,no,MEP fixture DXF placement,no,no,MEPLayoutEngine.ts:112
+SectionElevationEngine,L4_END_TO_END_WIRED,no,no,no,section/elevation DXF gen,no,no,SectionElevationEngine.ts:199
+DXFWriter,L4_END_TO_END_WIRED,no,no,no,DXF file serialization,no,no,DXFWriter.ts:121
+ContractGenerator,L3_PARTIAL_FLOW,yes,no,no,contract HTML rendering,no,no,ContractGenerator.tsx:460
+ContractPackager,L3_PARTIAL_FLOW,yes,no,no,BOQ split into packages,no,no,ContractPackager.tsx:376
+BilingualPDFContract,L3_PARTIAL_FLOW,yes,no,no,bilingual contract rendering,no,no,BilingualPDFContract.tsx:388
+ConsultantTitleBlockPDF,L3_PARTIAL_FLOW,yes,no,no,title block + QR rendering,no,no,ConsultantTitleBlockPDF.tsx:254
+LayerMapper,L3_PARTIAL_FLOW,yes,no,no,DXF layer mapping UI,no,no,LayerMapper.tsx:315
+CostEstimator,L4_END_TO_END_WIRED,yes,no,no,qty × rate calcs,no,no,CostEstimator.tsx:323
+ProjectEnginePassport,L1_UI_ONLY,yes,no,no,display only,no,no,ProjectEnginePassport.tsx:294
+SovereignEthicsShield,L1_UI_ONLY,yes,no,no,display only,no,no,SovereignEthicsShield.tsx:128
+UserPreferences,L2_DATA_MODEL_ONLY,no,no,no,localStorage prefs,no,no,UserPreferences.ts:182
+landAnalysisService,L4_END_TO_END_WIRED,no,no,no,PDF→OCR→ONNX→coords pipeline,no,no,landAnalysisService.ts:563
+ocrProcessor,L4_END_TO_END_WIRED,no,no,no,Tesseract.js ara+eng,no,no,ocrProcessor.ts:133
+onnxProcessor,L4_END_TO_END_WIRED,no,no,no,ONNX Runtime diagram analysis,no,no,onnxProcessor.ts:136
+dxfExportService,L4_END_TO_END_WIRED,no,no,no,room data → DXF R12 file,no,no,dxfExportService.ts:209
+imagePreprocessor,L4_END_TO_END_WIRED,no,no,no,canvas grayscale/Otsu/deskew,no,no,imagePreprocessor.ts:261
+pdfProcessor,L4_END_TO_END_WIRED,no,no,no,pdfjs-dist text + render,no,no,pdfProcessor.ts:51
+chatAdminService,L4_END_TO_END_WIRED,no,yes,yes,admin chat API wrapper,no,no,chatAdminService.ts:28
+auditService,L2_DATA_MODEL_ONLY,no,no,no,localStorage audit trail,no,no,auditService.ts:50
+ChatContext,L4_END_TO_END_WIRED,yes,yes (WS),no,real-time messaging protocol,no,no,ChatContext.tsx:324
+AuthContext,L4_END_TO_END_WIRED,yes,yes,no,login/register/session,no,no,AuthContext.tsx:204
+GeoContext,L4_END_TO_END_WIRED,no,yes (GPS+IP),no,geolocation chain,no,no,GeoContext.tsx:195
+GeoAdsContext,L4_END_TO_END_WIRED,no,yes (GET+POST),no,geo ad fetching + caching,no,no,GeoAdsContext.tsx:107
+CompanyContext,L4_END_TO_END_WIRED,no,no,no,localStorage company CRUD,no,no,CompanyContext.tsx:111
+LocationContext,L4_END_TO_END_WIRED,no,no,no,country/gov/city state,no,no,LocationContext.tsx:340
+api.ts (mock),L3_PARTIAL_FLOW,no,no,no,in-memory CRUD mock,no,no,api.ts:1170

@@ -1,0 +1,143 @@
+{
+  "probe": {
+    "mode": "BEGIN READ ONLY -> deliberate ROLLBACK",
+    "read_only_enforced": true,
+    "transaction_closed_with": "ROLLBACK (deliberate)",
+    "generated_at_utc": "2026-08-21T19:23:17.455Z",
+    "privacy": "No raw identities or user content emitted. Known hard-coded seed identities are represented by labels + fingerprints only."
+  },
+  "errors": [],
+  "identities": {
+    "seed_customer": {
+      "fingerprint_md5": "d55c8863abb98177063772f2b5382944",
+      "users_rows": "0",
+      "sponsor_access_rows": "1",
+      "service_provider_profiles_user_rows": "0",
+      "service_requests_customer_rows": "5",
+      "service_offers_provider_rows": "0",
+      "service_orders_customer_rows": "1",
+      "service_orders_provider_rows": "0",
+      "service_reviews_reviewer_rows": "1",
+      "service_reviews_reviewee_rows": "1",
+      "service_request_history_actor_rows": "5",
+      "service_job_timeline_actor_rows": "0",
+      "provider_graph": {
+        "category_rows": "0",
+        "document_rows": "0",
+        "portfolio_rows": "0",
+        "match_rows": "0"
+      }
+    },
+    "seed_provider_1": {
+      "fingerprint_md5": "53e26e636e1af754f54b2d31d556c32c",
+      "users_rows": "1",
+      "sponsor_access_rows": "1",
+      "service_provider_profiles_user_rows": "1",
+      "service_requests_customer_rows": "0",
+      "service_offers_provider_rows": "1",
+      "service_orders_customer_rows": "0",
+      "service_orders_provider_rows": "1",
+      "service_reviews_reviewer_rows": "1",
+      "service_reviews_reviewee_rows": "1",
+      "service_request_history_actor_rows": "0",
+      "service_job_timeline_actor_rows": "4",
+      "provider_graph": {
+        "category_rows": "4",
+        "document_rows": "1",
+        "portfolio_rows": "1",
+        "match_rows": "1"
+      }
+    },
+    "seed_provider_2": {
+      "fingerprint_md5": "f1fe021db3c43663208e657524114a7a",
+      "users_rows": "1",
+      "sponsor_access_rows": "1",
+      "service_provider_profiles_user_rows": "1",
+      "service_requests_customer_rows": "0",
+      "service_offers_provider_rows": "0",
+      "service_orders_customer_rows": "0",
+      "service_orders_provider_rows": "0",
+      "service_reviews_reviewer_rows": "0",
+      "service_reviews_reviewee_rows": "0",
+      "service_request_history_actor_rows": "0",
+      "service_job_timeline_actor_rows": "0",
+      "provider_graph": {
+        "category_rows": "4",
+        "document_rows": "1",
+        "portfolio_rows": "1",
+        "match_rows": "1"
+      }
+    },
+    "seed_provider_3": {
+      "fingerprint_md5": "9312923a4d2d6294eabd2fa129217a6d",
+      "users_rows": "0",
+      "sponsor_access_rows": "1",
+      "service_provider_profiles_user_rows": "1",
+      "service_requests_customer_rows": "0",
+      "service_offers_provider_rows": "0",
+      "service_orders_customer_rows": "0",
+      "service_orders_provider_rows": "0",
+      "service_reviews_reviewer_rows": "0",
+      "service_reviews_reviewee_rows": "0",
+      "service_request_history_actor_rows": "0",
+      "service_job_timeline_actor_rows": "0",
+      "provider_graph": {
+        "category_rows": "4",
+        "document_rows": "1",
+        "portfolio_rows": "1",
+        "match_rows": "1"
+      }
+    },
+    "seed_provider_4": {
+      "fingerprint_md5": "cecc7480c6eb71f0f414479c933ceaca",
+      "users_rows": "1",
+      "sponsor_access_rows": "1",
+      "service_provider_profiles_user_rows": "1",
+      "service_requests_customer_rows": "0",
+      "service_offers_provider_rows": "0",
+      "service_orders_customer_rows": "0",
+      "service_orders_provider_rows": "0",
+      "service_reviews_reviewer_rows": "0",
+      "service_reviews_reviewee_rows": "0",
+      "service_request_history_actor_rows": "0",
+      "service_job_timeline_actor_rows": "0",
+      "provider_graph": {
+        "category_rows": "4",
+        "document_rows": "1",
+        "portfolio_rows": "1",
+        "match_rows": "1"
+      }
+    }
+  },
+  "identity_tables": {
+    "users_present": true,
+    "sponsor_access_present": true
+  },
+  "seed_request_shape": {
+    "all_seed_customer_requests": "5",
+    "known_reference_requests": "5",
+    "extra_seed_customer_requests": "0",
+    "first_created_at": "2026-08-07T13:19:08.000Z",
+    "last_created_at": "2026-08-07T13:39:01.000Z"
+  },
+  "known_reference_presence": {
+    "SR-2026-1001": "2",
+    "SR-2026-1002": "1",
+    "SR-2026-1003": "1",
+    "SR-2026-1004": "1"
+  },
+  "services_totals": {
+    "provider_profiles": "4",
+    "requests": "5",
+    "offers": "1",
+    "orders": "1",
+    "reviews": "2",
+    "provider_categories": "16",
+    "provider_documents": "4",
+    "provider_portfolio": "4",
+    "request_answers": "18",
+    "request_matches": "4",
+    "request_status_history": "5",
+    "job_timeline": "4"
+  }
+}

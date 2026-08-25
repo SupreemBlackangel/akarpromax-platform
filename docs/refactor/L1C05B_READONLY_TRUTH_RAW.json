@@ -1,0 +1,3901 @@
+{
+  "probe": {
+    "phase": "L1C-0.5B0",
+    "script_revision": "architect-reviewed-r1",
+    "mode": "BEGIN READ ONLY -> deliberate ROLLBACK",
+    "application_schema": "public",
+    "generated_at_utc": "2026-08-21T18:56:14.259Z",
+    "read_only_enforced": true,
+    "transaction_closed_with": "ROLLBACK (deliberate)",
+    "notes": [
+      "Aggregates only. No email address, outbox payload body, or credential is emitted.",
+      "service_disputes.opened_by_user_id is excluded from the active 22 and reported separately.",
+      "Expected Services application indexes are the exact 42 names from the two canonical runtime schema files; constraint-backed indexes are reported separately."
+    ]
+  },
+  "errors": [],
+  "database_identity": {
+    "current_database": "neondb",
+    "current_schema": "public",
+    "version": "PostgreSQL 18.6 (3484359) on aarch64-unknown-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit",
+    "transaction_read_only": "on",
+    "forward_migrations": {
+      "present": true,
+      "count": 3,
+      "entries": [
+        {
+          "id": "1",
+          "hash": "f6c1570008396645535abb95e8040eaf9614b8fab87295be6b2d6238c40709a4"
+        },
+        {
+          "id": "2",
+          "hash": "f445c364ccd1de7d57b4cfb5bd5eafd5106d7921165599abe235589c259a685e"
+        },
+        {
+          "id": "3",
+          "hash": "0b0aa54623fed30ca5ebedecd50a6a402ca66fb064af725e5f24a5c936a8cc42"
+        }
+      ]
+    }
+  },
+  "users": {
+    "total_users": "36",
+    "users_with_null_email": "0",
+    "max_email_length": 50,
+    "email_length_gt_36": "11",
+    "email_length_gt_255": "0",
+    "normalized_duplicate_email_groups": "0",
+    "rows_in_duplicate_groups": "0"
+  },
+  "services_schema": {
+    "expected_tables": 25,
+    "found_expected_tables": 25,
+    "missing_tables": [],
+    "extra_service_tables": [],
+    "expected_application_indexes": 42,
+    "found_expected_application_indexes": 42,
+    "missing_expected_indexes": [],
+    "extra_nonconstraint_indexes": [],
+    "constraint_backed_indexes": [
+      {
+        "table": "service_bookmarks",
+        "index": "service_bookmarks_pkey"
+      },
+      {
+        "table": "service_categories",
+        "index": "service_categories_pkey"
+      },
+      {
+        "table": "service_disputes",
+        "index": "service_disputes_pkey"
+      },
+      {
+        "table": "service_job_timeline",
+        "index": "service_job_timeline_pkey"
+      },
+      {
+        "table": "service_listings",
+        "index": "service_listings_pkey"
+      },
+      {
+        "table": "service_marketplace_settings",
+        "index": "service_marketplace_settings_pkey"
+      },
+      {
+        "table": "service_message_participants",
+        "index": "service_message_participants_pkey"
+      },
+      {
+        "table": "service_message_threads",
+        "index": "service_message_threads_pkey"
+      },
+      {
+        "table": "service_messages",
+        "index": "service_messages_pkey"
+      },
+      {
+        "table": "service_notifications",
+        "index": "service_notifications_pkey"
+      },
+      {
+        "table": "service_offer_revisions",
+        "index": "service_offer_revisions_pkey"
+      },
+      {
+        "table": "service_offers",
+        "index": "service_offers_pkey"
+      },
+      {
+        "table": "service_orders",
+        "index": "service_orders_pkey"
+      },
+      {
+        "table": "service_outbox_events",
+        "index": "service_outbox_events_pkey"
+      },
+      {
+        "table": "service_provider_categories",
+        "index": "service_provider_categories_pkey"
+      },
+      {
+        "table": "service_provider_documents",
+        "index": "service_provider_documents_pkey"
+      },
+      {
+        "table": "service_provider_portfolio",
+        "index": "service_provider_portfolio_pkey"
+      },
+      {
+        "table": "service_provider_profiles",
+        "index": "service_provider_profiles_pkey"
+      },
+      {
+        "table": "service_reports",
+        "index": "service_reports_pkey"
+      },
+      {
+        "table": "service_request_answers",
+        "index": "service_request_answers_pkey"
+      },
+      {
+        "table": "service_request_attachments",
+        "index": "service_request_attachments_pkey"
+      },
+      {
+        "table": "service_request_matches",
+        "index": "service_request_matches_pkey"
+      },
+      {
+        "table": "service_request_status_history",
+        "index": "service_request_status_history_pkey"
+      },
+      {
+        "table": "service_requests",
+        "index": "service_requests_pkey"
+      },
+      {
+        "table": "service_reviews",
+        "index": "service_reviews_pkey"
+      }
+    ],
+    "physical_index_count_total": 67,
+    "tables": {
+      "service_categories": {
+        "exists": true,
+        "row_count": "48",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "parent_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "country_code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OM'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 128
+          },
+          {
+            "column": "sort_order",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "is_active",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "name_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "name_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "name_tr",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_tr",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "icon",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "image_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "requires_license",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "requires_visit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "price_min",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "price_max",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "dynamic_fields",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_featured",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "booking_mode",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'quotes'::character varying",
+            "max_length": 24
+          },
+          {
+            "column": "badge_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "badge_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          }
+        ]
+      },
+      "service_listings": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "category_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "country_code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 8
+          },
+          {
+            "column": "city_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "district_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "latitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "longitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "title_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "description_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "currency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OMR'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "unit",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'project'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'draft'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "is_featured",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "tags",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "title_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "title_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "title_tr",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description_tr",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "attributes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "media",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "approved_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "published_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_promoted",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "view_count",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          }
+        ]
+      },
+      "service_requests": {
+        "exists": true,
+        "row_count": "5",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "customer_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "category_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "country_code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 8
+          },
+          {
+            "column": "city_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "district_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "latitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "longitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "title_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "description_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "budget_min",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "budget_max",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "currency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OMR'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "preferred_date",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'open'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "title",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "urgency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 16
+          },
+          {
+            "column": "preferred_period",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "needs_visit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "access_notes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "short_address",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "pricing_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'fixed'::character varying",
+            "max_length": 16
+          },
+          {
+            "column": "reference_number",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "answers",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "published_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "matched_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "contact_phone",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "contact_email",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "contact_preference",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'chat'::character varying",
+            "max_length": 16
+          }
+        ]
+      },
+      "service_offers": {
+        "exists": true,
+        "row_count": "1",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "listing_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "currency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OMR'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "duration_days",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "message_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'sent'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "materials_included",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "material_cost",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "labor_cost",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "visit_fee",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "tax_amount",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "total_price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "duration_text",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "nearest_date",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "offer_notes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "terms",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "valid_until",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "needs_visit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "revision_of",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          }
+        ]
+      },
+      "service_orders": {
+        "exists": true,
+        "row_count": "1",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "offer_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "customer_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "currency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OMR'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'created'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "accepted_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "started_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "completed_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "cancelled_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_messages": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "thread_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 16
+          },
+          {
+            "column": "thread_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "sender_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "body",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_system",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "is_read",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "read_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          }
+        ]
+      },
+      "service_reviews": {
+        "exists": true,
+        "row_count": "2",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "order_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "reviewer_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "reviewee_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "rating",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "comment",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "quality_rating",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "punctuality_rating",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "communication_rating",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "value_rating",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "recommend",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_hidden",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "hidden_reason",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          }
+        ]
+      },
+      "service_disputes": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "order_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "opened_by_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "reason",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "description",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'open'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "resolution_note",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "opened_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "resolved_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_bookmarks": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "listing_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_provider_profiles": {
+        "exists": true,
+        "row_count": "4",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "display_name_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "display_name_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "bio_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "bio_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "logo_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "cover_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "phone",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "whatsapp",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "email",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "website",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "country_code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OM'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "city_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "district_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "governorate",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "latitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "longitude",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "service_radius_km",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": false,
+            "default": "50",
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'draft'::character varying",
+            "max_length": 24
+          },
+          {
+            "column": "verified_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "approved_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "suspended_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "rejection_reason",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "rating_avg",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "rating_count",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "jobs_completed",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "completion_rate",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": false,
+            "default": "100",
+            "max_length": null
+          },
+          {
+            "column": "response_rate",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": false,
+            "default": "100",
+            "max_length": null
+          },
+          {
+            "column": "avg_response_time_min",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "licenses_text",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "insurance_text",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "founded_year",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "team_size",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_business",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "business_name",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "tax_number",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "commercial_registration",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "is_featured",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "featured_rank",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "is_accepting_requests",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          }
+        ]
+      },
+      "service_provider_categories": {
+        "exists": true,
+        "row_count": "16",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "category_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "price_from",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "price_to",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "pricing_unit",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "min_duration_min",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "notes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_active",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_provider_documents": {
+        "exists": true,
+        "row_count": "4",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'other'::character varying",
+            "max_length": 32
+          },
+          {
+            "column": "file_name",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "file_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "file_size",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "mime_type",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "notes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "verified",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "verified_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "verified_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "uploaded_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_provider_portfolio": {
+        "exists": true,
+        "row_count": "4",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "category_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "city_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 100
+          },
+          {
+            "column": "title",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "description",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "image_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "before_image_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "after_image_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "video_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "year",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "tags",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "is_featured",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'active'::character varying",
+            "max_length": 16
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_request_answers": {
+        "exists": true,
+        "row_count": "18",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "field_key",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "field_label",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "field_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 24
+          },
+          {
+            "column": "value",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_request_attachments": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "file_name",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "file_url",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "file_size",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "mime_type",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "uploaded_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_request_matches": {
+        "exists": true,
+        "row_count": "4",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "score",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "distance_km",
+            "type": "real",
+            "udt_name": "float4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "category_match",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "rating_bonus",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "urgency_bonus",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "budget_fit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "is_contacted",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "contacted_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "provider_ignored",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_request_status_history": {
+        "exists": true,
+        "row_count": "5",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "from_status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "to_status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "note",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "changed_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_offer_revisions": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "offer_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "revision_number",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "request_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "provider_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "currency",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OMR'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "total_price",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "duration_text",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "material_cost",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "labor_cost",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "visit_fee",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "tax_amount",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "materials_included",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "nearest_date",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "offer_notes",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "terms",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "needs_visit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "reason",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_job_timeline": {
+        "exists": true,
+        "row_count": "4",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "order_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "event",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "actor_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "from_status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "to_status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "note",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_reports": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "target_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "target_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "reporter_user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "reason",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "description",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'open'::character varying",
+            "max_length": 24
+          },
+          {
+            "column": "resolution_note",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "resolved_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "resolved_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_notifications": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 48
+          },
+          {
+            "column": "title",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "body",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "link",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "entity_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "entity_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "is_read",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "read_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_message_threads": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "thread_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "thread_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "title",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "context_link",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_message_participants": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "thread_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "thread_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "user_id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "role",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 32
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      },
+      "service_outbox_events": {
+        "exists": true,
+        "row_count": "0",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "event_type",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 64
+          },
+          {
+            "column": "payload",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "status",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'pending'::character varying",
+            "max_length": 24
+          },
+          {
+            "column": "attempts",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "0",
+            "max_length": null
+          },
+          {
+            "column": "error",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "processed_at",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          }
+        ]
+      },
+      "service_marketplace_settings": {
+        "exists": true,
+        "row_count": "1",
+        "columns": [
+          {
+            "column": "id",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": null,
+            "max_length": 36
+          },
+          {
+            "column": "country_code",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": false,
+            "default": "'OM'::character varying",
+            "max_length": 8
+          },
+          {
+            "column": "hero_kicker_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "hero_kicker_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "hero_title_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "hero_title_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "hero_description_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "hero_description_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "primary_cta_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "primary_cta_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "primary_cta_href",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": "'/service-requests/new'::text",
+            "max_length": null
+          },
+          {
+            "column": "secondary_cta_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "secondary_cta_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "secondary_cta_href",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": false,
+            "default": "'/providers/apply'::text",
+            "max_length": null
+          },
+          {
+            "column": "announcement_ar",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "announcement_en",
+            "type": "text",
+            "udt_name": "text",
+            "nullable": true,
+            "default": null,
+            "max_length": null
+          },
+          {
+            "column": "show_categories",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "show_featured_providers",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "show_latest_requests",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "show_how_it_works",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "show_trust_bar",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "featured_category_limit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "12",
+            "max_length": null
+          },
+          {
+            "column": "featured_provider_limit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "6",
+            "max_length": null
+          },
+          {
+            "column": "latest_request_limit",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "6",
+            "max_length": null
+          },
+          {
+            "column": "allow_public_requests",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "allow_provider_registration",
+            "type": "integer",
+            "udt_name": "int4",
+            "nullable": false,
+            "default": "1",
+            "max_length": null
+          },
+          {
+            "column": "updated_by",
+            "type": "character varying",
+            "udt_name": "varchar",
+            "nullable": true,
+            "default": null,
+            "max_length": 255
+          },
+          {
+            "column": "created_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          },
+          {
+            "column": "updated_at",
+            "type": "timestamp without time zone",
+            "udt_name": "timestamp",
+            "nullable": false,
+            "default": "CURRENT_TIMESTAMP",
+            "max_length": null
+          }
+        ]
+      }
+    }
+  },
+  "ownership_active_22": [
+    {
+      "table": "service_provider_profiles",
+      "column": "user_id",
+      "exists": true,
+      "total_rows": "4",
+      "non_null_rows": "4",
+      "distinct_values": "4",
+      "max_value_length": 30,
+      "email_like_count": "4",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "3",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "3",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "1",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_requests",
+      "column": "customer_user_id",
+      "exists": true,
+      "total_rows": "5",
+      "non_null_rows": "5",
+      "distinct_values": "1",
+      "max_value_length": 29,
+      "email_like_count": "5",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "5",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_listings",
+      "column": "provider_user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_offers",
+      "column": "provider_user_id",
+      "exists": true,
+      "total_rows": "1",
+      "non_null_rows": "1",
+      "distinct_values": "1",
+      "max_value_length": 30,
+      "email_like_count": "1",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "1",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "1",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_offer_revisions",
+      "column": "provider_user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_offer_revisions",
+      "column": "created_by",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_orders",
+      "column": "customer_user_id",
+      "exists": true,
+      "total_rows": "1",
+      "non_null_rows": "1",
+      "distinct_values": "1",
+      "max_value_length": 29,
+      "email_like_count": "1",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "1",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_orders",
+      "column": "provider_user_id",
+      "exists": true,
+      "total_rows": "1",
+      "non_null_rows": "1",
+      "distinct_values": "1",
+      "max_value_length": 30,
+      "email_like_count": "1",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "1",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "1",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_job_timeline",
+      "column": "actor_user_id",
+      "exists": true,
+      "total_rows": "4",
+      "non_null_rows": "4",
+      "distinct_values": "1",
+      "max_value_length": 30,
+      "email_like_count": "4",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "1",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "1",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_messages",
+      "column": "sender_user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_message_participants",
+      "column": "user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_reviews",
+      "column": "reviewer_user_id",
+      "exists": true,
+      "total_rows": "2",
+      "non_null_rows": "2",
+      "distinct_values": "2",
+      "max_value_length": 30,
+      "email_like_count": "2",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "1",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "1",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "1",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_reviews",
+      "column": "reviewee_user_id",
+      "exists": true,
+      "total_rows": "2",
+      "non_null_rows": "2",
+      "distinct_values": "2",
+      "max_value_length": 30,
+      "email_like_count": "2",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "1",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "1",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "1",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_notifications",
+      "column": "user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_reports",
+      "column": "reporter_user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_reports",
+      "column": "resolved_by",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_request_attachments",
+      "column": "uploaded_by",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_request_status_history",
+      "column": "changed_by",
+      "exists": true,
+      "total_rows": "5",
+      "non_null_rows": "5",
+      "distinct_values": "1",
+      "max_value_length": 29,
+      "email_like_count": "5",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "1",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "5",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_provider_documents",
+      "column": "uploaded_by",
+      "exists": true,
+      "total_rows": "4",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_provider_documents",
+      "column": "verified_by",
+      "exists": true,
+      "total_rows": "4",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_bookmarks",
+      "column": "user_id",
+      "exists": true,
+      "total_rows": "0",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    },
+    {
+      "table": "service_marketplace_settings",
+      "column": "updated_by",
+      "exists": true,
+      "total_rows": "1",
+      "non_null_rows": "0",
+      "distinct_values": "0",
+      "max_value_length": 0,
+      "email_like_count": "0",
+      "uuid_like_count": "0",
+      "resolvable_by_email": "0",
+      "resolvable_by_uuid": "0",
+      "resolvable_to_exactly_one_user": "0",
+      "unresolved_count": "0",
+      "ambiguous_identity_count": "0",
+      "ambiguous_normalized_email_count": "0",
+      "unresolved_rows": "0",
+      "note": "Resolver accepts either normalized legacy email or an already-UUID users.id value; no raw identity values are emitted."
+    }
+  ],
+  "service_disputes_legacy": {
+    "excluded_from_m1": true,
+    "row_count": "0",
+    "opened_by_user_id_max_length": 0,
+    "unresolved_count": "0",
+    "status_distribution": {}
+  },
+  "currency": {
+    "canonical_currencies_table_present": true,
+    "tables": {
+      "service_requests": {
+        "exists": true,
+        "nullable": false,
+        "default": "'OMR'::character varying",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "character_maximum_length": 8,
+        "row_count": "5",
+        "null_currency_count": "0",
+        "unsupported_currency_count": "0",
+        "distribution": {
+          "OMR": "5"
+        }
+      },
+      "service_listings": {
+        "exists": true,
+        "nullable": false,
+        "default": "'OMR'::character varying",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "character_maximum_length": 8,
+        "row_count": "0",
+        "null_currency_count": "0",
+        "unsupported_currency_count": "0",
+        "distribution": {}
+      },
+      "service_offers": {
+        "exists": true,
+        "nullable": false,
+        "default": "'OMR'::character varying",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "character_maximum_length": 8,
+        "row_count": "1",
+        "null_currency_count": "0",
+        "unsupported_currency_count": "0",
+        "distribution": {
+          "OMR": "1"
+        }
+      },
+      "service_orders": {
+        "exists": true,
+        "nullable": false,
+        "default": "'OMR'::character varying",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "character_maximum_length": 8,
+        "row_count": "1",
+        "null_currency_count": "0",
+        "unsupported_currency_count": "0",
+        "distribution": {
+          "OMR": "1"
+        }
+      },
+      "service_offer_revisions": {
+        "exists": true,
+        "nullable": false,
+        "default": "'OMR'::character varying",
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "character_maximum_length": 8,
+        "row_count": "0",
+        "null_currency_count": "0",
+        "unsupported_currency_count": "0",
+        "distribution": {}
+      }
+    },
+    "total_currency_rows": "25",
+    "active_currency_rows": "25",
+    "inactive_currency_rows": "0",
+    "service_requests_budget_matrix": {
+      "no_budget_with_currency_count": "0",
+      "no_budget_without_currency_count": "0",
+      "budget_with_currency_count": "5",
+      "budget_without_currency_count": "0"
+    }
+  },
+  "outbox": {
+    "exists": true,
+    "total": "0",
+    "max_attempts": 0,
+    "events_with_provider_user_id": "0",
+    "provider_user_id_email_like": "0",
+    "provider_user_id_uuid_like": "0",
+    "count_by_status": {},
+    "pending_count": 0,
+    "processed_count": 0,
+    "failed_count": 0,
+    "note": "Payload contents are not emitted; providerUserId is inspected only inside aggregate SQL expressions."
+  },
+  "identity_rekey_risk": {
+    "in_scope_columns": 22,
+    "total_ownership_rows": 25,
+    "total_distinct_values": 14,
+    "total_unresolved_rows": 14,
+    "columns_with_unresolved_values": [
+      "service_provider_profiles.user_id",
+      "service_requests.customer_user_id",
+      "service_orders.customer_user_id",
+      "service_reviews.reviewer_user_id",
+      "service_reviews.reviewee_user_id",
+      "service_request_status_history.changed_by"
+    ],
+    "columns_with_ambiguous_values": [],
+    "columns_with_existing_uuid_values": [],
+    "max_value_length_across_columns": 30,
+    "any_value_longer_than_36": false
+  }
+}

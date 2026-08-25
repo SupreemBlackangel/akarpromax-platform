@@ -1,0 +1,18 @@
+Domain,Total,PRESERVED,IMPROVED,REGRESSED,LOST,BROKEN,NOT_WIRED,INTENTIONALLY_DEFERRED,V1_STUB,NEEDS_RUNTIME_PROOF,Launch_Blockers,Proven_Parity_Percent,Status
+Identity,17,0,1,0,0,0,0,0,1,15,2,6.2,OPEN
+Authorization,8,0,0,0,0,0,0,0,0,8,2,0.0,OPEN
+Ads,9,0,2,0,0,1,0,0,0,6,0,22.2,OPEN
+Chat,11,0,0,1,1,0,0,0,0,9,1,0.0,OPEN
+Properties,11,1,0,0,0,0,0,0,0,10,1,9.1,OPEN
+Services,26,0,0,3,1,0,0,0,1,21,1,0.0,OPEN
+Organizations,10,0,0,0,0,0,0,0,0,10,0,0.0,OPEN
+Auctions,15,0,1,0,4,0,0,0,0,10,1,6.7,OPEN
+Matching,4,0,0,0,4,0,0,0,0,0,0,0.0,OPEN
+Membership,7,0,0,1,2,0,0,0,0,4,0,0.0,OPEN
+Tools,14,0,0,3,0,0,0,0,0,11,0,0.0,OPEN
+Notifications,3,0,0,1,0,0,0,0,0,2,0,0.0,OPEN
+Office Integration,8,0,0,0,0,0,0,0,0,8,2,0.0,OPEN
+Admin,18,0,0,0,1,0,0,0,0,17,1,0.0,OPEN
+Geography,8,0,1,1,0,0,0,0,0,6,0,12.5,OPEN
+Localization,1,0,0,0,0,0,0,0,0,1,0,0.0,OPEN
+UX,60,0,1,0,5,0,0,0,1,53,0,1.7,OPEN
