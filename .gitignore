@@ -156,7 +156,7 @@ ps-test-after.txt
 output.txt
 low_memory_build.py
 lint-output.txt
-l1c05b0-readonly-truth-reviewed.mjs
+/l1c05b0-readonly-truth-reviewed.mjs
 fix_typescript_errors.py
 fix_hero_selectors.py
 final_tsfix.py
