@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -60,10 +60,10 @@ export default function ReviewsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="reviews">
         <div className="flex items-center gap-2 mb-4">
-          <button onClick={() => setTab("received")} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "received" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
+          <button onClick={() => setTab("received")} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "received" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
             {t("services.reviewsReceived") ?? "التقييمات المستلمة"} ({received.length})
           </button>
-          <button onClick={() => setTab("given")} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "given" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
+          <button onClick={() => setTab("given")} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === "given" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
             {t("services.reviewsGiven") ?? "التقييمات المرسلة"} ({given.length})
           </button>
         </div>
@@ -75,15 +75,15 @@ export default function ReviewsPage() {
         ) : (
           <div className="space-y-3">
             {list.map((review) => (
-              <div key={review.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+              <div key={review.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <RatingStars value={review.rating} count={null} locale={locale} />
                   <span className="text-xs text-gray-400">{formatDate(review.created_at)}</span>
                 </div>
                 {review.comment && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{review.comment}</p>}
                 <div className="mt-3 flex items-center justify-between">
-                  {Boolean(review.recommend) && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓ يوصي به</span>}
-                  <Link href={`/dashboard/services/jobs/${review.order_id}`} className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                  {Boolean(review.recommend) && <span className="text-xs text-[var(--color-success)] dark:text-[var(--color-success)]">✓ يوصي به</span>}
+                  <Link href={`/dashboard/services/jobs/${review.order_id}`} className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
                     المهمة #{String(review.order_id).slice(0, 8)} ←
                   </Link>
                 </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import OfficeWorkspaceShell from "@/src/components/office/OfficeWorkspaceShell";
@@ -52,8 +52,8 @@ export default function OfficeRadarPage() {
   return (
     <OfficeWorkspaceShell activeTab="radar">
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-white">مسح الرادار الجغرافي</h2>
+        <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">مسح الرادار الجغرافي</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             يبحث عن العقارات ومزودي الخدمات ضمن نصف قطر (حتى 100 كم) باستخدام مسافة هافرساين.
           </p>
@@ -79,14 +79,14 @@ export default function OfficeRadarPage() {
               </select>
             </label>
           </div>
-          <button type="button" onClick={() => void scan()} className="mt-4 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white hover:bg-blue-700">
+          <button type="button" onClick={() => void scan()} className="mt-4 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-black text-white hover:bg-[var(--color-primary-hover)]">
             تنفيذ المسح
           </button>
           {error && <p className="mt-3 text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-white">سجل عمليات المسح</h2>
+        <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">سجل عمليات المسح</h2>
           {loading ? (
             <p className="py-8 text-center text-sm text-gray-500">جارٍ التحميل…</p>
           ) : queries.length === 0 ? (
@@ -109,8 +109,8 @@ export default function OfficeRadarPage() {
       </div>
 
       {result && (
-        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-white">
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">
             النتائج — {result.targets.length} نتيجة (استعلام {result.queryId.slice(0, 8)})
           </h2>
           {result.targets.length === 0 ? (
@@ -125,7 +125,7 @@ export default function OfficeRadarPage() {
                       {String(target.kind)} · {String(target.cityId || target.countryCode)} · {Number(target.distanceKm).toFixed(1)}كم
                     </p>
                   </div>
-                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-black text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">
                     {Number(target.distanceKm).toFixed(1)} كم
                   </span>
                 </li>

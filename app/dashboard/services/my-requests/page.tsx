@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -41,8 +41,8 @@ export default function MyRequestsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="my-requests">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-white">{t("services.myRequests") ?? "طلباتي"}</h2>
-          <Link href="/service-requests/new" className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">➕ {t("services.postRequest") ?? "طلب جديد"}</Link>
+          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.myRequests") ?? "طلباتي"}</h2>
+          <Link href="/service-requests/new" className="px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">➕ {t("services.postRequest") ?? "طلب جديد"}</Link>
         </div>
 
         {loading ? (
@@ -52,10 +52,10 @@ export default function MyRequestsPage() {
         ) : (
           <div className="space-y-3">
             {requests.map((request) => (
-              <div key={request.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+              <div key={request.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                       {request.title || request.reference_number}
                     </Link>
                     <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {formatDate(request.created_at)}</p>
@@ -63,14 +63,14 @@ export default function MyRequestsPage() {
                   <RequestStatusPill status={request.status} locale={locale} />
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
+                  <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
                   <div className="flex gap-2">
                     {request.status === "draft" && (
                       <button
                         onClick={() => {
                           void apiFetch(`/api/service-requests/${request.id}/publish`, { method: "POST" }).then(() => window.location.reload());
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition"
                       >
                         {t("services.publish") ?? "نشر"}
                       </button>

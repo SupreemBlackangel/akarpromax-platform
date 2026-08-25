@@ -1,18 +1,26 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
-import { ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
+import { ProviderCard, RequestCard, ServiceCategoryIcon, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
 import { apiFetch, nameFor } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 
-type Props = { code: string };
-
-export default function CategoryDetailPage({ code }: Props) {
-  const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+export default function CategoryDetailPage() {
+  const params = useParams<{ code: string }>();
+  const code = decodeURIComponent(params.code ?? "");
+  const {
+    locale, viewer, t: rawT, dir, country, city, governorate, district,
+    latitude, longitude, isGlobal, openLogin, handleLogout, AccountDialog, copy,
+  } = useServicesPage();
+  const t = (key: string): string | undefined => {
+    const value = rawT(key);
+    return value && value !== key ? value : undefined;
+  };
   const [category, setCategory] = useState<CategoryRow | null>(null);
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
@@ -22,17 +30,41 @@ export default function CategoryDetailPage({ code }: Props) {
     const controller = new AbortController();
     (async () => {
       try {
-        const categoriesData = await apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM");
+        const categorySuffix = !isGlobal && country ? `?country=${encodeURIComponent(country)}` : "";
+        const categoriesData = await apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${categorySuffix}`);
         if (controller.signal.aborted) return;
         const found = (categoriesData.categories ?? []).find((c) => c.code === code) ?? null;
         setCategory(found);
         if (found) {
+          const providerParams = new URLSearchParams({
+            categoryId: found.id,
+            limit: "50",
+            scope: isGlobal ? "global" : "local",
+          });
+          if (!isGlobal) {
+            providerParams.set("country", country);
+            if (governorate) providerParams.set("governorate", governorate);
+            if (city) providerParams.set("cityId", city);
+            if (district) providerParams.set("districtId", district);
+            if (latitude != null && longitude != null) {
+              providerParams.set("latitude", String(latitude));
+              providerParams.set("longitude", String(longitude));
+              providerParams.set("radiusKm", "10");
+            }
+          }
+          const requestParams = new URLSearchParams({ categoryId: found.id, status: "published", limit: "20", scope: isGlobal ? "global" : "local" });
+          if (!isGlobal) {
+            requestParams.set("country", country);
+            if (governorate) requestParams.set("governorate", governorate);
+            if (city) requestParams.set("cityId", city);
+            if (district) requestParams.set("districtId", district);
+          }
           const [providersData, requestsData] = await Promise.all([
-            apiFetch<{ providers: ProviderRow[] }>(`/api/service-providers?categoryId=${encodeURIComponent(found.id)}&status=approved&limit=50`),
-            apiFetch<{ requests: RequestRow[] }>(`/api/service-requests?categoryId=${encodeURIComponent(found.id)}&status=published&limit=20`),
+            apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?${providerParams.toString()}`),
+            apiFetch<{ requests: RequestRow[] }>(`/api/service-requests?${requestParams.toString()}`),
           ]);
           if (controller.signal.aborted) return;
-          setProviders(providersData.providers ?? []);
+          setProviders(providersData.profiles ?? []);
           setRequests(requestsData.requests ?? []);
         }
       } catch {
@@ -42,7 +74,7 @@ export default function CategoryDetailPage({ code }: Props) {
       }
     })();
     return () => controller.abort();
-  }, [code]);
+  }, [city, code, country, district, governorate, isGlobal, latitude, longitude]);
 
   const name = category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, code) : code;
   const description = category ? nameFor(locale, category.description_ar, category.description_en, category.description_tr, "") : "";
@@ -61,9 +93,9 @@ export default function CategoryDetailPage({ code }: Props) {
     >
       <PageContainer dir={dir} className="py-8">
         <div className="mb-6">
-          <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "دليل الخدمات"}</Link>
+          <Link href="/services/catalog" className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">← {t("services.back") ?? "دليل الخدمات"}</Link>
           <div className="mt-3 flex items-center gap-4">
-            <span className="h-16 w-16 grid place-items-center rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-4xl">{category?.icon ?? "🛠"}</span>
+            <span className="h-16 w-16 grid place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-blue-900/30 dark:text-[var(--color-primary)]"><ServiceCategoryIcon name={category?.icon} className="h-8 w-8" /></span>
             <div>
               <h1 className="text-3xl font-black text-gray-900 dark:text-white">{name}</h1>
               {description && <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">{description}</p>}
@@ -71,17 +103,18 @@ export default function CategoryDetailPage({ code }: Props) {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-5 mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="rounded-2xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-5 mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="text-sm text-gray-600 dark:text-gray-300">
             {loading
               ? "جارٍ التحميل..."
               : category
-                ? `${providers.length} ${t("services.providers")} • ${requests.length} ${t("services.requests")}`
-                : t("services.empty")}
+                ? `${providers.length} ${t("services.providers") ?? "محترف"} • ${requests.length} ${t("services.requests") ?? "طلب"}`
+                : t("services.empty") ?? "لا توجد نتائج"}
           </div>
-          <Link href="/service-requests/new" className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
-            ➕ {t("services.postRequest") ?? "انشر طلباً في هذا التصنيف"}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {(category?.booking_mode === "instant" || category?.booking_mode === "both") && <Link href={`/providers?categoryId=${encodeURIComponent(category.id)}`} className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-bold transition">احجز مع محترف</Link>}
+            {(category?.booking_mode === "quotes" || category?.booking_mode === "both" || !category) && <Link href={`/service-requests/new?category=${encodeURIComponent(category?.id ?? "")}`} className="px-5 py-2.5 rounded-xl border border-[var(--color-border)] text-[var(--color-primary)] text-sm font-bold transition">➕ {t("services.postRequest") ?? "انشر طلباً في هذا التصنيف"}</Link>}
+          </div>
         </div>
 
         <section>
@@ -89,7 +122,7 @@ export default function CategoryDetailPage({ code }: Props) {
           <Grid columns={3}>
             {providers.map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
             {!loading && providers.length === 0 && (
-              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty")}</p>
+              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty") ?? "لا توجد نتائج"}</p>
             )}
           </Grid>
         </section>
@@ -99,7 +132,7 @@ export default function CategoryDetailPage({ code }: Props) {
           <Grid columns={3}>
             {requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
             {!loading && requests.length === 0 && (
-              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty")}</p>
+              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty") ?? "لا توجد نتائج"}</p>
             )}
           </Grid>
         </section>

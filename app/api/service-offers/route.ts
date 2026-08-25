@@ -4,6 +4,7 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { createOfferFull, listOffersForParticipant } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +45,17 @@ export async function POST(request: NextRequest) {
   if (!requestId) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const currency = resolveCurrencyCode(body.currency);
+  if (!currency.ok) {
+    return NextResponse.json({ error: currency.error }, { status: 400 });
+  }
   try {
     const id = await createOfferFull(
       {
         requestId,
         providerUserId: identity.email,
         price: cleanNumber(body.price),
-        currency: clean(body.currency, 8) || "OMR",
+        currency: currency.code,
         durationDays: cleanNumber(body.durationDays),
         materialsIncluded: body.materialsIncluded === true,
         materialCost: cleanNumber(body.materialCost),
@@ -75,6 +80,8 @@ export async function POST(request: NextRequest) {
       if (message === "REQUEST_NOT_FOUND") return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_FOUND }, { status: 404 });
       if (message === "REQUEST_NOT_OPEN") return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_OPEN }, { status: 400 });
       if (message === "PROVIDER_PROFILE_REQUIRED" || message === "PROVIDER_NOT_APPROVED") return NextResponse.json({ error: "provider_profile_required" }, { status: 403 });
+      if (message === "SELF_OFFER_NOT_ALLOWED") return NextResponse.json({ error: SERVICE_ERROR_CODES.SELF_OFFER_NOT_ALLOWED }, { status: 403 });
+      if (message === "PROVIDER_NOT_ELIGIBLE") return NextResponse.json({ error: SERVICE_ERROR_CODES.PROVIDER_NOT_ELIGIBLE }, { status: 403 });
       if (message === "OFFER_ALREADY_EXISTS") return NextResponse.json({ error: SERVICE_ERROR_CODES.OFFER_ALREADY_EXISTS }, { status: 409 });
     }
     throw error;

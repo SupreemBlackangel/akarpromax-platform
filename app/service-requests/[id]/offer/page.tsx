@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { apiFetch, formatMoney, nameFor } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
+import { CURRENCY_REGISTRY } from "@/lib/market/currency-registry";
 
 type Props = { id: string };
 
@@ -17,7 +18,10 @@ export default function NewOfferPage({ id }: Props) {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
   const [request, setRequest] = useState<RequestRow | null>(null);
   const [price, setPrice] = useState("");
-  const [currency, setCurrency] = useState("OMR");
+  // CURRENCY POLICY: no preselection and no platform default. The provider
+  // chooses from the canonical registry; the amount and its currency travel
+  // together. No FX, no country inference.
+  const [currency, setCurrency] = useState("");
   const [durationText, setDurationText] = useState("");
   const [materialsIncluded, setMaterialsIncluded] = useState(false);
   const [materialCost, setMaterialCost] = useState("");
@@ -68,6 +72,10 @@ export default function NewOfferPage({ id }: Props) {
       setError(t("services.offerPriceRequired") ?? "أدخل سعراً صحيحاً");
       return;
     }
+    if (!currency) {
+      setError(t("services.offerCurrencyRequired") ?? "اختر العملة");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -97,7 +105,7 @@ export default function NewOfferPage({ id }: Props) {
   };
 
   const inputCls =
-    "w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400";
+    "w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-gray-400";
   const labelCls = "block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1";
 
   return (
@@ -112,7 +120,7 @@ export default function NewOfferPage({ id }: Props) {
       onLogout={handleLogout}
     >
       <PageContainer dir={dir} className="py-8">
-        <Link href={`/service-requests/${id}`} className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للطلب"}</Link>
+        <Link href={`/service-requests/${id}`} className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للطلب"}</Link>
         <h1 className="mt-3 text-3xl font-black text-gray-900 dark:text-white">{t("services.makeOffer") ?? "تقديم عرض"}</h1>
 
         {loading ? (
@@ -120,12 +128,12 @@ export default function NewOfferPage({ id }: Props) {
         ) : !request ? (
           <p className="mt-6 text-gray-500 dark:text-gray-400">{t("services.empty")}</p>
         ) : !isOpen ? (
-          <div className="mt-6 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-amber-700 dark:text-amber-300">
+          <div className="mt-6 rounded-xl bg-[var(--accent-soft)] dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-[var(--accent)] dark:text-[var(--accent)]">
             {t("services.requestClosed") ?? "هذا الطلب لم يعد متاحاً لاستقبال العروض."}
           </div>
         ) : (
           <>
-            <div className="mt-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+            <div className="mt-5 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="font-bold text-gray-900 dark:text-white">{request.title || request.reference_number}</h2>
                 <RequestStatusPill status={request.status} locale={locale} />
@@ -133,26 +141,28 @@ export default function NewOfferPage({ id }: Props) {
               <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {request.category ? nameFor(locale, (request.category as Record<string, unknown>).name_ar, (request.category as Record<string, unknown>).name_en, (request.category as Record<string, unknown>).name_tr, "") : ""}</p>
               {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-3">{request.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                <span className="px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
-                {request.urgency && <span className="px-3 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">إلحاح: {request.urgency}</span>}
+                <span className="px-3 py-1 rounded-lg bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300 font-bold">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
+                {request.urgency && <span className="px-3 py-1 rounded-lg bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]">إلحاح: {request.urgency}</span>}
               </div>
             </div>
 
-            {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+            {error && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
-            <div className="mt-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 space-y-5">
+            <div className="mt-5 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 space-y-5">
               <Grid columns={2}>
                 <div>
-                  <label className={labelCls}>{t("services.offerPrice") ?? "السعر (ر.ع)"} *</label>
+                  <label className={labelCls}>{t("services.offerPrice") ?? "السعر"} *</label>
                   <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>{t("services.currency") ?? "العملة"}</label>
-                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}>
-                    <option value="OMR">OMR</option>
-                    <option value="SAR">SAR</option>
-                    <option value="AED">AED</option>
-                    <option value="USD">USD</option>
+                  <label className={labelCls}>{t("services.currency") ?? "العملة"} *</label>
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls} required>
+                    <option value="" disabled>{t("services.currencySelect") ?? "اختر العملة"}</option>
+                    {CURRENCY_REGISTRY.map((entry) => (
+                      <option key={entry.code} value={entry.code}>
+                        {`${entry.code} — ${locale === "en" ? entry.nameEn : locale === "tr" ? entry.nameTr : entry.nameAr}`}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -177,11 +187,11 @@ export default function NewOfferPage({ id }: Props) {
                 </div>
                 <div className="flex flex-col justify-end gap-2 pb-1">
                   <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                    <input type="checkbox" checked={materialsIncluded} onChange={(e) => setMaterialsIncluded(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input type="checkbox" checked={materialsIncluded} onChange={(e) => setMaterialsIncluded(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                     {t("services.materialsIncluded") ?? "المواد متضمنة في السعر"}
                   </label>
                   <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                    <input type="checkbox" checked={needsVisit} onChange={(e) => setNeedsVisit(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input type="checkbox" checked={needsVisit} onChange={(e) => setNeedsVisit(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                     {t("services.visitRequired") ?? "يتطلب معاينة أولاً"}
                   </label>
                 </div>

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Gavel, Clock, ChevronRight } from 'lucide-react';
@@ -57,14 +57,14 @@ export default function AuctionsPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       active: 'bg-green-100 text-green-700',
-      pending_seller_terms: 'bg-amber-100 text-amber-700',
+      pending_seller_terms: 'bg-amber-100 text-[var(--accent)]',
       awaiting_seller_decision: 'bg-orange-100 text-orange-700',
-      awarded: 'bg-blue-100 text-blue-700',
+      awarded: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
       ended_no_bids: 'bg-gray-100 text-gray-700',
-      rejected: 'bg-red-100 text-red-700',
+      rejected: 'bg-red-100 text-[var(--color-error)]',
       ended: 'bg-gray-100 text-gray-700',
       draft: 'bg-yellow-100 text-yellow-700',
-      cancelled: 'bg-red-100 text-red-700',
+      cancelled: 'bg-red-100 text-[var(--color-error)]',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
@@ -135,7 +135,7 @@ export default function AuctionsPage() {
                     <div className="flex items-center justify-between border-t pt-3">
                       <div>
                         <p className="text-xs text-gray-400">السعر الحالي</p>
-                        <p className="font-bold text-blue-600">{parseFloat(auction.auctionCurrentPrice || '0').toLocaleString()} ريال</p>
+                        <p className="font-bold text-[var(--color-primary)]">{parseFloat(auction.auctionCurrentPrice || '0').toLocaleString()} ريال</p>
                       </div>
                       <div className="text-left">
                         <p className="text-xs text-gray-400">المزايدات</p>

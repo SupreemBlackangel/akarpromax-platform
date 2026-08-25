@@ -1,15 +1,21 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { LocateFixed, MapPin, ShieldCheck } from "lucide-react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
-import { apiFetch } from "@services-client";
+import { apiFetch, nameFor } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
-import SearchInput from "@/src/components/ui/SearchInput";
 import type { CategoryRow } from "@services-ui/ServiceCards";
+
+const ServiceLocationPicker = dynamic(() => import("@services-ui/ServiceLocationPicker"), {
+  ssr: false,
+  loading: () => <div className="h-[320px] animate-pulse rounded-2xl bg-[var(--color-background)] dark:bg-[var(--color-surface)]" />,
+});
 
 type DynamicField = Record<string, unknown> & {
   key: string;
@@ -18,7 +24,7 @@ type DynamicField = Record<string, unknown> & {
   label_en?: string | null;
   type?: string;
   required?: boolean;
-  options?: Array<{ value?: string; label?: string }>;
+  options?: Array<string | { value?: string; label?: string }>;
 };
 
 type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -49,9 +55,12 @@ const DRAFT_KEY = "service_request_draft_v1";
 
 type DraftData = {
   step: WizardStep;
+  countryCode: string;
   categoryId: string;
   cityId: string;
   district: string;
+  latitude: string;
+  longitude: string;
   title: string;
   description: string;
   attachmentUrl: string;
@@ -67,16 +76,19 @@ type DraftData = {
   answers: Record<string, string>;
   contactPhone: string;
   contactEmail: string;
-  contactPreference: "phone" | "email" | "chat";
+  contactPreference: "phone" | "whatsapp" | "email" | "platform";
   publishNow: boolean;
   updatedAt: number;
 };
 
 const INITIAL_DRAFT: DraftData = {
   step: 1,
+  countryCode: "",
   categoryId: "",
   cityId: "",
   district: "",
+  latitude: "",
+  longitude: "",
   title: "",
   description: "",
   attachmentUrl: "",
@@ -92,13 +104,20 @@ const INITIAL_DRAFT: DraftData = {
   answers: {},
   contactPhone: "",
   contactEmail: "",
-  contactPreference: "phone",
+  contactPreference: "platform",
   publishNow: true,
   updatedAt: 0,
 };
 
 export default function NewServiceRequestPage() {
-  const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const {
+    locale, viewer, t: rawT, dir, country, city, district, latitude, longitude,
+    isGlobal, countryConfig, openLogin, handleLogout, AccountDialog, copy,
+  } = useServicesPage();
+  const t = (key: string): string | undefined => {
+    const value = rawT(key);
+    return value && value !== key ? value : undefined;
+  };
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [draft, setDraft] = useState<DraftData>(() => {
     if (typeof window === "undefined") return INITIAL_DRAFT;
@@ -121,15 +140,38 @@ export default function NewServiceRequestPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM")
+    const suffix = !isGlobal && country ? `?country=${encodeURIComponent(country)}` : "";
+    apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${suffix}`)
       .then((data) => {
         if (!controller.signal.aborted) {
-          setCategories(data.categories ?? []);
+          const leafCategories = (data.categories ?? []).filter((category) => category.parent_id);
+          setCategories(leafCategories);
+          const requestedCategory = new URLSearchParams(window.location.search).get("category");
+          if (requestedCategory && leafCategories.some((category) => category.id === requestedCategory)) {
+            setDraft((current) => ({ ...current, categoryId: current.categoryId || requestedCategory }));
+          }
         }
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, []);
+  }, [country, isGlobal]);
+
+  useEffect(() => {
+    if (isGlobal || !country) return;
+    // The draft intentionally mirrors the authoritative platform location.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft((current) => {
+      const countryChanged = Boolean(current.countryCode) && current.countryCode !== country;
+      return {
+        ...current,
+        countryCode: country,
+        cityId: countryChanged ? city : current.cityId || city,
+        district: countryChanged ? district : current.district || district,
+        latitude: countryChanged ? (latitude == null ? "" : String(latitude)) : current.latitude || (latitude == null ? "" : String(latitude)),
+        longitude: countryChanged ? (longitude == null ? "" : String(longitude)) : current.longitude || (longitude == null ? "" : String(longitude)),
+      };
+    });
+  }, [city, country, district, isGlobal, latitude, longitude]);
 
   const saveDraft = useCallback((step: WizardStep) => {
     const updated = { ...draft, step, updatedAt: Date.now() };
@@ -153,38 +195,28 @@ export default function NewServiceRequestPage() {
     return Array.isArray(fields) ? (fields as DynamicField[]) : [];
   }, [category]);
 
-  if (!viewer.authenticated) {
-    return (
-      <PublicPageShell
-        locale={locale}
-        copy={copy}
-        viewer={viewer}
-        country={country}
-        city={city}
-        adLayout={{ mode: "safe-no-ads" }}
-        onLogin={() => openLogin("login")}
-        onLogout={handleLogout}
-      >
-        <PageContainer dir={dir} className="py-24 max-w-md text-center">
-          <div className="text-5xl mb-4">🔒</div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToPost") ?? "سجّل الدخول لنشر طلب"}</h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("services.loginToPostSub") ?? "أنشئ حساباً أو سجّل دخولك لتتمكن من نشر طلبات الخدمات واستقبال العروض."}</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Button variant="primary" onClick={() => openLogin("login")}>{t("services.login") ?? "تسجيل الدخول"}</Button>
-            <Button variant="secondary" onClick={() => openLogin("register")}>{t("services.register") ?? "إنشاء حساب"}</Button>
-          </div>
-        </PageContainer>
-        {AccountDialog}
-      </PublicPageShell>
-    );
-  }
-
   const addAttachment = () => {
     const url = draft.attachmentUrl.trim();
     if (!url) return;
     const fileName = url.split("/").pop()?.split("?")[0] || "ملف";
     updateField("attachments", [...draft.attachments, { fileName, fileUrl: url }]);
     updateField("attachmentUrl", "");
+  };
+
+  const locateMe = () => {
+    if (!navigator.geolocation) {
+      setError("المتصفح لا يدعم تحديد الموقع. اختر النقطة يدويًا من الخريطة.");
+      return;
+    }
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateField("latitude", position.coords.latitude.toFixed(7));
+        updateField("longitude", position.coords.longitude.toFixed(7));
+      },
+      () => setError("تعذر الوصول إلى موقعك. اسمح للموقع باستخدام GPS أو اختر النقطة يدويًا."),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+    );
   };
 
   const validateStep = (step: WizardStep): string => {
@@ -200,6 +232,7 @@ export default function NewServiceRequestPage() {
         return "";
       case 3:
         if (!draft.cityId.trim()) return t("services.cityRequired") ?? "المدينة مطلوبة";
+        if (!draft.latitude || !draft.longitude) return "حدّد موقع الخدمة على الخريطة أو استخدم موقعك الحالي";
         return "";
       case 4:
         return "";
@@ -209,7 +242,7 @@ export default function NewServiceRequestPage() {
         if (draft.budgetMin && draft.budgetMax && Number(draft.budgetMax) < Number(draft.budgetMin)) return t("services.budgetInvalid") ?? "الميزانية القصوى أقل من الدنيا";
         return "";
       case 7:
-        if (draft.contactPreference === "phone" && !draft.contactPhone.trim()) return "رقم الهاتف مطلوب";
+        if ((draft.contactPreference === "phone" || draft.contactPreference === "whatsapp") && !draft.contactPhone.trim()) return "رقم الهاتف مطلوب";
         if (draft.contactPreference === "email" && !draft.contactEmail.trim()) return "البريد الإلكتروني مطلوب";
         return "";
       case 8:
@@ -245,6 +278,16 @@ export default function NewServiceRequestPage() {
       setError(invalid);
       return;
     }
+    if (!viewer.authenticated) {
+      saveDraft(8);
+      setError("طلبك محفوظ. سجّل الدخول أو أنشئ حسابًا لإرساله دون فقدان البيانات.");
+      openLogin("register");
+      return;
+    }
+    if (!draft.countryCode || isGlobal) {
+      setError("اختر دولة وموقعًا محليًا قبل إرسال طلب الخدمة.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -255,9 +298,11 @@ export default function NewServiceRequestPage() {
         method: "POST",
         body: JSON.stringify({
           categoryId: draft.categoryId,
-          countryCode: "OM",
+          countryCode: draft.countryCode,
           cityId: draft.cityId.trim(),
           districtId: draft.district.trim() || null,
+          latitude: draft.latitude ? Number(draft.latitude) : null,
+          longitude: draft.longitude ? Number(draft.longitude) : null,
           title: draft.title.trim(),
           description: draft.description.trim() || null,
           budgetMin: draft.budgetMin ? Number(draft.budgetMin) : null,
@@ -265,9 +310,14 @@ export default function NewServiceRequestPage() {
           currency: "OMR",
           urgency: draft.urgency,
           preferredPeriod: draft.preferredPeriod.trim() || null,
+          preferredDate: draft.preferredDate || null,
           needsVisit: draft.needsVisit,
           accessNotes: draft.accessNotes.trim() || null,
           shortAddress: draft.shortAddress.trim() || null,
+          pricingType: category?.booking_mode === "instant" ? "fixed" : "quote",
+          contactPhone: draft.contactPhone.trim() || null,
+          contactEmail: draft.contactEmail.trim() || null,
+          contactPreference: draft.contactPreference,
           answers: answerRows,
           attachments: draft.attachments.slice(0, 20),
         }),
@@ -279,7 +329,7 @@ export default function NewServiceRequestPage() {
       localStorage.removeItem(DRAFT_KEY);
       window.location.href = `/service-requests/${id}`;
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("services.error"));
+      setError(e instanceof Error ? e.message : t("services.error") ?? "تعذر إرسال الطلب");
       setSubmitting(false);
     }
   };
@@ -292,14 +342,12 @@ export default function NewServiceRequestPage() {
   };
 
   const inputCls =
-    "w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400";
+    "w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-gray-400";
   const labelCls = "block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1";
 
   const currentStep = draft.step;
   const stepError = error;
   const stepInvalid = validateStep(currentStep);
-  const canProceed = currentStep < 8 && !stepInvalid;
-  const isLastStep = currentStep === 8;
 
   return (
     <PublicPageShell
@@ -313,27 +361,29 @@ export default function NewServiceRequestPage() {
       onLogout={handleLogout}
     >
       <PageContainer dir={dir} className="py-8">
-        <Link href="/services" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
+        <Link href="/services" className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
 
         <div className="mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
+              <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">{STEP_DESCRIPTIONS[currentStep]}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <span>{currentStep} / 8</span>
               <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
+                <div className="h-full bg-[var(--color-primary)] transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
               </div>
             </div>
           </div>
         </div>
 
-        {stepError && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{stepError}</div>}
-        {draftSaved && <div className="mt-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-sm">{t("services.draftSaved") ?? "تم حفظ المسودة تلقائياً"}</div>}
+        {!viewer.authenticated && <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-4 py-3 text-sm text-blue-800 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-blue-200"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-black">أكمل الطلب الآن دون تسجيل</p><p className="mt-0.5 text-xs leading-5">سنحفظ كل ما تدخله على جهازك، ولن نطلب تسجيل الدخول إلا عند الإرسال النهائي.</p></div></div>}
 
-        <div className="mt-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8">
+        {stepError && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{stepError}</div>}
+        {draftSaved && <div className="mt-4 px-4 py-3 bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)] rounded-lg text-sm">{t("services.draftSaved") ?? "تم حفظ المسودة تلقائياً"}</div>}
+
+        <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
@@ -342,9 +392,9 @@ export default function NewServiceRequestPage() {
                     key={i}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                       i + 1 < currentStep
-                        ? "bg-blue-600 text-white"
+                        ? "bg-[var(--color-primary)] text-white"
                         : i + 1 === currentStep
-                        ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                        ? "bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:text-[var(--color-primary)]"
                         : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}
                   >
@@ -368,17 +418,17 @@ export default function NewServiceRequestPage() {
                   <option value="">{t("services.selectCategory") ?? "اختر التصنيف"}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {(c as { name_en?: string | null }).name_en || (c as { name_ar?: string | null }).name_ar || c.code}
+                      {nameFor(locale, c.name_ar, c.name_en, c.name_tr, c.code)}
                     </option>
                   ))}
                 </select>
               </div>
               {category && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                  <p className="font-semibold text-blue-700 dark:text-blue-300">
-                    {(category as { name_en?: string | null }).name_en || (category as { name_ar?: string | null }).name_ar || category.code}
+                <div className="p-4 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                  <p className="font-semibold text-[var(--color-primary)] dark:text-[var(--color-primary)]">
+                    {nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code)}
                   </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                  <p className="text-sm text-[var(--color-primary)] dark:text-[var(--color-primary)] mt-1">
                     {t("services.categorySelectedSub") ?? "يمكنك تغيير الاختيار في أي وقت"}
                   </p>
                 </div>
@@ -398,7 +448,7 @@ export default function NewServiceRequestPage() {
               </div>
               {dynamicFields.length > 0 && (
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-                  <h2 className="text-sm font-black text-gray-900 dark:text-white mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
+                  <h2 className="text-sm font-black text-gray-900 dark:text-[var(--color-surface)] mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
                   <Grid columns={2}>
                     {dynamicFields.map((field) => {
                       const label = field.label ?? field.label_ar ?? field.label_en ?? field.key;
@@ -411,9 +461,11 @@ export default function NewServiceRequestPage() {
                           {type === "select" ? (
                             <select value={draft.answers[field.key] ?? ""} onChange={(e) => updateField("answers", { ...draft.answers, [field.key]: e.target.value })} className={inputCls}>
                               <option value="">اختر...</option>
-                              {(field.options ?? []).map((option, i) => (
-                                <option key={i} value={option.value ?? option.label ?? ""}>{option.label ?? option.value}</option>
-                              ))}
+                              {(field.options ?? []).map((option, i) => {
+                                const value = typeof option === "string" ? option : option.value ?? option.label ?? "";
+                                const label = typeof option === "string" ? option : option.label ?? option.value;
+                                return <option key={i} value={value}>{label}</option>;
+                              })}
                             </select>
                           ) : type === "textarea" ? (
                             <textarea value={draft.answers[field.key] ?? ""} onChange={(e) => updateField("answers", { ...draft.answers, [field.key]: e.target.value })} rows={3} className={inputCls} />
@@ -435,28 +487,31 @@ export default function NewServiceRequestPage() {
           )}
 
           {currentStep === 3 && (
-            <Grid columns={2} className="space-y-5">
-              <div>
-                <label className={labelCls}>{t("services.city") ?? "المدينة"} *</label>
-                <input value={draft.cityId} onChange={(e) => updateField("cityId", e.target.value)} className={inputCls} placeholder={t("services.cityPlaceholder") ?? "مثال: مسقط"} />
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-blue-100 bg-[var(--color-primary-soft)] p-4 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/30">
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white"><MapPin className="h-5 w-5" /></span><div><p className="text-sm font-black text-blue-950 dark:text-[var(--color-primary)]/80">حدّد مكان تنفيذ الخدمة بدقة</p><p className="mt-0.5 text-xs leading-5 text-[var(--color-primary)] dark:text-[var(--color-primary)]">الموقع الدقيق يحسّن مطابقة الطلب مع الحرفيين القريبين. لا يظهر للعامة، بل للمحترفين المطابقين فقط.</p></div></div><button type="button" onClick={locateMe} className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-black text-[var(--color-primary)] shadow-sm hover:bg-[var(--color-primary-soft)] dark:bg-blue-950 dark:text-blue-200"><LocateFixed className="h-4 w-4" />استخدم موقعي</button></div>
               </div>
-              <div>
-                <label className={labelCls}>{t("services.district") ?? "المنطقة / الحي"}</label>
-                <input value={draft.district} onChange={(e) => updateField("district", e.target.value)} className={inputCls} placeholder="الخوض، المعبيلة..." />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className={labelCls}>{t("services.city") ?? "الولاية / المدينة"} *</label><input value={draft.cityId} onChange={(e) => updateField("cityId", e.target.value)} className={inputCls} placeholder="مثال: بوشر" /></div>
+                <div><label className={labelCls}>{t("services.district") ?? "المنطقة / الحي"}</label><input value={draft.district} onChange={(e) => updateField("district", e.target.value)} className={inputCls} placeholder="الخوير، المعبيلة..." /></div>
+                <div className="sm:col-span-2"><label className={labelCls}>{t("services.shortAddress") ?? "عنوان مختصر"}</label><input value={draft.shortAddress} onChange={(e) => updateField("shortAddress", e.target.value)} className={inputCls} placeholder="قرب الجامع، رقم المبنى، الشارع..." /></div>
               </div>
-              <div className="sm:col-span-2">
-                <label className={labelCls}>{t("services.shortAddress") ?? "عنوان مختصر"}</label>
-                <input value={draft.shortAddress} onChange={(e) => updateField("shortAddress", e.target.value)} className={inputCls} placeholder="قرب الجامعة، شارع 18..." />
+              <ServiceLocationPicker
+                latitude={Number(draft.latitude) || countryConfig?.mapCenterLat || 0}
+                longitude={Number(draft.longitude) || countryConfig?.mapCenterLng || 0}
+                selected={Boolean(draft.latitude && draft.longitude)}
+                onChange={(position) => {
+                  updateField("latitude", position.latitude.toFixed(7));
+                  updateField("longitude", position.longitude.toFixed(7));
+                }}
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3 py-2 text-xs dark:bg-[var(--color-surface)]">
+                <span className={draft.latitude && draft.longitude ? "font-bold text-[var(--color-success)] dark:text-[var(--color-success)]" : "text-[var(--color-text-muted)]"}>{draft.latitude && draft.longitude ? "تم تثبيت نقطة الخدمة — يمكنك سحب العلامة لتصحيحها" : "انقر على الخريطة لتثبيت نقطة الخدمة"}</span>
+                {draft.latitude && draft.longitude && <span dir="ltr" className="font-mono text-[var(--color-text-muted)]">{Number(draft.latitude).toFixed(6)}, {Number(draft.longitude).toFixed(6)}</span>}
               </div>
-              <div className="sm:col-span-2">
-                <label className={labelCls}>{t("services.accessNotes") ?? "ملاحظات الوصول"}</label>
-                <textarea value={draft.accessNotes} onChange={(e) => updateField("accessNotes", e.target.value)} rows={2} className={inputCls} placeholder="مثال: البوابة الثانية، كود الدخول 1234" />
-              </div>
-              <label className="sm:col-span-2 flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="checkbox" checked={draft.needsVisit} onChange={(e) => updateField("needsVisit", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                {t("services.needsVisit") ?? "يتطلب معاينة الموقع"}
-              </label>
-            </Grid>
+              <div><label className={labelCls}>{t("services.accessNotes") ?? "ملاحظات الوصول"}</label><textarea value={draft.accessNotes} onChange={(e) => updateField("accessNotes", e.target.value)} rows={2} className={inputCls} placeholder="مثال: البوابة الثانية أو تعليمات الوقوف والدخول" /></div>
+              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200"><input type="checkbox" checked={draft.needsVisit} onChange={(e) => updateField("needsVisit", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />{t("services.needsVisit") ?? "يتطلب معاينة الموقع قبل التسعير"}</label>
+            </div>
           )}
 
           {currentStep === 4 && (
@@ -472,7 +527,7 @@ export default function NewServiceRequestPage() {
                   {draft.attachments.map((att, i) => (
                     <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-600 dark:text-gray-300">
                       📎 {att.fileName}
-                      <button type="button" onClick={() => updateField("attachments", draft.attachments.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700">×</button>
+                      <button type="button" onClick={() => updateField("attachments", draft.attachments.filter((_, j) => j !== i))} className="text-red-500 hover:text-[var(--color-error)]">×</button>
                     </span>
                   ))}
                 </div>
@@ -518,18 +573,22 @@ export default function NewServiceRequestPage() {
           {currentStep === 7 && (
             <div className="space-y-5">
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="radio" name="contactPreference" value="phone" checked={draft.contactPreference === "phone"} onChange={() => updateField("contactPreference", "phone")} className="h-4 w-4 text-blue-600" />
+                <input type="radio" name="contactPreference" value="phone" checked={draft.contactPreference === "phone"} onChange={() => updateField("contactPreference", "phone")} className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{t("services.contactPhone") ?? "الهاتف"}</span>
               </label>
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="radio" name="contactPreference" value="email" checked={draft.contactPreference === "email"} onChange={() => updateField("contactPreference", "email")} className="h-4 w-4 text-blue-600" />
+                <input type="radio" name="contactPreference" value="whatsapp" checked={draft.contactPreference === "whatsapp"} onChange={() => updateField("contactPreference", "whatsapp")} className="h-4 w-4 text-[var(--color-primary)]" />
+                <span>واتساب</span>
+              </label>
+              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+                <input type="radio" name="contactPreference" value="email" checked={draft.contactPreference === "email"} onChange={() => updateField("contactPreference", "email")} className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{t("services.contactEmail") ?? "البريد الإلكتروني"}</span>
               </label>
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="radio" name="contactPreference" value="chat" checked={draft.contactPreference === "chat"} onChange={() => updateField("contactPreference", "chat")} className="h-4 w-4 text-blue-600" />
+                <input type="radio" name="contactPreference" value="platform" checked={draft.contactPreference === "platform"} onChange={() => updateField("contactPreference", "platform")} className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{t("services.contactChat") ?? "الدردشة داخل التطبيق"}</span>
               </label>
-              {draft.contactPreference === "phone" && (
+              {(draft.contactPreference === "phone" || draft.contactPreference === "whatsapp") && (
                 <div>
                   <label className={labelCls}>{t("services.phoneNumber") ?? "رقم الهاتف"}</label>
                   <input type="tel" value={draft.contactPhone} onChange={(e) => updateField("contactPhone", e.target.value)} className={inputCls} placeholder="+968 XXXX XXXX" />
@@ -547,18 +606,20 @@ export default function NewServiceRequestPage() {
           {currentStep === 8 && (
             <div className="space-y-5">
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 dark:text-white mb-3">{t("services.reviewTitle") ?? "مراجعة الطلب"}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-[var(--color-surface)] mb-3">{t("services.reviewTitle") ?? "مراجعة الطلب"}</h3>
                 <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.category") ?? "التصنيف"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{(category as { name_en?: string | null })?.name_en || (category as { name_ar?: string | null })?.name_ar || draft.categoryId}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.title") ?? "العنوان"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{draft.title || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{draft.cityId || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{(draft.budgetMin ? `${draft.budgetMin} ر.ع` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ر.ع` : "—")}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-white">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.category") ?? "التصنيف"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code) : draft.categoryId}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.title") ?? "العنوان"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.title || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.cityId || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموقع</dt><dd className="font-semibold text-[var(--color-success)] dark:text-[var(--color-success)]">{draft.latitude && draft.longitude ? "محدد بدقة" : "غير محدد"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموعد</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.preferredDate || "مرن"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{(draft.budgetMin ? `${draft.budgetMin} ر.ع` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ر.ع` : "—")}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
                 </dl>
               </div>
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="checkbox" checked={draft.publishNow} onChange={(e) => updateField("publishNow", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <input type="checkbox" checked={draft.publishNow} onChange={(e) => updateField("publishNow", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                 {t("services.publishNow") ?? "نشر الطلب فوراً (سيتم عرضه لمقدمي الخدمات)"}
               </label>
             </div>

@@ -7,7 +7,7 @@ import { createRequestId, recordAuditEvent } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
-import type { Locale } from "@/lib/email/templates";
+import { normalizeEmailIdentity } from "@/lib/auth/email-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const email = parsed.data.email.toLowerCase();
+  const email = normalizeEmailIdentity(parsed.data.email);
   const ip = clientIp(request);
   const limited = await enforceRateLimit("email_verification_resend", ip, normalizeEmail(email));
   if (!limited.allowed) {

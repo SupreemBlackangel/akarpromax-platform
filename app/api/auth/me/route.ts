@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
         isActive: user.isActive,
         onboardingCompleted: user.onboardingCompletedAt !== null,
         preferredLanguage: user.preferredLanguage,
+        preferredMarket: user.preferredMarket ?? null,
         createdAt: user.createdAt,
         permissions,
       },

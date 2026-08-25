@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X, SlidersHorizontal, MapPin, Home } from 'lucide-react';
 import PublicPageShell from '@/src/components/PublicPageShell';
 import { useServicesPage } from '@/src/components/services/useServicesPage';
-import LuxuryPropertyCard from '@/src/components/ui/LuxuryPropertyCard';
+import LuxuryPropertyCard, { type CardProperty } from '@/src/components/ui/LuxuryPropertyCard';
 
 interface OfferType {
   id: string;
@@ -25,7 +25,7 @@ function SearchPageInner() {
   const [cityFilter, setCityFilter] = useState(searchParams.get('city') || '');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<CardProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [offerTypes, setOfferTypes] = useState<OfferType[]>([]);
@@ -118,7 +118,7 @@ function SearchPageInner() {
       currentPath="/properties"
     >
       <div className="container mx-auto px-4 py-6" dir={dir}>
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-6 mb-6">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
@@ -127,7 +127,7 @@ function SearchPageInner() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="ابحث عن عقار..."
-                  className="w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               </div>
@@ -161,7 +161,7 @@ function SearchPageInner() {
                   <option value="fixed">محدد</option>
                   <option value="open">مفتوح</option>
                 </select>
-                <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">
+                <button type="submit" className="w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg font-bold hover:bg-[var(--color-primary-hover)]">
                   <Search className="w-4 h-4 inline mr-1" /> بحث
                 </button>
               </div>
@@ -173,7 +173,7 @@ function SearchPageInner() {
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-[var(--color-primary)]"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {showFilters ? 'إخفاء الفلاتر' : 'فلاتر متقدمة'}
@@ -226,7 +226,7 @@ function SearchPageInner() {
           {[...Array(6)].map((_, i) => <div key={i} className="h-64 bg-gray-200 animate-pulse rounded-xl" />)}
         </div>
       ) : results.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
+        <div className="bg-[var(--color-surface)] rounded-xl shadow-sm border p-12 text-center">
           <Home className="w-12 h-12 mx-auto text-gray-300 mb-3" />
           <h3 className="text-lg font-bold text-gray-700 mb-2">لا توجد نتائج</h3>
           <p className="text-gray-500 text-sm">حاول تعديل معايير البحث</p>
@@ -235,7 +235,7 @@ function SearchPageInner() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {results.map((property: any) => (
+            {results.map((property) => (
               <LuxuryPropertyCard key={property.id} property={property} />
             ))}
           </div>
@@ -245,7 +245,7 @@ function SearchPageInner() {
                 <button
                   key={i}
                   onClick={() => performSearch(i + 1)}
-                  className={`px-3 py-1 rounded ${i + 1 === pagination.page ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  className={`px-3 py-1 rounded ${i + 1 === pagination.page ? 'bg-[var(--color-primary)] text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
                 >
                   {i + 1}
                 </button>

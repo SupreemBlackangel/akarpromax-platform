@@ -19,7 +19,12 @@ export async function GET(req: NextRequest) {
   if (blocked) return blocked;
 
   const url = new URL(req.url);
-  const countryCode = (url.searchParams.get("country") ?? "om").toLowerCase().slice(0, 2);
+  // No country default. An empty country reaches buildContext as undefined, and
+  // isGeoMatch then rejects every campaign that names countries without
+  // target_all_countries — so only explicitly global/untargeted office
+  // inventory can match. Defaulting to a country would hand one market's
+  // campaigns to an office whose country is unknown.
+  const countryCode = (url.searchParams.get("country") ?? "").toLowerCase().slice(0, 2);
   const placement = url.searchParams.get("placement") ?? OFFICE_AD_PLACEMENTS[0];
   if (!(OFFICE_AD_PLACEMENTS as readonly string[]).includes(placement) || !isValidPlacement(placement)) {
     return NextResponse.json({ error: "Unsupported placement" }, { status: 400 });
@@ -27,8 +32,10 @@ export async function GET(req: NextRequest) {
   const device = (url.searchParams.get("device") ?? "desktop") as "desktop" | "mobile" | "tablet";
   const language = (url.searchParams.get("locale") ?? "ar") as "ar" | "en" | "tr";
   const limit = Math.max(1, Math.min(20, Number(url.searchParams.get("limit") ?? 3)));
-  const regionId = url.searchParams.get("region") ?? undefined;
-  const cityId = url.searchParams.get("city") ?? undefined;
+  // Region and city are only meaningful inside a country, and are never read
+  // back to infer one.
+  const regionId = countryCode ? (url.searchParams.get("region") ?? undefined) : undefined;
+  const cityId = countryCode ? (url.searchParams.get("city") ?? undefined) : undefined;
 
   try {
     const db = await getRuntimeDb();
@@ -36,7 +43,7 @@ export async function GET(req: NextRequest) {
       placement,
       section: OFFICE_SECTION,
       channel: "office",
-      countryCode,
+      countryCode: countryCode || undefined,
       regionId,
       cityId,
       language,
@@ -88,14 +95,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Campaign is not eligible for the office channel" }, { status: 403 });
     }
 
-    const countryCode = String(body.country ?? "om").slice(0, 8).toLowerCase();
+    // Same rule on the event path: no country default, ever.
+    const countryCode = String(body.country ?? "").slice(0, 8).toLowerCase();
     const device = String(body.device ?? "desktop").slice(0, 16) as "desktop" | "mobile" | "tablet";
     const language = (String(body.locale ?? "ar") as "ar" | "en" | "tr");
     const ctx = buildContext({
       placement,
       section: OFFICE_SECTION,
       channel: "office",
-      countryCode,
+      countryCode: countryCode || undefined,
       language,
       deviceType: device,
       sessionId: auth.device.deviceId,

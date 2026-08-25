@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { reviseOffer } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const currency = resolveCurrencyCode(body.currency);
+  if (!currency.ok) {
+    return NextResponse.json({ error: currency.error }, { status: 400 });
+  }
   try {
     await reviseOffer(
       id,
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         requestId: clean(body.requestId, 80),
         providerUserId: identity.email,
         price: cleanNumber(body.price),
-        currency: clean(body.currency, 8) || "OMR",
+        currency: currency.code,
         durationDays: cleanNumber(body.durationDays),
         materialsIncluded: body.materialsIncluded === true,
         materialCost: cleanNumber(body.materialCost),

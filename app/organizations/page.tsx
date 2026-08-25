@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -108,7 +108,7 @@ export default function OrganizationsDirectoryPage() {
           />
         </div>
 
-        {error && <div className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">{error}</div>}
+        {error && <div className="mb-6 rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-200">{error}</div>}
 
         <Grid columns={3}>
           {loading
@@ -116,12 +116,12 @@ export default function OrganizationsDirectoryPage() {
                 <div key={index} className="h-48 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
               ))
             : filtered.map((item) => (
-                <Link key={item.id} href={`/organizations/${item.id}`} className="block rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
+                <Link key={item.id} href={`/organizations/${item.id}`} className="block rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 transition hover:border-[var(--color-primary)]/30 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
                   <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{item.type}</span>
+                    <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">{item.type}</span>
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{item.classification}</span>
                   </div>
-                  <h2 className="text-xl font-black text-gray-900 dark:text-white">{pick(locale, item, "name")}</h2>
+                  <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{pick(locale, item, "name")}</h2>
                   <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, item, "description") || item.slug}</p>
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
                     <span>{item.countryCode}{item.cityId ? ` • ${item.cityId}` : ""}</span>

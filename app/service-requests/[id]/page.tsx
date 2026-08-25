@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -104,14 +104,14 @@ export default function ServiceRequestDetailPage({ id }: Props) {
       onLogout={handleLogout}
     >
       <PageContainer dir={dir} className="py-8">
-         <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.requests") ?? "الطلبات"}</Link>
+         <Link href="/service-requests" className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">← {t("services.requests") ?? "الطلبات"}</Link>
 
-         <div className="mt-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8">
+         <div className="mt-4 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8">
            <div className="flex flex-wrap items-center justify-between gap-3">
              <div className="flex items-center gap-3 flex-wrap">
                <span className="text-sm font-semibold text-gray-400">{request.reference_number}</span>
                <RequestStatusPill status={request.status} locale={locale} />
-               <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold">{categoryName}</span>
+               <span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] text-xs font-semibold">{categoryName}</span>
              </div>
              <span className="text-xs text-gray-400">{formatDate(request.created_at)}</span>
            </div>
@@ -120,12 +120,12 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
            <div className="mt-4 flex flex-wrap gap-2 text-sm">
              {request.budget_min != null && (
-               <span className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold">
+               <span className="px-3 py-1.5 rounded-lg bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300 font-bold">
                  {formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}
                </span>
              )}
              {request.urgency && (
-               <span className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-semibold">إلحاح: {request.urgency}</span>
+               <span className="px-3 py-1.5 rounded-lg bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)] font-semibold">إلحاح: {request.urgency}</span>
              )}
              {request.preferred_period && (
                <span className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">{request.preferred_period}</span>
@@ -166,7 +166,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
                      href={String((att as { file_url?: string }).file_url ?? "")}
                      target="_blank"
                      rel="noreferrer"
-                     className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                     className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-[var(--color-primary)] dark:text-blue-400 hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/30"
                    >
                      📎 {String((att as { file_name?: string }).file_name ?? "ملف")}
                    </a>
@@ -176,7 +176,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
            )}
 
            {!isCustomer && isPublished && (
-             <div className="mt-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-5 text-center">
+             <div className="mt-8 rounded-xl bg-[var(--color-primary-soft)] dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-5 text-center">
                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{t("services.offerCta") ?? "هل يمكنك تقديم هذه الخدمة؟ قدّم عرضك الآن."}</p>
                <Button variant="primary" onClick={makeOffer}>
                  {t("services.makeOffer") ?? "تقديم عرض"}
@@ -206,7 +206,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
                          <OfferStatusPill status={String(o.status)} locale={locale} />
                          <Link
                            href={`/dashboard/services/offers/${String(o.id)}`}
-                           className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+                           className="px-4 py-2 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition"
                          >
                            {t("services.viewOffer") ?? "عرض التفاصيل"}
                          </Link>
@@ -221,7 +221,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
          {isCustomer && (
            <div className="mt-4 text-center">
-             <Link href="/dashboard/services/my-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+             <Link href="/dashboard/services/my-requests" className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">
                {t("services.manageRequest") ?? "إدارة طلباتي ←"}
              </Link>
            </div>

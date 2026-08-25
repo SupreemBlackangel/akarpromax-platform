@@ -42,6 +42,7 @@ const navGroups: NavGroup[] = [
       { href: "/admin/properties", icon: "⌂", label: "تصنيف العقارات", permission: PERMISSIONS.PROPERTIES_VIEW },
       { href: "/admin/companies", icon: "◉", label: "تصنيف الشركات", permission: PERMISSIONS.PROPERTIES_VIEW },
       { href: "/admin/advertisers", icon: "▣", label: "المعلنون", permission: PERMISSIONS.ADVERTISERS_VIEW },
+      { href: "/admin/auction-organizers", icon: "⚖", label: "منظمات المزادات", permission: PERMISSIONS.SETTINGS_MANAGE },
     ],
   },
   {

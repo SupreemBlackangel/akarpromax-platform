@@ -1,10 +1,5 @@
-import type { Metadata } from "next";
 import { ToolsPageClient } from "@/src/components/tools/ToolsPageClient";
-
-export const metadata: Metadata = {
-  title: "الأدوات الهندسية — عقار بروماكس",
-  description: "أدوات احترافية للمهندسين والمقاولين وشركات التشييد",
-};
+import "@/src/styles/tools.css";
 
 export default function ToolsPage() {
   return <ToolsPageClient />;

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq, or } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
+import { ApiError } from "@/lib/errors/api-error";
+
 import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
@@ -14,6 +16,7 @@ import { createRequestId, logSecurityEvent, recordAuditEvent } from "@/lib/secur
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
+import { normalizeEmailIdentity } from "@/lib/auth/email-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +36,22 @@ function clean(value: unknown, maxLength: number): string {
 
 export async function POST(request: NextRequest) {
   const requestId = createRequestId();
-  assertSafeOrigin(request);
+  try {
+    assertSafeOrigin(request);
+  } catch (error) {
+    // A rejected Origin is a deliberate 403 policy decision, not a server
+    // crash: surface it as structured JSON instead of an opaque HTTP 500 so
+    // clients (and operators) can tell CSRF/origin misconfiguration apart
+    // from real backend failures. The security event is already logged by
+    // assertSafeOrigin.
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message, requestId },
+        applySecurityHeaders({ status: error.status, headers: { "Cache-Control": "no-store" } }),
+      );
+    }
+    throw error;
+  }
 
   let body: LoginBody;
   try {
@@ -47,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   const rawIdentifier = typeof body.identifier === "string" ? body.identifier.trim() : "";
   const looksLikeEmail = rawIdentifier.includes("@");
-  const email = clean(body.email ?? (rawIdentifier && looksLikeEmail ? rawIdentifier : ""), 255).toLowerCase();
+  const email = normalizeEmailIdentity(body.email ?? (rawIdentifier && looksLikeEmail ? rawIdentifier : ""));
   const phone = clean(body.phone ?? (rawIdentifier && !looksLikeEmail ? rawIdentifier : ""), 20);
   const password = typeof body.password === "string" ? body.password : "";
 

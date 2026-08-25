@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveForChannel } from "@/lib/news/delivery";
 import type { NewsChannel } from "@/lib/news/contracts";
+import { cached, cacheKey } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -16,38 +17,44 @@ export async function GET(request: NextRequest) {
   const pagePath = url.searchParams.get("page") || "/";
   const limit = Math.max(1, Math.min(50, Number(url.searchParams.get("limit")) || 20));
 
-  const result = await resolveForChannel(
-    {
-      channel,
-      countryCode: country,
-      cityId: city,
-      language,
-      pagePath,
-      pageGroup: null,
-      userKey: null,
-      sessionKey: null,
-    },
-    { limit },
-  );
+  const items = await cached(
+    cacheKey(["newsfeed", channel, country, city, language, pagePath, limit]),
+    30_000,
+    async () => {
+      const result = await resolveForChannel(
+        {
+          channel,
+          countryCode: country,
+          cityId: city,
+          language,
+          pagePath,
+          pageGroup: null,
+          userKey: null,
+          sessionKey: null,
+        },
+        { limit },
+      );
 
-  const items = result.items.map((item) => ({
-    id: item.id,
-    titleAr: item.titleAr,
-    titleEn: item.titleEn,
-    titleTr: item.titleTr,
-    linkUrl: item.linkUrl,
-    summaryAr: item.summaryAr,
-    summaryEn: item.summaryEn,
-    summaryTr: item.summaryTr,
-    imageUrl: item.imageUrl,
-    isBreaking: item.isBreaking,
-    isPinned: item.isPinned,
-    category: item.category,
-    tags: item.tags,
-    sourceName: item.sourceName,
-    sourceUrl: item.sourceUrl,
-    updatedAt: item.updatedAt,
-  }));
+      return result.items.map((item) => ({
+        id: item.id,
+        titleAr: item.titleAr,
+        titleEn: item.titleEn,
+        titleTr: item.titleTr,
+        linkUrl: item.linkUrl,
+        summaryAr: item.summaryAr,
+        summaryEn: item.summaryEn,
+        summaryTr: item.summaryTr,
+        imageUrl: item.imageUrl,
+        isBreaking: item.isBreaking,
+        isPinned: item.isPinned,
+        category: item.category,
+        tags: item.tags,
+        sourceName: item.sourceName,
+        sourceUrl: item.sourceUrl,
+        updatedAt: item.updatedAt,
+      }));
+    },
+  );
 
   return NextResponse.json({ channel, items });
 }

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { addReviewFull, getJobDetail } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { getDirectBookingRow, reviewDirectBooking } from "@services/booking";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,23 @@ export async function POST(request: NextRequest, { params }: Params) {
   const rating = cleanNumber(body.rating);
   if (rating == null || !Number.isInteger(rating) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.RATING_INVALID }, { status: 400 });
+  }
+  const direct = await getDirectBookingRow(id);
+  if (direct) {
+    try {
+      const reviewId = await reviewDirectBooking(id, { userId: identity.email }, {
+        rating,
+        comment: typeof body.comment === "string" ? body.comment.trim().slice(0, 2000) || null : null,
+        recommend: body.recommend == null ? null : body.recommend === true,
+      }, { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null });
+      return NextResponse.json({ ok: true, id: reviewId }, { status: 201 });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      if (code === "BOOKING_FORBIDDEN") return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
+      if (code === "ORDER_NOT_COMPLETED") return NextResponse.json({ error: "order_not_completed" }, { status: 400 });
+      if (code === "REVIEW_ALREADY_EXISTS") return NextResponse.json({ error: SERVICE_ERROR_CODES.REVIEW_ALREADY_EXISTS }, { status: 409 });
+      throw error;
+    }
   }
   const isCustomer = String(job.customer_user_id) === identity.email;
   const revieweeUserId = isCustomer ? String(job.provider_user_id) : String(job.customer_user_id);

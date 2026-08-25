@@ -1,11 +1,16 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, Trash2, Eye } from 'lucide-react';
+import type { propertyFavorites } from '@/lib/db/schemas/properties-schema';
+
+type FavoriteRow = typeof propertyFavorites.$inferSelect & {
+  property?: { titleAr?: string | null } | null;
+};
 
 export default function FavoritesPage() {
   const router = useRouter();
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchFavorites = async () => {
@@ -27,7 +32,7 @@ export default function FavoritesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ propertyId }),
     });
-    setFavorites(prev => prev.filter((f: any) => f.propertyId !== propertyId));
+    setFavorites(prev => prev.filter((f) => f.propertyId !== propertyId));
   };
 
   return (
@@ -44,14 +49,14 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {favorites.map((fav: any) => (
-            <div key={fav.id} className="bg-white rounded-lg shadow p-4">
+          {favorites.map((fav) => (
+            <div key={fav.id} className="bg-[var(--color-surface)] rounded-lg shadow p-4">
               <h3 className="font-semibold">{fav.property?.titleAr || fav.propertyId}</h3>
               <div className="flex gap-2 mt-4">
                 <button onClick={() => router.push(`/properties/${fav.propertyId}`)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200">
                   <Eye className="w-4 h-4" /> عرض
                 </button>
-                <button onClick={() => removeFavorite(fav.propertyId)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200">
+                <button onClick={() => fav.propertyId && removeFavorite(fav.propertyId)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-red-100 text-[var(--color-error)] rounded hover:bg-red-200">
                   <Trash2 className="w-4 h-4" /> إزالة
                 </button>
               </div>

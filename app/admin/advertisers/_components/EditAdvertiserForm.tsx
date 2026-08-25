@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -76,7 +76,7 @@ export default function EditAdvertiserForm() {
   }
 
   if (fetching) {
-    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" /></div>;
+    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" /></div>;
   }
 
   if (!profile) {
@@ -89,10 +89,10 @@ export default function EditAdvertiserForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6" dir="rtl">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">تعديل المعلن: {profile.companyNameAr}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-[var(--color-surface)]">تعديل المعلن: {profile.companyNameAr}</h1>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm">
+        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-400 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -101,18 +101,18 @@ export default function EditAdvertiserForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم الشركة (عربي) *</label>
-            <input name="companyNameAr" defaultValue={profile.companyNameAr} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="companyNameAr" defaultValue={profile.companyNameAr} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم الشركة (إنجليزي) *</label>
-            <input name="companyNameEn" defaultValue={profile.companyNameEn} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="companyNameEn" defaultValue={profile.companyNameEn} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدولة *</label>
-            <select name="countryCode" defaultValue={profile.countryCode} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+            <select name="countryCode" defaultValue={profile.countryCode} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]">
               {countries.map(([code, label]) => (
                 <option key={code} value={code}>{label}</option>
               ))}
@@ -120,24 +120,24 @@ export default function EditAdvertiserForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البريد الإلكتروني</label>
-            <input name="email" type="email" defaultValue={profile.email || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="email" type="email" defaultValue={profile.email || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">رقم الهاتف</label>
-            <input name="phone" defaultValue={profile.phone || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="phone" defaultValue={profile.phone || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الشخص المسؤول</label>
-            <input name="contactName" defaultValue={profile.contactName || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="contactName" defaultValue={profile.contactName || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الموقع الإلكتروني</label>
-          <input name="website" type="url" defaultValue={profile.website || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          <input name="website" type="url" defaultValue={profile.website || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -150,21 +150,21 @@ export default function EditAdvertiserForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">السجل التجاري</label>
-            <input name="commercialRegistration" defaultValue={profile.commercialRegistration || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="commercialRegistration" defaultValue={profile.commercialRegistration || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الرقم الضريبي</label>
-            <input name="taxNumber" defaultValue={profile.taxNumber || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+            <input name="taxNumber" defaultValue={profile.taxNumber || ""} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">العنوان</label>
-          <textarea name="addressAr" defaultValue={profile.addressAr || ""} rows={2} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+          <textarea name="addressAr" defaultValue={profile.addressAr || ""} rows={2} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
         </div>
 
         <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors">
+          <button type="submit" disabled={loading} className="px-6 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white rounded-lg transition-colors">
             {loading ? "جاري الحفظ..." : "حفظ التغييرات"}
           </button>
           <button type="button" onClick={() => router.back()} className="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors">

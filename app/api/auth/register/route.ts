@@ -19,6 +19,7 @@ import { createRequestId, logSecurityEvent, recordAuditEvent } from "@/lib/secur
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
+import { normalizeEmailIdentity } from "@/lib/auth/email-identity";
 import { emailService } from "@/lib/email";
 import type { Locale } from "@/lib/email/templates";
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const email = clean(body.email, 255).toLowerCase();
+  const email = normalizeEmailIdentity(body.email);
   const phone = clean(body.phone, 20);
   const password = typeof body.password === "string" ? body.password : "";
   const name = clean(body.name ?? body.fullName, 190);
@@ -139,30 +140,47 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await hashPassword(password);
 
-    const [inserted] = await db
-      .insert(users)
-      .values({
-        email: email || null,
-        phone: phone || null,
-        name: name || null,
-        passwordHash,
-        role,
-        isActive: true,
-        status: "pending_verification",
-        preferredLanguage,
-        emailVerifiedAt: email ? null : null,
-      })
-      .returning({
-        id: users.id,
-        email: users.email,
-        phone: users.phone,
-        name: users.name,
-        role: users.role,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-      });
+    try {
+      const [inserted] = await db
+        .insert(users)
+        .values({
+          email: email || null,
+          phone: phone || null,
+          name: name || null,
+          passwordHash,
+          role,
+          isActive: true,
+          status: "pending_verification",
+          preferredLanguage,
+          emailVerifiedAt: email ? null : null,
+        })
+        .returning({
+          id: users.id,
+          email: users.email,
+          phone: users.phone,
+          name: users.name,
+          role: users.role,
+          isActive: users.isActive,
+          createdAt: users.createdAt,
+        });
 
-    created = inserted;
+      created = inserted;
+    } catch (error) {
+      // Race-safe duplicate handling: a concurrent registration that wins the
+      // unique index (users.email / users_email_lower_unique / users.phone)
+      // surfaces as PG 23505. That is the same product outcome as the
+      // pre-checked duplicate — a structured conflict, never a raw 500 and
+      // never a leaked database error.
+      const code = (error as { code?: unknown } | null)?.code;
+      if (code === "23505") {
+        logSecurityEvent("AUTH_REGISTER_FAILED", { requestId, reason: "already_registered_race" });
+        return NextResponse.json(
+          { error: "already_registered", requestId },
+          applySecurityHeaders({ status: 409, headers: { "Cache-Control": "no-store" } }),
+        );
+      }
+      throw error;
+    }
   } finally {
     await end();
   }

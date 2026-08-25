@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
+import { useGeo } from "@/src/contexts/GeoContext";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import SearchInput from "@/src/components/ui/SearchInput";
-import { DEMO_PROPERTIES } from "@/src/data/demo-properties";
 import type { PublicProperty } from "@/lib/properties-format";
+import { normalizeApiProperty, type ApiPropertyRecord } from "@/lib/properties-api-normalize";
+import LuxuryPropertyCard from "@/src/components/ui/LuxuryPropertyCard";
 
 const FALLBACK_PROPERTY_TYPES = [
   { id: "all", label_en: "All", label_ar: "الكل", label_tr: "Tümü" },
@@ -20,10 +22,12 @@ const FALLBACK_PROPERTY_TYPES = [
 
 type TaxonomyType = { id: string; slug: string; label_en: string; label_ar: string; label_tr: string; category_slug: string };
 
+// Filter ids ARE the database dealType values — the API stores 'sale' | 'rent'
+// and normalizeApiProperty passes dealType through as listingType verbatim.
 const LISTING_TYPES = [
   { id: "all", ar: "الكل", en: "All", tr: "Tümü" },
-  { id: "for-sale", ar: "للبيع", en: "For sale", tr: "Satılık" },
-  { id: "for-rent", ar: "للإيجار", en: "For rent", tr: "Kiralık" },
+  { id: "sale", ar: "للبيع", en: "For sale", tr: "Satılık" },
+  { id: "rent", ar: "للإيجار", en: "For rent", tr: "Kiralık" },
 ];
 
 function pick(locale: "ar" | "en" | "tr", property: PublicProperty, key: "title" | "description" | "area") {
@@ -31,13 +35,16 @@ function pick(locale: "ar" | "en" | "tr", property: PublicProperty, key: "title"
 }
 
 export default function PropertiesPage() {
-  const { locale, viewer, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const { locale, viewer, dir, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const { countryCode: country, governorate, city: geoCity, district, isGlobal } = useGeo();
+  const city = geoCity;
   const [items, setItems] = useState<PublicProperty[]>([]);
   const [search, setSearch] = useState("");
-  const [listingType, setListingType] = useState<"all" | "for-sale" | "for-rent">("all");
+  const [listingType, setListingType] = useState<"all" | "sale" | "rent">("all");
   const [propertyType, setPropertyType] = useState("all");
   const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -66,25 +73,36 @@ export default function PropertiesPage() {
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
+      setLoading(true);
+      setLoadError(false);
       try {
-        const response = await fetch(`/api/properties?country=${encodeURIComponent(country)}&limit=50`, { cache: "no-store", signal: controller.signal });
-        const data = (await response.json().catch(() => ({}))) as { properties?: PublicProperty[] };
+        const params = new URLSearchParams({ limit: "50", scope: isGlobal ? "global" : "local" });
+        if (!isGlobal) {
+          params.set("country", country);
+          if (governorate) params.set("governorate", governorate);
+          if (city) params.set("city", city);
+          if (district) params.set("district", district);
+        }
+        const response = await fetch(`/api/properties?${params.toString()}`, { cache: "no-store", signal: controller.signal });
+        const data = (await response.json().catch(() => ({}))) as { data?: ApiPropertyRecord[] };
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const dbProperties = Array.isArray(data.properties) ? data.properties : [];
+        const dbProperties = Array.isArray(data.data) ? data.data.map(normalizeApiProperty) : [];
         if (!controller.signal.aborted) {
-          const allProperties = [...DEMO_PROPERTIES.filter((p) => p.countryCode === country), ...dbProperties];
-          setItems(allProperties);
+          // The marketplace shows ONLY real, approved listings from the API.
+          // No demo rows are ever merged into the public feed.
+          setItems(dbProperties);
         }
       } catch {
         if (!controller.signal.aborted) {
-          setItems(DEMO_PROPERTIES.filter((p) => p.countryCode === country));
+          setItems([]);
+          setLoadError(true);
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
     return () => controller.abort();
-  }, [country, locale]);
+  }, [country, governorate, city, district, isGlobal]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -123,96 +141,91 @@ export default function PropertiesPage() {
     >
       <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-              {locale === "ar" ? "نوع العرض:" : locale === "tr" ? "Teklif türü:" : "Listing:"}
-            </span>
-            {LISTING_TYPES.map((lt) => (
-              <button
-                key={lt.id}
-                type="button"
-                onClick={() => setListingType(lt.id as typeof listingType)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${listingType === lt.id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
-              >
-                {lt[locale]}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <SearchInput
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={locale === "ar" ? "ابحث عن عقار..." : locale === "tr" ? "Gayrimenkul ara..." : "Search properties..."}
+                className="w-full sm:w-80"
+                aria-label={locale === "ar" ? "ابحث عن عقار" : locale === "tr" ? "Gayrimenkul ara" : "Search properties"}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                {locale === "ar" ? "نوع العرض:" : locale === "tr" ? "Teklif türü:" : "Listing:"}
+              </span>
+              {LISTING_TYPES.map((lt) => (
+                <button
+                  key={lt.id}
+                  type="button"
+                  onClick={() => setListingType(lt.id as typeof listingType)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${listingType === lt.id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
+                >
+                  {lt[locale]}
+                </button>
+              ))}
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                {locale === "ar" ? "نوع العقار:" : locale === "tr" ? "Mülk türü:" : "Property:"}
+              </span>
+              {propertyTypes.map((pt) => (
+                <button
+                  key={pt.id}
+                  type="button"
+                  onClick={() => setPropertyType(pt.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === pt.id ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
+                >
+                  {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-              {locale === "ar" ? "نوع العقار:" : locale === "tr" ? "Mülk türü:" : "Property:"}
-            </span>
-            {propertyTypes.map((pt) => (
-              <button
-                key={pt.id}
-                type="button"
-                onClick={() => setPropertyType(pt.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === pt.id ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
-              >
-                {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
-              </button>
-            ))}
-          </div>
-          <SearchInput
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={locale === "ar" ? "ابحث عن عقار..." : locale === "tr" ? "Gayrimenkul ara..." : "Search properties..."}
-            className="w-full sm:w-80"
-            aria-label={locale === "ar" ? "ابحث عن عقار" : locale === "tr" ? "Gayrimenkul ara" : "Search properties"}
-          />
         </div>
 
         <div className="mb-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
           {locale === "ar" ? `${filtered.length} عقار` : locale === "tr" ? `${filtered.length} mülk` : `${filtered.length} properties`}
         </div>
 
-        <Grid columns={3}>
+        <Grid columns={3} className="gap-6">
           {loading
-            ? Array.from({ length: 9 }).map((_, index) => <div key={index} className="h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
+            ? Array.from({ length: 9 }).map((_, index) => (
+                <div key={index} className="rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse h-64 flex items-center justify-center">
+                  <span className="text-gray-400">جارٍ التحميل...</span>
+                </div>
+              ))
             : filtered.map((property) => (
-                <Link key={property.id} href={`/properties/${property.slug || property.id}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
-                  <div className="relative h-48 bg-gray-100 dark:bg-gray-800">
-                    {property.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- dynamic property image URLs
-                      <img src={property.imageUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-4xl text-gray-300 dark:text-gray-600">
-                        {property.propertyType === "villa" ? "🏠" : property.propertyType === "apartment" ? "🏢" : property.propertyType === "land" ? "🌍" : "🏪"}
-                      </div>
-                    )}
-                    <span className="absolute end-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-gray-900">
-                      {property.listingType === "for-rent"
-                        ? (locale === "ar" ? "إيجار" : locale === "tr" ? "Kiralık" : "For rent")
-                        : (locale === "ar" ? "بيع" : locale === "tr" ? "Satılık" : "For sale")}
-                    </span>
-                    {property.id.startsWith("demo-") && (
-                      <span className="absolute start-3 top-3 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-bold text-white">
-                        {locale === "ar" ? "عرض" : locale === "tr" ? "Demo" : "Demo"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{pick(locale, property, "area")}</p>
-                    <h2 className="mt-2 text-xl font-black text-gray-900 dark:text-white">{pick(locale, property, "title")}</h2>
-                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, property, "description")}</p>
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <strong className="text-lg font-black text-blue-700 dark:text-blue-300">{property.price.toLocaleString(locale === "ar" ? "ar" : "en")} {property.currency}</strong>
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                        {property.bedrooms > 0 && `${property.bedrooms} غرف`}
-                        {property.bedrooms > 0 && property.bathrooms > 0 && " • "}
-                        {property.bathrooms > 0 && `${property.bathrooms} حمّام`}
-                        {property.landArea && ` • ${property.landArea} م²`}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <LuxuryPropertyCard
+                  key={property.id}
+                  property={property}
+                  className="col-span-2 md:col-span-1"
+                />
               ))}
-          {!loading && filtered.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-              {locale === "ar" ? "لا توجد عقارات مطابقة حالياً." : locale === "tr" ? "Şu anda eşleşen mülk yok." : "No matching properties are available right now."}
-            </div>
-          )}
         </Grid>
+
+        {!loading && loadError && (
+          <div className="col-span-full rounded-2xl border border-amber-300 bg-amber-50 px-6 py-12 text-center text-sm font-bold text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+            {locale === "ar"
+              ? "تعذر تحميل العقارات من الخادم. حاول تحديث الصفحة."
+              : locale === "tr"
+                ? "Mülkler sunucudan yüklenemedi. Sayfayı yenilemeyi deneyin."
+                : "Could not load properties from the server. Try refreshing the page."}
+          </div>
+        )}
+
+        {!loading && !loadError && filtered.length === 0 && (
+          <div className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+            {locale === "ar" ? "لا توجد عقارات مطابقة حالياً." : locale === "tr" ? "Şu anda eşleşen mülk yok." : "No matching properties are available right now."}
+          </div>
+        )}
+
+        <div className="mt-8 text-right text-xs text-gray-500 dark:text-gray-400">
+          <Link
+            href="/properties"
+            className="hover:underline underline-offset-2 transition-colors"
+          >
+            {locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View All"}
+          </Link>
+        </div>
       </PageContainer>
       {AccountDialog}
     </PublicPageShell>

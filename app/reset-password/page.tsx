@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import AuthPageShell, { useAuthPage } from "@/src/components/AuthPageShell";
@@ -10,7 +11,9 @@ const RESET_URL = "/api/auth/reset-password";
 export default function ResetPasswordPage() {
   return (
     <AuthPageShell>
-      <ResetPasswordForm />
+      <Suspense>
+        <ResetPasswordForm />
+      </Suspense>
     </AuthPageShell>
   );
 }

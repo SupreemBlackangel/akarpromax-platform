@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -207,7 +207,7 @@ function AuctionDetailInner() {
                       <h1 className="text-2xl font-black text-gray-900">{auction.titleAr}</h1>
                       <p className="mt-1 text-sm text-gray-500">{auction.auctionType === 'fixed' ? 'مزاد مغلق' : 'مزاد مفتوح'}</p>
                     </div>
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--color-primary)]">
                       {statusLabels[auction.auctionStatus] || auction.auctionStatus}
                     </span>
                   </div>
@@ -220,7 +220,7 @@ function AuctionDetailInner() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-start gap-3">
-                      <ShieldCheck className="mt-1 h-5 w-5 text-blue-600" />
+                      <ShieldCheck className="mt-1 h-5 w-5 text-[var(--color-primary)]" />
                       <div className="flex-1">
                         <h2 className="font-black text-gray-900">اعتماد البائع</h2>
                         <p className="mt-1 text-sm text-gray-600">الجهة المنظمة أنشأت المزاد، ولن يبدأ قبل موافقتك كمالك للعقار على شروط المزاد.</p>
@@ -283,7 +283,7 @@ function AuctionDetailInner() {
                             مزايدة #{auction.bids.length - index}
                           </span>
                           <div className="text-left">
-                            <strong className="text-blue-600">{Number(bid.amount).toLocaleString()} {auction.currency}</strong>
+                            <strong className="text-[var(--color-primary)]">{Number(bid.amount).toLocaleString()} {auction.currency}</strong>
                             <span className="block text-xs text-gray-400">{new Date(bid.createdAt).toLocaleString()}</span>
                           </div>
                         </div>
@@ -300,7 +300,7 @@ function AuctionDetailInner() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">السعر الحالي</span>
-                      <span className="text-xl font-black text-blue-600">{Number(auction.auctionCurrentPrice || auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span>
+                      <span className="text-xl font-black text-[var(--color-primary)]">{Number(auction.auctionCurrentPrice || auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-500">سعر البداية</span><span>{Number(auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span></div>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-500">عدد المزايدات</span><span>{auction.auctionBidCount || 0}</span></div>
@@ -352,7 +352,7 @@ function AuctionDetailInner() {
                 </Card>
               )}
 
-              {actionError && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</div>}
+              {actionError && <div className="rounded-xl bg-[var(--color-error-soft)] p-3 text-sm text-[var(--color-error)]">{actionError}</div>}
               {actionSuccess && <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700">{actionSuccess}</div>}
             </div>
           </div>

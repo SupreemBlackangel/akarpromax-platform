@@ -7,7 +7,7 @@ import { createRequestId, recordAuditEvent } from "@/lib/security/audit";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { assertSafeOrigin } from "@/lib/security/origin";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
-import type { Locale } from "@/lib/email/templates";
+import { normalizeEmailIdentity } from "@/lib/auth/email-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Never disclose whether the email exists.
-  const result = await issuePasswordReset(parsed.data.email.toLowerCase(), parsed.data.locale);
+  const result = await issuePasswordReset(normalizeEmailIdentity(parsed.data.email), parsed.data.locale);
   void recordAuditEvent({
     eventType: "AUTH_PASSWORD_RESET_REQUEST",
     ipAddress: ip,

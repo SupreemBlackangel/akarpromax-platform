@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -13,11 +13,11 @@ const statusLabels: Record<string, string> = {
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  under_review: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  under_review: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/30 dark:text-[var(--color-primary)]",
   approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  suspended: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  active: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/30 dark:text-[var(--color-success)]",
+  suspended: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-400",
+  rejected: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-400",
 };
 
 const countries: Record<string, string> = {
@@ -55,25 +55,25 @@ export default function AdvertiserRequestsView() {
   }
 
   if (loading) {
-    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" /></div>;
+    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" /></div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto p-6" dir="rtl">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">طلبات اعتماد المعلنين</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-[var(--color-surface)]">طلبات اعتماد المعلنين</h1>
 
       {profiles.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center border border-gray-200 dark:border-gray-700">
+        <div className="bg-[var(--color-surface)] dark:bg-gray-800 rounded-xl p-8 text-center border border-gray-200 dark:border-gray-700">
           <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد طلبات اعتماد حالياً</p>
           <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">جميع طلبات المعلنين تمت معالجتها</p>
         </div>
       ) : (
         <div className="space-y-3">
           {profiles.map((profile) => (
-            <div key={profile.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div key={profile.id} className="bg-[var(--color-surface)] dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <Link href={`/admin/advertisers/${profile.id}`} className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                  <Link href={`/admin/advertisers/${profile.id}`} className="font-semibold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                     {profile.companyNameAr}
                   </Link>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[profile.status]}`}>
@@ -90,7 +90,7 @@ export default function AdvertiserRequestsView() {
                 <button
                   onClick={() => updateStatus(profile.id, "approved")}
                   disabled={actionLoading === profile.id}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs transition-colors"
+                  className="px-3 py-1.5 bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 disabled:opacity-50 text-white rounded-lg text-xs transition-colors"
                 >
                   اعتماد
                 </button>

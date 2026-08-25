@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import OfficeWorkspaceShell from "@/src/components/office/OfficeWorkspaceShell";
@@ -7,10 +7,10 @@ import { apiFetch } from "@services-client";
 type DeliveryRow = Record<string, unknown> & { id: string; status: string; event_type: string; channel: string; title?: string | null; body?: string | null; created_at: string };
 
 const STATUS_TONES: Record<string, string> = {
-  queued: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-  delivered: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-  deferred: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-  failed: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+  queued: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]",
+  delivered: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]",
+  deferred: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
+  failed: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
 };
 
 export default function OfficeNotificationsPage() {
@@ -50,7 +50,7 @@ export default function OfficeNotificationsPage() {
           type="button"
           onClick={() => setView("deliveries")}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${
-            view === "deliveries" ? "bg-blue-600 text-white" : "bg-white text-gray-600 dark:bg-gray-900 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
+            view === "deliveries" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] text-gray-600 dark:bg-gray-900 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
           }`}
         >
           سجل التسليم
@@ -59,7 +59,7 @@ export default function OfficeNotificationsPage() {
           type="button"
           onClick={() => setView("rules")}
           className={`rounded-xl px-4 py-2 text-sm font-bold ${
-            view === "rules" ? "bg-blue-600 text-white" : "bg-white text-gray-600 dark:bg-gray-900 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
+            view === "rules" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] text-gray-600 dark:bg-gray-900 dark:text-gray-300 border border-gray-200 dark:border-gray-800"
           }`}
         >
           القواعد
@@ -67,16 +67,16 @@ export default function OfficeNotificationsPage() {
       </div>
 
       {loading ? (
-        <p className="rounded-2xl bg-white px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900">جارٍ التحميل…</p>
+        <p className="rounded-2xl bg-[var(--color-surface)] px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900">جارٍ التحميل…</p>
       ) : view === "deliveries" ? (
         deliveries.length === 0 ? (
-          <p className="rounded-2xl bg-white px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">لا توجد تنبيهات بعد.</p>
+          <p className="rounded-2xl bg-[var(--color-surface)] px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">لا توجد تنبيهات بعد.</p>
         ) : (
           <ul className="space-y-3">
             {deliveries.map((d) => (
-              <li key={d.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <li key={d.id} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-bold text-gray-900 dark:text-white">{d.title || d.event_type}</p>
+                  <p className="font-bold text-gray-900 dark:text-[var(--color-surface)]">{d.title || d.event_type}</p>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${STATUS_TONES[d.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
                     {d.status}
                   </span>
@@ -90,11 +90,11 @@ export default function OfficeNotificationsPage() {
           </ul>
         )
       ) : rules.length === 0 ? (
-        <p className="rounded-2xl bg-white px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+        <p className="rounded-2xl bg-[var(--color-surface)] px-5 py-10 text-center text-sm text-gray-500 dark:bg-gray-900 dark:text-gray-400">
           لا توجد قواعد تنبيه. تُنشأ افتراضيًا لكل حدث.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-surface)] dark:border-gray-800 dark:bg-gray-900">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-xs font-black uppercase text-gray-400 dark:bg-gray-800/60">
               <tr>
@@ -110,7 +110,7 @@ export default function OfficeNotificationsPage() {
                   <td className="px-4 py-3 font-bold text-gray-800 dark:text-gray-200">{String(rule.event_type)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{String(rule.channel)}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${Number(rule.enabled) === 1 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${Number(rule.enabled) === 1 ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
                       {Number(rule.enabled) === 1 ? "نعم" : "لا"}
                     </span>
                   </td>

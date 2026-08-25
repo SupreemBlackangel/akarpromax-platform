@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]" />
         </div>
       }
     >
@@ -146,10 +146,10 @@ function VerifyEmailForm() {
       className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
       dir="rtl"
     >
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+      <div className="w-full max-w-md bg-[var(--color-surface)] rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Mail className="w-8 h-8 text-blue-600" />
+          <div className="w-16 h-16 bg-[var(--color-primary-soft)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-[var(--color-primary)]" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">
             تحقق من بريدك الإلكتروني
@@ -169,7 +169,7 @@ function VerifyEmailForm() {
           </div>
         )}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+          <div className="mb-4 p-3 bg-[var(--color-error-soft)] border border-[var(--color-error)]/30 rounded-lg text-[var(--color-error)] text-sm flex items-start gap-2">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             {error}
           </div>
@@ -177,7 +177,7 @@ function VerifyEmailForm() {
 
         {status === "verifying" ? (
           <div className="text-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto mb-4" />
             <p className="text-gray-600">جارٍ تفعيل حسابك…</p>
           </div>
         ) : status === "success" ? (
@@ -200,7 +200,7 @@ function VerifyEmailForm() {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${error ? "border-red-500" : "border-gray-300"}`}
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${error ? "border-[var(--color-error)]" : "border-gray-300"}`}
                   placeholder="ألصق رمز التحقق من بريدك"
                 />
                 <button
@@ -220,7 +220,7 @@ function VerifyEmailForm() {
             <button
               onClick={handleVerify}
               disabled={loading || !token.trim()}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg font-semibold hover:bg-[var(--color-primary-hover)] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -241,7 +241,7 @@ function VerifyEmailForm() {
                 className={`text-sm font-medium mt-1 ${
                   resendTimer > 0
                     ? "text-gray-400"
-                    : "text-blue-600 hover:underline"
+                    : "text-[var(--color-primary)] hover:underline"
                 }`}
               >
                 {resending ? (
@@ -259,7 +259,7 @@ function VerifyEmailForm() {
                       `/register?email=${encodeURIComponent(email)}`,
                     )
                   }
-                  className="text-sm text-gray-500 hover:text-blue-600 flex items-center justify-center gap-1 mx-auto"
+                  className="text-sm text-gray-500 hover:text-[var(--color-primary)] flex items-center justify-center gap-1 mx-auto"
                 >
                   <ArrowRight className="w-4 h-4" />
                   البريد غير صحيح؟ تغيير البريد الإلكتروني

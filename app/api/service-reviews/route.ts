@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { listReviews } from "@services/marketplace";
+import { toPublicServiceReview } from "@services/public-dto";
 
 export const dynamic = "force-dynamic";
 
@@ -18,5 +19,5 @@ export async function GET(request: NextRequest) {
     orderId: orderId ?? undefined,
     limit: 100,
   });
-  return NextResponse.json({ reviews });
+  return NextResponse.json({ reviews: reviews.map(toPublicServiceReview) });
 }

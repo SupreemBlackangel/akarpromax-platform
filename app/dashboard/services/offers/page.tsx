@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -40,7 +40,7 @@ export default function MyOffersPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="offers">
-        <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4">{t("services.offers") ?? "العروض"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.offers") ?? "العروض"}</h2>
 
         {loading ? (
           <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}</div>
@@ -51,10 +51,10 @@ export default function MyOffersPage() {
             {offers.map((offer) => {
               const isProvider = offer.provider_user_id === viewer.email;
               return (
-                <div key={offer.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <div key={offer.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <Link href={`/dashboard/services/offers/${offer.id}`} className="font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                      <Link href={`/dashboard/services/offers/${offer.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                         {offer.request_title ? String(offer.request_title) : `عرض #${String(offer.id).slice(0, 8)}`}
                       </Link>
                       <p className="mt-1 text-xs text-gray-400">
@@ -62,13 +62,13 @@ export default function MyOffersPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatMoney(offer.total_price ?? offer.price, offer.currency)}</span>
+                      <span className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{formatMoney(offer.total_price ?? offer.price, offer.currency)}</span>
                       <OfferStatusPill status={offer.status} locale={locale} />
                     </div>
                   </div>
                   {offer.offer_notes && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{offer.offer_notes}</p>}
                   <div className="mt-3">
-                    <Link href={`/dashboard/services/offers/${offer.id}`} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
+                    <Link href={`/dashboard/services/offers/${offer.id}`} className="px-4 py-2 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">
                       {t("services.viewOffer") ?? "عرض التفاصيل"}
                     </Link>
                   </div>

@@ -11,8 +11,14 @@ export async function GET(req: NextRequest) {
   if (blocked) return blocked;
 
   const url = new URL(req.url);
-  const countryCode = (url.searchParams.get("country") ?? "om").toLowerCase().slice(0, 2);
-  const cityId = url.searchParams.get("city") ?? undefined;
+  // No country default. An absent country means "no country context", and the
+  // delivery layer then matches only globally scoped news (country_code IS
+  // NULL); a country-scoped item cannot equal an empty context. Substituting a
+  // country here would silently turn global news into one market's news.
+  const countryCode = (url.searchParams.get("country") ?? "").toLowerCase().slice(0, 2);
+  // City is meaningless without a country in the canonical geo contract, and is
+  // never used to work out a country.
+  const cityId = countryCode ? (url.searchParams.get("city") ?? undefined) : undefined;
   const limit = Math.max(1, Math.min(100, Number(url.searchParams.get("limit") ?? 20)));
   const view = url.searchParams.get("view") ?? "list";
 

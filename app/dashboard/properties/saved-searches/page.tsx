@@ -1,9 +1,12 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { Trash2, Bell, BellOff } from 'lucide-react';
+import type { savedSearches } from '@/lib/db/schemas/properties-schema';
+
+type SavedSearchRow = typeof savedSearches.$inferSelect;
 
 export default function SavedSearchesPage() {
-  const [searches, setSearches] = useState<any[]>([]);
+  const [searches, setSearches] = useState<SavedSearchRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -37,20 +40,20 @@ export default function SavedSearchesPage() {
 
   const deleteSearch = async (id: string) => {
     await fetch(`/api/properties/saved-searches?id=${id}`, { method: 'DELETE' });
-    setSearches(prev => prev.filter((s: any) => s.id !== id));
+    setSearches(prev => prev.filter((s) => s.id !== id));
   };
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">البحث المحفوظ</h1>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-hover)]">
           + حفظ بحث جديد
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="bg-[var(--color-surface)] rounded-lg shadow p-4 mb-6">
           <input type="text" placeholder="اسم البحث" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 border rounded mb-3" />
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <select value={filters.dealType} onChange={(e) => setFilters({ ...filters, dealType: e.target.value })} className="p-2 border rounded">
@@ -78,15 +81,15 @@ export default function SavedSearchesPage() {
         <div className="text-center py-12 text-gray-500"><p>لا توجد بحوث محفوظة</p></div>
       ) : (
         <div className="space-y-3">
-          {searches.map((s: any) => (
-            <div key={s.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+          {searches.map((s) => (
+            <div key={s.id} className="bg-[var(--color-surface)] rounded-lg shadow p-4 flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">{s.name}</h3>
                 <p className="text-sm text-gray-500">{JSON.stringify(s.filters)}</p>
               </div>
               <div className="flex gap-2">
-                {s.notify ? <Bell className="w-5 h-5 text-blue-500" /> : <BellOff className="w-5 h-5 text-gray-400" />}
-                <button onClick={() => deleteSearch(s.id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-5 h-5" /></button>
+                {s.notify ? <Bell className="w-5 h-5 text-[var(--color-primary)]" /> : <BellOff className="w-5 h-5 text-gray-400" />}
+                <button onClick={() => deleteSearch(s.id)} className="text-red-500 hover:text-[var(--color-error)]"><Trash2 className="w-5 h-5" /></button>
               </div>
             </div>
           ))}

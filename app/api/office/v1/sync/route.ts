@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
   const items = parseBody(body.items);
   if (!items.length) return NextResponse.json({ error: "items required" }, { status: 400 });
 
-  const result = await syncPush(auth.device.deviceId, items, (server, incoming) => {
+  // Sponsor identity comes from the authenticated device credential only —
+  // never from the request body.
+  const result = await syncPush(auth.device.deviceId, auth.device.sponsorId, items, (server, incoming) => {
     void server;
     void incoming;
     return { action: "accept-server" };

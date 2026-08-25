@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getSessionIdentity } from "@/lib/identity-auth";
 import AdminSidebar from "./admin-sidebar";
+import "@/src/styles/admin.css";
 
 export const dynamic = "force-dynamic";
 

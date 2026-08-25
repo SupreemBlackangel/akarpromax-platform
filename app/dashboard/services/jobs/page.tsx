@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
@@ -7,7 +7,7 @@ import ServiceDashboardShell from "@services-ui/ServiceDashboardShell";
 import { JobCard, type JobRow } from "@services-ui/ServiceCards";
 import { apiFetch } from "@services-client";
 
-const FILTERS = ["all", "created", "accepted", "scheduled", "in_progress", "waiting_customer_confirmation", "delivered", "completed", "cancelled", "disputed"] as const;
+const FILTERS = ["all", "pending_provider", "confirmed", "declined", "created", "accepted", "scheduled", "in_progress", "waiting_customer_confirmation", "delivered", "completed", "cancelled", "disputed"] as const;
 
 export default function MyJobsPage() {
   const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -43,8 +43,8 @@ export default function MyJobsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="jobs">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-white">{t("services.jobs") ?? "المهام"}</h2>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.jobs") ?? "المهام"}</h2>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
             {FILTERS.map((f) => (
               <option key={f} value={f}>{f.replace(/_/g, " ")}</option>
             ))}

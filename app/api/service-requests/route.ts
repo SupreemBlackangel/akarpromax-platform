@@ -4,6 +4,10 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { createRequestFull, listRequestsFull } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
+import { geoAliases } from "@/lib/geo/platform-location";
+import { GeoService } from "@/lib/services/geo/geo.service";
+import { resolveGeoSelection } from "@/lib/services/geo/selection";
 
 export const dynamic = "force-dynamic";
 
@@ -30,24 +34,57 @@ function cleanAnswers(value: unknown): Array<{ key: string; label?: string | nul
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams;
+  const mine = q.get("mine") === "1";
   let customerUserId: string | undefined;
-  if (q.get("mine") === "1") {
+  if (mine) {
     const identity = await getSessionIdentity();
     if (!identity.authenticated || !identity.email) {
       return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
     }
     customerUserId = identity.email;
   }
+  const requestedStatus = q.get("status");
+  const publicStatus = requestedStatus === "receiving_offers" ? "receiving_offers" : "published";
+  const rawScope = q.get("scope");
+  if (rawScope && rawScope !== "local" && rawScope !== "global") {
+    return NextResponse.json({ error: "GEO_INVALID_SELECTION" }, { status: 400 });
+  }
+  const geoProvider = new GeoService();
+  const geoResolution = await resolveGeoSelection({
+    scope: rawScope as "local" | "global" | undefined,
+    country: q.get("country"),
+    governorate: q.get("governorate"),
+    city: q.get("cityId"),
+    district: q.get("districtId"),
+  }, geoProvider);
+  if (!geoResolution.ok) {
+    return NextResponse.json({ error: geoResolution.error }, { status: 400 });
+  }
+  const geo = geoResolution.value;
+  const regionCityAliases = geo.governorate && !geo.city
+    ? (await geoProvider.getCities(geo.governorate.id)).flatMap(geoAliases)
+    : geo.aliases.city;
   const requests = await listRequestsFull({
-    countryCode: q.get("country") ?? undefined,
-    cityId: q.get("cityId") ?? undefined,
+    countryCode: geo.country?.code,
+    countryAliases: geo.aliases.country,
+    cityId: geo.city?.code ?? geo.city?.id,
+    cityAliases: regionCityAliases,
+    districtId: geo.district?.code ?? geo.district?.id,
+    districtAliases: geo.aliases.district,
     categoryId: q.get("categoryId") ?? undefined,
-    status: q.get("status") ?? undefined,
+    status: mine ? requestedStatus ?? undefined : publicStatus,
     customerUserId,
     urgency: q.get("urgency") ?? undefined,
     limit: q.get("limit") ? Math.max(1, Math.min(100, Number(q.get("limit")) || 50)) : 50,
   });
-  return NextResponse.json({ requests }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=90" } });
+  const safeRequests = mine ? requests : requests.map((request) => {
+    const safe = { ...request };
+    for (const key of ["customer_user_id", "latitude", "longitude", "contact_phone", "contact_email", "contact_preference", "access_notes"]) {
+      delete safe[key];
+    }
+    return safe;
+  });
+  return NextResponse.json({ requests: safeRequests }, { headers: { "Cache-Control": mine ? "no-store" : "public, max-age=30, stale-while-revalidate=90" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -68,6 +105,10 @@ export async function POST(request: NextRequest) {
   if (!categoryId || !countryCode || !cityId) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const currency = resolveCurrencyCode(body.currency);
+  if (!currency.ok) {
+    return NextResponse.json({ error: currency.error }, { status: 400 });
+  }
   const id = await createRequestFull(
     {
       customerUserId: identity.email,
@@ -81,7 +122,7 @@ export async function POST(request: NextRequest) {
       description: clean(body.description, 4000) || null,
       budgetMin: cleanNumber(body.budgetMin),
       budgetMax: cleanNumber(body.budgetMax),
-      currency: clean(body.currency, 8) || "OMR",
+      currency: currency.code,
       urgency: clean(body.urgency, 24) || null,
       preferredPeriod: clean(body.preferredPeriod, 200) || null,
       needsVisit: body.needsVisit === true,
@@ -89,6 +130,11 @@ export async function POST(request: NextRequest) {
       shortAddress: clean(body.shortAddress, 300) || null,
       pricingType: clean(body.pricingType, 24) || null,
       preferredDate: clean(body.preferredDate, 40) || null,
+      contactPhone: clean(body.contactPhone, 32) || null,
+      contactEmail: clean(body.contactEmail, 200) || null,
+      contactPreference: ["platform", "phone", "whatsapp", "email"].includes(String(body.contactPreference))
+        ? body.contactPreference as "platform" | "phone" | "whatsapp" | "email"
+        : "platform",
       answers: cleanAnswers(body.answers),
       attachments: Array.isArray(body.attachments) ? body.attachments.flatMap((item) => {
         if (!item || typeof item !== "object") return [];

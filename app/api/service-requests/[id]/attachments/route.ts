@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
-import { addRequestAttachments, listRequestAttachments } from "@services/marketplace";
+import { addRequestAttachments, getProviderProfileByUserId, getRequestFull, listRequestAttachments, listRequestMatches } from "@services/marketplace";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 
@@ -15,7 +15,29 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
   }
+
   const { id } = await params;
+  const serviceRequest = await getRequestFull(id);
+  if (!serviceRequest) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_FOUND }, { status: 404 });
+  }
+
+  const isCustomer = String(serviceRequest.customer_user_id) === identity.email;
+  const isAdmin = hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL);
+  let isMatchedProvider = false;
+
+  if (!isCustomer && !isAdmin) {
+    const provider = await getProviderProfileByUserId(identity.email);
+    if (provider?.status === "approved") {
+      const matches = await listRequestMatches(id);
+      isMatchedProvider = matches.some((match) => String(match.provider_id) === String(provider.id));
+    }
+  }
+
+  if (!isCustomer && !isAdmin && !isMatchedProvider) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
+  }
+
   const attachments = await listRequestAttachments(id);
   return NextResponse.json({ attachments }, { headers: { "Cache-Control": "no-store" } });
 }

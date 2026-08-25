@@ -4,6 +4,8 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { createListing, listListings } from "@services/core";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
+import { toPublicServiceListing } from "@services/public-dto";
 
 export const dynamic = "force-dynamic";
 
@@ -48,14 +50,17 @@ export async function GET(request: NextRequest) {
     categoryId: q.get("categoryId") ?? undefined,
     countryCode: q.get("country") ?? undefined,
     cityId: q.get("cityId") ?? undefined,
-    status: q.get("status") ?? undefined,
+    status: "active",
     latitude,
     longitude,
     radiusKm,
     limit,
     offset,
   });
-  return NextResponse.json({ listings }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=90" } });
+  return NextResponse.json(
+    { listings: listings.map(toPublicServiceListing) },
+    { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=90" } },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -76,6 +81,10 @@ export async function POST(request: NextRequest) {
   if (!categoryId || !countryCode || !cityId) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const currency = resolveCurrencyCode(body.currency);
+  if (!currency.ok) {
+    return NextResponse.json({ error: currency.error }, { status: 400 });
+  }
   const id = await createListing(
     {
       providerUserId: identity.email,
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
       titleKey: clean(body.titleKey, 300) || null,
       descriptionKey: clean(body.descriptionKey, 4000) || null,
       price: cleanNumber(body.price) ?? 0,
-      currency: clean(body.currency, 8) || "OMR",
+      currency: currency.code,
       unit: clean(body.unit, 24) || "project",
       status: clean(body.status, 24) || "active",
       tags: Array.isArray(body.tags) ? body.tags.map(String).slice(0, 20) : [],

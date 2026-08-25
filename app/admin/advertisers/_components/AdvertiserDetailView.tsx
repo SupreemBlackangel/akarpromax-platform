@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -23,11 +23,11 @@ const statusLabels: Record<string, string> = {
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  under_review: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  under_review: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/30 dark:text-[var(--color-primary)]",
   approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  suspended: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  active: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/30 dark:text-[var(--color-success)]",
+  suspended: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-400",
+  rejected: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-400",
 };
 
 export default function AdvertiserDetailView() {
@@ -46,14 +46,14 @@ export default function AdvertiserDetailView() {
   }, [params?.id]);
 
   if (loading) {
-    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" /></div>;
+    return <div className="flex justify-center p-12"><div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" /></div>;
   }
 
   if (!profile) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center" dir="rtl">
         <p className="text-gray-500 dark:text-gray-400">المعلن غير موجود</p>
-        <Link href="/admin/advertisers" className="text-blue-600 hover:underline mt-2 inline-block">العودة إلى القائمة</Link>
+        <Link href="/admin/advertisers" className="text-[var(--color-primary)] hover:underline mt-2 inline-block">العودة إلى القائمة</Link>
       </div>
     );
   }
@@ -61,9 +61,9 @@ export default function AdvertiserDetailView() {
   return (
     <div className="max-w-3xl mx-auto p-6" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.companyNameAr}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{profile.companyNameAr}</h1>
         <div className="flex gap-2">
-          <Link href={`/admin/advertisers/${profile.id}/edit`} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+          <Link href={`/admin/advertisers/${profile.id}/edit`} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg transition-colors text-sm">
             تعديل
           </Link>
           <button onClick={() => router.push("/admin/advertisers")} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors text-sm">
@@ -72,7 +72,7 @@ export default function AdvertiserDetailView() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-[var(--color-surface)] dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[profile.status] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
@@ -121,7 +121,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   return (
     <div>
       <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-gray-900 dark:text-white">{value}</dd>
+      <dd className="mt-0.5 text-sm text-gray-900 dark:text-[var(--color-surface)]">{value}</dd>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -115,7 +115,7 @@ export default function SupervisorDashboardPage() {
   ];
 
   const tabButton = (key: typeof tab, label: string, count?: number) => (
-    <button onClick={() => setTab(key)} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === key ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
+    <button onClick={() => setTab(key)} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${tab === key ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200"}`}>
       {label} {count !== undefined ? `(${count})` : ""}
     </button>
   );
@@ -124,10 +124,10 @@ export default function SupervisorDashboardPage() {
     <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active={active}>
       <PageContainer dir={dir} className="py-8">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
         </div>
 
-        {message && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{message}</div>}
+        {message && <div className="mb-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{message}</div>}
 
         <div className="mb-5 flex flex-wrap gap-2">
           {tabButton("overview", t("services.overview") ?? "نظرة عامة")}
@@ -142,16 +142,16 @@ export default function SupervisorDashboardPage() {
         {tab === "overview" && (
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {stats.map(([label, value]) => (
-              <div key={label} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+              <div key={label} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
                 <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-                <p className="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">{value}</p>
+                <p className="mt-1 text-3xl font-black text-[var(--color-primary)] dark:text-[var(--color-primary)]">{value}</p>
               </div>
             ))}
           </div>
         )}
 
         {tab === "providers" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
             {providers.length === 0 ? (
               <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-12">{t("services.noPendingProviders") ?? "لا يوجد مقدمو خدمات بانتظار المراجعة"}</p>
             ) : (
@@ -168,16 +168,16 @@ export default function SupervisorDashboardPage() {
                   {providers.map((p) => (
                     <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
                       <td className="px-4 py-3">
-                        <Link className="font-bold text-blue-600 dark:text-blue-400 hover:underline" href={`/providers/${p.id}`}>
+                        <Link className="font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline" href={`/providers/${p.id}`}>
                           {p.business_name || p.display_name_ar || p.display_name_en || "مقدم خدمة"}
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.city_id || "—"}</td>
-                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold">{p.status}</span></td>
+                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)] text-xs font-semibold">{p.status}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => void setProviderStatus(p.id, "approved")} disabled={busy} className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold">{t("services.approve") ?? "اعتماد"}</button>
-                          <button onClick={() => void setProviderStatus(p.id, "rejected")} disabled={busy} className="px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold">{t("services.reject") ?? "رفض"}</button>
+                          <button onClick={() => void setProviderStatus(p.id, "approved")} disabled={busy} className="px-3 py-1.5 rounded-lg bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 disabled:opacity-50 text-white text-xs font-bold">{t("services.approve") ?? "اعتماد"}</button>
+                          <button onClick={() => void setProviderStatus(p.id, "rejected")} disabled={busy} className="px-3 py-1.5 rounded-lg bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold">{t("services.reject") ?? "رفض"}</button>
                         </div>
                       </td>
                     </tr>
@@ -189,7 +189,7 @@ export default function SupervisorDashboardPage() {
         )}
 
         {tab === "reports" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
             {reports.length === 0 ? (
               <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-12">{t("services.noReports") ?? "لا توجد بلاغات"}</p>
             ) : (
@@ -206,13 +206,13 @@ export default function SupervisorDashboardPage() {
                 <tbody>
                   {reports.map((r) => (
                     <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold">{r.target_type}</span></td>
+                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] text-xs font-semibold">{r.target_type}</span></td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.reason || r.description || "—"}</td>
-                      <td className="px-4 py-3 text-xs font-semibold text-amber-600 dark:text-amber-400">{r.status || "open"}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-[var(--accent)] dark:text-[var(--accent)]">{r.status || "open"}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs">{r.created_at ? new Date(r.created_at).toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US") : "—"}</td>
                       <td className="px-4 py-3">
                         {(r.status === "open" || r.status === "in_review") && (
-                          <button onClick={() => void resolveReport(r.id)} disabled={busy} className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold">{t("services.resolve") ?? "حل البلاغ"}</button>
+                          <button onClick={() => void resolveReport(r.id)} disabled={busy} className="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-xs font-bold">{t("services.resolve") ?? "حل البلاغ"}</button>
                         )}
                       </td>
                     </tr>
@@ -225,7 +225,7 @@ export default function SupervisorDashboardPage() {
 
         {tab === "categories" && (
           <div className="grid lg:grid-cols-2 gap-4 items-start">
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
               <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.currentCategories") ?? "التصنيفات الحالية"}</h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {categories.map((c) => (
@@ -236,7 +236,7 @@ export default function SupervisorDashboardPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3">
               <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.addCategory") ?? "إضافة تصنيف"}</h3>
               <CategoryForm t={t} onSubmit={load} />
             </div>
@@ -244,21 +244,21 @@ export default function SupervisorDashboardPage() {
         )}
 
         {tab === "requests" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.allRequests") ?? "جميع طلبات الخدمات"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.requestsComingSoon") ?? "قائمة الطلبات الكاملة مع فلاتر متقدمة — قيد التطوير"}</p>
           </div>
         )}
 
         {tab === "offers" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.allOffers") ?? "جميع العروض"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.offersComingSoon") ?? "قائمة العروض الكاملة مع فلاتر متقدمة — قيد التطوير"}</p>
           </div>
         )}
 
         {tab === "disputes" && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
             <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.disputes") ?? "النزاعات"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.disputesComingSoon") ?? "إدارة النزاعات وسير العمل — قيد التطوير"}</p>
           </div>
@@ -299,7 +299,7 @@ function CategoryForm({ t, onSubmit }: { t: (key: string) => string; onSubmit: (
     }
   };
 
-  const inputCls = "w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputCls = "w-full px-3 py-2 rounded-lg bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
 
   return (
     <form onSubmit={submit} className="space-y-3">
@@ -311,10 +311,10 @@ function CategoryForm({ t, onSubmit }: { t: (key: string) => string; onSubmit: (
         <input value={form.priceMax} onChange={(e) => setForm((f) => ({ ...f, priceMax: e.target.value }))} placeholder="سعر إلى (ر.ع)" className={inputCls} />
       </div>
       <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-        <input type="checkbox" checked={form.requiresLicense} onChange={(e) => setForm((f) => ({ ...f, requiresLicense: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-blue-600" />
+        <input type="checkbox" checked={form.requiresLicense} onChange={(e) => setForm((f) => ({ ...f, requiresLicense: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)]" />
         {t("services.requiresLicense") ?? "يتطلب ترخيصاً"}
       </label>
-      <button type="submit" disabled={busy || !form.code.trim()} className="w-full px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold transition">
+      <button type="submit" disabled={busy || !form.code.trim()} className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-sm font-bold transition">
         {t("services.addCategory") ?? "إضافة التصنيف"}
       </button>
     </form>

@@ -19,7 +19,14 @@ function cleanNumber(value: unknown): number | null {
 
 export async function GET(request: NextRequest) {
   const country = request.nextUrl.searchParams.get("country") ?? undefined;
-  const categories = await listCategoriesFull(country);
+  const includeInactive = request.nextUrl.searchParams.get("admin") === "1";
+  if (includeInactive) {
+    const identity = await getSessionIdentity();
+    if (!identity.authenticated || !hasSponsorPermission(identity, PERMISSIONS.SERVICE_CATEGORIES_MANAGE)) {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
+    }
+  }
+  const categories = await listCategoriesFull(country, { includeInactive });
   return NextResponse.json({ categories }, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=120" } });
 }
 
@@ -60,6 +67,10 @@ export async function POST(request: NextRequest) {
         priceMax: cleanNumber(body.priceMax),
         dynamicFields: Array.isArray(body.dynamicFields) ? (body.dynamicFields as Array<Record<string, unknown>>) : undefined,
         sortOrder: Number.isFinite(Number(body.sortOrder)) ? Number(body.sortOrder) : 0,
+        isFeatured: body.isFeatured === true,
+        bookingMode: ["instant", "quotes", "both"].includes(String(body.bookingMode)) ? body.bookingMode as "instant" | "quotes" | "both" : "quotes",
+        badgeAr: clean(body.badgeAr, 80) || null,
+        badgeEn: clean(body.badgeEn, 80) || null,
       },
       { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
     );

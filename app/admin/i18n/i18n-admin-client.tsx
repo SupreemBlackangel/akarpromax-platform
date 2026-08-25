@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { PERMISSIONS } from "@/src/constants/permissions";
@@ -192,7 +192,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">إدارة الترجمات</h1>
 
         {message && (
-          <div className="mb-4 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">
+          <div className="mb-4 px-4 py-2 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">
             {message}
           </div>
         )}
@@ -201,7 +201,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
           <select
             value={namespaceFilter}
             onChange={(e) => setNamespaceFilter(e.target.value)}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
+            className="px-3 py-2 bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm"
           >
             <option value="">جميع الـ namespaces</option>
             {data?.namespaces.map((ns) => (
@@ -213,7 +213,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
             placeholder="بحث بالـ key أو القيمة..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm flex-1 min-w-[200px]"
+            className="px-3 py-2 bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm flex-1 min-w-[200px]"
           />
           {canPublish && (
             <button onClick={publishSnapshot} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors">
@@ -232,7 +232,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
                   <span className="text-gray-500">{v.label}</span>
                   <span className="text-gray-400">{new Date(v.createdAt).toLocaleDateString()}</span>
                   {can(PERMISSIONS.I18N_EDIT) && (
-                    <button onClick={() => rollbackVersion(v.id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 underline text-xs">تراجع</button>
+                    <button onClick={() => rollbackVersion(v.id)} className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] dark:text-[var(--color-primary)] underline text-xs">تراجع</button>
                   )}
                 </span>
               ))}
@@ -247,7 +247,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
         ) : (
           <div className="space-y-6">
             {Object.entries(keysByNamespace).map(([ns, rows]) => (
-              <div key={ns} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+              <div key={ns} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
                   <h2 className="font-semibold text-gray-800 dark:text-gray-100">namespace: {ns}</h2>
                   <p className="text-xs text-gray-500">{rows.length} key(s)</p>
@@ -281,7 +281,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
                                     value={currentValue}
                                     onChange={(e) => setEditing((prev) => ({ ...prev, [cacheKey]: e.target.value }))}
                                     rows={2}
-                                    className="w-full px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-gray-800 dark:text-gray-100 resize-y"
+                                    className="w-full px-2 py-1 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-gray-800 dark:text-gray-100 resize-y"
                                     dir="auto"
                                   />
                                 </td>
@@ -291,7 +291,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
                               <button
                                 onClick={() => saveAllLocales(row.key)}
                                 disabled={isSaving || !canEdit}
-                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                className="px-3 py-1.5 text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white rounded-lg transition-colors"
                               >
                                 {isSaving ? "..." : "حفظ"}
                               </button>

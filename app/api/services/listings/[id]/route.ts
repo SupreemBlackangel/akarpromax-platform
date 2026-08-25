@@ -4,16 +4,20 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getListing, updateListingStatus } from "@services/core";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { toPublicServiceListing } from "@services/public-dto";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const listing = await getListing(id);
-  if (!listing) {
+  if (!listing || listing.status !== "active") {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.NOT_FOUND }, { status: 404 });
   }
-  return NextResponse.json({ listing }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json(
+    { listing: toPublicServiceListing(listing) },
+    { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=90" } },
+  );
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

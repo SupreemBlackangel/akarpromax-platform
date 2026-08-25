@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { getProviderProfileByUserId, addProviderCategory, listProviderCategories, removeProviderCategory } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,19 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!categoryId) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const instantPrice = cleanNumber(body?.instantPrice);
+  const currency = body?.currency == null || body.currency === "" ? null : resolveCurrencyCode(body.currency);
+  if (instantPrice != null && (!Number.isInteger(instantPrice) || instantPrice <= 0 || !currency?.ok)) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
+  }
   await addProviderCategory(
     id,
     categoryId,
     {
       priceFrom: cleanNumber(body?.priceFrom),
       priceTo: cleanNumber(body?.priceTo),
+      instantPrice,
+      currency: currency?.ok ? currency.code : null,
       pricingUnit: typeof body?.pricingUnit === "string" ? body.pricingUnit.trim().slice(0, 24) || null : null,
       minDurationMin: cleanNumber(body?.minDurationMin),
       notes: typeof body?.notes === "string" ? body.notes.trim().slice(0, 500) || null : null,

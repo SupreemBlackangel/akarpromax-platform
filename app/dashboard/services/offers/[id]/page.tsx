@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -7,6 +7,7 @@ import { useServicesPage } from "@services-ui/useServicesPage";
 import ServiceDashboardShell from "@services-ui/ServiceDashboardShell";
 import { OfferStatusPill } from "@services-ui/ServiceStatusBadges";
 import { apiFetch, formatMoney, formatDate } from "@services-client";
+import { getCurrency } from "@/lib/market/currency-registry";
 
 type OfferDetail = {
   id: string;
@@ -81,7 +82,15 @@ export default function OfferDetailPage({ id }: Props) {
       setMessage(t("services.offerPriceRequired") ?? "أدخل سعراً صحيحاً");
       return;
     }
-    void action("revise", { requestId: requestRow?.id, price: priceNum, offerNotes: reviseNotes.trim() || null });
+    // The revision inherits the offer's own currency — never re-chosen, never
+    // defaulted. An offer with no usable currency cannot be revised until its
+    // data is corrected; the route answers a deterministic validation error.
+    const offerCurrency = getCurrency(offer?.currency)?.code ?? null;
+    if (!offerCurrency) {
+      setMessage(t("services.offerCurrencyRequired") ?? "لا يمكن مراجعة عرض بدون عملة محددة");
+      return;
+    }
+    void action("revise", { requestId: requestRow?.id, price: priceNum, currency: offerCurrency, offerNotes: reviseNotes.trim() || null });
   };
 
   if (!viewer.authenticated) {
@@ -108,14 +117,14 @@ export default function OfferDetailPage({ id }: Props) {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="offers">
-        <Link href="/dashboard/services/offers" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">← {t("services.offers") ?? "العروض"}</Link>
+        <Link href="/dashboard/services/offers" className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">← {t("services.offers") ?? "العروض"}</Link>
 
         {loading ? (
           <div className="mt-4 h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
         ) : !offer ? (
           <p className="mt-6 text-gray-500 dark:text-gray-400">{t("services.empty")}</p>
         ) : (
-          <div className="mt-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+          <div className="mt-4 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h1 className="text-xl font-black text-gray-900 dark:text-white">
                 {String(requestRow?.title ?? requestRow?.reference_number ?? "عرض")}
@@ -123,10 +132,10 @@ export default function OfferDetailPage({ id }: Props) {
               <OfferStatusPill status={status} locale={locale} />
             </div>
 
-            {message && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{message}</div>}
+            {message && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-300 rounded-lg text-sm">{message}</div>}
 
             <div className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              <div><span className="block text-xs text-gray-500 dark:text-gray-400">السعر</span><span className="font-bold text-blue-600 dark:text-blue-400">{formatMoney(offer.price, offer.currency)}</span></div>
+              <div><span className="block text-xs text-gray-500 dark:text-gray-400">السعر</span><span className="font-bold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(offer.price, offer.currency)}</span></div>
               <div><span className="block text-xs text-gray-500 dark:text-gray-400">الإجمالي</span><span className="font-bold text-gray-900 dark:text-white">{formatMoney(offer.total_price, offer.currency)}</span></div>
               {offer.duration_text && <div><span className="block text-xs text-gray-500 dark:text-gray-400">المدة</span><span className="text-gray-800 dark:text-gray-100">{offer.duration_text}</span></div>}
               {offer.nearest_date && <div><span className="block text-xs text-gray-500 dark:text-gray-400">أقرب موعد</span><span className="text-gray-800 dark:text-gray-100">{formatDate(offer.nearest_date)}</span></div>}
@@ -144,7 +153,7 @@ export default function OfferDetailPage({ id }: Props) {
                   {revisions.map((rev) => (
                     <div key={String(rev.id)} className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm">
                       <span className="text-gray-700 dark:text-gray-200">مراجعة #{String(rev.revision_number)}</span>
-                      <span className="font-bold text-blue-600 dark:text-blue-400">{formatMoney(rev.price != null ? Number(rev.price) : null, offer.currency)}</span>
+                      <span className="font-bold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(rev.price != null ? Number(rev.price) : null, offer.currency)}</span>
                       {Boolean(rev.reason) && <span className="text-xs text-gray-500 dark:text-gray-400 w-full">{String(rev.reason)}</span>}
                     </div>
                   ))}
@@ -154,18 +163,18 @@ export default function OfferDetailPage({ id }: Props) {
 
             <div className="mt-6 flex flex-wrap gap-3">
               {isCustomer && status === "sent" && (
-                <button onClick={() => void action("accept")} disabled={busy} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold transition">
+                <button onClick={() => void action("accept")} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 disabled:opacity-50 text-white text-sm font-bold transition">
                   ✓ {t("services.acceptOffer") ?? "قبول العرض"}
                 </button>
               )}
               {isCustomer && status === "sent" && (
-                <button onClick={() => void action("decline")} disabled={busy} className="px-5 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition">
+                <button onClick={() => void action("decline")} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition">
                   ✕ {t("services.declineOffer") ?? "رفض العرض"}
                 </button>
               )}
               {isProvider && status === "sent" && (
                 <>
-                  <button onClick={() => setShowRevise((v) => !v)} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
+                  <button onClick={() => setShowRevise((v) => !v)} className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-bold transition">
                     {t("services.reviseOffer") ?? "مراجعة العرض"}
                   </button>
                   <button onClick={() => void action("withdraw")} disabled={busy} className="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition">
@@ -174,7 +183,7 @@ export default function OfferDetailPage({ id }: Props) {
                 </>
               )}
               {isProvider && status === "withdrawn" && (
-                <Link href={`/service-requests/${requestRow?.id}/offer`} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
+                <Link href={`/service-requests/${requestRow?.id}/offer`} className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-bold transition">
                   {t("services.makeOffer") ?? "إعادة تقديم عرض"}
                 </Link>
               )}
@@ -183,14 +192,14 @@ export default function OfferDetailPage({ id }: Props) {
             {showRevise && (
               <div className="mt-5 rounded-xl bg-gray-50 dark:bg-gray-800 p-5 grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">السعر الجديد (ر.ع) *</label>
-                  <input type="number" min={0} value={revisePrice} onChange={(e) => setRevisePrice(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">السعر الجديد {getCurrency(offer?.currency) ? `(${getCurrency(offer?.currency)?.code})` : ""} *</label>
+                  <input type="number" min={0} value={revisePrice} onChange={(e) => setRevisePrice(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">سبب المراجعة</label>
-                  <input value={reviseNotes} onChange={(e) => setReviseNotes(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input value={reviseNotes} onChange={(e) => setReviseNotes(e.target.value)} className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
-                <button onClick={submitRevise} disabled={busy} className="sm:col-span-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold transition">
+                <button onClick={submitRevise} disabled={busy} className="sm:col-span-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-sm font-bold transition">
                   {t("services.submitRevise") ?? "إرسال المراجعة"}
                 </button>
               </div>

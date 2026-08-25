@@ -24,6 +24,16 @@ export async function POST(req: NextRequest) {
   }
 
   const lastIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-  await heartbeatDevice(auth.device.deviceId, lastIp);
-  return NextResponse.json({ ok: true });
+  let meta: Record<string, unknown> = {};
+  try {
+    meta = (await req.json()) as Record<string, unknown>;
+  } catch {
+    meta = {};
+  }
+  const heartbeat = await heartbeatDevice(auth.device.deviceId, lastIp, {
+    appVersion: String(meta.appVersion ?? req.headers.get("x-app-version") ?? "").slice(0, 30) || undefined,
+    osVersion: String(meta.osVersion ?? "").slice(0, 64) || undefined,
+    protocolVersion: Number(meta.protocolVersion ?? req.headers.get("x-protocol-version") ?? auth.device.protocolVersion) || 1,
+  });
+  return NextResponse.json(heartbeat);
 }

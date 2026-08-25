@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -310,12 +310,12 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
   return (
     <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white">الاستهداف حسب القنوات (Placements)</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-[var(--color-surface)]">الاستهداف حسب القنوات (Placements)</h3>
         {canUpdate && (
-          <button onClick={startCreate} className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">+ استهداف جديد</button>
+          <button onClick={startCreate} className="px-3 py-1.5 text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg transition-colors">+ استهداف جديد</button>
         )}
       </div>
-      {message && <div className="mb-3 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs">{message}</div>}
+      {message && <div className="mb-3 px-3 py-2 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-xs">{message}</div>}
 
       {draft && canUpdate && (
         <div className="mb-4 bg-gray-50 dark:bg-gray-800/40 rounded-lg p-4">
@@ -325,7 +325,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
               <select
                 value={draft.channel}
                 onChange={(event) => setDraft({ ...draft, channel: event.target.value as NewsChannel })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 {NEWS_CHANNELS.map((channel) => <option key={channel} value={channel}>{channelLabels[channel] ?? channel}</option>)}
               </select>
@@ -335,7 +335,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
               <select
                 value={draft.pageMode}
                 onChange={(event) => setDraft({ ...draft, pageMode: event.target.value as NewsPlacement["pageMode"] })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 {PAGE_TARGET_MODES.map((mode) => <option key={mode} value={mode}>{pageModeLabels[mode] ?? mode}</option>)}
               </select>
@@ -346,7 +346,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 value={codesText}
                 onChange={(event) => setCodesText(event.target.value)}
                 placeholder={draft.pageMode === "PAGE_GROUPS" ? "home, properties, services, tools, office, account, news" : "/, /properties/*, /services/catalog"}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -358,7 +358,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                   setSelectedCountry(code);
                   setDraft({ ...draft, countryCode: code || null, cityId: null });
                 }}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 <option value="">كل الدول</option>
                 {countryOptions.map((country) => <option key={country.id} value={country.id}>{country.names.ar}</option>)}
@@ -369,7 +369,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
               <select
                 value={draft.cityId ?? ""}
                 onChange={(event) => setDraft({ ...draft, cityId: event.target.value || null })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 <option value="">كل المدن</option>
                 {cities.map((city) => <option key={city.id} value={city.id}>{city.names.ar}</option>)}
@@ -380,7 +380,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
               <select
                 value={draft.language ?? ""}
                 onChange={(event) => setDraft({ ...draft, language: event.target.value || null })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 <option value="">كل اللغات</option>
                 <option value="ar">العربية</option>
@@ -394,7 +394,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 value={audiencesText}
                 onChange={(event) => setAudiencesText(event.target.value)}
                 placeholder="investors, expats, landlords"
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -403,7 +403,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={1} max={999}
                 value={draft.priority}
                 onChange={(event) => setDraft({ ...draft, priority: Number(event.target.value) || 100 })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -412,7 +412,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={0}
                 value={draft.manualOrder ?? ""}
                 onChange={(event) => setDraft({ ...draft, manualOrder: event.target.value === "" ? null : Number(event.target.value) })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -421,7 +421,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={0}
                 value={draft.limits.maxImpressions ?? ""}
                 onChange={(event) => setDraft({ ...draft, limits: { ...draft.limits, maxImpressions: event.target.value === "" ? null : Number(event.target.value) } })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -430,7 +430,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={0}
                 value={draft.limits.maxClicks ?? ""}
                 onChange={(event) => setDraft({ ...draft, limits: { ...draft.limits, maxClicks: event.target.value === "" ? null : Number(event.target.value) } })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -439,7 +439,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={0}
                 value={draft.limits.maxPerUserPerDay ?? ""}
                 onChange={(event) => setDraft({ ...draft, limits: { ...draft.limits, maxPerUserPerDay: event.target.value === "" ? null : Number(event.target.value) } })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -448,7 +448,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 type="number" min={0}
                 value={draft.limits.maxPerSession ?? ""}
                 onChange={(event) => setDraft({ ...draft, limits: { ...draft.limits, maxPerSession: event.target.value === "" ? null : Number(event.target.value) } })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -457,7 +457,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 value={draft.startAt ?? ""}
                 onChange={(event) => setDraft({ ...draft, startAt: event.target.value || null })}
                 placeholder="2026-01-01 09:00"
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -466,7 +466,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                 value={draft.endAt ?? ""}
                 onChange={(event) => setDraft({ ...draft, endAt: event.target.value || null })}
                 placeholder="2026-12-31 23:59"
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               />
             </label>
             <label className="block">
@@ -474,7 +474,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
               <select
                 value={draft.status}
                 onChange={(event) => setDraft({ ...draft, status: event.target.value as NewsPlacement["status"] })}
-                className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
               >
                 <option value="active">نشط</option>
                 <option value="paused">موقوف مؤقتًا</option>
@@ -482,7 +482,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
             </label>
           </div>
           <div className="mt-4 flex items-center gap-3">
-            <button onClick={savePlacement} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">حفظ الاستهداف</button>
+            <button onClick={savePlacement} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm font-semibold transition-colors">حفظ الاستهداف</button>
             <button onClick={() => setDraft(null)} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm transition-colors">إلغاء</button>
           </div>
         </div>
@@ -525,7 +525,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                       : "بدون حدود"}
                   </td>
                   <td className="px-3 py-2">
-                    <span className={`px-2 py-1 text-xs rounded-lg ${placement.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"}`}>
+                    <span className={`px-2 py-1 text-xs rounded-lg ${placement.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]"}`}>
                       {placement.status === "active" ? "نشط" : "موقوف"}
                     </span>
                   </td>
@@ -535,7 +535,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                         <>
                           <button onClick={() => startEdit(placement)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors">تعديل</button>
                           <button onClick={() => togglePause(placement)} className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors">{placement.status === "active" ? "إيقاف" : "تشغيل"}</button>
-                          <button onClick={() => deletePlacement(placement.id)} className="px-2 py-1 text-xs bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded transition-colors">حذف</button>
+                          <button onClick={() => deletePlacement(placement.id)} className="px-2 py-1 text-xs bg-[var(--color-error-soft)] dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-[var(--color-error)] dark:text-[var(--color-error)] rounded transition-colors">حذف</button>
                         </>
                       )}
                     </div>
@@ -677,47 +677,47 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">المصادر الخارجية</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">المصادر الخارجية</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">سجل المصادر الموثوقة لاستيراد الأخبار — العناصر المستوردة تصل كمسودات بانتظار المراجعة.</p>
         </div>
         {canManage && (
-          <button onClick={startCreate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">+ مصدر جديد</button>
+          <button onClick={startCreate} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm font-semibold transition-colors">+ مصدر جديد</button>
         )}
       </div>
-      {message && <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">{message}</div>}
+      {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
 
       {editing && canManage && (
-        <div className="mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{editing.id ? "تعديل مصدر" : "مصدر جديد"}</h3>
+        <div className="mb-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">{editing.id ? "تعديل مصدر" : "مصدر جديد"}</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الاسم</span>
-              <input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+              <input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الرابط (http/https عام)</span>
-              <input value={editing.url} onChange={(event) => setEditing({ ...editing, url: event.target.value })} placeholder="https://example.com/feed.xml" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+              <input value={editing.url} onChange={(event) => setEditing({ ...editing, url: event.target.value })} placeholder="https://example.com/feed.xml" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">النوع</span>
-              <select value={editing.sourceType} onChange={(event) => setEditing({ ...editing, sourceType: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={editing.sourceType} onChange={(event) => setEditing({ ...editing, sourceType: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 {NEWS_SOURCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
               </select>
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الصيغة</span>
-              <input value={editing.format} onChange={(event) => setEditing({ ...editing, format: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+              <input value={editing.format} onChange={(event) => setEditing({ ...editing, format: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الدولة (اختياري)</span>
-              <select value={editing.countryCode} onChange={(event) => setEditing({ ...editing, countryCode: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={editing.countryCode} onChange={(event) => setEditing({ ...editing, countryCode: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="">عالمي</option>
                 {countryOptions.map((country) => <option key={country.id} value={country.id}>{country.names.ar}</option>)}
               </select>
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">اللغة</span>
-              <select value={editing.language} onChange={(event) => setEditing({ ...editing, language: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={editing.language} onChange={(event) => setEditing({ ...editing, language: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="ar">العربية</option>
                 <option value="en">English</option>
                 <option value="tr">Türkçe</option>
@@ -725,24 +725,24 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">مستوى الثقة</span>
-              <select value={editing.trustLevel} onChange={(event) => setEditing({ ...editing, trustLevel: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={editing.trustLevel} onChange={(event) => setEditing({ ...editing, trustLevel: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 {(["REVIEW_REQUIRED", "TRUSTED"] as const).map((level) => <option key={level} value={level}>{trustLabels[level] ?? level}</option>)}
               </select>
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الحالة</span>
-              <select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="active">نشط</option>
                 <option value="paused">موقوف مؤقتًا</option>
               </select>
             </label>
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">فاصل الجلب (بالدقائق — 15 حتى 10080)</span>
-              <input type="number" min={15} max={10080} value={editing.fetchIntervalMinutes} onChange={(event) => setEditing({ ...editing, fetchIntervalMinutes: Number(event.target.value) || 60 })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+              <input type="number" min={15} max={10080} value={editing.fetchIntervalMinutes} onChange={(event) => setEditing({ ...editing, fetchIntervalMinutes: Number(event.target.value) || 60 })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
             </label>
           </div>
           <div className="mt-5 flex items-center gap-3">
-            <button onClick={saveSource} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">حفظ</button>
+            <button onClick={saveSource} className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm font-semibold transition-colors">حفظ</button>
             <button onClick={() => setEditing(null)} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm transition-colors">إلغاء</button>
           </div>
         </div>
@@ -753,7 +753,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
       ) : sources.length === 0 ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد مصادر بعد.</p>
       ) : (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -769,13 +769,13 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
               {sources.map((source) => (
                 <tr key={source.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 dark:text-white">{source.name}</div>
+                    <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">{source.name}</div>
                     <div className="text-xs text-gray-400 truncate max-w-xs">{source.url}</div>
                     <div className="text-xs text-gray-400">{source.sourceType} • كل {source.fetchIntervalMinutes} دقيقة</div>
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{source.countryCode ? countryName(source.countryCode) : "عالمي"}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-lg ${source.trustLevel === "TRUSTED" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"}`}>
+                    <span className={`px-2 py-1 text-xs rounded-lg ${source.trustLevel === "TRUSTED" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]"}`}>
                       {trustLabels[source.trustLevel] ?? source.trustLevel}
                     </span>
                   </td>
@@ -796,7 +796,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
                             {fetchingId === source.id ? "جارٍ الجلب..." : "جلب الآن"}
                           </button>
                           <button onClick={() => startEdit(source)} className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors">تعديل</button>
-                          <button onClick={() => deleteSource(source.id)} className="px-2.5 py-1 text-xs bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded transition-colors">حذف</button>
+                          <button onClick={() => deleteSource(source.id)} className="px-2.5 py-1 text-xs bg-[var(--color-error-soft)] dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-[var(--color-error)] dark:text-[var(--color-error)] rounded transition-colors">حذف</button>
                         </>
                       )}
                     </div>
@@ -852,31 +852,31 @@ function AnalyticsTab() {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">الإحصائيات</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">الإحصائيات</h2>
         <p className="text-xs text-gray-500 dark:text-gray-400">الظهور والنقرات المسجلة عبر القنوات — النقرات تُحتسب فقط للزوار الحقيقيين (تُستبعد الزواحف والجلب المسبق).</p>
       </div>
-      {message && <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">{message}</div>}
+      {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
 
       {loading ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">جارٍ التحميل...</p>
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">الظهور</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{totals?.impressions ?? items.reduce((sum, item) => sum + item.impressions, 0)}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totals?.impressions ?? items.reduce((sum, item) => sum + item.impressions, 0)}</div>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">ظهور مرئي</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalVisible}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totalVisible}</div>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">النقرات</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalClicks}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totalClicks}</div>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">معدل النقر (CTR)</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{overallCtr}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{overallCtr}</div>
             </div>
           </div>
 
@@ -893,7 +893,7 @@ function AnalyticsTab() {
           {items.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد بيانات إحصائيات بعد.</p>
           ) : (
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -907,7 +907,7 @@ function AnalyticsTab() {
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.newsId} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{item.newsId}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-[var(--color-surface)]">{item.newsId}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.impressions}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.visibleImpressions}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.clicks}</td>
@@ -1095,9 +1095,9 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
+      <header className="bg-[var(--color-surface)] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">إدارة الأخبار والشريط</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-[var(--color-surface)]">إدارة الأخبار والشريط</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">الشريط الإخباري حسب الدولة والمنطقة — عالميًا أو محليًا</p>
         </div>
         <div className="flex items-center gap-3">
@@ -1107,17 +1107,17 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
       </header>
 
       <main className="p-6 max-w-6xl mx-auto">
-        <div className="mb-6 flex items-center gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-1 w-fit">
-          <button onClick={() => setTab("news")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "news" ? "bg-blue-600 text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>الأخبار</button>
+        <div className="mb-6 flex items-center gap-1 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-1 w-fit">
+          <button onClick={() => setTab("news")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "news" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>الأخبار</button>
           {canSources && (
-            <button onClick={() => setTab("sources")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "sources" ? "bg-blue-600 text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>المصادر</button>
+            <button onClick={() => setTab("sources")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "sources" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>المصادر</button>
           )}
           {canAnalytics && (
-            <button onClick={() => setTab("analytics")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "analytics" ? "bg-blue-600 text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>الإحصائيات</button>
+            <button onClick={() => setTab("analytics")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "analytics" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>الإحصائيات</button>
           )}
         </div>
 
-        {message && <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm">{message}</div>}
+        {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
 
         {tab === "sources" && canSources && <SourcesTab can={can} />}
         {tab === "analytics" && canAnalytics && <AnalyticsTab />}
@@ -1125,27 +1125,27 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
         {tab === "news" && (
           <>
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              <button onClick={startCreate} disabled={!can(PERMISSIONS.NEWS_CREATE) || Boolean(editing)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors">
+              <button onClick={startCreate} disabled={!can(PERMISSIONS.NEWS_CREATE) || Boolean(editing)} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors">
                 + خبر جديد
               </button>
               <div className="flex-1" />
-              <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value)} className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value)} className="px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="all">كل النطاقات</option>
                 {scopes.map((scope) => <option key={scope} value={scope}>{scopeLabels[scope]}</option>)}
               </select>
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="all">كل الحالات</option>
                 {statuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
               </select>
-              <select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)} className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+              <select value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)} className="px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                 <option value="all">كل الدول</option>
                 {countryOptions.map((country) => <option key={country.id} value={country.id}>{country.names.ar}</option>)}
               </select>
             </div>
 
             {editing && (
-              <div className="mb-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{editing.id ? "تعديل خبر" : "خبر جديد"}</h2>
+              <div className="mb-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">{editing.id ? "تعديل خبر" : "خبر جديد"}</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <label className="block">
@@ -1154,7 +1154,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                         value={editing.scope}
                         disabled={Boolean(restrictedToCountry) && editing.scope !== "country"}
                         onChange={(event) => setEditing({ ...editing, scope: event.target.value as NewsForm["scope"] })}
-                        className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                        className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
                       >
                         {scopes.map((scope) => <option key={scope} value={scope}>{scopeLabels[scope]}</option>)}
                       </select>
@@ -1170,7 +1170,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                             setSelectedCountry(code);
                             setEditing({ ...editing, countryCode: code, cityId: null });
                           }}
-                          className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                          className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
                         >
                           {countryOptions.map((country) => <option key={country.id} value={country.id}>{country.names.ar}</option>)}
                         </select>
@@ -1182,7 +1182,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                         <select
                           value={editing.cityId ?? ""}
                           onChange={(event) => setEditing({ ...editing, cityId: event.target.value || null })}
-                          className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                          className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
                         >
                           <option value="">— اختر المدينة —</option>
                           {cities.map((city) => <option key={city.id} value={city.id}>{city.names.ar}</option>)}
@@ -1190,66 +1190,66 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                       </label>
                     )}
                     {editing.scope === "city" && !cities.length && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">لا توجد مدن مدرجة لهذه الدولة بعد.</p>
+                      <p className="text-xs text-[var(--accent)] dark:text-[var(--accent)]">لا توجد مدن مدرجة لهذه الدولة بعد.</p>
                     )}
                   </div>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">العنوان (عربي)</span>
-                    <input value={editing.titleAr} onChange={(event) => setEditing({ ...editing, titleAr: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.titleAr} onChange={(event) => setEditing({ ...editing, titleAr: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">العنوان (إنجليزي)</span>
-                    <input value={editing.titleEn} onChange={(event) => setEditing({ ...editing, titleEn: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.titleEn} onChange={(event) => setEditing({ ...editing, titleEn: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">العنوان (تركي)</span>
-                    <input value={editing.titleTr} onChange={(event) => setEditing({ ...editing, titleTr: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.titleTr} onChange={(event) => setEditing({ ...editing, titleTr: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">رابط اختياري</span>
-                    <input value={editing.linkUrl ?? ""} onChange={(event) => setEditing({ ...editing, linkUrl: event.target.value || null })} placeholder="https://… أو #/مسار" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.linkUrl ?? ""} onChange={(event) => setEditing({ ...editing, linkUrl: event.target.value || null })} placeholder="https://… أو #/مسار" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">ملخص (عربي)</span>
-                    <textarea value={editing.summaryAr ?? ""} onChange={(event) => setEditing({ ...editing, summaryAr: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <textarea value={editing.summaryAr ?? ""} onChange={(event) => setEditing({ ...editing, summaryAr: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">ملخص (إنجليزي)</span>
-                    <textarea value={editing.summaryEn ?? ""} onChange={(event) => setEditing({ ...editing, summaryEn: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <textarea value={editing.summaryEn ?? ""} onChange={(event) => setEditing({ ...editing, summaryEn: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">ملخص (تركي)</span>
-                    <textarea value={editing.summaryTr ?? ""} onChange={(event) => setEditing({ ...editing, summaryTr: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <textarea value={editing.summaryTr ?? ""} onChange={(event) => setEditing({ ...editing, summaryTr: event.target.value || null })} rows={2} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">التصنيف</span>
-                    <select value={editing.category} onChange={(event) => setEditing({ ...editing, category: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+                    <select value={editing.category} onChange={(event) => setEditing({ ...editing, category: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                       {NEWS_TYPES.map((type) => <option key={type} value={type}>{categoryLabels[type] ?? type}</option>)}
                     </select>
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">الوسوم (مفصولة بفواصل)</span>
-                    <input value={editing.tagsText} onChange={(event) => setEditing({ ...editing, tagsText: event.target.value })} placeholder="سكني, استثمار" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.tagsText} onChange={(event) => setEditing({ ...editing, tagsText: event.target.value })} placeholder="سكني, استثمار" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">صورة (رابط اختياري)</span>
-                    <input value={editing.imageUrl ?? ""} onChange={(event) => setEditing({ ...editing, imageUrl: event.target.value || null })} placeholder="https://…" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.imageUrl ?? ""} onChange={(event) => setEditing({ ...editing, imageUrl: event.target.value || null })} placeholder="https://…" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">مصدر الأخبار</span>
-                    <select value={editing.newsType} onChange={(event) => setEditing({ ...editing, newsType: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+                    <select value={editing.newsType} onChange={(event) => setEditing({ ...editing, newsType: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                       {NEWS_SOURCE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                     </select>
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">حالة المراجعة</span>
-                    <select value={editing.reviewStatus} onChange={(event) => setEditing({ ...editing, reviewStatus: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+                    <select value={editing.reviewStatus} onChange={(event) => setEditing({ ...editing, reviewStatus: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                       {REVIEW_STATUSES.map((status) => <option key={status} value={status}>{reviewLabels[status] ?? status}</option>)}
                     </select>
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">اللغة الأساسية</span>
-                    <select value={editing.language} onChange={(event) => setEditing({ ...editing, language: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
+                    <select value={editing.language} onChange={(event) => setEditing({ ...editing, language: event.target.value })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg">
                       <option value="ar">العربية</option>
                       <option value="en">English</option>
                       <option value="tr">Türkçe</option>
@@ -1271,31 +1271,31 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                       value={editing.status}
                       disabled={!canPublish}
                       onChange={(event) => setEditing({ ...editing, status: event.target.value })}
-                      className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
+                      className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg"
                     >
                       <option value="draft">مسودة</option>
                       <option value="active">منشورة</option>
                     </select>
-                    {!canPublish && <span className="text-xs text-amber-600 dark:text-amber-400">تنشر كمسودة — تحتاج صلاحية النشر.</span>}
+                    {!canPublish && <span className="text-xs text-[var(--accent)] dark:text-[var(--accent)]">تنشر كمسودة — تحتاج صلاحية النشر.</span>}
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">الأولوية (الأصغر أولًا)</span>
-                    <input type="number" min={1} max={999} value={editing.priority} onChange={(event) => setEditing({ ...editing, priority: Number(event.target.value) || 100 })} className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input type="number" min={1} max={999} value={editing.priority} onChange={(event) => setEditing({ ...editing, priority: Number(event.target.value) || 100 })} className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">البداية (YYYY-MM-DD HH:MM)</span>
-                    <input value={editing.startAt ?? ""} onChange={(event) => setEditing({ ...editing, startAt: event.target.value || null })} placeholder="2026-01-01 09:00" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.startAt ?? ""} onChange={(event) => setEditing({ ...editing, startAt: event.target.value || null })} placeholder="2026-01-01 09:00" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">النهاية (YYYY-MM-DD HH:MM)</span>
-                    <input value={editing.endAt ?? ""} onChange={(event) => setEditing({ ...editing, endAt: event.target.value || null })} placeholder="2026-12-31 23:59" className="mt-1 w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
+                    <input value={editing.endAt ?? ""} onChange={(event) => setEditing({ ...editing, endAt: event.target.value || null })} placeholder="2026-12-31 23:59" className="mt-1 w-full px-3 py-2 text-sm bg-[var(--color-surface)] dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg" />
                   </label>
                 </div>
 
                 {editing.id && <PlacementEditor newsId={editing.id} canUpdate={can(PERMISSIONS.NEWS_UPDATE)} />}
 
                 <div className="mt-5 flex items-center gap-3">
-                  <button onClick={save} disabled={saving} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors">
+                  <button onClick={save} disabled={saving} className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors">
                     {saving ? "حفظ..." : "حفظ"}
                   </button>
                   <button onClick={() => setEditing(null)} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm transition-colors">
@@ -1310,7 +1310,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
             ) : filtered.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد أخبار مطابقة.</p>
             ) : (
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+              <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -1325,15 +1325,15 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                     {filtered.map((item) => (
                       <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {item.isBreaking && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded mr-1">عاجل</span>}
-                            {item.isPinned && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded mr-1">مثبت</span>}
+                          <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">
+                            {item.isBreaking && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded mr-1">عاجل</span>}
+                            {item.isPinned && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded mr-1">مثبت</span>}
                             {item.titleAr}
                           </div>
                           <div className="text-xs text-gray-400">{item.titleEn}{item.category !== "GENERAL" ? ` • ${categoryLabels[item.category] ?? item.category}` : ""}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-1 text-xs rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                          <span className="px-2 py-1 text-xs rounded-lg bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]">
                             {scopeLabels[item.scope] ?? item.scope}
                           </span>
                           <div className="text-xs text-gray-400 mt-1">
@@ -1342,11 +1342,11 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 text-xs rounded-lg ${item.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : item.status === "draft" ? "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                          <span className={`px-2 py-1 text-xs rounded-lg ${item.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : item.status === "draft" ? "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
                             {statusLabels[item.status] ?? item.status}
                           </span>
                           {item.reviewStatus !== "APPROVED" && (
-                            <div className={`text-[10px] mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <div className={`text-[10px] mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-[var(--accent)] dark:text-[var(--accent)]"}`}>
                               {reviewLabels[item.reviewStatus] ?? item.reviewStatus}
                             </div>
                           )}
@@ -1358,7 +1358,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                               <button onClick={() => startEdit(item)} className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors">تعديل</button>
                             )}
                             {can(PERMISSIONS.NEWS_DELETE) && item.status !== "archived" && (
-                              <button onClick={() => archive(item.id)} className="px-2.5 py-1 text-xs bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded transition-colors">أرشفة</button>
+                              <button onClick={() => archive(item.id)} className="px-2.5 py-1 text-xs bg-[var(--color-error-soft)] dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-[var(--color-error)] dark:text-[var(--color-error)] rounded transition-colors">أرشفة</button>
                             )}
                           </div>
                         </td>

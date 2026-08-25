@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -48,12 +48,12 @@ export default function ServiceFavoritesPage() {
       <PageContainer dir={dir} className="py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.favorites") ?? "المفضلة"}</h1>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.favorites") ?? "المفضلة"}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.favoritesSub") ?? "مقدمو الخدمات والطلبات التي حفظتها للرجوع إليها لاحقاً"}</p>
           </div>
         </div>
 
-        {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+        {error && <div className="mb-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
 
         {loading ? (
           <Grid columns={3}>
@@ -64,9 +64,9 @@ export default function ServiceFavoritesPage() {
         ) : favorites.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">⭐</div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white">{t("services.noFavorites") ?? "لا توجد عناصر مفضلة"}</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.noFavorites") ?? "لا توجد عناصر مفضلة"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noFavoritesSub") ?? "ابدأ بحفظ مقدمي الخدمات أو الطلبات التي تعجبك"}</p>
-            <button onClick={() => window.location.href = "/services"} className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition">
+            <button onClick={() => window.location.href = "/services"} className="mt-4 px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-bold transition">
               {t("services.browseServices") ?? "استعرض الخدمات"}
             </button>
           </div>

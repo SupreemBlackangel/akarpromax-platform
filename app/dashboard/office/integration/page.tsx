@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -55,11 +55,11 @@ export default function OfficeIntegrationPage() {
   ];
 
   const toneClasses: Record<string, string> = {
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-    green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-    red: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    blue: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]",
+    green: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]",
+    red: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
     purple: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-    amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    amber: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
   };
 
   return (
@@ -69,22 +69,22 @@ export default function OfficeIntegrationPage() {
           <Link
             key={card.label}
             href={card.href}
-            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+            className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-4 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
           >
             <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg ${toneClasses[card.tone]}`}>
               {card.icon}
             </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">{loading ? "…" : card.value}</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{loading ? "…" : card.value}</p>
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400">{card.label}</p>
           </Link>
         ))}
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-white">أحدث الأجهزة</h2>
-            <Link href="/dashboard/office/devices" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+            <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">أحدث الأجهزة</h2>
+            <Link href="/dashboard/office/devices" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               إدارة
             </Link>
           </div>
@@ -105,7 +105,7 @@ export default function OfficeIntegrationPage() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
                       device.status === "active"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]"
                         : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                     }`}
                   >
@@ -117,10 +117,10 @@ export default function OfficeIntegrationPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-white">آخر التنبيهات</h2>
-            <Link href="/dashboard/office/notifications" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+            <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">آخر التنبيهات</h2>
+            <Link href="/dashboard/office/notifications" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               الكل
             </Link>
           </div>

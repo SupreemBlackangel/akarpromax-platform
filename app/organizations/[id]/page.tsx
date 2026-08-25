@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -91,26 +91,26 @@ export default function OrganizationProfilePage({ params }: { params: { id: stri
       } : undefined}
     >
       <PageContainer className="py-8" dir={dir}>
-        <Link href="/organizations" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+        <Link href="/organizations" className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">
           ← {locale === "ar" ? "العودة إلى المنظمات" : locale === "tr" ? "Kuruluşlara dön" : "Back to organizations"}
         </Link>
 
         {loading && <div className="mt-6 h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />}
-        {error && <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">{error}</div>}
+        {error && <div className="mt-6 rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-200">{error}</div>}
 
         {!loading && organization && (
           <div className="mt-6 grid gap-6 md:grid-cols-[2fr,1fr]">
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
               <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold">
-                <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{organization.type}</span>
+                <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-blue-900/40 dark:text-[var(--color-primary)]">{organization.type}</span>
                 <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{organization.classification}</span>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{organization.status}</span>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[var(--color-success)] dark:bg-emerald-900/40 dark:text-emerald-300">{organization.status}</span>
               </div>
               <h2 className="text-xl font-black text-gray-900 dark:text-white">{pick(locale, organization, "name")}</h2>
               <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, organization, "description") || organization.slug}</p>
             </section>
 
-            <aside className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <aside className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
               <h3 className="text-sm font-black text-gray-900 dark:text-white">{locale === "ar" ? "ملخص الحضور" : locale === "tr" ? "Varlık Özeti" : "Presence Summary"}</h3>
               <div className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300">
                 <p>{locale === "ar" ? "الدولة" : locale === "tr" ? "Ülke" : "Country"}: <strong>{organization.countryCode}</strong></p>
@@ -118,7 +118,7 @@ export default function OrganizationProfilePage({ params }: { params: { id: stri
                 <p>{locale === "ar" ? "عدد الأعضاء" : locale === "tr" ? "Üye sayısı" : "Member count"}: <strong>{memberCount}</strong></p>
                 <p>{locale === "ar" ? "المستوى" : locale === "tr" ? "Seviye" : "Level"}: <strong>{reputation?.level ?? "—"}</strong></p>
                 <p>{locale === "ar" ? "الدرجة" : locale === "tr" ? "Puan" : "Score"}: <strong>{reputation?.score ?? "—"}</strong></p>
-                <p>{locale === "ar" ? "الموقع الإلكتروني" : locale === "tr" ? "Web sitesi" : "Website"}: {organization.websiteUrl ? <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-600 dark:text-blue-400">{organization.websiteUrl}</a> : "—"}</p>
+                <p>{locale === "ar" ? "الموقع الإلكتروني" : locale === "tr" ? "Web sitesi" : "Website"}: {organization.websiteUrl ? <a href={organization.websiteUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--color-primary)] dark:text-blue-400">{organization.websiteUrl}</a> : "—"}</p>
                 <p>{locale === "ar" ? "البريد" : locale === "tr" ? "E-posta" : "Email"}: <strong>{organization.contactEmail || "—"}</strong></p>
                 <p>{locale === "ar" ? "الهاتف" : locale === "tr" ? "Telefon" : "Phone"}: <strong>{organization.contactPhone || "—"}</strong></p>
               </div>

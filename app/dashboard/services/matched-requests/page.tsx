@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -46,10 +46,10 @@ export default function MatchedRequestsPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="matched-requests">
-        <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
 
         {!loading && hasProfile === false && (
-          <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-amber-700 dark:text-amber-300">
+          <div className="mb-4 rounded-xl bg-[var(--accent-soft)] dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-[var(--accent)] dark:text-[var(--accent)]">
             {t("services.applyToMatch") ?? "للاستفادة من نظام المطابقة تحتاج لإنشاء ملف مقدم خدمة والموافقة عليه."}
             <Link href="/dashboard/services/provider-profile" className="mt-2 inline-block font-bold underline">← {t("services.applyProvider") ?? "قدم الآن"}</Link>
           </div>
@@ -62,10 +62,10 @@ export default function MatchedRequestsPage() {
         ) : (
           <div className="space-y-3">
             {requests.map((request) => (
-              <div key={request.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+              <div key={request.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                       {request.title || request.reference_number}
                     </Link>
                     <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {formatDate(request.created_at)}</p>
@@ -74,8 +74,8 @@ export default function MatchedRequestsPage() {
                 </div>
                 {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{request.description}</p>}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
-                  <Link href={`/service-requests/${request.id}/offer`} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
+                  <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
+                  <Link href={`/service-requests/${request.id}/offer`} className="px-4 py-2 rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">
                     {t("services.makeOffer") ?? "تقديم عرض"}
                   </Link>
                 </div>

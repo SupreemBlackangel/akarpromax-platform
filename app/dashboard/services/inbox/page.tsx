@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
@@ -59,7 +59,7 @@ export default function InboxPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="inbox">
-        <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
 
         {loading ? (
           <div className="h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
@@ -67,7 +67,7 @@ export default function InboxPage() {
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-16">{t("services.empty")}</p>
         ) : (
           <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start">
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               {threads.map((thread) => {
                 const isActive = active?.thread_id === thread.thread_id && active?.thread_type === thread.thread_type;
                 const label = thread.title ?? messageContextLabel(String(thread.thread_type), "ar");
@@ -76,13 +76,13 @@ export default function InboxPage() {
                     key={threadKey(thread)}
                     onClick={() => setActive(thread)}
                     className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-800 last:border-b-0 transition ${
-                      isActive ? "bg-blue-50 dark:bg-blue-900/30" : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                      isActive ? "bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30" : "hover:bg-gray-50 dark:hover:bg-gray-800"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{label}</span>
                       {Number(thread.unread_count) > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold">{thread.unread_count}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">{thread.unread_count}</span>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-gray-400">{formatDateTime(thread.last_message_at)}</p>
@@ -91,7 +91,7 @@ export default function InboxPage() {
               })}
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4">
               {active && (
                 <ThreadMessages
                   key={threadKey(active)}

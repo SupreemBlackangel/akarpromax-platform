@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -65,7 +65,7 @@ export default function ServiceNotificationsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.notifications") ?? "التنبيهات"}</h1>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.notifications") ?? "التنبيهات"}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.notificationsSub") ?? "جميع التنبيهات والإشعارات المتعلقة بخدماتك"}</p>
           </div>
           {notifications.some((n) => !n.read) && (
@@ -75,7 +75,7 @@ export default function ServiceNotificationsPage() {
           )}
         </div>
 
-        {error && <div className="px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+        {error && <div className="px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
 
         {loading ? (
           <div className="space-y-4">
@@ -86,25 +86,25 @@ export default function ServiceNotificationsPage() {
         ) : notifications.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🔔</div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white">{t("services.noNotifications") ?? "لا توجد تنبيهات"}</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.noNotifications") ?? "لا توجد تنبيهات"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noNotificationsSub") ?? "ستظهر التنبيهات هنا عند وصولها"}</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
             {notifications.map((n) => (
               <Link
                 key={n.id}
                 href={n.link || "/dashboard/services"}
                 onClick={() => !n.read && handleRead(n.id)}
-                className={`block border-b border-gray-100 dark:border-gray-800 px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800 last:border-b-0 flex items-start justify-between gap-4 ${n.read ? "opacity-70" : "bg-blue-50 dark:bg-blue-900/20"}`}
+                className={`block border-b border-gray-100 dark:border-gray-800 px-5 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800 last:border-b-0 flex items-start justify-between gap-4 ${n.read ? "opacity-70" : "bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/20"}`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{n.title}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-[var(--color-surface)]">{n.title}</span>
                     <span className="shrink-0 text-[10px] text-gray-400">{new Date(n.created_at).toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US")}</span>
                   </div>
                   {n.body && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{n.body}</p>}
-                  {!n.read && <span className="mt-2 inline-block px-2 py-0.5 text-[10px] font-bold text-white bg-blue-600 rounded-full">{t("services.new") ?? "جديد"}</span>}
+                  {!n.read && <span className="mt-2 inline-block px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-primary)] rounded-full">{t("services.new") ?? "جديد"}</span>}
                 </div>
                 <span className="shrink-0 text-gray-400">→</span>
               </Link>

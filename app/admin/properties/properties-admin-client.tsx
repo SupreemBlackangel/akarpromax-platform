@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import AdminPageShell from "@/src/components/AdminPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
+import AdminPropertyModeration from "@/components/properties/AdminPropertyModeration";
 
 type TaxonomyType = {
   id: string;
@@ -64,6 +65,7 @@ const EMPTY_FORM: FormState = {
 
 export default function PropertiesAdminClient() {
   const { locale, copy, viewer, dir, openLogin, handleLogout } = useServicesPage();
+  const [section, setSection] = useState<"moderation" | "taxonomy">("moderation");
   const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
@@ -200,7 +202,7 @@ export default function PropertiesAdminClient() {
     }
   };
 
-  const inputCls = "w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const inputCls = "w-full px-3 py-2 rounded-lg bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
 
   return (
     <AdminPageShell
@@ -214,25 +216,41 @@ export default function PropertiesAdminClient() {
       <div className="max-w-6xl mx-auto px-4 py-8" dir={dir}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white"> إدارة تصنيفات العقارات</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">التصنيفات وأنواع العقارات</p>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">إدارة العقارات</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">مراجعة العقارات المرسلة، والتصنيفات وأنواع العقارات</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => openCreate("category")} className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition">
-              + تصنيف جديد
+            <button
+              onClick={() => setSection("moderation")}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${section === "moderation" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]"}`}
+            >
+              مراجعة العقارات
             </button>
+            <button
+              onClick={() => setSection("taxonomy")}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${section === "taxonomy" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]"}`}
+            >
+              التصنيفات
+            </button>
+            {section === "taxonomy" && (
+              <button onClick={() => openCreate("category")} className="px-4 py-2 rounded-xl text-sm font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition">
+                + تصنيف جديد
+              </button>
+            )}
           </div>
         </div>
 
-        {message && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+        {section === "moderation" && <AdminPropertyModeration />}
+
+        {section === "taxonomy" && message && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-[var(--color-error-soft)] dark:bg-red-900/30 border border-[var(--color-error)]/30 dark:border-red-800 text-sm text-[var(--color-error)] dark:text-[var(--color-error)]">
             {message}
           </div>
         )}
 
-        {showForm && (
-          <div className="mb-6 p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+        {section === "taxonomy" && showForm && (
+          <div className="mb-6 p-6 rounded-2xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">
               {editing ? "تعديل" : "إضافة"} {form.kind === "category" ? "تصنيف" : "نوع"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -297,17 +315,18 @@ export default function PropertiesAdminClient() {
           </div>
         )}
 
+        {section === "taxonomy" && (
         <div className="space-y-4">
           {categories.length === 0 && (
             <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">لا توجد تصنيفات بعد.</div>
           )}
           {categories.map((cat) => (
-            <div key={cat.id} className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div key={cat.id} className="rounded-2xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{cat.icon ?? "📂"}</span>
                   <div>
-                    <div className="font-bold text-gray-900 dark:text-white text-sm">{cat.label_en}</div>
+                    <div className="font-bold text-gray-900 dark:text-[var(--color-surface)] text-sm">{cat.label_en}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{cat.label_ar} / {cat.label_tr}</div>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${cat.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
@@ -316,13 +335,13 @@ export default function PropertiesAdminClient() {
                   <span className="text-xs text-gray-400 dark:text-gray-500">#{cat.sort_order}</span>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit("category", cat)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition">
+                  <button onClick={() => openEdit("category", cat)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/50 transition">
                     تعديل
                   </button>
                   <button onClick={() => openCreate("type", cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 transition">
                     + نوع
                   </button>
-                  <button onClick={() => handleDelete("category", cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition">
+                  <button onClick={() => handleDelete("category", cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-[var(--color-error)] hover:bg-red-100 dark:hover:bg-red-900/50 transition">
                     حذف
                   </button>
                   <button onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
@@ -350,10 +369,10 @@ export default function PropertiesAdminClient() {
                           <span className="text-xs text-gray-400 dark:text-gray-500">#{typ.sort_order}</span>
                         </div>
                         <div className="flex gap-1">
-                          <button onClick={() => openEdit("type", typ)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition">
+                          <button onClick={() => openEdit("type", typ)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/50 transition">
                             تعديل
                           </button>
-                          <button onClick={() => handleDelete("type", typ.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition">
+                          <button onClick={() => handleDelete("type", typ.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-[var(--color-error)] hover:bg-red-100 dark:hover:bg-red-900/50 transition">
                             حذف
                           </button>
                         </div>
@@ -365,6 +384,7 @@ export default function PropertiesAdminClient() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </AdminPageShell>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
-import { getAdminOverview } from "@services/marketplace";
+import { getAdminMarketplaceSnapshot, getAdminOverview, getServiceMarketplaceSettings } from "@services/marketplace";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 
@@ -15,9 +15,13 @@ export async function GET() {
   if (!hasSponsorPermission(identity, PERMISSIONS.SERVICE_CATEGORIES_MANAGE) && !hasSponsorPermission(identity, PERMISSIONS.SERVICE_REPORTS_MANAGE) && !hasSponsorPermission(identity, PERMISSIONS.SERVICE_PROVIDERS_REVIEW)) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
   }
-  const overview = await getAdminOverview();
+  const [overview, snapshot, settings] = await Promise.all([
+    getAdminOverview(),
+    getAdminMarketplaceSnapshot(),
+    getServiceMarketplaceSettings("OM"),
+  ]);
   return NextResponse.json(
-    { overview },
+    { overview, snapshot, settings },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

@@ -5,5 +5,5 @@ type Props = {
 };
 
 export default function PublicLayout({ children }: Props) {
-  return <>{children}</>;
+  return children;
 }

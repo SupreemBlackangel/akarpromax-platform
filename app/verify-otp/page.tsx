@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import AuthPageShell, { useAuthPage } from "@/src/components/AuthPageShell";
@@ -10,7 +11,9 @@ const VERIFY_OTP_URL = "/api/auth/verify-otp";
 export default function VerifyOtpPage() {
   return (
     <AuthPageShell>
-      <VerifyOtpForm />
+      <Suspense>
+        <VerifyOtpForm />
+      </Suspense>
     </AuthPageShell>
   );
 }

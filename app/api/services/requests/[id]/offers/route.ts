@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { createOfferFull, listOffersForRequest } from "@services/marketplace";
+import { createOfferFull, getRequestFull, listOffersForRequest } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { resolveCurrencyCode } from "@services/currency-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,30 @@ function cleanNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const identity = await getSessionIdentity();
+  if (!identity.authenticated || !identity.email) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
+  }
+
   const { id } = await params;
+  const serviceRequest = await getRequestFull(id);
+  if (!serviceRequest) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_FOUND }, { status: 404 });
+  }
+
   const offers = await listOffersForRequest(id);
-  return NextResponse.json({ offers }, { headers: { "Cache-Control": "no-store" } });
+  const isCustomer = String(serviceRequest.customer_user_id) === identity.email;
+  const isAdmin = hasSponsorPermission(identity, PERMISSIONS.SERVICE_OFFERS_MANAGE_ALL);
+
+  if (isCustomer || isAdmin) {
+    return NextResponse.json({ offers }, { headers: { "Cache-Control": "no-store" } });
+  }
+
+  return NextResponse.json(
+    { offers: offers.filter((offer) => String(offer.provider_user_id) === identity.email) },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -36,13 +57,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
+  const currency = resolveCurrencyCode(body.currency);
+  if (!currency.ok) {
+    return NextResponse.json({ error: currency.error }, { status: 400 });
+  }
   try {
     const offerId = await createOfferFull(
       {
         requestId: id,
         providerUserId: identity.email,
         price: cleanNumber(body.price),
-        currency: clean(body.currency, 8) || "OMR",
+        currency: currency.code,
         durationDays: cleanNumber(body.durationDays),
         materialsIncluded: body.materialsIncluded === true,
         materialCost: cleanNumber(body.materialCost),
@@ -67,6 +92,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (message === "REQUEST_NOT_FOUND") return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_FOUND }, { status: 404 });
       if (message === "REQUEST_NOT_OPEN") return NextResponse.json({ error: SERVICE_ERROR_CODES.REQUEST_NOT_OPEN }, { status: 400 });
       if (message === "PROVIDER_PROFILE_REQUIRED" || message === "PROVIDER_NOT_APPROVED") return NextResponse.json({ error: "provider_profile_required" }, { status: 403 });
+      if (message === "SELF_OFFER_NOT_ALLOWED") return NextResponse.json({ error: SERVICE_ERROR_CODES.SELF_OFFER_NOT_ALLOWED }, { status: 403 });
+      if (message === "PROVIDER_NOT_ELIGIBLE") return NextResponse.json({ error: SERVICE_ERROR_CODES.PROVIDER_NOT_ELIGIBLE }, { status: 403 });
       if (message === "OFFER_ALREADY_EXISTS") return NextResponse.json({ error: SERVICE_ERROR_CODES.OFFER_ALREADY_EXISTS }, { status: 409 });
     }
     throw error;

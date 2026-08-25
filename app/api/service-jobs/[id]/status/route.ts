@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getSessionIdentity } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { PERMISSIONS } from "@/src/constants/permissions";
 import { updateJobStatus } from "@services/marketplace";
 import { SERVICE_ERROR_CODES, type OrderStatus } from "@services/constants";
+import { DIRECT_BOOKING_STATUS, getDirectBookingRow, transitionDirectBooking, type DirectBookingStatus } from "@services/booking";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const body = (await request.json().catch(() => null)) as { status?: string; note?: string } | null;
   const status = typeof body?.status === "string" ? body.status : "";
+  const direct = await getDirectBookingRow(id);
+  if (direct) {
+    if (!Object.values(DIRECT_BOOKING_STATUS).includes(status as DirectBookingStatus)) {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.ORDER_STATUS_INVALID }, { status: 400 });
+    }
+    try {
+      await transitionDirectBooking(id, status as DirectBookingStatus, {
+        userId: identity.email,
+        canManageAll: hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL),
+      }, typeof body?.note === "string" ? body.note.trim().slice(0, 500) || null : null, {
+        userId: identity.email,
+        ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+      });
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      if (code === "BOOKING_FORBIDDEN") return NextResponse.json({ error: SERVICE_ERROR_CODES.NOT_PARTICIPANT }, { status: 403 });
+      if (code === "BOOKING_STATUS_INVALID") return NextResponse.json({ error: SERVICE_ERROR_CODES.ORDER_STATUS_INVALID }, { status: 400 });
+      throw error;
+    }
+  }
   if (!ALLOWED_STATUSES.includes(status as OrderStatus)) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.ORDER_STATUS_INVALID }, { status: 400 });
   }

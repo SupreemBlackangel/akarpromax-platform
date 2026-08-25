@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       "request",
       "draft",
       mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm") ? "video" : "image",
-      mediaUrl || "/og.png",
+      mediaUrl || "/placeholder.svg",
       null,
       null,
       null,

@@ -1,6 +1,6 @@
-export default function Loading() {
+﻿export default function Loading() {
   return (
-    <div className="min-h-screen animate-pulse bg-slate-50" dir="rtl">
+    <div className="min-h-screen animate-pulse bg-[var(--color-surface-muted)]" dir="rtl">
       <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-5">
         <div className="h-7 w-32 rounded-lg bg-slate-200" />
         <div className="hidden h-5 w-48 gap-3 sm:flex">

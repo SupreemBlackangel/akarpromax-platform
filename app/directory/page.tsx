@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -121,10 +121,10 @@ export default function DirectoryPage() {
       <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setTab("providers")} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === "providers" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"}`}>
+            <button type="button" onClick={() => setTab("providers")} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === "providers" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"}`}>
               {locale === "ar" ? "المهنيون" : locale === "tr" ? "Profesyoneller" : "Professionals"}
             </button>
-            <button type="button" onClick={() => setTab("organizations")} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === "organizations" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"}`}>
+            <button type="button" onClick={() => setTab("organizations")} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${tab === "organizations" ? "bg-[var(--color-primary)] text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"}`}>
               {locale === "ar" ? "المنظمات" : locale === "tr" ? "Kuruluşlar" : "Organizations"}
             </button>
           </div>
@@ -133,7 +133,7 @@ export default function DirectoryPage() {
               <select
                 value={categoryId}
                 onChange={(event) => setCategoryId(event.target.value)}
-                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="rounded-xl border border-gray-200 bg-[var(--color-surface)] px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               >
                 <option value="">{locale === "ar" ? "كل التصنيفات" : locale === "tr" ? "Tüm kategoriler" : "All categories"}</option>
                 {categories.map((category) => (
@@ -153,7 +153,7 @@ export default function DirectoryPage() {
           </div>
         </div>
 
-        {error && <div className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">{error}</div>}
+        {error && <div className="mb-6 rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-200">{error}</div>}
 
         <Grid columns={3}>
           {loading
@@ -163,12 +163,12 @@ export default function DirectoryPage() {
             : tab === "providers"
               ? (items as ProviderRow[]).map((provider, index) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={index} />)
               : (items as OrgRow[]).map((organization) => (
-                  <Link key={organization.id} href={`/organizations/${organization.id}`} className="block rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
+                  <Link key={organization.id} href={`/organizations/${organization.id}`} className="block rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 transition hover:border-[var(--color-primary)]/30 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
                     <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-                      <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{organization.type}</span>
+                      <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">{organization.type}</span>
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{organization.classification}</span>
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 dark:text-white">{pickOrg(locale, organization, "name")}</h2>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{pickOrg(locale, organization, "name")}</h2>
                     <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pickOrg(locale, organization, "description") || organization.slug}</p>
                   </Link>
                 ))}

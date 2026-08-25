@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -64,12 +64,12 @@ export default function CustomerDisputesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.disputes") ?? "نزاعاتي"}</h1>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.disputes") ?? "نزاعاتي"}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.disputesSub") ?? "إدارة النزاعات المرتبطة بطلباتك"}</p>
           </div>
         </div>
 
-        {error && <div className="px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+        {error && <div className="px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
 
         {loading ? (
           <div className="space-y-4">
@@ -80,21 +80,21 @@ export default function CustomerDisputesPage() {
         ) : disputes.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">⚖</div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noDisputesSub") ?? "ستظهر النزاعات هنا عند وجودها"}</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+          <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
             {disputes.map((d) => (
               <div key={d.id} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">{t("services.disputeId") ?? "نزاع"} #{d.id.slice(0, 8)}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-[var(--color-surface)]">{t("services.disputeId") ?? "نزاع"} #{d.id.slice(0, 8)}</span>
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold
-                        {d.status === 'open' ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
-                         d.status === 'in_review' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                         d.status === 'resolved' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+                        {d.status === 'open' ? 'bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]' :
+                         d.status === 'in_review' ? 'bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]' :
+                         d.status === 'resolved' ? 'bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)]' :
                          'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                         }">
                         {d.status}
@@ -105,7 +105,7 @@ export default function CustomerDisputesPage() {
                     <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">{t("services.openedAt") ?? "تم الفتح"} {new Date(d.opened_at).toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US")}</p>
                   </div>
                   {d.order && (
-                    <Link href={`/service-requests/${d.order.id}`} className="shrink-0 text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link href={`/service-requests/${d.order.id}`} className="shrink-0 text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
                       {t("services.viewRequest") ?? "عرض الطلب"}
                     </Link>
                   )}

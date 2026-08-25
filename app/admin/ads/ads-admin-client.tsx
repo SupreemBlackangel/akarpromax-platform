@@ -840,7 +840,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
           <section className="ads-form-section" hidden={wizardStep !== 2}><div><span>2</span><h3>الصورة أو الفيديو</h3></div>
             <div className={`ads-dialog-upload${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files); }}>
-              <div className="ads-dialog-media-preview">{form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} muted controls preload="metadata" /> : <img src={form.mediaUrl || "/og.png"} alt="معاينة الوسائط" />}</div>
+              <div className="ads-dialog-media-preview">{form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} muted controls preload="metadata" /> : <img src={form.mediaUrl || "/placeholder.svg"} alt="معاينة الوسائط" loading="lazy" decoding="async" />}</div>
               <div><strong>{uploading ? "جارٍ رفع الملفات..." : "اسحب الصور والفيديوهات هنا"}</strong><small>ارفع عدة ملفات معًا؛ الفيديو لا يتجاوز 15 ثانية، ويُختار أول ملف للحملة.</small></div>
               {canUpload && <button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار ملفات</button>}
             </div>
@@ -944,7 +944,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <section className="ads-form-section" hidden={wizardStep !== 7}><div><span>7</span><h3>المعاينة</h3></div>
             <div className="ads-preview-toolbar">{(["ar", "en", "tr"] as const).map((language) => <button className={previewLocale === language ? "active" : ""} type="button" onClick={() => setPreviewLocale(language)} key={language}>{language.toUpperCase()}</button>)}</div>
             <div className="ads-live-preview" dir={previewLocale === "ar" ? "rtl" : "ltr"}>
-              {form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} autoPlay muted loop playsInline /> : <img src={form.mediaUrl || "/og.png"} alt="" />}
+              {form.mediaType === "video" ? <video src={form.mediaUrl} poster={form.posterUrl || undefined} autoPlay muted loop playsInline /> : <img src={form.mediaUrl || "/placeholder.svg"} alt="" loading="lazy" decoding="async" />}
               <div><p>{preview.eyebrow}</p><h2>{preview.title}<br /><strong>{preview.accent}</strong></h2><span>{preview.description}</span><b>{preview.cta} ←</b></div>
             </div>
             <div className="ads-preview-meta"><span>{form.placements.length} موضع</span><span>{form.sectionScopes.length} قسم</span><span>{form.channels.length ? form.channels.map((channel) => channelLabels[channel] ?? channel).join(" + ") : "الموقع"}</span><span>{form.devices.join("، ")}</span><span>الموازنة: {form.budget} ريال</span></div>

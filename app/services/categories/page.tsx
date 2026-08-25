@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -11,7 +11,7 @@ import { CategoryCard, type CategoryRow } from "@services-ui/ServiceCards";
 import SearchInput from "@/src/components/ui/SearchInput";
 
 export default function ServiceCategoriesPage() {
-  const { locale, viewer, t, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const { locale, viewer, t, dir, country, city, isGlobal, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,8 @@ export default function ServiceCategoriesPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM")
+    const suffix = !isGlobal && country ? `?country=${encodeURIComponent(country)}` : "";
+    apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${suffix}`)
       .then((data) => {
         if (!controller.signal.aborted) {
           setCategories(data.categories ?? []);
@@ -32,7 +33,7 @@ export default function ServiceCategoriesPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [locale]);
+  }, [country, isGlobal, locale, t]);
 
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return categories;
@@ -59,15 +60,15 @@ export default function ServiceCategoriesPage() {
       onLogout={handleLogout}
     >
       <PageContainer className="py-8" dir={dir}>
-        <Link href="/services" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+        <Link href="/services" className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
           ← {t("services.back") ?? "العودة للسوق"}
         </Link>
         <div className="mt-6">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white">{t("services.categories") ?? "جميع التصنيفات"}</h1>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.categories") ?? "جميع التصنيفات"}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.categoriesSub") ?? "استعرض جميع تصنيفات الخدمات المتاحة واختر ما يناسبك"}</p>
         </div>
 
-        {error && <div className="mt-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+        {error && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
 
         <div className="mt-6">
           <SearchInput
@@ -89,7 +90,7 @@ export default function ServiceCategoriesPage() {
           ) : filteredCategories.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-4">🔍</div>
-              <h2 className="text-xl font-black text-gray-900 dark:text-white">{search ? t("services.noResults") ?? "لا توجد نتائج" : t("services.empty") ?? "لا توجد تصنيفات"}</h2>
+              <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{search ? t("services.noResults") ?? "لا توجد نتائج" : t("services.empty") ?? "لا توجد تصنيفات"}</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{search ? t("services.noResultsSub") ?? "جرب كلمات بحث مختلفة" : t("services.emptySub") ?? "لا توجد تصنيفات متاحة حالياً"}</p>
             </div>
           ) : (
