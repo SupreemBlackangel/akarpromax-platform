@@ -246,8 +246,8 @@ test("standard public ad layout renders the managed 8-slot shell and replaces le
   assert.match(html, /data-standard-public-ad-layout="services"/);
   assert.equal((html.match(/standard-public-ad-hero/g) ?? []).length, 1, "one hero slot");
   assert.equal((html.match(/standard-public-ad-bottom/g) ?? []).length, 3, "three bottom slots");
-  assert.equal((html.match(/class="public-ad-slot standard-public-ad-rail /g) ?? []).length, 4, "four desktop rail slots");
-  assert.equal((html.match(/standard-public-ad-inline/g) ?? []).length, 4, "four responsive inline rail slots");
+  assert.equal((html.match(/class="public-ad-slot standard-public-ad-rail"/g) ?? []).length, 4, "four desktop rail slots");
+  assert.equal((html.match(/class="public-ad-slot standard-public-ad-inline"/g) ?? []).length, 4, "four responsive inline rail slots");
 });
 
 test("safe-no-ads suppresses inherited shell advertising on sensitive pages", () => {

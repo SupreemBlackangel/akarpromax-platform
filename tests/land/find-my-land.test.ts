@@ -8,6 +8,8 @@ import { buildLandGeometry } from "@/lib/land/intelligence/geometry-builder";
 import { computeLocationConfidence, computeBoundaryConfidence } from "@/lib/land/intelligence/confidence";
 import { resolveLandDocument } from "@/lib/land/intelligence/resolver";
 import { storeResolveResult, getResolveResult, clearResolveResults } from "@/lib/land/resolve-store";
+import { extractZoneLessUtmRows } from "@/lib/geo/evidence-extraction";
+import { extractLandDetails } from "@/src/lib/tools/land-analysis";
 
 function metadata(nativeText: string, overrides: Record<string, unknown> = {}) {
   return { fileName: "deed.pdf", mimeType: "application/pdf", sizeBytes: 1024, nativeText, ...overrides };
@@ -61,6 +63,105 @@ describe("Land Document Classifier", () => {
   });
 });
 
+describe("Land detail extraction", () => {
+  it("reads the registered area from repeated survey-table values", () => {
+    const text = [
+      "تقرير مساحي لقطعة أرض",
+      "40 40 15 15",
+      "600 600",
+      "إحداثيات حدود الأرض",
+    ].join("\n");
+
+    assert.equal(extractLandDetails(text).area, "600");
+  });
+
+  it("prefers a complete SQ. M. area over an earlier corrupted OCR value", () => {
+    const text = "AREA: 50050. M.\nLINE NORTHING EASTING DIST (m)\nAREA = 600 SQ. M.";
+    assert.equal(extractLandDetails(text).area, "600");
+  });
+
+  it("does not display a visibly corrupted OCR token as a district", () => {
+    assert.equal(extractLandDetails("حي ححااجات").district, undefined);
+    assert.equal(extractLandDetails("حي ححااجات\u200e").district, undefined);
+  });
+});
+
+describe("Zone-less UTM survey tables", () => {
+  const omanTable = [
+    "PLOT NO: 47 - AREA: 600 SQ. M.",
+    "LINE NORTHING EASTING DIST (m)",
+    "1 2 253310507 55932222 19.99",
+    "2 3 253312465 55932626 30.00",
+    "3 4 253311859 55935564 20.00",
+    "4 1 253309900 55935160 30.00",
+    "AREA = 600 SQ. M.",
+  ].join("\n");
+
+  it("restores OCR-dropped decimal separators using valid UTM ranges", () => {
+    const rows = extractZoneLessUtmRows(omanTable);
+    assert.equal(rows.length, 4);
+    assert.equal(rows[0].northing, 2533105.07);
+    assert.equal(rows[0].easting, 559322.22);
+    assert.equal(rows[3].northing, 2533099);
+  });
+
+  it("repairs ambiguous OCR digits only when the declared sides and area verify them", () => {
+    const photographedOcr = [
+      "LINE NORTHING EASTING DIST (m)",
+      "1 2 253310507 56032222 19.99 OCRCONF 84 85",
+      "2 3 253312465 55932626 30.00 OCRCONF 90 91",
+      "3 4 253311850 55835564 20.00 OCRCONF 79 80",
+      "4 1 253300900 55035160 30.00 OCRCONF 75 37",
+      "AREA = 600 SQ. M.",
+    ].join("\n");
+    const rows = extractZoneLessUtmRows(photographedOcr);
+    assert.deepEqual(rows.map(({ northing, easting }) => [northing, easting]), [
+      [2533105.07, 559322.22],
+      [2533124.65, 559326.26],
+      [2533118.59, 559355.64],
+      [2533099, 559351.6],
+    ]);
+    assert.equal(rows[0].ocrCorrected, true);
+    assert.equal(rows[2].ocrCorrected, true);
+  });
+
+  it("applies Oman product-default UTM zone 40 and resolves all boundary points", async () => {
+    const result = await resolveLandDocument({ metadata: metadata(omanTable), countryCode: "OM" });
+    assert.equal(result.status, "RESOLVED_EXPLICIT_COORDINATES");
+    assert.equal(result.evidence.coordinatePairs.length, 4);
+    assert.equal(result.parcelIdentifiers?.plotId, "47");
+    assert.ok(result.center && result.center.lat >= 16.6 && result.center.lat <= 26.3);
+    assert.ok(result.center && result.center.lon >= 52 && result.center.lon <= 59.9);
+    assert.doesNotMatch(result.warnings.join(" "), /UTM zone 40 inferred/i);
+    assert.equal(result.strategy?.path, "EXPLICIT_UTM");
+    assert.equal(result.crsSelection?.source, "OMAN_DEFAULT");
+    assert.equal(result.crsSelection?.zone, 40);
+    assert.equal(result.crsSelection?.hemisphere, "N");
+    assert.equal(result.strategy?.confidence.location.level, "HIGH");
+    assert.equal(result.strategy?.confidence.boundary.level, "HIGH");
+    assert.equal(
+      result.strategy?.validations.find((check) => check.code === "SIDE_LENGTHS")?.status,
+      "PASS",
+    );
+    assert.equal(
+      result.strategy?.validations.find((check) => check.code === "REGISTERED_AREA_MATCH")?.status,
+      "PASS",
+    );
+    assert.ok(!result.strategy?.reviewReasons.includes("UTM_ZONE_INFERRED"));
+  });
+
+  it("flags a declared area that does not agree with the survey coordinates", async () => {
+    const result = await resolveLandDocument({
+      metadata: metadata(omanTable.replaceAll("600 SQ. M.", "650 SQ. M.")),
+      countryCode: "OM",
+    });
+    const areaCheck = result.strategy?.validations.find((check) => check.code === "REGISTERED_AREA_MATCH");
+    assert.equal(areaCheck?.status, "FAIL");
+    assert.ok((areaCheck?.deviation ?? 0) > 5);
+    assert.ok(result.strategy?.reviewReasons.includes("VALIDATION_FAILED"));
+  });
+});
+
 describe("Country Adapters", () => {
   it("Saudi adapter extracts parcel/plan/city/district", () => {
     const adapter = new SaudiDocumentAdapter();
@@ -75,6 +176,13 @@ describe("Country Adapters", () => {
     const adapter = new SaudiDocumentAdapter();
     const hints = adapter.extractHints("المساحة 500 م2");
     assert.ok(hints.landmarks.some((l) => l.startsWith("area:500")));
+  });
+
+  it("adapters do not expose a visibly corrupted OCR district", () => {
+    const adapter = new SaudiDocumentAdapter();
+    const hints = adapter.extractHints("صك ملكية - حي ححااجات\u200e");
+    assert.equal(hints.district, undefined);
+    assert.equal(hints.addresses.some((address) => address.district === "ححااجات"), false);
   });
 
   it("Saudi plausibility rejects out-of-country point", () => {
@@ -211,6 +319,18 @@ describe("Geometry Builder", () => {
     const coords = (r.geometry as { coordinates: { lat: number; lon: number }[] }).coordinates;
     assert.equal(coords.length - 1, 3);
   });
+
+  it("preserves source order and refuses to manufacture a boundary from crossing points", () => {
+    const r = buildLandGeometry([
+      { lat: 21.885762907392643, lon: 39.20592066741188 },
+      { lat: 21.88578809143258, lon: 39.20550801127744 },
+      { lat: 21.885892632901115, lon: 39.205878663428656 },
+      { lat: 21.88565836601457, lon: 39.20555001556669 },
+    ], adapter);
+    assert.equal(r.geometry, undefined);
+    assert.ok(r.center);
+    assert.ok(r.warnings.some((warning) => warning.includes("self-intersecting")));
+  });
 });
 
 describe("Confidence Model", () => {
@@ -323,6 +443,92 @@ describe("Resolver", () => {
     assert.ok(r.center);
     assert.equal(r.locationConfidence, "HIGH");
     assert.equal(r.extraction.aiUsed, false);
+    assert.equal(r.strategy?.path, "COORDINATES_CRS_REVIEW");
+  });
+
+  it("ignores unrelated numeric groups instead of drawing a false parcel", async () => {
+    const text = [
+      "نطاق العمل لمشروع تطوير عقاري",
+      "الجدول المالي 41.12947 19.90105",
+      "نسبة الإنجاز 24.75000 46.70000",
+      "الدفعة التالية 30.25000 55.12500",
+      "مدة التنفيذ 22.50000 48.25000",
+    ].join("\n");
+    const r = await resolveLandDocument({ metadata: metadata(text) });
+    assert.equal(r.evidence.coordinatePairs.length, 0);
+    assert.equal(r.geometry, undefined);
+    assert.match(r.warnings.join(" "), /unlabelled numeric pairs ignored/i);
+  });
+
+  it("requires a user-selected UTM zone when a zone-less grid has no country evidence", async () => {
+    const text = [
+      "تقرير مساحي - حدود قطعة أرض",
+      "LINE NORTHING EASTING DIST (m)",
+      "1 2 2533105.07 559322.22 20.00",
+      "2 3 2533124.65 559326.26 30.00",
+      "3 4 2533118.59 559355.64 20.00",
+      "4 1 2533099.00 559351.60 30.00",
+    ].join("\n");
+    const pending = await resolveLandDocument({ metadata: metadata(text) });
+    assert.equal(pending.status, "PARTIALLY_RESOLVED");
+    assert.equal(pending.evidence.coordinatePairs.length, 0);
+    assert.equal(pending.geometry, undefined);
+    assert.equal(pending.crsSelection?.required, true);
+    assert.equal(pending.crsSelection?.source, "NONE");
+    assert.equal(pending.crsSelection?.zone, undefined);
+    assert.equal(pending.crsSelection?.hemisphere, undefined);
+    assert.equal(pending.strategy?.path, "UTM_ZONE_SELECTION_REQUIRED");
+
+    const selected = await resolveLandDocument({
+      metadata: metadata(text),
+      utmZone: 40,
+      utmHemisphere: "N",
+    });
+    assert.equal(selected.status, "RESOLVED_EXPLICIT_COORDINATES");
+    assert.equal(selected.evidence.coordinatePairs.length, 4);
+    assert.equal(selected.crsSelection?.source, "USER");
+    assert.equal(selected.crsSelection?.zone, 40);
+    assert.equal(selected.crsSelection?.hemisphere, "N");
+    assert.equal(selected.strategy?.path, "USER_SELECTED_UTM_ZONE");
+  });
+
+  it("accepts Arabic presentation forms and PDF-style hemisphere coordinates", async () => {
+    const pdfNativeText = [
+      "ﺗﻘﺮﻳﺮ ﻣﺴﺎﺣﻲ - ﺻﻚ ﻣﻠﻜﻴﺔ ﺃﺭﺽ - 1173 ﺭﻗﻢ ﺍﻟﻘﻄﻌﺔ",
+      "39.20592066741188 E 21.885762907392643 N",
+      "39.20550801127744 E 21.88578809143258 N",
+      "39.205878663428656 E 21.885892632901115 N",
+    ].join(" ");
+    const r = await resolveLandDocument({ metadata: metadata(pdfNativeText) });
+    assert.equal(r.status, "RESOLVED_EXPLICIT_COORDINATES");
+    assert.notEqual(r.document.category, "UNKNOWN_LAND_DOCUMENT");
+    assert.equal(r.evidence.coordinatePairs.length, 3);
+    assert.ok(r.center);
+  });
+
+  it("keeps every municipal survey row when an area value precedes N/E coordinates", async () => {
+    const surveyText = [
+      "تقرير مساحي - حدود الأرض - المساحة 600",
+      "22470581 39.20592066741188 E 21.885762907392643 N",
+      "22470582 39.20550801127744 E 21.88578809143258 N",
+      "22470583 39.205878663428656 E 21.885892632901115 N",
+      "22470584 39.20555001556669 E 21.88565836601457 N",
+      "22470585 39.20550801127744 E 21.88578809143258 N",
+    ].join(" ");
+
+    const r = await resolveLandDocument({ metadata: metadata(surveyText) });
+
+    assert.equal(r.status, "RESOLVED_EXPLICIT_COORDINATES");
+    assert.equal(r.evidence.coordinatePairs.length, 5);
+    assert.deepEqual(r.evidence.coordinatePairs[0], {
+      lat: 21.885762907392643,
+      lon: 39.20592066741188,
+    });
+    assert.deepEqual(r.evidence.coordinatePairs[4], r.evidence.coordinatePairs[1]);
+    assert.match(
+      r.evidence.explicitCoordinates.find((item) => item.parsedLat !== undefined)?.raw ?? "",
+      /^22470581\b/,
+    );
   });
 
   it("resolves UTM coordinates and converts to WGS84", async () => {
@@ -357,6 +563,9 @@ describe("Resolver", () => {
     });
     assert.equal(r.status, "RESOLVED_GEOCODED");
     assert.equal(r.extraction.geocodingUsed, true);
+    assert.equal(r.strategy?.path, "ADDRESS_APPROXIMATION");
+    assert.equal(r.strategy?.confidence.boundary.level, "UNRESOLVED");
+    assert.ok((r.strategy?.confidence.location.score ?? 100) < 80);
   });
 
   it("returns PARTIALLY_RESOLVED when only parcel present", async () => {
@@ -365,6 +574,8 @@ describe("Resolver", () => {
     });
     assert.equal(r.status, "PARTIALLY_RESOLVED");
     assert.equal(r.parcelIdentifiers?.parcelId, "1234");
+    assert.equal(r.strategy?.path, "CADASTRAL_LOOKUP_REQUIRED");
+    assert.ok(r.strategy?.reviewReasons.includes("OFFICIAL_CADASTRAL_LOOKUP_REQUIRED"));
   });
 
   it("returns UNRESOLVED for a land doc with no geo evidence", async () => {
@@ -395,6 +606,17 @@ describe("Resolver", () => {
     });
     assert.equal(r.status, "RESOLVED_GEOCODED");
     assert.equal(r.extraction.ocrUsed, true);
+  });
+
+  it("keeps OCR confidence separate from document and location confidence", async () => {
+    const r = await resolveLandDocument({
+      metadata: { fileName: "scan.png", mimeType: "image/png", sizeBytes: 500 },
+      ocrText: "صك ملكية - الموقع 24.7136 46.6753",
+      ocrConfidence: 42,
+    });
+    assert.equal(r.strategy?.confidence.extraction.score, 42);
+    assert.notEqual(r.strategy?.confidence.document.score, 42);
+    assert.ok((r.strategy?.confidence.location.score ?? 100) < 80);
   });
 
   it("never sets aiUsed true (no LLM coordinate fabrication)", async () => {

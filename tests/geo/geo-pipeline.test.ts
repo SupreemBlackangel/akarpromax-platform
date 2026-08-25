@@ -9,6 +9,7 @@ import {
   extractAddressEvidence,
   parseDmsLatLon,
   parseDecimalLatLon,
+  parseHemisphereDecimalLatLon,
   parseUtmCoordinates,
 } from "@/lib/geo/evidence-extraction";
 import {
@@ -151,10 +152,15 @@ describe("Geo Document Classification", () => {
 });
 
 describe("Geo Text Extraction", () => {
-  it("prefers native text over OCR", () => {
-    const result = extractText({ nativeText: "native", ocrText: "ocr" });
+  it("prefers sufficiently long native text over OCR", () => {
+    const result = extractText({ nativeText: "native PDF text with enough useful characters", ocrText: "ocr" });
     assert.equal(result.method, "native_text");
-    assert.equal(result.text, "native");
+    assert.equal(result.text, "native PDF text with enough useful characters");
+  });
+
+  it("prefers OCR when native PDF text is only a short fragment", () => {
+    const result = extractText({ nativeText: "native", ocrText: "complete OCR result" });
+    assert.equal(result.method, "ocr");
   });
 
   it("falls back to OCR when no native text", () => {
@@ -172,6 +178,12 @@ describe("Geo Text Extraction", () => {
     assert.equal(result.method, "none");
     assert.equal(result.charCount, 0);
   });
+
+  it("normalizes Arabic presentation forms extracted from PDFs", () => {
+    const result = extractText({ nativeText: "ﺗﻘﺮﻳﺮ ﻣﺴﺎﺣﻲ - ﺻﻚ ﻣﻠﻜﻴﺔ ﺃﺭﺽ" });
+    assert.equal(result.method, "native_text");
+    assert.equal(result.text, "تقرير مساحي - صك ملكية أرض");
+  });
 });
 
 describe("Geo Coordinate Evidence Extraction", () => {
@@ -181,6 +193,13 @@ describe("Geo Coordinate Evidence Extraction", () => {
     assert.equal(evidence[0].format, "decimal");
     assert.ok(Math.abs(evidence[0].point!.lat - 24.7136) < 0.0001);
     assert.ok(Math.abs(evidence[0].point!.lon - 46.6753) < 0.0001);
+  });
+
+  it("parses PDF-style longitude/latitude with suffix hemispheres", () => {
+    const point = parseHemisphereDecimalLatLon("39.20592066741188 E 21.885762907392643 N");
+    assert.ok(point);
+    assert.ok(Math.abs(point.lat - 21.885762907392643) < 1e-12);
+    assert.ok(Math.abs(point.lon - 39.20592066741188) < 1e-12);
   });
 
   it("parses decimal with swapped hemisphere", () => {
@@ -193,6 +212,11 @@ describe("Geo Coordinate Evidence Extraction", () => {
   it("rejects out-of-range longitude", () => {
     const p = parseDecimalLatLon("24.7, 246.6");
     assert.equal(p, null);
+  });
+
+  it("does not treat table dimensions or dates as decimal coordinates", () => {
+    const evidence = extractCoordinateEvidence("1447/07/14 — الأبعاد 40 40 15 15");
+    assert.equal(evidence.length, 0);
   });
 
   it("parses DMS coordinates", () => {

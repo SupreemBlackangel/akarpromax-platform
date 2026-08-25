@@ -17,6 +17,7 @@ function unquote(token) {
 
 function valueOf(token, params) {
   const t = token.trim();
+  if (/^null$/i.test(t)) return null;
   const m = /^\?(\d+)$/.exec(t);
   if (m) return params[Number(m[1]) - 1];
   if (t === "?") return params[0];
@@ -24,9 +25,11 @@ function valueOf(token, params) {
 }
 
 function stripAlias(token) {
-  const t = token.trim();
-  const m = /^([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)$/.exec(t);
-  return m ? m[2] : t;
+  // Accepts `col`, `alias.col` and the quoted form `"col"` that reserved words
+  // such as "order" require.
+  const t = token.trim().replace(/^"(.*)"$/, "$1");
+  const m = /^([a-z_][a-z0-9_]*)\.("?[a-z_][a-z0-9_]*"?)$/.exec(t);
+  return m ? m[2].replace(/^"(.*)"$/, "$1") : t;
 }
 
 function normalizeValue(row, col) {
@@ -145,7 +148,7 @@ function evalClause(clause, row, params) {
     return v != null && likeToRegExp(pattern).test(String(v));
   }
 
-  const eq = /^([a-z_][a-z0-9_.]*) = (.+)$/i.exec(c);
+  const eq = /^("?[a-z_][a-z0-9_.]*"?) = (.+)$/i.exec(c);
   if (eq) {
     const col = stripAlias(eq[1]);
     return compare(row, col, valueOf(eq[2], params));
@@ -226,7 +229,7 @@ function extractWhereAndTail(sql) {
   const orderBy = orderByMatch?.[1] ?? null;
   const limit = limitMatch?.[1] ?? null;
   const offset = offsetMatch?.[1] ?? null;
-  const whereMatch = / where (.+?)(?= order by| limit|$)/i.exec(sql);
+  const whereMatch = / where (.+?)(?= returning| order by| limit|$)/i.exec(sql);
   const where = whereMatch?.[1]?.trim() || null;
   return { where, orderBy, limit, offset };
 }
@@ -333,7 +336,7 @@ class Statement {
     for (const row of rows) {
       if (where && !matchesRow(row, where, this.params)) continue;
       for (const assignment of assignments) {
-        const am = /^([a-z_][a-z0-9_]*) = (.+)$/i.exec(assignment);
+        const am = /^"?([a-z_][a-z0-9_]*)"? = (.+)$/i.exec(assignment);
         if (!am) throw new Error(`Unsupported SET clause: ${assignment}`);
         const col = am[1];
         const rhs = am[2].trim();
@@ -366,6 +369,26 @@ class Statement {
   }
 
   #select() {
+    // listCategoriesFull() intentionally uses two aggregate LEFT JOIN
+    // subqueries. The generic parser below only understands a single outer
+    // WHERE and would mistake the first subquery WHERE for the category
+    // filter, silently returning zero rows. Model this one canonical query
+    // explicitly so the CRUD test exercises the service behavior accurately.
+    if (/^select c\.\*, coalesce\(pc\.provider_count, 0\) as provider_count,/i.test(this.sql)) {
+      return this.#selectCategoriesFull();
+    }
+
+    // SELECT COALESCE(AVG(col), 0) AS x, COUNT(*) AS y FROM t [WHERE ...]
+    const aggregate = /^select coalesce\(avg\(([a-z_][a-z0-9_]*)\), 0\) as ([a-z_]+), count\(\*\) as ([a-z_]+) from ([a-z_][a-z0-9_]*)(.*)$/i.exec(this.sql);
+    if (aggregate) {
+      const [, column, avgAlias, countAlias, table, tail] = aggregate;
+      const { where } = extractWhereAndTail(tail || "");
+      const rows = this.db.table(table).filter((row) => matchesRow(row, where, this.params));
+      const values = rows.map((row) => Number(row[column])).filter((value) => Number.isFinite(value));
+      const total = values.reduce((sum, value) => sum + value, 0);
+      return [{ [avgAlias]: values.length ? total / values.length : 0, [countAlias]: rows.length }];
+    }
+
     if (/^select count\(\*\) as ([a-z_]+) from /i.test(this.sql)) {
       const m = /^select count\(\*\) as ([a-z_]+) from ([a-z_][a-z0-9_]*)(.*)$/i.exec(this.sql);
       const table = m[2];
@@ -419,7 +442,8 @@ class Statement {
       rows = rows.slice(0, n);
     }
 
-    const isStar = colsRaw.replace(/^distinct\s+/i, "").trim() === "*";
+    const normalizedColumns = colsRaw.replace(/^distinct\s+/i, "").trim();
+    const isStar = normalizedColumns === "*" || /^[a-z_][a-z0-9_]*\.\*$/i.test(normalizedColumns);
     return rows.map((row) => {
       if (isStar) return { ...row };
       const projected = {};
@@ -429,6 +453,42 @@ class Statement {
       }
       return projected;
     });
+  }
+
+  #selectCategoriesFull() {
+    const outerJoin = ") rc ON rc.category_id = c.id";
+    const outerTail = this.sql.slice(this.sql.lastIndexOf(outerJoin) + outerJoin.length);
+    const { where } = extractWhereAndTail(outerTail);
+    const profiles = this.db.table("service_provider_profiles");
+    const providerCategories = this.db.table("service_provider_categories");
+    const requests = this.db.table("service_requests");
+
+    const rows = this.db.table("service_categories")
+      .filter((category) => matchesRow(category, where, this.params))
+      .map((category) => {
+        const providerCount = providerCategories.filter((entry) => {
+          if (!compare(entry, "category_id", category.id) || !compare(entry, "is_active", 1)) return false;
+          const profile = profiles.find((candidate) => compare(candidate, "id", entry.provider_id));
+          return profile?.status === "approved";
+        }).length;
+        const openRequestCount = requests.filter((request) =>
+          compare(request, "category_id", category.id) && ["published", "receiving_offers"].includes(request.status),
+        ).length;
+        return { ...category, provider_count: providerCount, open_request_count: openRequestCount };
+      });
+
+    const compareNullable = (a, b) => {
+      if (a == null && b == null) return 0;
+      if (a == null) return -1;
+      if (b == null) return 1;
+      return String(a).localeCompare(String(b));
+    };
+    return rows.sort((a, b) =>
+      compareNullable(a.parent_id, b.parent_id)
+      || Number(b.is_featured ?? 0) - Number(a.is_featured ?? 0)
+      || Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+      || String(a.code ?? "").localeCompare(String(b.code ?? "")),
+    );
   }
 
   // SELECT id FROM (SELECT id, category_id FROM service_listings

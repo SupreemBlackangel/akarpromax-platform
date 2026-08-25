@@ -80,8 +80,11 @@ test("does not retain the starter preview or starter metadata", async () => {
 });
 
 test("includes the advertiser admin, content schema and campaign assets", async () => {
-  const [page, publicSidebar, admin, schema, advertiserApi, accessApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
+  const [page, shell, shellClient, hook, publicSidebar, admin, schema, advertiserApi, accessApi, auth, runtimeDb, packageJson, hosting, ...images] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-page-shell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/services/useServicesPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/public-sidebar.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/advertisers/advertiser-admin-client.tsx", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
@@ -97,24 +100,27 @@ test("includes the advertiser admin, content schema and campaign assets", async 
     stat(new URL("../public/sponsors/arab-blue.webp", import.meta.url)),
   ]);
 
-  assert.match(page, /\/api\/user-context/);
+  assert.match(page, /PublicPageShell/);
+  assert.match(page, /family: "home"/);
+  assert.match(page, /adLayout=\{\{ mode: "standard", family: "home" \}\}/);
   assert.doesNotMatch(page, /\/api\/sponsors/);
-  assert.match(page, /StandardPublicAdLayout/);
-  assert.match(page, /family="home"/);
   assert.doesNotMatch(page, /sponsor-ribbon-visual/);
   assert.doesNotMatch(page, /sponsor-visual-image/);
   assert.doesNotMatch(page, /Official Sponsor/i);
   assert.doesNotMatch(page, /House Ad/i);
   assert.doesNotMatch(page, /sponsor-ribbon/);
-  assert.match(page, /PublicSidebar/);
-  assert.match(page, /getPublicNav/);
-  assert.match(publicSidebar, /sidebar-public-nav/);
   assert.doesNotMatch(page, /right-sidebar/);
   assert.doesNotMatch(page, /sidebarHovered/);
   assert.doesNotMatch(page, /sidebar-sponsor-admin/);
   assert.doesNotMatch(page, /adminNav/);
   assert.doesNotMatch(page, /sidebar-admin-head/);
   assert.doesNotMatch(page, /admin-chip/);
+  assert.match(shell, /StandardPublicAdLayout/);
+  assert.match(shell, /PublicSidebar/);
+  assert.match(shell, /NewsTicker/);
+  assert.match(shellClient, /getPublicNav/);
+  assert.match(hook, /\/api\/user-context/);
+  assert.match(publicSidebar, /sidebar-public-nav/);
   assert.match(admin, /المستخدمون والصلاحيات/);
   assert.match(admin, /مواضع الظهور/);
   assert.match(schema, /sponsorAccess/);
@@ -131,14 +137,15 @@ test("includes the advertiser admin, content schema and campaign assets", async 
   assert.doesNotMatch(auth, /getChatGPTUser|oai-authenticated-user/);
   assert.match(auth, /getSessionIdentity/);
   assert.match(runtimeDb, /CREATE TABLE IF NOT EXISTS sponsors/);
-  assert.match(packageJson, /"dev": "vinext dev"/);
+  assert.match(packageJson, /"dev": "next dev --port 3010"/);
   assert.match(hosting, /"r2": "SPONSOR_ASSETS"/);
   images.forEach((image) => assert.ok(image.size > 40_000));
 });
 
 test("includes the managed advertising center, media storage and targeted hero delivery", async () => {
-  const [page, layout, layoutConfig, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, roles, migration, styles] = await Promise.all([
+  const [page, shell, layout, layoutConfig, admin, adsApi, assetsApi, eventsApi, schema, runtimeDb, permissions, roles, migration, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/ads/standard-public-ad-layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/config/standard-public-ad-layout.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/ads/ads-admin-client.tsx", import.meta.url), "utf8"),
@@ -153,8 +160,10 @@ test("includes the managed advertising center, media storage and targeted hero d
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /StandardPublicAdLayout/);
-  assert.match(page, /family="home"/);
+  assert.match(page, /PublicPageShell/);
+  assert.match(page, /family: "home"/);
+  assert.match(shell, /StandardPublicAdLayout/);
+  assert.match(shell, /family=\{adLayout\.family\}/);
   assert.doesNotMatch(page, /\/api\/ads\?country=/);
   assert.doesNotMatch(page, /\/api\/ad-events/);
   assert.match(layout, /data-standard-public-ad-layout/);
@@ -185,8 +194,9 @@ test("includes the managed advertising center, media storage and targeted hero d
 });
 
 test("includes the region-filtered news ticker, management API and admin panel", async () => {
-  const [page, ticker, newsApi, runtimeDb, permissions, adminPage, adminClient, mysqlSchema, migration, styles, translations] = await Promise.all([
+  const [page, shell, ticker, newsApi, runtimeDb, permissions, adminPage, adminClient, mysqlSchema, migration, styles, translations] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/NewsTicker.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/content-schema.ts", import.meta.url), "utf8"),
@@ -199,8 +209,8 @@ test("includes the region-filtered news ticker, management API and admin panel",
     readFile(new URL("../src/data/translations.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /<NewsTicker copy=\{copy\} locale=\{locale\} country=\{country\} city=\{city\} \/>/);
-  assert.match(page, /PublicSidebar/);
+  assert.match(shell, /<NewsTicker copy=\{labels\} locale=\{locale\} country=\{country\} city=\{city\} \/>/);
+  assert.match(shell, /PublicSidebar/);
   assert.doesNotMatch(page, /adminNav/);
   assert.doesNotMatch(page, /sidebar-admin-head/);
   assert.doesNotMatch(page, /admin-chip/);

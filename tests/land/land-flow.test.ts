@@ -343,6 +343,22 @@ describe("Land Quote Request", () => {
     assert.doesNotMatch(source, /service:\s*"land-survey"/);
   });
 
+  it("Find My Land launch UI keeps upload, timeout, CRS choice, RTL, and explicit verdict safeguards", async () => {
+    const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
+    assert.match(source, /MAX_FILE_SIZE\s*=\s*20\s*\*\s*1024\s*\*\s*1024/);
+    assert.match(source, /onDragOver=/);
+    assert.match(source, /onDrop=/);
+    assert.match(source, /ANALYSIS_TIMEOUT_MS\s*=\s*60_000/);
+    assert.match(source, /new AbortController\(\)/);
+    assert.match(source, /controller\.abort\(\)/);
+    assert.match(source, /aria-label="UTM Zone"/);
+    assert.match(source, /utmHemisphereInput/);
+    assert.match(source, /dir=\{dir\}/);
+    assert.match(source, /تم تحديد الإحداثيات بثقة/);
+    assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
+    assert.match(source, /تعذر استخراج إحداثيات صالحة/);
+  });
+
   it("requestSurveyorQuote rejects invalid budget", () => {
     const land = saveLand(sampleLandInput());
     const result = requestSurveyorQuote({

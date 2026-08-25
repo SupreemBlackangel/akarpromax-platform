@@ -1,0 +1,57 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 603 >>
+stream
+BT
+/F1 11 Tf
+54 780 Td
+15 TL
+(SYNTHETIC SURVEY SHEET - PARCEL AND CONTROL POINTS) Tj T*
+() Tj T*
+(WGS84 40N) Tj T*
+() Tj T*
+(LINE    EASTING       NORTHING       DIST) Tj T*
+(1  2    565150.50     2550415.28     30.00) Tj T*
+(2  3    565136.78     2550388.60     10.00) Tj T*
+(3  4    565127.88     2550393.17     30.00) Tj T*
+(4  1    565141.61     2550419.85     10.00) Tj T*
+() Tj T*
+(AREA = 300 SQ.m) Tj T*
+() Tj T*
+(CONTROL STATIONS) Tj T*
+(STATION EASTING NORTHING) Tj T*
+(101     560000.00     2540000.00) Tj T*
+(102     561000.00     2541000.00) Tj T*
+(103     562000.00     2542000.00) Tj T*
+ET
+endstream
+endobj
+6 0 obj
+<< /Title (Synthetic survey sheet: parcel plus control stations) /Producer (AkarProMax synthetic survey fixture) >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000338 00000 n 
+0000000992 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R /Info 6 0 R >>
+startxref
+1123
+%%EOF

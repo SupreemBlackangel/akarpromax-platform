@@ -19,7 +19,7 @@ function prodEnv(overrides = {}) {
     NODE_ENV: "production",
     SESSION_SECRET: VALID_SECRET,
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
-    DB_PROVIDER: "mysql",
+    DB_PROVIDER: "postgres",
     APP_URL: TEST_URL,
     TRUSTED_ORIGINS: TEST_URL,
     ...overrides,
@@ -92,22 +92,20 @@ test("production rejects invalid TRUSTED_ORIGINS entries", () => {
   assert.throws(() => validateRuntimeEnv(prodEnv({ TRUSTED_ORIGINS: "ftp://example.com" })), /TRUSTED_ORIGINS/);
 });
 
-test("production defaults to mysql when DB_PROVIDER is unset", () => {
+test("production defaults to postgres when DB_PROVIDER is unset", () => {
   const env = prodEnv();
   delete env.DB_PROVIDER;
   const parsed = validateRuntimeEnv(env);
-  assert.equal(parsed.dbProvider, "mysql");
+  assert.equal(parsed.dbProvider, "postgres");
 });
 
-test("production accepts DB_PROVIDER=mysql and DB_PROVIDER=d1", () => {
+test("production accepts DB_PROVIDER=postgres, DB_PROVIDER=mysql, and DB_PROVIDER=d1", () => {
+  const pg = validateRuntimeEnv(prodEnv({ DB_PROVIDER: "postgres" }));
+  assert.equal(pg.dbProvider, "postgres");
   const my = validateRuntimeEnv(prodEnv({ DB_PROVIDER: "mysql" }));
   assert.equal(my.dbProvider, "mysql");
   const d1 = validateRuntimeEnv(prodEnv({ DB_PROVIDER: "d1" }));
   assert.equal(d1.dbProvider, "d1");
-});
-
-test("production rejects deprecated DB_PROVIDER=postgres", () => {
-  assert.throws(() => validateRuntimeEnv(prodEnv({ DB_PROVIDER: "postgres" })), /DB_PROVIDER/);
 });
 
 test("production rejects an invalid DB_PROVIDER value", () => {

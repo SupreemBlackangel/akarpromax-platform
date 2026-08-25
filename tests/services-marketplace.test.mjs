@@ -17,20 +17,27 @@ test("the services marketplace ships public hub, catalog and provider profile pa
   assert.match(hub, /CategoryCard/);
   assert.match(hub, /ProviderCard/);
   assert.match(hub, /RequestCard/);
-  assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\("\/api\/service-categories\?country=OM"\)/);
+  assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\(`\/api\/service-categories\$\{countrySuffix\}`\)/);
+  assert.match(hub, /scope: isGlobal \? "global" : "local"/);
+  assert.doesNotMatch(hub, /country=OM/);
   assert.match(hub, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);
-  assert.match(category, /service-providers\?categoryId=\$\{encodeURIComponent\(found\.id\)\}/);
+  assert.match(category, /providerParams\.set\("country", country\)/);
+  assert.match(category, /service-providers\?\$\{providerParams\.toString\(\)\}/);
   assert.match(category, /\.find\(\(c\) => c\.code === code\)/);
-  assert.match(providers, /service-reviews\?revieweeUserId=/);
+  assert.match(providers, /api\/service-providers\/\$\{id\}/);
+  assert.match(providers, /Array\.isArray\(providerData\.reviews\)/);
+  assert.doesNotMatch(providers, /service-reviews\?revieweeUserId=/);
   assert.match(providers, /RatingStars/);
-  assert.match(requests, /service-requests\?status=published/);
+  assert.match(requests, /scope: isGlobal \? "global" : "local"/);
+  assert.match(requests, /service-requests\?\$\{requestParams\.toString\(\)\}/);
   assert.match(requestDetail, /makeOffer/);
   assert.match(requestDetail, /OfferStatusPill|RequestStatusPill/);
   assert.match(newRequest, /dynamic_fields/);
   assert.match(newRequest, /needsVisit/);
   assert.match(newRequest, /publishNow/);
   assert.match(offerForm, /\/api\/service-offers/);
-  assert.match(apply, /becomeProvider/);
+  assert.match(apply, /ak_provider_selected_category/);
+  assert.match(apply, /service-marketplace-settings/);
 });
 
 test("services admin exists behind a permission gate and manages providers, reports and categories", async () => {
@@ -52,11 +59,12 @@ test("services admin exists behind a permission gate and manages providers, repo
   assert.match(client, /AdminPageShell/);
   assert.match(client, /activeSection="services"/);
   assert.match(client, /api\/service-admin/);
-  assert.match(client, /api\/service-providers\?status=under_review/);
+  assert.match(client, /api\/service-providers\?admin=1&limit=100/);
+  assert.match(client, /api\/service-marketplace-settings/);
   assert.match(client, /api\/service-reports/);
   assert.match(client, /api\/service-categories/);
   assert.match(client, /إدارة سوق الخدمات/);
-  assert.match(client, /مقدمو الخدمات/);
+  assert.match(client, /إدارة الحرفيين ومقدمي الخدمات/);
   assert.match(adminApi, /getAdminOverview/);
   assert.match(adminApi, /SERVICE_CATEGORIES_MANAGE/);
   assert.match(marketplace, /service_provider_profiles/);
@@ -235,7 +243,7 @@ test("offer and job detail pages enforce participant authz separation", async ()
   assert.match(offer, /\/api\/service-offers\/\$\{encodeURIComponent\(id\)\}\/\$\{path\}/);
   assert.match(offer, /window\.location\.href = "\/dashboard\/services\/jobs"/);
   assert.match(job, /disputed: \["completed"\]/);
-  assert.match(job, /const canReview = job\?\.status === "completed" && !reviewed;/);
+  assert.match(job, /const canReview = job\?\.status === "completed" && !reviewed[\s\S]*job\.viewer_role === "customer"/);
   assert.match(job, /ThreadMessages threadType="order"/);
   assert.match(matched, /hasProfile === false/);
   assert.match(matched, /\/dashboard\/services\/provider-profile/);

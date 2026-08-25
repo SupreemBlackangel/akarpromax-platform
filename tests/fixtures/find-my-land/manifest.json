@@ -1,0 +1,72 @@
+{
+  "corpusVersion": 2,
+  "privacy": "synthetic-only-no-personal-data",
+  "cases": [
+    {
+      "file": "01-text-wgs84.pdf",
+      "case": "text-wgs84",
+      "expectedPoints": 4
+    },
+    {
+      "file": "02-arabic-wgs84.pdf",
+      "case": "arabic-wgs84",
+      "expectedPoints": 4
+    },
+    {
+      "file": "03-explicit-utm.pdf",
+      "case": "explicit-utm",
+      "expectedPoints": 4
+    },
+    {
+      "file": "04-zone-less-utm.pdf",
+      "case": "zone-less-utm",
+      "expectedPoints": 0,
+      "requiresZone": true
+    },
+    {
+      "file": "05-multiple-number-groups.pdf",
+      "case": "ambiguous-numbers",
+      "expectedPoints": 0
+    },
+    {
+      "file": "06-incomplete-two-points.pdf",
+      "case": "incomplete-boundary",
+      "expectedPoints": 2
+    },
+    {
+      "file": "07-no-extractable-text.pdf",
+      "case": "image-only",
+      "expectedPoints": 0
+    },
+    {
+      "file": "08-invalid-pdf.pdf",
+      "case": "invalid-pdf",
+      "parseError": true
+    },
+    {
+      "file": "09-line-topology-utm.pdf",
+      "case": "line-topology-utm",
+      "expectedPoints": 4,
+      "topology": "LINE",
+      "zone": "40N",
+      "statedAreaM2": 300
+    },
+    {
+      "file": "10-point-table-northing-first.pdf",
+      "case": "point-table-northing-first",
+      "expectedPoints": 4,
+      "topology": "POINT",
+      "zone": "40N",
+      "statedAreaM2": 300
+    },
+    {
+      "file": "11-two-coordinate-tables.pdf",
+      "case": "two-coordinate-tables",
+      "expectedPoints": 4,
+      "topology": "LINE",
+      "zone": "40N",
+      "statedAreaM2": 300,
+      "extraTables": 1
+    }
+  ]
+}

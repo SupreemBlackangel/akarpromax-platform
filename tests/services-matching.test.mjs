@@ -124,6 +124,6 @@ test("matching pipeline inserts qualified providers and notifies both sides", as
   assert.match(matching, /service_provider_categories WHERE provider_id = \?1 AND is_active = 1/);
   assert.match(score, /export function computeMatchScore/);
   assert.match(score, /coversCategory/);
-  assert.match(score, /distance > radius/);
+  assert.match(score, /distance > effectiveRadius/);
   assert.match(score, /export function distanceKm/);
 });

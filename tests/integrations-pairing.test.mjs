@@ -134,3 +134,95 @@ test("protocol gate rejects a blocked client at the api layer", () => {
   const result = checkProtocolVersion("0.9.0", 2);
   assert.equal(result.status, "BLOCKED");
 });
+
+async function seedCode(db, code, expiresAt, status = "pending") {
+  const hash = await sha256Hex(code);
+  db.seed("office_pairing_codes", [
+    {
+      id: crypto.randomUUID(),
+      sponsor_id: SPONSOR,
+      office_id: null,
+      code_hash: hash,
+      status,
+      expires_at: expiresAt,
+      created_by: SPONSOR,
+    },
+  ]);
+}
+
+test("expiry: future ISO-8601 string is accepted", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "FUTUR1";
+  await seedCode(db, code, new Date(Date.now() + 60_000).toISOString());
+  const device = await completePairing({ code, installationId: "inst-iso-future", appVersion: "1.2.0" });
+  assert.equal(device.status, "active");
+  assert.equal(db.dump("office_devices").length, 1);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: past ISO-8601 string is rejected", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "PASTISO";
+  await seedCode(db, code, new Date(Date.now() - 60_000).toISOString());
+  await assert.rejects(completePairing({ code, installationId: "inst-iso-past", appVersion: "1.2.0" }), /PAIRING_CODE_EXPIRED/);
+  assert.equal(db.dump("office_devices").length, 0);
+  assert.equal(db.dump("office_device_credentials").length, 0);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: future Date/postgres-style value is accepted", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "FUTUR2";
+  // node-postgres converts `timestamp without time zone` to a Date by parsing
+  // the stored naive text as LOCAL time; local components reproduce the text.
+  const pgFuture = new Date(new Date(Date.now() + 60_000).toISOString().slice(0, 19).replace("T", " "));
+  await seedCode(db, code, pgFuture);
+  const device = await completePairing({ code, installationId: "inst-date-future", appVersion: "1.2.0" });
+  assert.equal(device.status, "active");
+  assert.equal(db.dump("office_devices").length, 1);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: past Date/postgres-style value is rejected", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "PASTDAT";
+  const pgPast = new Date(new Date(Date.now() - 60_000).toISOString().slice(0, 19).replace("T", " "));
+  await seedCode(db, code, pgPast);
+  await assert.rejects(completePairing({ code, installationId: "inst-date-past", appVersion: "1.2.0" }), /PAIRING_CODE_EXPIRED/);
+  assert.equal(db.dump("office_devices").length, 0);
+  assert.equal(db.dump("office_device_credentials").length, 0);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: invalid/unparseable value fails closed (rejected)", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "GARBAGE";
+  await seedCode(db, code, "not-a-date-at-all");
+  await assert.rejects(completePairing({ code, installationId: "inst-garbage", appVersion: "1.2.0" }), /PAIRING_CODE_EXPIRED/);
+  assert.equal(db.dump("office_devices").length, 0);
+  assert.equal(db.dump("office_device_credentials").length, 0);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: naive D1-style UTC text (YYYY-MM-DD HH:MM:SS) is honoured", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const future = new Date(Date.now() + 60_000).toISOString().slice(0, 19).replace("T", " ");
+  const code = "NAIVE1";
+  await seedCode(db, code, future);
+  const device = await completePairing({ code, installationId: "inst-naive-future", appVersion: "1.2.0" });
+  assert.equal(device.status, "active");
+
+  const pastCode = "NAIVE2";
+  await seedCode(db, pastCode, new Date(Date.now() - 60_000).toISOString().slice(0, 19).replace("T", " "));
+  await assert.rejects(completePairing({ code: pastCode, installationId: "inst-naive-past", appVersion: "1.2.0" }), /PAIRING_CODE_EXPIRED/);
+  setIntegrationDbForTesting(null);
+});
+
+test("expiry: consumed code is rejected regardless of expiry", async () => {
+  const db = setIntegrationDbForTesting(createInMemoryDb());
+  const code = "CONSUME";
+  await seedCode(db, code, new Date(Date.now() + 60_000).toISOString(), "completed");
+  await assert.rejects(completePairing({ code, installationId: "inst-consumed", appVersion: "1.2.0" }), /PAIRING_CODE_USED/);
+  assert.equal(db.dump("office_devices").length, 0);
+  setIntegrationDbForTesting(null);
+});

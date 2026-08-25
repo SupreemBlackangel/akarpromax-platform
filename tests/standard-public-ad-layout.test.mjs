@@ -118,8 +118,9 @@ test("standard placements enforce exact placement and module targeting", () => {
 });
 
 test("enrolled pages use the standard layout while safe-zone flows remove legacy page-owned ad slots", async () => {
-  const [home, services, servicesCategories, tools, requestNew, requestOffer] = await Promise.all([
+  const [home, shell, services, servicesCategories, tools, requestNew, requestOffer] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/public-shell-layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/services/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/services/categories/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/tools/ToolsPageClient.tsx", import.meta.url), "utf8"),
@@ -127,18 +128,20 @@ test("enrolled pages use the standard layout while safe-zone flows remove legacy
     readFile(new URL("../app/service-requests/[id]/offer/page.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(home, /StandardPublicAdLayout/);
-  assert.match(home, /family="home"/);
+  assert.match(home, /PublicPageShell/);
+  assert.match(home, /adLayout=\{\{ mode: "standard", family: "home" \}\}/);
   assert.doesNotMatch(home, /\/api\/ads\?country=/);
   assert.doesNotMatch(home, /\/api\/ad-events/);
+  assert.match(shell, /StandardPublicAdLayout/);
+  assert.match(shell, /family=\{adLayout\.family\}/);
 
   assert.match(services, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);
   assert.doesNotMatch(services, /services_hub_mid/);
   assert.match(servicesCategories, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);
   assert.doesNotMatch(servicesCategories, /services_categories_bottom/);
 
-  assert.match(tools, /adLayout=\{\{ mode: "safe-no-ads" \}\}/);
-  assert.doesNotMatch(tools, /tools_hero/);
+  assert.match(tools, /adLayout=\{\{ mode: "standard", family: "tools" \}\}/);
+  assert.doesNotMatch(tools, /safe-no-ads/);
   assert.match(requestNew, /adLayout=\{\{ mode: "safe-no-ads" \}\}/);
   assert.doesNotMatch(requestNew, /request_wizard_bottom/);
   assert.match(requestOffer, /adLayout=\{\{ mode: "safe-no-ads" \}\}/);
