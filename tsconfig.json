@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,10 +23,18 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@services/*": ["./lib/services/*"],
-      "@services-ui/*": ["./src/components/services/*"],
-      "@services-client": ["./src/lib/services-client.ts"]
+      "@/*": [
+        "./*"
+      ],
+      "@services/*": [
+        "./lib/services/*"
+      ],
+      "@services-ui/*": [
+        "./src/components/services/*"
+      ],
+      "@services-client": [
+        "./src/lib/services-client.ts"
+      ]
     }
   },
   "include": [
@@ -33,5 +45,34 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "scripts/backup",
+    "_ai-backup",
+    "_auctions_current_snapshot",
+    "artifacts",
+    "build",
+    "tmp",
+    ".auth-f1-backup",
+    ".cleanup-backup",
+    ".local-backup",
+    ".properties-f2-backup",
+    ".properties-lifecycle-backup",
+    ".property-lifecycle-backup",
+    ".services-f3-backup",
+    ".services-provider-review-backup",
+    ".temp-fix",
+    ".visual-backup",
+    ".vinext",
+    ".wrangler",
+    ".fml-oman-saudi-backup-20260824_014503",
+    ".fml-oman-saudi-backup-20260824_014558",
+    ".fml-oman-saudi-backup-20260824_015028",
+    ".fml-oman-saudi-final-backup-20260824_084615",
+    "AKARPROMAX_FML_FINAL_EXACT",
+    "AKARPROMAX_FML_FINAL_EXACT_V2",
+    "AKARPROMAX_FML_OMAN_SAUDI_FIX",
+    "AKARPROMAX_FML_OMAN_TEST_SYNC",
+    "AKARPROMAX_FML_OMAN_TEST_SYNC_V2"
+  ]
 }

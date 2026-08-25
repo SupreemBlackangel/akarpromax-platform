@@ -92,3 +92,119 @@ temp/
 
 # local backup (refactor protection)
 .local-backup/
+
+# certification scratch: holds real survey documents, never committed
+tmp/_scratch/
+
+# stray experimental build outputs (not the real .next, never the build target
+# of npm run dev/build/start)
+.next-fml/
+.next-fml2/
+.next-fml-build/
+.next-fml-dev/
+.next-gate1*/
+.next-ocrv2/
+.next-ocrv2-cert/
+.next.passc1-prebuild/
+
+# stray per-feature "before I try again" snapshots (not source control history)
+.auth-f1-backup/
+.cleanup-backup/
+.properties-f2-backup/
+.properties-lifecycle-backup/
+.property-lifecycle-backup/
+.services-f3-backup/
+.services-provider-review-backup/
+.visual-checkpoint/
+.fml-oman-saudi-backup-*/
+.fml-oman-saudi-final-backup-*/
+_ai-backup/
+_auctions_current_snapshot/
+AkarApp_LIVE/
+
+# exported hand-off packages to external assistants/devs (not source)
+AKARPROMAX_FML_*/
+AKARPROMAX_FML_*.zip
+AKARPROMAX_FOUNDATION_EXECUTION_KIT.zip
+AkarProMax_ChatGPT_Source_Review.zip
+akarpromax-*-current.zip
+COLLECT_AKARPROMAX_FML_CURRENT.cmd
+AKARPROMAX_CREATE_RELEASE_SNAPSHOT.cmd
+
+# one-off root-level scratch scripts and command output dumps
+run_*.ps1
+run_*.py
+run_*.mjs
+resume_*.ps1
+apply_akarpromax_*.py
+akarpromax_p0_stabilize.py
+validate_post_hardening.py
+L1C0_WINDOWS_*.ps1
+start-dev.cmd
+MANIFEST.txt
+ts-verify.txt
+ts-errors-before.txt
+ts-errors-after.txt
+ts-assets-check.txt
+test-output.txt
+server-output.txt
+vite.config.ts.vinext-backup
+remove_hero_fix.py
+regenerate_and_run.py
+ps-test-before.txt
+ps-test-after.txt
+output.txt
+low_memory_build.py
+lint-output.txt
+l1c05b0-readonly-truth-reviewed.mjs
+fix_typescript_errors.py
+fix_hero_selectors.py
+final_tsfix.py
+error.txt
+diagnose_organizations_f2_exact_failure*.ps1
+create-admin.js
+cleanup_akarpromax_ai_temp.ps1
+build-verify.txt
+build-output.txt
+apply_services_provider_reviews.py
+apply_property_lifecycle.py
+apply_hero_fix.py
+
+# stray loose OCR trained-data at repo root (superseded by tessdata/*.gz,
+# the actual deployment location read by lib/land/ocr/tessdata.ts)
+/ara.traineddata
+/eng.traineddata
+/tur.traineddata
+
+# unrelated binaries accidentally dropped at repo root (not part of this app)
+/adlmdll.dll
+/lacadp.dll
+
+# broken shell-redirect artifacts (literal filenames from unexpanded
+# PowerShell variables / status-code redirects), not real content
+/stdout
+/stderr
+/role
+/authenticated
+/My
+/Admin
+/401
+/200
+/$out
+/$err
+
+# QA screenshot dumps (regenerable, not source)
+/artifacts/
+
+# scratch/staging directories used by ad-hoc migration or debug runners,
+# not the real source tree (which already lives in lib/, scripts/, tests/, docs/)
+/tmp/
+/ops/
+/.akarpromax/
+
+# local agent/tooling session state, not project source
+/.claude/
+
+# one-off manual debug probes (not part of the real tests/ suite)
+/test-utm.js
+/test-server.mjs
