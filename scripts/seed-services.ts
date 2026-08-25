@@ -1,7 +1,26 @@
-import { getRuntimeDb } from "@/lib/runtime-db";
-import { createCategory, createListing, createRequest } from "@/lib/services/core";
-import { upsertTranslations, invalidateTranslationCache } from "@/lib/i18n/db";
-import { LOCALES } from "@/lib/i18n/keys";
+/**
+ * AkarProMax — MANUAL Services demo seed (categories, demo listings, demo
+ * customer requests, OMR demo pricing).
+ *
+ * L1C-0.5B1 SAFETY GATE. This script writes operational Services demo rows. It
+ * refuses to run unless an operator explicitly opts in, and it can never run
+ * against a production runtime:
+ *
+ *   SEED_DEMO_DATA=true            required (exact string)
+ *   NODE_ENV=production            always refused
+ *
+ * The gate runs BEFORE any database module is loaded, so a refusal never opens
+ * a connection. Every DB-touching module is imported dynamically inside main()
+ * for that reason — do not convert them back to static imports.
+ */
+import type { Locale } from "@/src/types/site";
+
+import { assertServicesDemoSeedAllowed } from "@/lib/services/demo-seed-gate";
+
+const SCRIPT = "seed-services";
+
+// FAIL-FAST: refuse (exit 1) before any DB connection is opened.
+assertServicesDemoSeedAllowed(SCRIPT);
 
 const ADMIN = (process.env.SEED_ADMIN_EMAIL ?? "admin@localhost.akarpromax").trim().toLowerCase();
 const COUNTRY = "OM";
@@ -26,7 +45,7 @@ const REQUESTS: Array<{ categoryCode: string; titleKey: string; descriptionKey: 
   { categoryCode: "renovation", titleKey: "services.seed.request2.title", descriptionKey: "services.seed.request2.desc", budgetMin: 500, budgetMax: 2000 },
 ];
 
-const SEED_KEYS: Array<{ key: string; value: Record<(typeof LOCALES)[number], string> }> = [
+const SEED_KEYS: Array<{ key: string; value: Record<Locale, string> }> = [
   { key: "services.seed.listing1.title", value: { ar: "خدمة تنظيف شاملة", en: "Full cleaning service", tr: "Kapsamlı temizlik hizmeti" } },
   { key: "services.seed.listing1.desc", value: { ar: "تنظيف منزلي أو مكتبي حسب الطلب.", en: "Home or office cleaning on demand.", tr: "İsteğe göre ev veya ofis temizliği." } },
   { key: "services.seed.listing2.title", value: { ar: "صيانة عامة للمنزل", en: "General home maintenance", tr: "Genel ev bakımı" } },
@@ -45,9 +64,14 @@ const SEED_KEYS: Array<{ key: string; value: Record<(typeof LOCALES)[number], st
 ];
 
 async function main() {
+  const { getRuntimeDb } = await import("@/lib/runtime-db");
+  const { createCategory, createListing, createRequest } = await import("@/lib/services/core");
+  const { upsertTranslations, invalidateTranslationCache } = await import("@/lib/i18n/db");
+  const { LOCALES } = await import("@/lib/i18n/keys");
+
   const db = await getRuntimeDb();
 
-  const i18nEntries: Array<{ key: string; locale: (typeof LOCALES)[number]; value: string }> = [];
+  const i18nEntries: Array<{ key: string; locale: Locale; value: string }> = [];
   for (const item of SEED_KEYS) {
     for (const locale of LOCALES) i18nEntries.push({ key: item.key, locale, value: item.value[locale] });
   }
