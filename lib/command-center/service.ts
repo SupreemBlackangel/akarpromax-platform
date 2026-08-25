@@ -188,7 +188,7 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
       `SELECT approval_status AS name, COUNT(*) AS total FROM ad_campaigns GROUP BY approval_status`,
     ).all<CountRow>(),
     db.prepare(
-      `SELECT COUNT(*) AS total FROM ad_campaigns WHERE end_at IS NOT NULL AND end_at <= datetime('now', '+7 days') AND end_at >= datetime('now') AND status = 'active'`,
+      `SELECT COUNT(*) AS total FROM ad_campaigns WHERE end_at IS NOT NULL AND datetime(end_at) <= datetime('now', '+7 days') AND datetime(end_at) >= datetime('now') AND status = 'active'`,
     ).first<{ total: number }>(),
     db.prepare(
       `SELECT property_type AS name, COUNT(*) AS total FROM property_listings GROUP BY property_type`,
@@ -207,10 +207,10 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
       `SELECT COUNT(*) AS total FROM property_listings WHERE latitude IS NULL OR longitude IS NULL`,
     ).first<{ total: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS total FROM property_listings WHERE updated_at < datetime('now', '-30 days') AND status != 'deleted'`,
+      `SELECT COUNT(*) AS total FROM property_listings WHERE datetime(updated_at) < datetime('now', '-30 days') AND status != 'deleted'`,
     ).first<{ total: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS total FROM property_listings WHERE created_at >= datetime('now', '-30 days')`,
+      `SELECT COUNT(*) AS total FROM property_listings WHERE datetime(created_at) >= datetime('now', '-30 days')`,
     ).first<{ total: number }>(),
     countByStatus(db, "service_requests", "status"),
     countByStatus(db, "service_offers", "status"),
@@ -241,10 +241,10 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
     ).all<CountRow>(),
     db.prepare(`SELECT COUNT(*) AS total FROM office_radar_queries`).first<{ total: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS total FROM office_devices WHERE last_seen_at < datetime('now', '-7 days') OR last_seen_at IS NULL`,
+      `SELECT COUNT(*) AS total FROM office_devices WHERE datetime(last_seen_at) < datetime('now', '-7 days') OR last_seen_at IS NULL`,
     ).first<{ total: number }>(),
     db.prepare(
-      `SELECT COUNT(*) AS total FROM office_pairing_codes WHERE status = 'pending' AND expires_at > datetime('now')`,
+      `SELECT COUNT(*) AS total FROM office_pairing_codes WHERE status = 'pending' AND datetime(expires_at) > datetime('now')`,
     ).first<{ total: number }>(),
     db.prepare(
       `SELECT status AS name, COUNT(*) AS total FROM office_notification_deliveries GROUP BY status`,

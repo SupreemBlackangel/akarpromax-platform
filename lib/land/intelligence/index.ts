@@ -5,5 +5,6 @@ export * from "./crs-detector";
 export * from "./coordinate-protection";
 export * from "./geometry-builder";
 export * from "./confidence";
+export * from "./strategy";
 export * from "./geocoding-provider";
 export * from "./resolver";

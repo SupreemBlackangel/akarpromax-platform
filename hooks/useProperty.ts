@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { PropertyFormData } from '@/components/properties/PropertyFormWithOffers';
 
 export function useProperty(id: string | null) {
-  const [property, setProperty] = useState<any>(null);
+  const [property, setProperty] = useState<PropertyFormData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

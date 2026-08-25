@@ -14,6 +14,8 @@ export const SERVICE_ERROR_CODES = {
   REQUEST_NOT_OPEN: "services.request_not_open",
   OFFER_NOT_SENT: "services.offer_not_sent",
   OFFER_ALREADY_EXISTS: "services.offer_already_exists",
+  SELF_OFFER_NOT_ALLOWED: "services.self_offer_not_allowed",
+  PROVIDER_NOT_ELIGIBLE: "services.provider_not_eligible",
   DUPLICATE_OFFER: "services.duplicate_offer",
   ORDER_ALREADY_EXISTS: "services.order_already_exists",
   ORDER_STATUS_INVALID: "services.order_status_invalid",
@@ -25,6 +27,9 @@ export const SERVICE_ERROR_CODES = {
   DISPUTE_ALREADY_EXISTS: "services.dispute_already_exists",
   DISPUTE_NOT_FOUND: "services.dispute_not_found",
   INVALID_QUERY: "services.invalid_query",
+  // Currency policy: no global default, no OMR/SAR fallback, no substitution.
+  CURRENCY_REQUIRED: "services.currency_required",
+  CURRENCY_UNSUPPORTED: "services.currency_unsupported",
 } as const;
 
 export type ServiceErrorCode = (typeof SERVICE_ERROR_CODES)[keyof typeof SERVICE_ERROR_CODES];

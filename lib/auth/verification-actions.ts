@@ -4,10 +4,13 @@ import { users, type VerificationPurpose } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
+  buildPasswordResetEmailUrl,
   buildVerificationEmailUrl,
   buildVerificationRecord,
+  generateOtpValue,
   generateVerificationTokenValue,
   hashChallengeValue,
+  otpExpirySeconds,
   tokenExpiryMinutes,
   verifyOtpRecord,
   verifyTokenRecord,
@@ -148,6 +151,8 @@ export async function issuePasswordReset(email: string, locale: Locale = "ar"): 
     return { ok: true, reason: "sent_if_exists" };
   }
 
+  await revokeUserChallenges(userId, RESET, new Date());
+
   const rawToken = await generateVerificationTokenValue();
   const challenge = await buildVerificationRecord({
     userId,
@@ -166,10 +171,7 @@ export async function issuePasswordReset(email: string, locale: Locale = "ar"): 
     expiresAt: challenge.expiresAt,
   });
 
-  const resetUrl = buildVerificationEmailUrl(getRuntimeEnv().appOrigin, rawToken);
-  // The reset link is served under /reset-password but the token is the same
-  // shape as an email-verification token; we pass it as `verificationUrl` and
-  // the route reads `token`.
+  const resetUrl = buildPasswordResetEmailUrl(getRuntimeEnv().appOrigin, rawToken);
   void emailService
     .send("reset", {
       to: email,
@@ -249,10 +251,13 @@ export async function issueEmailChange(userId: string, newEmail: string, locale:
 
   await revokeUserChallenges(userId, EMAIL_CHANGE, new Date());
 
+  const otpCode = generateOtpValue();
+
   const challenge = await buildVerificationRecord({
     userId,
     purpose: EMAIL_CHANGE,
     destination: newEmail,
+    otpValue: otpCode,
     withOtp: true,
     withToken: false,
   });
@@ -271,8 +276,8 @@ export async function issueEmailChange(userId: string, newEmail: string, locale:
     .send("otp", {
       to: newEmail,
       locale,
-      variables: { recipientName: (await fetchUserSafe(userId))?.name ?? undefined, otpCode: undefined },
-      urls: { otpExpirySeconds: 600 },
+      variables: { recipientName: (await fetchUserSafe(userId))?.name ?? undefined, otpCode },
+      urls: { otpExpirySeconds: otpExpirySeconds() },
     })
     .catch(() => {
       logSecurityEvent("AUTH_CHANGE_EMAIL_REQUEST", { userId, emailDelivery: "failed" });
@@ -366,18 +371,15 @@ export async function changePassword(
   }
 
   const passwordHash = await hashPassword(newPassword);
+  const { db: db2, end: end2 } = getDb();
+
   try {
-    const { db: db2, end: end2 } = getDb();
-    try {
-      await db2
-        .update(users)
-        .set({ passwordHash, passwordChangedAt: new Date() })
-        .where(eq(users.id, userId));
-    } finally {
-      await end2();
-    }
+    await db2
+      .update(users)
+      .set({ passwordHash, passwordChangedAt: new Date() })
+      .where(eq(users.id, userId));
   } finally {
-    await end();
+    await end2();
   }
 
   void recordAuditEvent({ eventType: "AUTH_CHANGE_PASSWORD", userId, detail: { result: "success" } });

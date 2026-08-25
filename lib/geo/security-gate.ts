@@ -29,6 +29,10 @@ const ALLOWED_EXTENSIONS: readonly string[] = [
   "png",
   "jpg",
   "jpeg",
+  // JFIF is an ordinary JPEG that Windows and Edge hand over under a
+  // different extension; survey sketches photographed on a phone and saved
+  // from a browser arrive this way.
+  "jfif",
   "webp",
   "tiff",
   "tif",
@@ -105,6 +109,7 @@ export function checkDocumentSecurity(metadata: UploadMetadata): GateResult {
       png: "image/png",
       jpg: "image/jpeg",
       jpeg: "image/jpeg",
+      jfif: "image/jpeg",
       webp: "image/webp",
       tiff: "image/tiff",
       tif: "image/tiff",
@@ -163,7 +168,12 @@ export const GEO_RELEVANCE_KEYWORDS: readonly { keyword: string; weight: number 
   { keyword: "ملكية", weight: 2 },
   { keyword: "حدود", weight: 2 },
   { keyword: "مسح", weight: 2 },
-  { keyword: "حي", weight: 1 },
+  { keyword: "مساحة", weight: 2 },
+  { keyword: "مساحي", weight: 2 },
+  { keyword: "قرار", weight: 2 },
+  { keyword: "قرار مساحي", weight: 3 },
+  { keyword: "تقرير مساحي", weight: 3 },
+  { keyword: "تقرير", weight: 1 },
   { keyword: "حي", weight: 1 },
   { keyword: "مدينة", weight: 1 },
   { keyword: "شارع", weight: 1 },

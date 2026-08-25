@@ -1,7 +1,14 @@
 import { CRSDetector, CoordinateEvidenceDetail, CrsConfidence } from "./contracts";
 import type { CrsKind, Point } from "@/lib/geo/contracts";
-import { convertUtmToWgs84, utmZoneFromLon } from "@/lib/geo/crs";
-import proj4 from "proj4";
+import { readUtmDeclaration } from "@/lib/geo/crs";
+import {
+  isValidUtmZone,
+  parseUtmEpsgCode,
+  utmToWgs84Result,
+  utmZoneForLongitude,
+  type Hemisphere,
+} from "@/lib/geo/utm";
+import { parseDecimalLatLon, parseDmsLatLon } from "@/lib/geo/coordinate-parsing";
 
 export interface CrsDetection {
   kind: CrsKind;
@@ -12,6 +19,10 @@ export interface CrsDetection {
   datumHints: string[];
   zoneHints: string[];
   reason: string;
+  /** True only when the document itself states the zone. */
+  zoneDeclared?: boolean;
+  /** True only when the document itself states the hemisphere. */
+  hemisphereDeclared?: boolean;
 }
 
 const EPSG_PATTERN = /EPSG\s*[:#]?\s*(\d{4,6})/gi;
@@ -22,9 +33,15 @@ const DATUM_PATTERNS: readonly { name: string; re: RegExp }[] = [
   { name: "GCS", re: /\bGCS\b/i },
   { name: "NAD83", re: /NAD\s*83/i },
   { name: "NAD27", re: /NAD\s*27/i },
+  { name: "ETRS89", re: /ETRS\s*89/i },
+  { name: "GDA94", re: /GDA\s*94/i },
+  { name: "GDA2020", re: /GDA\s*2020/i },
+  { name: "SIRGAS2000", re: /SIRGAS\s*2000/i },
 ];
-const ZONE_PATTERN = /(?:UTM|Zone|zone|نطاق|زون|النطاق)\s*[:：\-]?\s*(\d{1,2})/i;
-const ZONE_WITH_LETTER_PATTERN = /(?:UTM|MGRS)?\s*(\d{1,2})\s*([NSEWnsew])/;
+const ZONE_PATTERN = /(?:UTM|Zone|zone|نطاق|زون)\s*[:：\-]?\s*(\d{1,2})(?!\d)/i;
+// Same-line, uppercase caption letters only: a lowercase OCR fragment such as
+// "27 n>" from a Turkish sheet's prose must never read as a zone caption.
+const ZONE_WITH_LETTER_PATTERN = /(?:UTM|MGRS)?[ \t]*(?<!\d)(\d{1,2})[ \t]?([NS])(?![\p{L}\p{N}])/u;
 
 export class CrsDetector implements CRSDetector {
   readonly name = "crs-detector";
@@ -34,35 +51,61 @@ export class CrsDetector implements CRSDetector {
     const datumHints = this.collectDatums(text);
     const zoneHints = this.collectZones(text);
     const utmEvidence = evidence.find((e) => e.crsHint === "utm" || /^\d{1,2}[NSEW]\s*\d{5,}/i.test(e.raw.trim()));
+    const wgs84Evidence = evidence.filter((e) => e.crsHint === "wgs84");
+
+    // An explicit UTM/WGS84 EPSG code fixes both the zone and the hemisphere,
+    // anywhere from EPSG:32601 to EPSG:32760.
+    const epsgUtm = epsgHints.map((code) => parseUtmEpsgCode(code)).find(Boolean);
+    if (epsgUtm) {
+      return {
+        kind: "utm",
+        zone: epsgUtm.zone,
+        northernHemisphere: epsgUtm.hemisphere === "N",
+        confidence: "DETECTED",
+        epsgHints,
+        datumHints,
+        zoneHints,
+        reason: `EPSG:${epsgUtm.hemisphere === "N" ? 32600 + epsgUtm.zone : 32700 + epsgUtm.zone} declares UTM zone ${epsgUtm.zone}${epsgUtm.hemisphere}`,
+        zoneDeclared: true,
+        hemisphereDeclared: true,
+      };
+    }
 
     if (utmEvidence || /^\s*\d{1,2}[NSEW]\s*\d{5,}/i.test(text)) {
+      const declaration = readUtmDeclaration(utmEvidence?.raw ?? text);
       const zoneMatch = (utmEvidence?.raw ?? text).match(ZONE_WITH_LETTER_PATTERN);
-      const zone = zoneMatch ? parseInt(zoneMatch[1], 10) : undefined;
-      const validZone = zone !== undefined && zone >= 1 && zone <= 60;
-      const northernHemisphere = zoneMatch ? zoneMatch[2].toUpperCase() !== "S" : true;
+      const zone = declaration.zone ?? (zoneMatch ? parseInt(zoneMatch[1], 10) : undefined);
+      const validZone = isValidUtmZone(zone);
+      const hemisphere: Hemisphere | undefined = declaration.hemisphere
+        ?? (zoneMatch && /[NSns]/.test(zoneMatch[2]) ? (zoneMatch[2].toUpperCase() as Hemisphere) : undefined);
       return {
         kind: "utm",
         zone: validZone ? zone : undefined,
-        northernHemisphere,
+        northernHemisphere: hemisphere !== "S",
         confidence: validZone ? "DETECTED" : "PROBABLE",
         epsgHints,
         datumHints,
         zoneHints,
         reason: "UTM coordinate format with zone letter detected",
+        zoneDeclared: validZone,
+        hemisphereDeclared: hemisphere !== undefined,
       };
     }
 
-    if (zoneHints.length > 0) {
-      const zone = parseInt(zoneHints[0], 10);
+    if (zoneHints.length > 0 && wgs84Evidence.length === 0) {
+      const declaration = readUtmDeclaration(text);
+      const zone = declaration.zone ?? parseInt(zoneHints[0], 10);
       return {
         kind: "utm",
         zone,
-        northernHemisphere: true,
+        northernHemisphere: declaration.hemisphere !== "S",
         confidence: "PROBABLE",
         epsgHints,
         datumHints,
         zoneHints,
         reason: `UTM zone ${zone} hinted in text`,
+        zoneDeclared: true,
+        hemisphereDeclared: declaration.hemisphere !== undefined,
       };
     }
 
@@ -106,7 +149,7 @@ export class CrsDetector implements CRSDetector {
       };
     }
 
-    if (/(-?\d{1,2}\.\d{3,7})\s*[,;/\s]\s*(-?\d{1,3}\.\d{3,7})/.test(text) || evidence.length > 0) {
+    if (/(-?\d{1,3}\.\d{3,15})\s*[,;/\s]\s*(-?\d{1,3}\.\d{3,15})/.test(text) || evidence.length > 0) {
       return {
         kind: "wgs84",
         northernHemisphere: true,
@@ -166,6 +209,12 @@ export class CrsDetector implements CRSDetector {
 
 export const LAND_CRS_DETECTOR: CRSDetector = new CrsDetector();
 
+/**
+ * Converts one piece of coordinate evidence to WGS84.
+ *
+ * UTM rows use the zone and hemisphere the caller resolved (document, EPSG, or
+ * user choice); nothing is assumed when they are missing.
+ */
 export function toWgs84Point(
   raw: string,
   format: string,
@@ -174,71 +223,47 @@ export function toWgs84Point(
   northernHemisphere = true,
 ): Point | null {
   if (format === "utm" || crsKind === "utm") {
-    const match = /(\d{1,2})\s*([NSEWnsew])\s*(\d{5,6}(?:\.\d+)?)\s*[,;\s]\s*(\d{6,7}(?:\.\d+)?)/i.exec(raw);
+    const match = /(\d{1,2})\s*([NSns])\s*(\d{5,6}(?:\.\d+)?)\s*[,;\s]\s*(\d{6,7}(?:\.\d+)?)/i.exec(raw);
     if (!match) return null;
-    const z = zone ?? parseInt(match[1], 10);
-    const hem = match[2].toUpperCase() !== "S";
+    const parsedZone = zone ?? parseInt(match[1], 10);
+    if (!isValidUtmZone(parsedZone)) return null;
+    const rowHemisphere: Hemisphere = match[2].toUpperCase() === "S" ? "S" : "N";
+    const hemisphere: Hemisphere = northernHemisphere === undefined
+      ? rowHemisphere
+      : northernHemisphere
+        ? "N"
+        : "S";
     const easting = parseFloat(match[3]);
     const northing = parseFloat(match[4]);
-    return convertUtmToWgs84(z, easting, northing, northernHemisphere ?? hem);
+    const result = utmToWgs84Result(easting, northing, parsedZone, hemisphere);
+    return result.ok ? result.value : null;
   }
 
   if (format === "dms") {
-    const re =
-      /(\d{1,2})\s*[°ºo]\s*(\d{1,2}(?:\.\d+)?)?\s*['′']\s*(\d{1,2}(?:\.\d+)?)?\s*["″"]?\s*([NSEWnsew])/g;
-    const matches = Array.from(raw.matchAll(re));
-    const latMatch = matches.find((m) => /[NSns]/.test(m[4]));
-    const lonMatch = matches.find((m) => /[EWew]/.test(m[4]));
-    if (!latMatch || !lonMatch) return null;
-    const parse = (m: RegExpMatchArray): number => {
-      const deg = parseInt(m[1], 10);
-      const min = m[2] ? parseFloat(m[2]) : 0;
-      const sec = m[3] ? parseFloat(m[3]) : 0;
-      return deg + min / 60 + sec / 3600;
-    };
-    let lat = parse(latMatch);
-    if (latMatch[4].toUpperCase() === "S") lat = -lat;
-    let lon = parse(lonMatch);
-    if (lonMatch[4].toUpperCase() === "W") lon = -lon;
-    return { lat, lon };
+    return parseDmsLatLon(raw);
   }
 
   if (format === "decimal") {
-    const re = /(-?\d{1,2}(?:\.\d{2,7})?)\s*[,;/\s]\s*(-?\d{1,3}(?:\.\d{2,7})?)/;
-    const match = re.exec(raw);
-    if (!match) return null;
-    let lat = parseFloat(match[1]);
-    let lon = parseFloat(match[2]);
-    if (Math.abs(lat) > 90) {
-      const tmp = lat;
-      lat = lon;
-      lon = tmp;
-    }
-    return { lat, lon };
+    return parseDecimalLatLon(raw);
   }
 
   return null;
 }
 
+/**
+ * UTM -> WGS84 for any zone and hemisphere. Returns null instead of a fabricated
+ * point when the inputs cannot be projected.
+ */
 export function convertWithProj4(
   easting: number,
   northing: number,
   zone: number,
   northernHemisphere = true,
 ): Point {
-  if (!northernHemisphere) {
-    return convertUtmToWgs84(zone, easting, northing, false);
-  }
-  const utmDef = `+proj=utm +zone=${zone} +datum=WGS84 +units=m +no_defs`;
-  const wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
-  try {
-    const [lng, lat] = proj4(utmDef, wgs84, [easting, northing]);
-    return { lat, lon: lng };
-  } catch {
-    return convertUtmToWgs84(zone, easting, northing, true);
-  }
+  const result = utmToWgs84Result(easting, northing, zone, northernHemisphere ? "N" : "S");
+  return result.ok ? result.value : { lat: Number.NaN, lon: Number.NaN };
 }
 
 export function inferZoneFromLon(lon: number): number {
-  return utmZoneFromLon(lon);
+  return utmZoneForLongitude(lon);
 }

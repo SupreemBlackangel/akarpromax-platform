@@ -15,6 +15,10 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   `ALTER TABLE service_categories ADD COLUMN price_min INTEGER NULL`,
   `ALTER TABLE service_categories ADD COLUMN price_max INTEGER NULL`,
   `ALTER TABLE service_categories ADD COLUMN dynamic_fields TEXT NULL`,
+  `ALTER TABLE service_categories ADD COLUMN is_featured INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE service_categories ADD COLUMN booking_mode VARCHAR(24) NOT NULL DEFAULT 'quotes'`,
+  `ALTER TABLE service_categories ADD COLUMN badge_ar TEXT NULL`,
+  `ALTER TABLE service_categories ADD COLUMN badge_en TEXT NULL`,
 
   // service_listings
   `ALTER TABLE service_listings ADD COLUMN title_ar TEXT NULL`,
@@ -43,6 +47,9 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   `ALTER TABLE service_requests ADD COLUMN answers TEXT NULL`,
   `ALTER TABLE service_requests ADD COLUMN published_at DATETIME NULL`,
   `ALTER TABLE service_requests ADD COLUMN matched_at DATETIME NULL`,
+  `ALTER TABLE service_requests ADD COLUMN contact_phone VARCHAR(32) NULL`,
+  `ALTER TABLE service_requests ADD COLUMN contact_email VARCHAR(255) NULL`,
+  `ALTER TABLE service_requests ADD COLUMN contact_preference VARCHAR(16) NOT NULL DEFAULT 'chat'`,
 
   // service_offers
   `ALTER TABLE service_offers ADD COLUMN materials_included INTEGER NOT NULL DEFAULT 0`,
@@ -59,6 +66,29 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   `ALTER TABLE service_offers ADD COLUMN needs_visit INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE service_offers ADD COLUMN revision_of VARCHAR(36) NULL`,
 
+  // service_orders — RFQ orders remain the default; direct booking writes
+  // independent orders with no request/offer and an immutable price snapshot.
+  `ALTER TABLE service_orders ADD COLUMN source_type VARCHAR(24) NOT NULL DEFAULT 'rfq'`,
+  `ALTER TABLE service_orders ADD COLUMN provider_profile_id VARCHAR(36) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN category_id VARCHAR(36) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN service_title_snapshot TEXT NULL`,
+  `ALTER TABLE service_orders ADD COLUMN price_snapshot INTEGER NULL`,
+  `ALTER TABLE service_orders ADD COLUMN currency_snapshot VARCHAR(8) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN pricing_unit_snapshot VARCHAR(32) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN country_code VARCHAR(8) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN city_id VARCHAR(100) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN district_id VARCHAR(100) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN latitude REAL NULL`,
+  `ALTER TABLE service_orders ADD COLUMN longitude REAL NULL`,
+  `ALTER TABLE service_orders ADD COLUMN short_address TEXT NULL`,
+  `ALTER TABLE service_orders ADD COLUMN scheduled_at DATETIME NULL`,
+  `ALTER TABLE service_orders ADD COLUMN contact_preference VARCHAR(16) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN contact_phone VARCHAR(32) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN contact_email VARCHAR(255) NULL`,
+  `ALTER TABLE service_orders ADD COLUMN contact_revealed_at DATETIME NULL`,
+  `ALTER TABLE service_orders ADD COLUMN declined_at DATETIME NULL`,
+  `ALTER TABLE service_orders ADD COLUMN provider_response_note TEXT NULL`,
+
   // service_reviews
   `ALTER TABLE service_reviews ADD COLUMN quality_rating INTEGER NULL`,
   `ALTER TABLE service_reviews ADD COLUMN punctuality_rating INTEGER NULL`,
@@ -71,6 +101,18 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   // service_messages
   `ALTER TABLE service_messages ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE service_messages ADD COLUMN read_at TEXT NULL`,
+
+];
+
+const SERVICES_PROVIDER_PROFILE_NEW_COLUMNS: string[] = [
+  `ALTER TABLE service_provider_profiles ADD COLUMN is_featured INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE service_provider_profiles ADD COLUMN featured_rank INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE service_provider_profiles ADD COLUMN is_accepting_requests INTEGER NOT NULL DEFAULT 1`,
+];
+
+const SERVICES_PROVIDER_CATEGORY_NEW_COLUMNS: string[] = [
+  `ALTER TABLE service_provider_categories ADD COLUMN instant_price INTEGER NULL`,
+  `ALTER TABLE service_provider_categories ADD COLUMN currency VARCHAR(8) NULL`,
 ];
 
 export const SERVICES_MARKETPLACE_TABLES_SQL: string[] = [
@@ -113,6 +155,9 @@ export const SERVICES_MARKETPLACE_TABLES_SQL: string[] = [
     business_name TEXT NULL,
     tax_number TEXT NULL,
     commercial_registration TEXT NULL,
+    is_featured INTEGER NOT NULL DEFAULT 0,
+    featured_rank INTEGER NOT NULL DEFAULT 0,
+    is_accepting_requests INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
@@ -122,6 +167,8 @@ export const SERVICES_MARKETPLACE_TABLES_SQL: string[] = [
     category_id VARCHAR(36) NOT NULL,
     price_from INTEGER NULL,
     price_to INTEGER NULL,
+    instant_price INTEGER NULL,
+    currency VARCHAR(8) NULL,
     pricing_unit VARCHAR(32) NULL,
     min_duration_min INTEGER NULL,
     notes TEXT NULL,
@@ -291,6 +338,37 @@ export const SERVICES_MARKETPLACE_TABLES_SQL: string[] = [
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     processed_at TEXT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS service_marketplace_settings (
+    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    country_code VARCHAR(8) NOT NULL DEFAULT 'OM',
+    hero_kicker_ar TEXT NULL,
+    hero_kicker_en TEXT NULL,
+    hero_title_ar TEXT NULL,
+    hero_title_en TEXT NULL,
+    hero_description_ar TEXT NULL,
+    hero_description_en TEXT NULL,
+    primary_cta_ar TEXT NULL,
+    primary_cta_en TEXT NULL,
+    primary_cta_href TEXT NOT NULL DEFAULT '/service-requests/new',
+    secondary_cta_ar TEXT NULL,
+    secondary_cta_en TEXT NULL,
+    secondary_cta_href TEXT NOT NULL DEFAULT '/providers/apply',
+    announcement_ar TEXT NULL,
+    announcement_en TEXT NULL,
+    show_categories INTEGER NOT NULL DEFAULT 1,
+    show_featured_providers INTEGER NOT NULL DEFAULT 1,
+    show_latest_requests INTEGER NOT NULL DEFAULT 1,
+    show_how_it_works INTEGER NOT NULL DEFAULT 1,
+    show_trust_bar INTEGER NOT NULL DEFAULT 1,
+    featured_category_limit INTEGER NOT NULL DEFAULT 12,
+    featured_provider_limit INTEGER NOT NULL DEFAULT 6,
+    latest_request_limit INTEGER NOT NULL DEFAULT 6,
+    allow_public_requests INTEGER NOT NULL DEFAULT 1,
+    allow_provider_registration INTEGER NOT NULL DEFAULT 1,
+    updated_by VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
 ];
 
 export const SERVICES_MARKETPLACE_INDEXES_SQL: string[] = [
@@ -314,6 +392,9 @@ export const SERVICES_MARKETPLACE_INDEXES_SQL: string[] = [
   `CREATE INDEX IF NOT EXISTS service_message_participants_user_idx ON service_message_participants (user_id)`,
   `CREATE INDEX IF NOT EXISTS service_message_threads_updated_idx ON service_message_threads (thread_type, thread_id)`,
   `CREATE INDEX IF NOT EXISTS service_outbox_status_idx ON service_outbox_events (status, created_at)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS service_marketplace_settings_country_unique ON service_marketplace_settings (country_code)`,
+  `CREATE INDEX IF NOT EXISTS service_categories_public_order_idx ON service_categories (country_code, is_active, is_featured, sort_order)`,
+  `CREATE INDEX IF NOT EXISTS service_provider_profiles_public_order_idx ON service_provider_profiles (country_code, status, is_featured, featured_rank)`,
 ];
 
 export async function ensureServicesMarketplaceSchema(db: D1Database): Promise<void> {
@@ -328,6 +409,24 @@ export async function ensureServicesMarketplaceSchema(db: D1Database): Promise<v
 
   for (const sql of SERVICES_MARKETPLACE_TABLES_SQL) {
     await db.prepare(sql).run();
+  }
+
+  for (const column of SERVICES_PROVIDER_PROFILE_NEW_COLUMNS) {
+    try {
+      await db.prepare(column).run();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isDuplicateColumnError(message)) throw error;
+    }
+  }
+
+  for (const column of SERVICES_PROVIDER_CATEGORY_NEW_COLUMNS) {
+    try {
+      await db.prepare(column).run();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!isDuplicateColumnError(message)) throw error;
+    }
   }
 
   for (const sql of SERVICES_MARKETPLACE_INDEXES_SQL) {

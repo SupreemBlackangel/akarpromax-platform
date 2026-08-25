@@ -45,9 +45,12 @@ export function buildLandGeometry(
     };
   }
 
-  const closed = [...distinct, distinct[0]];
-  const polygon: Geometry = { type: "polygon", coordinates: closed };
+  // The document order is evidence. Reordering points to manufacture a valid
+  // polygon changes the surveyed shape, so invalid/crossing source sequences
+  // are returned for review without a polygon.
+  const polygon: Geometry = { type: "polygon", coordinates: [...distinct, distinct[0]] };
   const validation = validateGeometry(polygon, countryAdapter.countryCode);
+
   if (!validation.valid) {
     warnings.push(...validation.errors);
     return {

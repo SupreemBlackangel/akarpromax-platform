@@ -432,6 +432,7 @@ const POLICIES: Record<string, ReputationPolicy> = {
   "professional": PROFESSIONAL_POLICY,
   "organization:real_estate": REAL_ESTATE_ORG_POLICY,
   "organization:business": BUSINESS_ORG_POLICY,
+  "organization:law_office": BUSINESS_ORG_POLICY,
   "organization:other": BUSINESS_ORG_POLICY,
   "user": USER_POLICY,
 };

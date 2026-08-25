@@ -34,6 +34,11 @@ const LAND_CATEGORY_RULES: readonly CategoryRule[] = [
     keywords: [
       "مسح",
       "مساحة",
+      "مساحي",
+      "قرار مساحي",
+      "قرار",
+      "تقرير مساحي",
+      "تقرير",
       "survey",
       "surveying",
       "boundary",
@@ -43,6 +48,10 @@ const LAND_CATEGORY_RULES: readonly CategoryRule[] = [
       "كروكي",
       "مقاس",
       "زوايا",
+      "أبعاد",
+      "مسافة",
+      "نقطة",
+      "إحداثيات",
     ],
   },
   {

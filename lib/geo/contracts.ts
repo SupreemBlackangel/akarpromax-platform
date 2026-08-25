@@ -44,12 +44,26 @@ export type GeometryValidationResult = {
   errors: string[];
 };
 
+/**
+ * Whether an unlabelled numeric pair may be treated as a position.
+ *
+ * `REJECT` marks numbers that are a measurement of the parcel, not a place on
+ * it; they must never reach clustering, geometry, or the candidate count.
+ */
+export type CoordinateAdmission = "ACCEPT" | "REVIEW_ONLY" | "REJECT";
+
 export type CoordinateEvidence = {
   format: CoordinateFormat;
   raw: string;
   crs?: CrsKind;
   point?: Point;
   source: string;
+  /** Set for readings that had to earn their place; absent means labelled. */
+  admission?: CoordinateAdmission;
+  /** Why the admission gate decided as it did, in the reviewer's words. */
+  admissionReason?: string;
+  /** Named evidence the gate considered. */
+  admissionEvidence?: string[];
 };
 
 export type ParcelEvidence = {

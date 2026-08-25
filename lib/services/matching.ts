@@ -62,14 +62,16 @@ export async function runMatching(requestId: string): Promise<number> {
 
   const candidates = await findCandidateProviders(request);
   const now = nowMySqlDateTime();
-  const statements: D1PreparedStatement[] = [];
+  const matchStatements: D1PreparedStatement[] = [];
+  const notificationStatements: D1PreparedStatement[] = [];
+  const outboxStatements: D1PreparedStatement[] = [];
   const notifications: Array<{ userId: string; providerId: string }> = [];
-  const outbox: Array<{ eventType: string; payload: Record<string, unknown> }> = [];
 
   for (const provider of candidates) {
     const result = computeMatchScore(request, provider);
     if (!result) continue;
-    statements.push(
+
+    matchStatements.push(
       db
         .prepare(
           `INSERT INTO service_request_matches
@@ -84,32 +86,44 @@ export async function runMatching(requestId: string): Promise<number> {
           result.score, result.distanceKm, result.categoryMatch ? 1 : 0, result.ratingBonus, result.urgencyBonus, result.budgetFit ? 1 : 0,
         ),
     );
+
     notifications.push({ userId: provider.user_id, providerId: provider.id });
-    outbox.push({
-      eventType: "SERVICE_REQUEST_MATCHED",
-      payload: { requestId, providerId: provider.id, providerUserId: provider.user_id, score: result.score },
-    });
-  }
 
-  if (statements.length) await db.batch(statements);
-
-  const customer = String(requestRow.customer_user_id);
-  for (const entry of notifications) {
-    statements.push(
+    notificationStatements.push(
       db
         .prepare(
           `INSERT INTO service_notifications (id, user_id, type, title, body, link, entity_type, entity_id, is_read, created_at)
            VALUES (?1, ?2, 'SERVICE_REQUEST_MATCHED', ?3, ?4, ?5, 'service_requests', ?6, 0, ?7)`,
         )
         .bind(
-          crypto.randomUUID(), entry.userId,
+          crypto.randomUUID(), provider.user_id,
           "طلب جديد يناسب خدماتك",
-          `وجدنا طلباً جديداً مطابقاً لخدماتك — يمكنك تقديم عرض.`,
+          "وجدنا طلباً جديداً مطابقاً لخدماتك — يمكنك تقديم عرض.",
           `/dashboard/services/requests/${requestId}`,
           requestId, now,
         ),
     );
-    statements.push(
+
+    outboxStatements.push(
+      db
+        .prepare(
+          `INSERT INTO service_outbox_events (id, event_type, payload, status, attempts, created_at)
+           VALUES (?1, ?2, ?3, 'pending', 0, ?4)`,
+        )
+        .bind(
+          crypto.randomUUID(),
+          "SERVICE_REQUEST_MATCHED",
+          JSON.stringify({ requestId, providerId: provider.id, providerUserId: provider.user_id, score: result.score }),
+          now,
+        ),
+    );
+  }
+
+  if (matchStatements.length) await db.batch(matchStatements);
+
+  if (notifications.length > 0) {
+    const customer = String(requestRow.customer_user_id);
+    notificationStatements.push(
       db
         .prepare(
           `INSERT INTO service_notifications (id, user_id, type, title, body, link, entity_type, entity_id, is_read, created_at)
@@ -118,24 +132,16 @@ export async function runMatching(requestId: string): Promise<number> {
         .bind(
           crypto.randomUUID(), customer,
           "تمت مطابقة طلبك",
-          `تم مطابقة طلبك مع مزودي خدمات محتملين.`,
+          `تم مطابقة طلبك مع ${notifications.length} مزود خدمة محتمل.`,
           `/service-requests/${requestId}`,
           requestId, now,
         ),
     );
   }
-  for (const event of outbox) {
-    statements.push(
-      db
-        .prepare(
-          `INSERT INTO service_outbox_events (id, event_type, payload, status, attempts, created_at)
-           VALUES (?1, ?2, ?3, 'pending', 0, ?4)`,
-        )
-        .bind(crypto.randomUUID(), event.eventType, JSON.stringify(event.payload), now),
-    );
-  }
 
-  if (statements.length) await db.batch(statements);
+  if (notificationStatements.length) await db.batch(notificationStatements);
+  if (outboxStatements.length) await db.batch(outboxStatements);
+
   return notifications.length;
 }
 

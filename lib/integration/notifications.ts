@@ -189,6 +189,70 @@ export async function listNotificationDeliveries(sponsorId?: string, deviceId?: 
   return rows.results ?? [];
 }
 
+/**
+ * Office notifications for one paired desktop device.
+ *
+ * The sponsor scope is mandatory: a device may only ever read its own
+ * sponsor's rows. The device filter is inclusive, because a notification
+ * addressed to the office as a whole is stored with no device_id and must
+ * still reach the desktop.
+ */
+export async function listOfficeDeviceNotifications(
+  sponsorId: string,
+  deviceId?: string,
+  status?: string,
+  limit = 50,
+): Promise<Array<Record<string, unknown>>> {
+  if (!sponsorId) return [];
+  const db = await getIntegrationDb();
+  const params: unknown[] = [sponsorId];
+  const clauses: string[] = ["sponsor_id = ?1"];
+  if (deviceId) {
+    params.push(deviceId);
+    clauses.push(`(device_id = ?${params.length} OR device_id IS NULL)`);
+  }
+  if (status) {
+    params.push(status);
+    clauses.push(`status = ?${params.length}`);
+  } else {
+    // Current/unread only: anything the device has not acknowledged yet.
+    clauses.push("status != 'delivered'");
+    clauses.push("status != 'failed'");
+  }
+  const rows = await db
+    .prepare(
+      `SELECT id, event_type, event_id, channel, title, body, link, status, delivered_at, created_at
+       FROM office_notification_deliveries
+       WHERE ${clauses.join(" AND ")}
+       ORDER BY created_at DESC
+       LIMIT ?${params.length + 1}`,
+    )
+    .bind(...params, limit)
+    .all<Record<string, unknown>>();
+  return rows.results ?? [];
+}
+
+/**
+ * Marks one delivery read, scoped to the sponsor that owns it. Returns false
+ * when the delivery belongs to another sponsor or does not exist, so a device
+ * can never mark another office's notification.
+ */
+export async function markOfficeNotificationRead(deliveryId: string, sponsorId: string): Promise<boolean> {
+  if (!deliveryId || !sponsorId) return false;
+  const db = await getIntegrationDb();
+  const owned = await db
+    .prepare("SELECT id FROM office_notification_deliveries WHERE id = ?1 AND sponsor_id = ?2 LIMIT 1")
+    .bind(deliveryId, sponsorId)
+    .first<{ id: string }>();
+  if (!owned) return false;
+  const now = nowIso();
+  await db
+    .prepare("UPDATE office_notification_deliveries SET status = 'delivered', delivered_at = ?1 WHERE id = ?2 AND sponsor_id = ?3")
+    .bind(now, deliveryId, sponsorId)
+    .run();
+  return true;
+}
+
 export async function listNotificationRules(sponsorId?: string): Promise<Array<Record<string, unknown>>> {
   const db = await getIntegrationDb();
   const rows = sponsorId

@@ -1,11 +1,12 @@
 import postgres, { type Sql } from "postgres";
 
-export const PG_IDENTITY_SCHEMA_VERSION = 1;
+export const PG_IDENTITY_SCHEMA_VERSION = 5;
 
 export const PG_IDENTITY_REQUIRED_TABLES = [
   "users",
   "audit_events",
   "verification_challenges",
+  "session_revocations",
   "organizations",
   "organization_members",
   "organization_branches",
@@ -91,6 +92,32 @@ const PG_IDENTITY_SCHEMA_SQL = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at timestamp with time zone`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language varchar(5) NOT NULL DEFAULT 'ar'`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_email varchar(255)`,
+  // L1B TRANSITIONAL ALIGNMENT — the canonical authority for these two columns
+  // and the lower(email) unique index on EXISTING databases is forward
+  // migration drizzle-pg-forward/0001_l1b_identity_registration.sql. They are
+  // mirrored here (additively, version unchanged) only so a FRESH database
+  // bootstrapped by this runtime path converges on the same shape.
+  // TRANSITIONAL IDENTITY SCHEMA DEBT: this whole runtime DDL module is
+  // retired once a whole-schema forward baseline exists AND fresh-DB + live-DB
+  // parity has been proven by the identity truth verifier in release checks.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT now()`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_market varchar(8)`,
+  `
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_class idx
+        JOIN pg_namespace nsp ON nsp.oid = idx.relnamespace
+        WHERE idx.relname = 'users_email_lower_unique' AND idx.relkind = 'i' AND nsp.nspname = 'public'
+      ) AND NOT EXISTS (
+        SELECT lower(email) FROM public.users WHERE email IS NOT NULL
+        GROUP BY lower(email) HAVING count(*) > 1
+      ) THEN
+        CREATE UNIQUE INDEX users_email_lower_unique ON public.users (lower(email));
+      END IF;
+    END
+    $$
+  `.trim(),
   `ALTER TABLE users ALTER COLUMN created_at SET DEFAULT now()`,
   `CREATE INDEX IF NOT EXISTS users_email_idx ON users (email)`,
   `
@@ -138,6 +165,21 @@ const PG_IDENTITY_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS vc_purpose_idx ON verification_challenges (purpose)`,
   `CREATE INDEX IF NOT EXISTS vc_token_hash_idx ON verification_challenges (token_hash)`,
   `CREATE INDEX IF NOT EXISTS vc_code_hash_idx ON verification_challenges (code_hash)`,
+  // v3: durable session-jti revocation. The in-memory revokedSessionJtis set is
+  // duplicated by Next across route-handler/page bundles (and worker processes in
+  // dev), so logout could not invalidate SSR pages. Persisting revocations in PG
+  // makes the check shared across every bundle/process.
+  `
+    CREATE TABLE IF NOT EXISTS session_revocations (
+      jti varchar(64) PRIMARY KEY NOT NULL,
+      user_id uuid NOT NULL,
+      revoked_at timestamp with time zone NOT NULL DEFAULT now(),
+      expires_at timestamp with time zone NOT NULL,
+      CONSTRAINT session_revocations_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    )
+  `.trim(),
+  `CREATE INDEX IF NOT EXISTS sr_user_id_idx ON session_revocations (user_id)`,
+  `CREATE INDEX IF NOT EXISTS sr_expires_at_idx ON session_revocations (expires_at)`,
   `
     CREATE TABLE IF NOT EXISTS organizations (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -190,6 +232,8 @@ const PG_IDENTITY_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS org_member_user_idx ON organization_members (user_id)`,
   `CREATE INDEX IF NOT EXISTS org_member_org_idx ON organization_members (organization_id)`,
   `CREATE INDEX IF NOT EXISTS org_member_status_idx ON organization_members (status)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS org_member_org_user_unique ON organization_members (organization_id, user_id)`,
+  `CREATE INDEX IF NOT EXISTS org_member_user_active_idx ON organization_members (user_id, status, organization_id)`,
   `
     CREATE TABLE IF NOT EXISTS organization_branches (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -239,6 +283,8 @@ const PG_IDENTITY_SCHEMA_SQL = [
   `CREATE INDEX IF NOT EXISTS verif_status_idx ON verification_records (status)`,
   `CREATE INDEX IF NOT EXISTS verif_expires_idx ON verification_records (expires_at)`,
   `CREATE INDEX IF NOT EXISTS verif_type_idx ON verification_records (type)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS verif_one_pending_subject_type ON verification_records (entity_type, entity_id, type) WHERE status = 'pending'`,
+  `CREATE INDEX IF NOT EXISTS verif_subject_type_status_idx ON verification_records (entity_type, entity_id, type, status)`,
   `
     CREATE TABLE IF NOT EXISTS reputation_profiles (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -292,6 +338,36 @@ const PG_IDENTITY_SCHEMA_SQL = [
       version integer PRIMARY KEY NOT NULL,
       applied_at timestamp with time zone NOT NULL DEFAULT now()
     )
+  `.trim(),
+  // v2: repair timestamp columns that were bootstrapped as `timestamp without
+  // time zone` while the drizzle schema declares them `timestamptz`
+  // (withTimezone: true). The naive stored values are UTC wall times (writers
+  // send `toISOString()`), so reinterpret them AT TIME ZONE 'UTC'. Without this,
+  // read-back Dates are skewed by the session UTC offset (e.g. +3h), which made
+  // every short-TTL verification challenge (password_reset/OTP) appear "expired".
+  `
+    DO $$
+    DECLARE t record;
+    BEGIN
+      FOR t IN
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND data_type = 'timestamp without time zone'
+          AND (table_name, column_name) IN (
+            ('users','created_at'), ('users','email_verified_at'), ('users','phone_verified_at'),
+            ('users','onboarding_completed_at'), ('users','welcome_sent_at'), ('users','last_login_at'),
+            ('users','password_changed_at'), ('audit_events','created_at'),
+            ('verification_challenges','expires_at'), ('verification_challenges','consumed_at'),
+            ('verification_challenges','revoked_at'), ('verification_challenges','created_at')
+          )
+      LOOP
+        EXECUTE format(
+          'ALTER TABLE %I ALTER COLUMN %I TYPE timestamp with time zone USING %I AT TIME ZONE ''UTC''',
+          t.table_name, t.column_name, t.column_name
+        );
+      END LOOP;
+    END $$;
   `.trim(),
   `
     INSERT INTO ${META_TABLE} (version, applied_at)

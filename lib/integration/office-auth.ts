@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-import { authenticateDeviceToken, type AuthenticatedDevice } from "@/lib/integration/device";
+import { authenticateDeviceTokenResult, type AuthenticatedDevice, type DeviceAuthErrorReason } from "@/lib/integration/device";
 import { checkProtocolVersion, type OfficeScope } from "@/lib/integration/constants";
 
 export async function authenticateOfficeRequest(req: Request): Promise<{ device: AuthenticatedDevice } | { error: NextResponse }> {
   const auth = req.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
   if (!token) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return { error: NextResponse.json({ error: "Unauthorized", reason: "MISSING" }, { status: 401 }) };
   }
-  const device = await authenticateDeviceToken(token);
-  if (!device) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  const result = await authenticateDeviceTokenResult(token);
+  if ("error" in result) {
+    return { error: authErrorResponse(result.error.reason) };
   }
+  const device = result.device;
 
   const rawProtocol = Number(req.headers.get("x-protocol-version") ?? device.protocolVersion);
   const rawApp = req.headers.get("x-app-version") ?? "";
@@ -30,6 +31,10 @@ export async function authenticateOfficeRequest(req: Request): Promise<{ device:
   }
 
   return { device };
+}
+
+function authErrorResponse(reason: DeviceAuthErrorReason): NextResponse {
+  return NextResponse.json({ error: "Unauthorized", reason }, { status: 401 });
 }
 
 export function requireScope(device: AuthenticatedDevice, scope: OfficeScope): NextResponse | null {

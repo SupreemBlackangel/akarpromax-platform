@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, boolean, integer, jsonb, doublePrecision, text, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, timestamp, boolean, integer, jsonb, doublePrecision, text, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable(
   "users",
@@ -19,7 +19,13 @@ export const users = pgTable(
     passwordChangedAt: timestamp("password_changed_at", { mode: "date", withTimezone: true }),
     preferredLanguage: varchar("preferred_language", { length: 5 }).notNull().default("ar"),
     pendingEmail: varchar("pending_email", { length: 255 }).unique(),
+    // ACCOUNT market preference — the "account" slot in the L1A resolution
+    // chain (manual > account > browser > gps > ip > GLOBAL). Nullable, no
+    // default: neither OM, SA, nor any market is a global identity default.
+    // Stores an ISO alpha-2 code or the literal 'GLOBAL' application state.
+    preferredMarket: varchar("preferred_market", { length: 8 }),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("users_email_idx").on(table.email)],
 );
@@ -72,6 +78,19 @@ export const auditEvents = pgTable(
   (table) => [index("audit_user_id_idx").on(table.userId), index("audit_event_type_idx").on(table.eventType)],
 );
 
+export const sessionRevocations = pgTable(
+  "session_revocations",
+  {
+    jti: varchar("jti", { length: 64 }).primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    revokedAt: timestamp("revoked_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
+  },
+  (table) => [index("sr_user_id_idx").on(table.userId), index("sr_expires_at_idx").on(table.expiresAt)],
+);
+
 // ─── AMRS: Organization Domain ────────────────────────────────────────────
 // Owner: Organization domain (AMRS-2)
 // Reuses: users (FK references)
@@ -85,7 +104,7 @@ export const organizations = pgTable(
     nameEn: varchar("name_en", { length: 255 }),
     nameTr: varchar("name_tr", { length: 255 }),
     slug: varchar("slug", { length: 255 }).notNull().unique(),
-    type: varchar("type", { length: 30 }).notNull(), // real_estate | business | other
+    type: varchar("type", { length: 30 }).notNull(), // real_estate | law_office | business | other
     classification: varchar("classification", { length: 30 }).notNull(), // startup | sme | established | enterprise
     countryCode: varchar("country_code", { length: 8 }).notNull(),
     cityId: varchar("city_id", { length: 100 }),
@@ -100,7 +119,7 @@ export const organizations = pgTable(
     websiteUrl: varchar("website_url", { length: 512 }),
     contactEmail: varchar("contact_email", { length: 255 }),
     contactPhone: varchar("contact_phone", { length: 32 }),
-    status: varchar("status", { length: 30 }).notNull().default("draft"), // draft | pending_review | active | suspended | deleted
+    status: varchar("status", { length: 30 }).notNull().default("draft"), // draft | pending_review | active | rejected | suspended | deleted
     verifiedAt: timestamp("verified_at", { mode: "date", withTimezone: true }),
     approvedAt: timestamp("approved_at", { mode: "date", withTimezone: true }),
     suspendedAt: timestamp("suspended_at", { mode: "date", withTimezone: true }),
@@ -134,6 +153,7 @@ export const organizationMembers = pgTable(
     index("org_member_user_idx").on(table.userId),
     index("org_member_org_idx").on(table.organizationId),
     index("org_member_status_idx").on(table.status),
+    uniqueIndex("org_member_org_user_unique").on(table.organizationId, table.userId),
   ],
 );
 
@@ -259,5 +279,31 @@ export const reputationHistory = pgTable(
   (table) => [
     index("hist_entity_idx").on(table.entityType, table.entityId),
     index("hist_evaluated_idx").on(table.evaluatedAt),
+  ],
+);
+
+// ─── OAuth Accounts ─────────────────────────────────────────────────────────
+
+export const userOauthAccounts = pgTable(
+  "user_oauth_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 30 }).notNull(),
+    providerUserId: varchar("provider_user_id", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }),
+    name: varchar("name", { length: 255 }),
+    avatarUrl: varchar("avatar_url", { length: 512 }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    tokenExpiresAt: timestamp("token_expires_at", { mode: "date", withTimezone: true }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("oauth_user_idx").on(table.userId),
+    index("oauth_provider_idx").on(table.provider, table.providerUserId),
   ],
 );

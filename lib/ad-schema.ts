@@ -168,6 +168,13 @@ function isDuplicateKeyError(message: string): boolean {
 }
 
 export async function ensureAdSchema(db: D1Database): Promise<void> {
+  // Tracking tables must exist before the additive repair ALTERs below run.
+  // On a clean PostgreSQL database the previous order failed immediately on
+  // `ALTER TABLE ad_impressions`, preventing Zero -> Ready bootstrap.
+  for (const sql of AD_TABLES_SQL) {
+    await db.prepare(sql).run();
+  }
+
   for (const sql of AD_CAMPAIGN_MODIFY_REPAIR) {
     try {
       await db.prepare(sql).run();
@@ -201,10 +208,6 @@ export async function ensureAdSchema(db: D1Database): Promise<void> {
       const message = error instanceof Error ? error.message : String(error);
       if (!isDuplicateColumnError(message)) throw error;
     }
-  }
-
-  for (const sql of AD_TABLES_SQL) {
-    await db.prepare(sql).run();
   }
 
   for (const sql of AD_TABLE_INDEXES) {

@@ -51,7 +51,22 @@ export function protectCoordinateOrder(
     return { point: { lat: 0, lon: 0 }, orderConfidence: 0, swapped, warnings };
   }
 
-  const plausible = countryAdapter.isPlausiblePoint({ lat, lon });
+  let plausible = countryAdapter.isPlausiblePoint({ lat, lon });
+  const swappedCandidate = { lat: lon, lon: lat };
+  if (
+    !plausible
+    && isValidLat(swappedCandidate.lat)
+    && isValidLon(swappedCandidate.lon)
+    && countryAdapter.isPlausiblePoint(swappedCandidate)
+  ) {
+    lat = swappedCandidate.lat;
+    lon = swappedCandidate.lon;
+    swapped = true;
+    plausible = true;
+    orderConfidence = Math.min(orderConfidence, 0.8);
+    warnings.push("lat/lon order was swapped (document-country bounds)");
+  }
+
   if (!plausible) {
     warnings.push(`coordinate outside plausible ${countryAdapter.countryCode} bounds`);
     orderConfidence = Math.min(orderConfidence, 0.3);

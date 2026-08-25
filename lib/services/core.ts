@@ -1,6 +1,7 @@
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
 import { insertRow, getServicesDb } from "@services/db";
 import { writeAudit } from "@services/audit";
+import { requireCurrencyCode } from "@services/currency-policy";
 import {
   isListingStatus,
   isOrderStatus,
@@ -114,7 +115,7 @@ export async function createListing(input: NewListing, actor?: ActorContext): Pr
       input.titleKey ?? null,
       input.descriptionKey ?? null,
       input.price ?? 0,
-      input.currency ?? "OMR",
+      requireCurrencyCode(input.currency),
       input.unit ?? "project",
       input.status ?? "active",
       input.tags ? JSON.stringify(input.tags) : null,
@@ -237,7 +238,7 @@ export async function createRequest(input: NewRequest, actor?: ActorContext): Pr
       input.descriptionKey ?? null,
       input.budgetMin ?? null,
       input.budgetMax ?? null,
-      input.currency ?? "OMR",
+      requireCurrencyCode(input.currency),
       nowMySqlDateTime(),
     ],
   );
@@ -341,7 +342,7 @@ export async function createOffer(input: NewOffer, actor?: ActorContext): Promis
       input.providerUserId,
       input.listingId ?? null,
       input.price,
-      input.currency ?? "OMR",
+      requireCurrencyCode(input.currency),
       input.durationDays ?? null,
       input.messageKey ?? null,
       nowMySqlDateTime(),
@@ -385,7 +386,7 @@ export async function acceptOffer(offerId: string, byUserId: string, actor?: Act
       request.customer_user_id,
       offer.provider_user_id,
       offer.price,
-      offer.currency ?? "OMR",
+      requireCurrencyCode(offer.currency),
       nowMySqlDateTime(),
     ],
   );

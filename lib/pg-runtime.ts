@@ -39,6 +39,19 @@ function clientOptions() {
 /** Node (vinext start): shared pool reused across statements and requests. */
 let sharedClient: postgres.Sql<Record<string, unknown>> | null = null;
 
+/**
+ * Dispose the Node shared pool and clear cached runtime state. Long-lived web
+ * processes normally keep the pool; one-shot processes such as bootstrap must
+ * call this during shutdown so the Node event loop can terminate cleanly.
+ */
+export async function closePgRuntimeDb(): Promise<void> {
+  const client = sharedClient;
+  sharedClient = null;
+  adapter = null;
+  schemaReady = null;
+  if (client) await client.end({ timeout: 3 });
+}
+
 async function sharedPool(): Promise<postgres.Sql<Record<string, unknown>>> {
   if (!sharedClient) {
     sharedClient = postgres(getRuntimeEnv().databaseUrl, {
@@ -75,13 +88,18 @@ async function acquireClient(): Promise<{ client: postgres.Sql<Record<string, un
  * - `datetime('now')` -> `now()`
  * - `ON CONFLICT (...) DO UPDATE SET` is already native Postgres (kept as-is)
  */
-function translateSql(input: string): string {
+export function translateSql(input: string): string {
   const isOrIgnore = /\bINSERT OR IGNORE INTO\b/i.test(input);
   const sql = input
     .replace(/`([^`]+)`/g, '"$1"')
     .replace(/\bINSERT OR IGNORE INTO\b/gi, "INSERT INTO")
-    .replace(/\bDATETIME\b/gi, "TIMESTAMP")
+    .replace(
+      /datetime\(\s*'now'\s*,\s*'([+-]\d+)\s+(days?|hours?|minutes?)'\s*\)/gi,
+      (_match, amount: string, unit: string) => `(now() + INTERVAL '${amount} ${unit}')`,
+    )
     .replace(/datetime\(\s*'now'\s*\)/gi, "now()")
+    .replace(/datetime\(\s*([a-z_][a-z0-9_.]*)\s*\)/gi, "NULLIF($1::text, '')::timestamptz")
+    .replace(/\bDATETIME\b/gi, "TIMESTAMP")
     .trim();
   if (isOrIgnore) {
     return sql.replace(/;?\s*$/, "") + " ON CONFLICT DO NOTHING";

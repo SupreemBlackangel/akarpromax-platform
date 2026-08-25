@@ -2,6 +2,8 @@ import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
 import { insertRow, getServicesDb } from "@services/db";
 import { writeAudit } from "@services/audit";
 import { runMatching } from "@services/matching";
+import { computeMatchScore, distanceKm } from "@services/match-score";
+import { requireCurrencyCode } from "@services/currency-policy";
 import {
   MESSAGE_CONTEXT,
   isMessageContext,
@@ -197,10 +199,39 @@ export async function setProviderStatus(providerId: string, status: ProviderStat
   await writeAudit({ action: `service_provider.status.${status}`, entityType: "service_provider_profiles", entityId: providerId, metadata: { note }, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
+export async function updateProviderAdminSettings(
+  providerId: string,
+  patch: { isFeatured?: boolean; featuredRank?: number; isAcceptingRequests?: boolean },
+  actor?: ActorContext,
+): Promise<void> {
+  const db = await getServicesDb();
+  const provider = await getProviderProfileById(providerId);
+  if (!provider) throw new Error("PROVIDER_NOT_FOUND");
+  await db.prepare(
+    `UPDATE service_provider_profiles SET is_featured = ?1, featured_rank = ?2,
+       is_accepting_requests = ?3, updated_at = ?4 WHERE id = ?5`,
+  ).bind(
+    patch.isFeatured === undefined ? provider.is_featured ?? 0 : patch.isFeatured ? 1 : 0,
+    patch.featuredRank === undefined ? provider.featured_rank ?? 0 : Math.max(0, Math.min(9999, Math.round(patch.featuredRank))),
+    patch.isAcceptingRequests === undefined ? provider.is_accepting_requests ?? 1 : patch.isAcceptingRequests ? 1 : 0,
+    nowMySqlDateTime(), providerId,
+  ).run();
+  await writeAudit({ action: "service_provider.admin_settings.update", entityType: "service_provider_profiles", entityId: providerId, metadata: patch, actorUserId: actor?.userId, ipAddress: actor?.ip });
+}
+
 export async function listProviderProfiles(query: {
   countryCode?: string;
+  countryAliases?: string[];
   status?: string;
   cityId?: string;
+  cityAliases?: string[];
+  governorate?: string;
+  governorateAliases?: string[];
+  districtId?: string;
+  districtAliases?: string[];
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
   categoryId?: string;
   search?: string;
   limit?: number;
@@ -208,34 +239,64 @@ export async function listProviderProfiles(query: {
   const db = await getServicesDb();
   const clauses: string[] = [];
   const params: unknown[] = [];
-  if (query.countryCode) {
-    params.push(String(query.countryCode).toUpperCase());
-    clauses.push(`p.country_code = ?${params.length}`);
+  const addAliasClause = (column: string, aliases: string[] | undefined, fallback?: string) => {
+    const normalized = [...new Set((aliases?.length ? aliases : fallback ? [fallback] : [])
+      .flatMap((value) => {
+        const token = String(value).trim();
+        return token ? [token, token.toLocaleLowerCase("en"), token.toLocaleUpperCase("en")] : [];
+      }))];
+    if (!normalized.length) return;
+    const placeholders = normalized.map((value) => {
+      params.push(value);
+      return `?${params.length}`;
+    });
+    clauses.push(`${column} IN (${placeholders.join(",")})`);
+  };
+  if (query.countryCode || query.countryAliases?.length) {
+    addAliasClause("p.country_code", query.countryAliases, query.countryCode);
   }
   if (query.status) {
     params.push(query.status);
     clauses.push(`p.status = ?${params.length}`);
   }
-  if (query.cityId) {
-    params.push(query.cityId);
-    clauses.push(`p.city_id = ?${params.length}`);
-  }
+  addAliasClause("p.governorate", query.governorateAliases, query.governorate);
+  addAliasClause("p.city_id", query.cityAliases, query.cityId);
+  addAliasClause("p.district_id", query.districtAliases, query.districtId);
   if (query.search) {
     params.push(`%${query.search}%`);
     clauses.push(`(p.display_name_ar LIKE ?${params.length} OR p.display_name_en LIKE ?${params.length} OR p.business_name LIKE ?${params.length})`);
   }
+  if (query.categoryId) {
+    params.push(query.categoryId);
+  }
   let sql =
     "SELECT DISTINCT p.* FROM service_provider_profiles p" +
-    (query.categoryId ? " JOIN service_provider_categories pc ON pc.provider_id = p.id AND pc.category_id = ?" : "") +
+    (query.categoryId ? ` JOIN service_provider_categories pc ON pc.provider_id = p.id AND pc.category_id = ?${params.length} AND pc.is_active = 1` : "") +
     (clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "") +
-    " ORDER BY p.rating_avg DESC, p.rating_count DESC";
-  if (query.categoryId) sql = sql.replace("pc.category_id = ?", `pc.category_id = ?${params.length + 1}`);
+    " ORDER BY p.is_featured DESC, p.featured_rank ASC, p.rating_avg DESC, p.rating_count DESC";
   if (query.limit) {
     params.push(Math.min(query.limit, 100));
     sql += ` LIMIT ?${params.length}`;
   }
   const result = await db.prepare(sql).bind(...params).all<Record<string, unknown>>();
-  return result.results ?? [];
+  const rows = result.results ?? [];
+  if (query.latitude == null || query.longitude == null || query.radiusKm == null) return rows;
+  const searchPoint = { latitude: query.latitude, longitude: query.longitude };
+  const requestedRadius = query.radiusKm;
+  return rows.filter((provider) => {
+    const providerLatitude = num(provider.latitude);
+    const providerLongitude = num(provider.longitude);
+    const distance = distanceKm(
+      searchPoint,
+      { latitude: providerLatitude, longitude: providerLongitude },
+    );
+    if (distance == null) return false;
+    const providerRadius = num(provider.service_radius_km);
+    const effectiveRadius = providerRadius == null
+      ? requestedRadius
+      : Math.min(requestedRadius, providerRadius);
+    return distance <= effectiveRadius;
+  });
 }
 
 /* ---------- Provider categories ---------- */
@@ -244,7 +305,8 @@ export async function listProviderCategories(providerId: string): Promise<Array<
   const db = await getServicesDb();
   const result = await db
     .prepare(
-      `SELECT pc.*, c.code AS category_code, c.name_ar AS category_name_ar, c.name_en AS category_name_en, c.icon AS category_icon
+      `SELECT pc.*, c.code AS category_code, c.name_ar AS category_name_ar, c.name_en AS category_name_en,
+              c.icon AS category_icon, c.booking_mode AS booking_mode
        FROM service_provider_categories pc
        LEFT JOIN service_categories c ON c.id = pc.category_id
        WHERE pc.provider_id = ?1 AND pc.is_active = 1
@@ -255,8 +317,9 @@ export async function listProviderCategories(providerId: string): Promise<Array<
   return result.results ?? [];
 }
 
-export async function addProviderCategory(providerId: string, categoryId: string, input: { priceFrom?: number | null; priceTo?: number | null; pricingUnit?: string | null; minDurationMin?: number | null; notes?: string | null }, actor?: ActorContext): Promise<void> {
+export async function addProviderCategory(providerId: string, categoryId: string, input: { priceFrom?: number | null; priceTo?: number | null; instantPrice?: number | null; currency?: string | null; pricingUnit?: string | null; minDurationMin?: number | null; notes?: string | null }, actor?: ActorContext): Promise<void> {
   const db = await getServicesDb();
+  const currency = input.currency ? requireCurrencyCode(input.currency) : null;
   const existing = await db
     .prepare("SELECT id FROM service_provider_categories WHERE provider_id = ?1 AND category_id = ?2")
     .bind(providerId, categoryId)
@@ -264,17 +327,19 @@ export async function addProviderCategory(providerId: string, categoryId: string
   if (existing) {
     await db
       .prepare(
-        `UPDATE service_provider_categories SET price_from = ?1, price_to = ?2, pricing_unit = ?3, min_duration_min = ?4, notes = ?5, is_active = 1 WHERE id = ?6`,
+        `UPDATE service_provider_categories SET price_from = ?1, price_to = ?2, instant_price = ?3, currency = ?4,
+          pricing_unit = ?5, min_duration_min = ?6, notes = ?7, is_active = 1 WHERE id = ?8`,
       )
-      .bind(input.priceFrom ?? null, input.priceTo ?? null, input.pricingUnit ?? null, input.minDurationMin ?? null, input.notes ?? null, existing.id)
+      .bind(input.priceFrom ?? null, input.priceTo ?? null, input.instantPrice ?? null, currency, input.pricingUnit ?? null, input.minDurationMin ?? null, input.notes ?? null, existing.id)
       .run();
     return;
   }
   await insertRow(
     db,
-    `INSERT INTO service_provider_categories (id, provider_id, category_id, price_from, price_to, pricing_unit, min_duration_min, notes, is_active, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, ?9)`,
-    [crypto.randomUUID(), providerId, categoryId, input.priceFrom ?? null, input.priceTo ?? null, input.pricingUnit ?? null, input.minDurationMin ?? null, input.notes ?? null, nowMySqlDateTime()],
+    `INSERT INTO service_provider_categories
+      (id, provider_id, category_id, price_from, price_to, instant_price, currency, pricing_unit, min_duration_min, notes, is_active, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 1, ?11)`,
+    [crypto.randomUUID(), providerId, categoryId, input.priceFrom ?? null, input.priceTo ?? null, input.instantPrice ?? null, currency, input.pricingUnit ?? null, input.minDurationMin ?? null, input.notes ?? null, nowMySqlDateTime()],
   );
   await writeAudit({ action: "service_provider.category.add", entityType: "service_provider_categories", entityId: providerId, metadata: { categoryId }, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
@@ -376,6 +441,10 @@ export async function createServiceCategory(input: {
   priceMax?: number | null;
   dynamicFields?: Array<Record<string, unknown>>;
   sortOrder?: number;
+  isFeatured?: boolean;
+  bookingMode?: "instant" | "quotes" | "both";
+  badgeAr?: string | null;
+  badgeEn?: string | null;
 }, actor?: ActorContext): Promise<string> {
   const db = await getServicesDb();
   const country = String(input.countryCode).toUpperCase();
@@ -389,8 +458,10 @@ export async function createServiceCategory(input: {
     db,
     `INSERT INTO service_categories
       (id, parent_id, country_code, code, name_ar, name_en, name_tr, description_ar, description_en, description_tr,
-       icon, image_url, requires_license, requires_visit, price_min, price_max, dynamic_fields, sort_order, is_active, created_at, updated_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, 1, ?19, ?19)`,
+       icon, image_url, requires_license, requires_visit, price_min, price_max, dynamic_fields, sort_order,
+       is_active, is_featured, booking_mode, badge_ar, badge_en, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18,
+             1, ?19, ?20, ?21, ?22, ?23, ?23)`,
     [
       crypto.randomUUID(), input.parentId ?? null, country, code,
       input.nameAr ?? null, input.nameEn ?? null, input.nameTr ?? null,
@@ -399,7 +470,9 @@ export async function createServiceCategory(input: {
       input.requiresLicense ? 1 : 0, input.requiresVisit ? 1 : 0,
       input.priceMin ?? null, input.priceMax ?? null,
       input.dynamicFields ? JSON.stringify(input.dynamicFields) : null,
-      input.sortOrder ?? 0, nowMySqlDateTime(),
+      input.sortOrder ?? 0,
+      input.isFeatured ? 1 : 0, input.bookingMode ?? "quotes", input.badgeAr ?? null, input.badgeEn ?? null,
+      nowMySqlDateTime(),
     ],
   );
   await writeAudit({ action: "service_category.create", entityType: "service_categories", entityId: id, actorUserId: actor?.userId, ipAddress: actor?.ip });
@@ -407,6 +480,7 @@ export async function createServiceCategory(input: {
 }
 
 export async function updateServiceCategory(categoryId: string, patch: {
+  parentId?: string | null;
   nameAr?: string | null;
   nameEn?: string | null;
   nameTr?: string | null;
@@ -422,28 +496,38 @@ export async function updateServiceCategory(categoryId: string, patch: {
   dynamicFields?: Array<Record<string, unknown>> | null;
   sortOrder?: number | null;
   isActive?: boolean | null;
+  isFeatured?: boolean | null;
+  bookingMode?: "instant" | "quotes" | "both" | null;
+  badgeAr?: string | null;
+  badgeEn?: string | null;
 }, actor?: ActorContext): Promise<void> {
   const db = await getServicesDb();
+  const current = await getCategoryById(categoryId);
+  if (!current) throw new Error("CATEGORY_NOT_FOUND");
+  const pick = (key: string, value: unknown) => value === undefined ? current[key] ?? null : value;
   await db
     .prepare(
       `UPDATE service_categories SET
-         name_ar = ?1, name_en = ?2, name_tr = ?3,
-         description_ar = ?4, description_en = ?5, description_tr = ?6,
-         icon = ?7, image_url = ?8, requires_license = ?9, requires_visit = ?10,
-         price_min = ?11, price_max = ?12, dynamic_fields = ?13, sort_order = ?14, is_active = ?15,
-         updated_at = ?16
-       WHERE id = ?17`,
+         parent_id = ?1, name_ar = ?2, name_en = ?3, name_tr = ?4,
+         description_ar = ?5, description_en = ?6, description_tr = ?7,
+         icon = ?8, image_url = ?9, requires_license = ?10, requires_visit = ?11,
+         price_min = ?12, price_max = ?13, dynamic_fields = ?14, sort_order = ?15, is_active = ?16,
+         is_featured = ?17, booking_mode = ?18, badge_ar = ?19, badge_en = ?20, updated_at = ?21
+       WHERE id = ?22`,
     )
     .bind(
-      patch.nameAr ?? null, patch.nameEn ?? null, patch.nameTr ?? null,
-      patch.descriptionAr ?? null, patch.descriptionEn ?? null, patch.descriptionTr ?? null,
-      patch.icon ?? null, patch.imageUrl ?? null,
-      patch.requiresLicense == null ? 0 : patch.requiresLicense ? 1 : 0,
-      patch.requiresVisit == null ? 0 : patch.requiresVisit ? 1 : 0,
-      patch.priceMin ?? null, patch.priceMax ?? null,
-      patch.dynamicFields == null ? null : JSON.stringify(patch.dynamicFields),
-      patch.sortOrder ?? 0,
-      patch.isActive == null ? 1 : patch.isActive ? 1 : 0,
+      pick("parent_id", patch.parentId),
+      pick("name_ar", patch.nameAr), pick("name_en", patch.nameEn), pick("name_tr", patch.nameTr),
+      pick("description_ar", patch.descriptionAr), pick("description_en", patch.descriptionEn), pick("description_tr", patch.descriptionTr),
+      pick("icon", patch.icon), pick("image_url", patch.imageUrl),
+      patch.requiresLicense === undefined ? current.requires_license ?? 0 : patch.requiresLicense ? 1 : 0,
+      patch.requiresVisit === undefined ? current.requires_visit ?? 0 : patch.requiresVisit ? 1 : 0,
+      pick("price_min", patch.priceMin), pick("price_max", patch.priceMax),
+      patch.dynamicFields === undefined ? current.dynamic_fields ?? null : patch.dynamicFields == null ? null : JSON.stringify(patch.dynamicFields),
+      pick("sort_order", patch.sortOrder),
+      patch.isActive === undefined ? current.is_active ?? 1 : patch.isActive ? 1 : 0,
+      patch.isFeatured === undefined ? current.is_featured ?? 0 : patch.isFeatured ? 1 : 0,
+      pick("booking_mode", patch.bookingMode), pick("badge_ar", patch.badgeAr), pick("badge_en", patch.badgeEn),
       nowMySqlDateTime(), categoryId,
     )
     .run();
@@ -467,15 +551,36 @@ export async function deleteServiceCategory(categoryId: string, actor?: ActorCon
   await writeAudit({ action: "service_category.delete", entityType: "service_categories", entityId: categoryId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
-export async function listCategoriesFull(countryCode?: string): Promise<Array<Record<string, unknown>>> {
+export async function listCategoriesFull(
+  countryCode?: string,
+  options: { includeInactive?: boolean } = {},
+): Promise<Array<Record<string, unknown>>> {
   const db = await getServicesDb();
-  let sql = "SELECT * FROM service_categories";
+  let sql = `SELECT c.*, COALESCE(pc.provider_count, 0) AS provider_count,
+      COALESCE(rc.open_request_count, 0) AS open_request_count
+    FROM service_categories c
+    LEFT JOIN (
+      SELECT pc.category_id, COUNT(*) AS provider_count
+      FROM service_provider_categories pc
+      JOIN service_provider_profiles p ON p.id = pc.provider_id
+      WHERE pc.is_active = 1 AND p.status = 'approved'
+      GROUP BY pc.category_id
+    ) pc ON pc.category_id = c.id
+    LEFT JOIN (
+      SELECT r.category_id, COUNT(*) AS open_request_count
+      FROM service_requests r
+      WHERE r.status IN ('published','receiving_offers')
+      GROUP BY r.category_id
+    ) rc ON rc.category_id = c.id`;
   const params: unknown[] = [];
+  const clauses: string[] = [];
   if (countryCode) {
     params.push(String(countryCode).toUpperCase());
-    sql += " WHERE country_code = ?1";
+    clauses.push(`c.country_code = ?${params.length}`);
   }
-  sql += " ORDER BY sort_order ASC, code ASC";
+  if (!options.includeInactive) clauses.push("c.is_active = 1");
+  if (clauses.length) sql += ` WHERE ${clauses.join(" AND ")}`;
+  sql += " ORDER BY c.parent_id ASC, c.is_featured DESC, c.sort_order ASC, c.code ASC";
   const result = await db.prepare(sql).bind(...params).all<Record<string, unknown>>();
   const categories = result.results ?? [];
   for (const category of categories) {
@@ -506,6 +611,167 @@ export async function getCategoryById(categoryId: string): Promise<Record<string
 }
 
 /* ============================================================
+ * Public marketplace page settings
+ * ============================================================ */
+
+export type ServiceMarketplaceSettings = {
+  countryCode: string;
+  heroKickerAr: string;
+  heroKickerEn: string;
+  heroTitleAr: string;
+  heroTitleEn: string;
+  heroDescriptionAr: string;
+  heroDescriptionEn: string;
+  primaryCtaAr: string;
+  primaryCtaEn: string;
+  primaryCtaHref: string;
+  secondaryCtaAr: string;
+  secondaryCtaEn: string;
+  secondaryCtaHref: string;
+  announcementAr: string;
+  announcementEn: string;
+  showCategories: boolean;
+  showFeaturedProviders: boolean;
+  showLatestRequests: boolean;
+  showHowItWorks: boolean;
+  showTrustBar: boolean;
+  featuredCategoryLimit: number;
+  featuredProviderLimit: number;
+  latestRequestLimit: number;
+  allowPublicRequests: boolean;
+  allowProviderRegistration: boolean;
+};
+
+export const DEFAULT_SERVICE_MARKETPLACE_SETTINGS: ServiceMarketplaceSettings = {
+  countryCode: "OM",
+  heroKickerAr: "سوق خدمات عقار بروماكس",
+  heroKickerEn: "AkarProMax Services Marketplace",
+  heroTitleAr: "كل خدمات عقارك، من محترفين موثوقين",
+  heroTitleEn: "Every property service, delivered by trusted professionals",
+  heroDescriptionAr: "اختر الخدمة، حدّد موقعك، ثم احجز مباشرة أو استقبل عروضًا واضحة وقارن بينها بثقة.",
+  heroDescriptionEn: "Choose a service, set your location, then book instantly or compare clear quotes from trusted professionals.",
+  primaryCtaAr: "اطلب خدمة الآن",
+  primaryCtaEn: "Request a service",
+  primaryCtaHref: "/service-requests/new",
+  secondaryCtaAr: "انضم كمحترف",
+  secondaryCtaEn: "Join as a professional",
+  secondaryCtaHref: "/providers/apply",
+  announcementAr: "خدمات سريعة بالحجز المباشر، ومشاريع متخصصة بنظام طلب العروض",
+  announcementEn: "Instant booking for quick services and competitive quotes for specialist projects",
+  showCategories: true,
+  showFeaturedProviders: true,
+  showLatestRequests: true,
+  showHowItWorks: true,
+  showTrustBar: true,
+  featuredCategoryLimit: 12,
+  featuredProviderLimit: 6,
+  latestRequestLimit: 6,
+  allowPublicRequests: true,
+  allowProviderRegistration: true,
+};
+
+function marketplaceSettingsFromRow(rowValue: Record<string, unknown> | null, countryCode: string): ServiceMarketplaceSettings {
+  const source = rowValue ?? {};
+  const fallback = { ...DEFAULT_SERVICE_MARKETPLACE_SETTINGS, countryCode };
+  const stringValue = (key: string, defaultValue: string) => source[key] == null ? defaultValue : String(source[key]);
+  const boolValue = (key: string, defaultValue: boolean) => source[key] == null ? defaultValue : Number(source[key]) === 1 || source[key] === true;
+  const intValue = (key: string, defaultValue: number) => {
+    const value = Number(source[key]);
+    return Number.isFinite(value) ? value : defaultValue;
+  };
+  return {
+    countryCode,
+    heroKickerAr: stringValue("hero_kicker_ar", fallback.heroKickerAr),
+    heroKickerEn: stringValue("hero_kicker_en", fallback.heroKickerEn),
+    heroTitleAr: stringValue("hero_title_ar", fallback.heroTitleAr),
+    heroTitleEn: stringValue("hero_title_en", fallback.heroTitleEn),
+    heroDescriptionAr: stringValue("hero_description_ar", fallback.heroDescriptionAr),
+    heroDescriptionEn: stringValue("hero_description_en", fallback.heroDescriptionEn),
+    primaryCtaAr: stringValue("primary_cta_ar", fallback.primaryCtaAr),
+    primaryCtaEn: stringValue("primary_cta_en", fallback.primaryCtaEn),
+    primaryCtaHref: stringValue("primary_cta_href", fallback.primaryCtaHref),
+    secondaryCtaAr: stringValue("secondary_cta_ar", fallback.secondaryCtaAr),
+    secondaryCtaEn: stringValue("secondary_cta_en", fallback.secondaryCtaEn),
+    secondaryCtaHref: stringValue("secondary_cta_href", fallback.secondaryCtaHref),
+    announcementAr: stringValue("announcement_ar", fallback.announcementAr),
+    announcementEn: stringValue("announcement_en", fallback.announcementEn),
+    showCategories: boolValue("show_categories", fallback.showCategories),
+    showFeaturedProviders: boolValue("show_featured_providers", fallback.showFeaturedProviders),
+    showLatestRequests: boolValue("show_latest_requests", fallback.showLatestRequests),
+    showHowItWorks: boolValue("show_how_it_works", fallback.showHowItWorks),
+    showTrustBar: boolValue("show_trust_bar", fallback.showTrustBar),
+    featuredCategoryLimit: intValue("featured_category_limit", fallback.featuredCategoryLimit),
+    featuredProviderLimit: intValue("featured_provider_limit", fallback.featuredProviderLimit),
+    latestRequestLimit: intValue("latest_request_limit", fallback.latestRequestLimit),
+    allowPublicRequests: boolValue("allow_public_requests", fallback.allowPublicRequests),
+    allowProviderRegistration: boolValue("allow_provider_registration", fallback.allowProviderRegistration),
+  };
+}
+
+export async function getServiceMarketplaceSettings(countryCode = "OM"): Promise<ServiceMarketplaceSettings> {
+  const db = await getServicesDb();
+  const country = countryCode.toUpperCase();
+  const existing = row(await db.prepare("SELECT * FROM service_marketplace_settings WHERE country_code = ?1 LIMIT 1").bind(country).first<Record<string, unknown>>());
+  if (existing) return marketplaceSettingsFromRow(existing, country);
+  const defaults = { ...DEFAULT_SERVICE_MARKETPLACE_SETTINGS, countryCode: country };
+  await insertRow(
+    db,
+    `INSERT OR IGNORE INTO service_marketplace_settings
+      (id, country_code, hero_kicker_ar, hero_kicker_en, hero_title_ar, hero_title_en,
+       hero_description_ar, hero_description_en, primary_cta_ar, primary_cta_en, primary_cta_href,
+       secondary_cta_ar, secondary_cta_en, secondary_cta_href, announcement_ar, announcement_en,
+       show_categories, show_featured_providers, show_latest_requests, show_how_it_works, show_trust_bar,
+       featured_category_limit, featured_provider_limit, latest_request_limit,
+       allow_public_requests, allow_provider_registration, created_at, updated_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16,
+             ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?27)`,
+    [
+      crypto.randomUUID(), country, defaults.heroKickerAr, defaults.heroKickerEn, defaults.heroTitleAr, defaults.heroTitleEn,
+      defaults.heroDescriptionAr, defaults.heroDescriptionEn, defaults.primaryCtaAr, defaults.primaryCtaEn, defaults.primaryCtaHref,
+      defaults.secondaryCtaAr, defaults.secondaryCtaEn, defaults.secondaryCtaHref, defaults.announcementAr, defaults.announcementEn,
+      1, 1, 1, 1, 1, defaults.featuredCategoryLimit, defaults.featuredProviderLimit, defaults.latestRequestLimit, 1, 1, nowMySqlDateTime(),
+    ],
+  );
+  return defaults;
+}
+
+export async function updateServiceMarketplaceSettings(
+  countryCode: string,
+  patch: Partial<Omit<ServiceMarketplaceSettings, "countryCode">>,
+  actor?: ActorContext,
+): Promise<ServiceMarketplaceSettings> {
+  const current = await getServiceMarketplaceSettings(countryCode);
+  const next = { ...current, ...patch, countryCode: countryCode.toUpperCase() };
+  const db = await getServicesDb();
+  await db.prepare(
+    `UPDATE service_marketplace_settings SET
+       hero_kicker_ar = ?1, hero_kicker_en = ?2, hero_title_ar = ?3, hero_title_en = ?4,
+       hero_description_ar = ?5, hero_description_en = ?6,
+       primary_cta_ar = ?7, primary_cta_en = ?8, primary_cta_href = ?9,
+       secondary_cta_ar = ?10, secondary_cta_en = ?11, secondary_cta_href = ?12,
+       announcement_ar = ?13, announcement_en = ?14,
+       show_categories = ?15, show_featured_providers = ?16, show_latest_requests = ?17,
+       show_how_it_works = ?18, show_trust_bar = ?19,
+       featured_category_limit = ?20, featured_provider_limit = ?21, latest_request_limit = ?22,
+       allow_public_requests = ?23, allow_provider_registration = ?24,
+       updated_by = ?25, updated_at = ?26 WHERE country_code = ?27`,
+  ).bind(
+    next.heroKickerAr, next.heroKickerEn, next.heroTitleAr, next.heroTitleEn,
+    next.heroDescriptionAr, next.heroDescriptionEn,
+    next.primaryCtaAr, next.primaryCtaEn, next.primaryCtaHref,
+    next.secondaryCtaAr, next.secondaryCtaEn, next.secondaryCtaHref,
+    next.announcementAr, next.announcementEn,
+    next.showCategories ? 1 : 0, next.showFeaturedProviders ? 1 : 0, next.showLatestRequests ? 1 : 0,
+    next.showHowItWorks ? 1 : 0, next.showTrustBar ? 1 : 0,
+    Math.max(1, Math.min(48, next.featuredCategoryLimit)), Math.max(1, Math.min(24, next.featuredProviderLimit)), Math.max(1, Math.min(24, next.latestRequestLimit)),
+    next.allowPublicRequests ? 1 : 0, next.allowProviderRegistration ? 1 : 0,
+    actor?.userId ?? null, nowMySqlDateTime(), next.countryCode,
+  ).run();
+  await writeAudit({ action: "service_marketplace.settings.update", entityType: "service_marketplace_settings", entityId: next.countryCode, actorUserId: actor?.userId, ipAddress: actor?.ip });
+  return next;
+}
+
+/* ============================================================
  * Requests (full lifecycle)
  * ============================================================ */
 
@@ -529,6 +795,9 @@ export type NewRequestFull = {
   shortAddress?: string | null;
   pricingType?: string | null;
   preferredDate?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  contactPreference?: "platform" | "phone" | "whatsapp" | "email" | null;
   answers?: Array<{ key: string; label?: string | null; type?: string | null; value?: string | null }>;
   attachments?: Array<{ fileName: string; fileUrl: string; fileSize?: number; mimeType?: string | null }>;
 };
@@ -547,18 +816,19 @@ export async function createRequestFull(input: NewRequestFull, actor?: ActorCont
       (id, customer_user_id, category_id, country_code, city_id, district_id, latitude, longitude,
        title, description, title_key, description_key, budget_min, budget_max, currency, preferred_date,
        status, urgency, preferred_period, needs_visit, access_notes, short_address, pricing_type,
-       reference_number, answers, created_at, updated_at)
+       reference_number, answers, contact_phone, contact_email, contact_preference, created_at, updated_at)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, NULL, NULL, ?11, ?12, ?13, ?14,
-       'draft', ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?23)`,
+       'draft', ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?26)`,
     [
       crypto.randomUUID(), input.customerUserId, input.categoryId,
       String(input.countryCode).toUpperCase(), input.cityId, input.districtId ?? null,
       input.latitude ?? null, input.longitude ?? null,
       input.title ?? null, input.description ?? null,
-      input.budgetMin ?? null, input.budgetMax ?? null, input.currency ?? "OMR", input.preferredDate ?? null,
+      input.budgetMin ?? null, input.budgetMax ?? null, requireCurrencyCode(input.currency), input.preferredDate ?? null,
       input.urgency ?? null, input.preferredPeriod ?? null, input.needsVisit ? 1 : 0,
       input.accessNotes ?? null, input.shortAddress ?? null, input.pricingType ?? "fixed",
-      referenceNumber, input.answers ? JSON.stringify(input.answers) : null, now,
+      referenceNumber, input.answers ? JSON.stringify(input.answers) : null,
+      input.contactPhone ?? null, input.contactEmail ?? null, input.contactPreference ?? "platform", now,
     ],
   );
 
@@ -627,20 +897,36 @@ export async function updateRequest(requestId: string, patch: {
   const request = await getRequestFull(requestId);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
   if (request.status !== REQUEST_STATUS.DRAFT && request.status !== REQUEST_STATUS.PUBLISHED) throw new Error("REQUEST_NOT_EDITABLE");
+
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  const add = (column: string, value: unknown) => {
+    values.push(value);
+    sets.push(`${column} = ?${values.length}`);
+  };
+
+  if (patch.title !== undefined) add("title", patch.title);
+  if (patch.description !== undefined) add("description", patch.description);
+  if (patch.budgetMin !== undefined) add("budget_min", patch.budgetMin);
+  if (patch.budgetMax !== undefined) add("budget_max", patch.budgetMax);
+  if (patch.urgency !== undefined) add("urgency", patch.urgency);
+  if (patch.preferredPeriod !== undefined) add("preferred_period", patch.preferredPeriod);
+  if (patch.needsVisit !== undefined) add("needs_visit", patch.needsVisit ? 1 : 0);
+  if (patch.accessNotes !== undefined) add("access_notes", patch.accessNotes);
+  if (patch.shortAddress !== undefined) add("short_address", patch.shortAddress);
+  if (patch.preferredDate !== undefined) add("preferred_date", patch.preferredDate);
+  if (patch.answers !== undefined) add("answers", patch.answers ? JSON.stringify(patch.answers) : null);
+
+  if (!sets.length) return;
+
+  add("updated_at", nowMySqlDateTime());
+  values.push(requestId);
+
   await db
-    .prepare(
-      `UPDATE service_requests SET
-         title = ?1, description = ?2, budget_min = ?3, budget_max = ?4, urgency = ?5,
-         preferred_period = ?6, needs_visit = ?7, access_notes = ?8, short_address = ?9,
-         preferred_date = ?10, answers = ?11, updated_at = ?12
-       WHERE id = ?13`,
-    )
-    .bind(
-      patch.title ?? null, patch.description ?? null, patch.budgetMin ?? null, patch.budgetMax ?? null, patch.urgency ?? null,
-      patch.preferredPeriod ?? null, patch.needsVisit ? 1 : 0, patch.accessNotes ?? null, patch.shortAddress ?? null,
-      patch.preferredDate ?? null, patch.answers ? JSON.stringify(patch.answers) : null, nowMySqlDateTime(), requestId,
-    )
+    .prepare(`UPDATE service_requests SET ${sets.join(", ")} WHERE id = ?${values.length}`)
+    .bind(...values)
     .run();
+
   await writeAudit({ action: "service_request.update", entityType: "service_requests", entityId: requestId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
@@ -678,37 +964,78 @@ export async function expireStaleRequests(days = 14): Promise<number> {
   return rows.length;
 }
 
-export async function listRequestsFull(query: {
+export type RequestFilter = {
   countryCode?: string;
+  countryAliases?: string[];
   cityId?: string;
+  cityAliases?: string[];
+  districtId?: string;
+  districtAliases?: string[];
   categoryId?: string;
   status?: string;
+  /** Matches any of these statuses; ignored when `status` is set. */
+  statuses?: readonly string[];
   customerUserId?: string;
   urgency?: string;
-  limit?: number;
-} = {}): Promise<Array<Record<string, unknown>>> {
-  const db = await getServicesDb();
+  /** Case-insensitive LIKE match against `service_requests.title`. */
+  search?: string;
+};
+
+function buildRequestFilter(query: RequestFilter): { where: string; params: unknown[] } {
   const clauses: string[] = [];
   const params: unknown[] = [];
   const push = (value: unknown) => {
     params.push(value);
     return params.length;
   };
-  if (query.countryCode) clauses.push(`country_code = ?${push(String(query.countryCode).toUpperCase())}`);
-  if (query.cityId) clauses.push(`city_id = ?${push(query.cityId)}`);
+  const aliases = (values: string[] | undefined, fallback?: string): string[] => [...new Set(
+    (values?.length ? values : fallback ? [fallback] : [])
+      .flatMap((value) => {
+        const token = String(value).trim();
+        return token ? [token, token.toLocaleLowerCase("en"), token.toLocaleUpperCase("en")] : [];
+      }),
+  )];
+  const addAliases = (column: string, values: string[] | undefined, fallback?: string) => {
+    const tokens = aliases(values, fallback);
+    if (!tokens.length) return;
+    clauses.push(`${column} IN (${tokens.map((token) => `?${push(token)}`).join(", ")})`);
+  };
+  addAliases("country_code", query.countryAliases, query.countryCode);
+  addAliases("city_id", query.cityAliases, query.cityId);
+  addAliases("district_id", query.districtAliases, query.districtId);
   if (query.categoryId) clauses.push(`category_id = ?${push(query.categoryId)}`);
   if (query.status) clauses.push(`status = ?${push(query.status)}`);
+  else if (query.statuses?.length) clauses.push(`status IN (${query.statuses.map((status) => `?${push(status)}`).join(", ")})`);
   if (query.customerUserId) clauses.push(`customer_user_id = ?${push(query.customerUserId)}`);
   if (query.urgency) clauses.push(`urgency = ?${push(query.urgency)}`);
-  let sql = "SELECT * FROM service_requests";
-  if (clauses.length) sql += ` WHERE ${clauses.join(" AND ")}`;
-  sql += " ORDER BY created_at DESC";
+  if (query.search) clauses.push(`title LIKE ?${push(`%${query.search}%`)}`);
+  return { where: clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "", params };
+}
+
+export async function listRequestsFull(query: RequestFilter & { limit?: number; offset?: number } = {}): Promise<Array<Record<string, unknown>>> {
+  const db = await getServicesDb();
+  const { where, params } = buildRequestFilter(query);
+  let sql = `SELECT * FROM service_requests${where} ORDER BY created_at DESC`;
   if (query.limit) {
     params.push(Math.min(query.limit, 100));
     sql += ` LIMIT ?${params.length}`;
+    if (query.offset) {
+      params.push(query.offset);
+      sql += ` OFFSET ?${params.length}`;
+    }
   }
   const result = await db.prepare(sql).bind(...params).all<Record<string, unknown>>();
   return result.results ?? [];
+}
+
+export async function countRequestsFull(query: RequestFilter = {}): Promise<number> {
+  const db = await getServicesDb();
+  const { where, params } = buildRequestFilter(query);
+  const counted = await db
+    .prepare(`SELECT COUNT(*) AS count FROM service_requests${where}`)
+    .bind(...params)
+    .first<{ count: number }>();
+  return Number(counted?.count ?? 0);
 }
 
 export async function listMatchedRequestsForProvider(providerUserId: string, query: { status?: string; limit?: number } = {}): Promise<Array<Record<string, unknown>>> {
@@ -848,9 +1175,53 @@ export async function createOfferFull(input: NewOfferFull, actor?: ActorContext)
   const requestStatus = String(request.status);
   if (requestStatus !== REQUEST_STATUS.PUBLISHED && requestStatus !== REQUEST_STATUS.RECEIVING_OFFERS) throw new Error("REQUEST_NOT_OPEN");
 
+  if (String(request.customer_user_id) === input.providerUserId) throw new Error("SELF_OFFER_NOT_ALLOWED");
+
   const provider = await getProviderProfileByUserId(input.providerUserId);
   if (!provider) throw new Error("PROVIDER_PROFILE_REQUIRED");
   if (provider.status !== PROVIDER_STATUS.APPROVED) throw new Error("PROVIDER_NOT_APPROVED");
+
+  const providerCategories = await db
+    .prepare("SELECT category_id, price_from, price_to FROM service_provider_categories WHERE provider_id = ?1 AND is_active = 1")
+    .bind(String(provider.id))
+    .all<{ category_id: string; price_from: number | null; price_to: number | null }>();
+
+  const categoryRows = providerCategories.results ?? [];
+  const eligibility = computeMatchScore(
+    {
+      id: input.requestId,
+      category_id: String(request.category_id),
+      country_code: String(request.country_code),
+      city_id: request.city_id ? String(request.city_id) : null,
+      latitude: request.latitude == null ? null : Number(request.latitude),
+      longitude: request.longitude == null ? null : Number(request.longitude),
+      urgency: request.urgency ? String(request.urgency) : null,
+      budget_min: request.budget_min == null ? null : Number(request.budget_min),
+      budget_max: request.budget_max == null ? null : Number(request.budget_max),
+    },
+    {
+      id: String(provider.id),
+      user_id: input.providerUserId,
+      country_code: String(provider.country_code ?? ""),
+      city_id: provider.city_id ? String(provider.city_id) : null,
+      latitude: provider.latitude == null ? null : Number(provider.latitude),
+      longitude: provider.longitude == null ? null : Number(provider.longitude),
+      service_radius_km: provider.service_radius_km == null ? null : Number(provider.service_radius_km),
+      rating_avg: provider.rating_avg == null ? null : Number(provider.rating_avg),
+      rating_count: provider.rating_count == null ? null : Number(provider.rating_count),
+      completion_rate: provider.completion_rate == null ? null : Number(provider.completion_rate),
+      response_rate: provider.response_rate == null ? null : Number(provider.response_rate),
+      status: String(provider.status),
+      category_ids: categoryRows.map((entry) => entry.category_id),
+      price_ranges: categoryRows.map((entry) => ({
+        category_id: entry.category_id,
+        price_from: entry.price_from,
+        price_to: entry.price_to,
+      })),
+    },
+  );
+
+  if (!eligibility) throw new Error("PROVIDER_NOT_ELIGIBLE");
 
   const existing = await db
     .prepare("SELECT id FROM service_offers WHERE request_id = ?1 AND provider_user_id = ?2 AND status != 'withdrawn'")
@@ -869,7 +1240,7 @@ export async function createOfferFull(input: NewOfferFull, actor?: ActorContext)
      VALUES (?1, ?2, ?3, NULL, ?4, ?5, ?6, ?7, 'sent', ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?20)`,
     [
       crypto.randomUUID(), input.requestId, input.providerUserId,
-      price, input.currency ?? "OMR", input.durationDays ?? null, input.messageKey ?? null,
+      price, requireCurrencyCode(input.currency), input.durationDays ?? null, input.messageKey ?? null,
       input.materialsIncluded ? 1 : 0, num(input.materialCost) ?? null, num(input.laborCost) ?? null,
       num(input.visitFee) ?? null, num(input.taxAmount) ?? null, total,
       input.durationText ?? null, input.nearestDate ?? null, input.offerNotes ?? null,
@@ -908,7 +1279,7 @@ async function insertOfferRevision(offerId: string, input: NewOfferFull, revisio
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)`,
     [
       crypto.randomUUID(), offerId, revisionNumber, input.requestId, input.providerUserId,
-      price, input.currency ?? "OMR", total, input.durationText ?? null,
+      price, requireCurrencyCode(input.currency), total, input.durationText ?? null,
       num(input.materialCost) ?? null, num(input.laborCost) ?? null, num(input.visitFee) ?? null, num(input.taxAmount) ?? null,
       input.materialsIncluded ? 1 : 0, input.nearestDate ?? null, input.offerNotes ?? null, input.terms ?? null,
       input.needsVisit ? 1 : 0, input.reason ?? null, actor?.userId ?? null, nowMySqlDateTime(),
@@ -1041,17 +1412,30 @@ export async function acceptOfferFlow(offerId: string, byUserId: string, actor?:
   if (offer.status !== OFFER_STATUS.SENT) throw new Error("OFFER_NOT_SENT");
   if (isOfferExpired(offer)) throw new Error("OFFER_EXPIRED");
 
+  const existingOrder = await db
+    .prepare("SELECT id FROM service_orders WHERE request_id = ?1 LIMIT 1")
+    .bind(String(offer.request_id))
+    .first<{ id: string }>();
+  if (existingOrder) throw new Error("REQUEST_NOT_OPEN");
+
   const now = nowMySqlDateTime();
-  const orderId = await insertRow(
+  let orderId: string;
+  try {
+    orderId = await insertRow(
     db,
     `INSERT INTO service_orders
       (id, request_id, offer_id, customer_user_id, provider_user_id, price, currency, status, accepted_at, created_at, updated_at)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'accepted', ?8, ?8, ?8)`,
     [
       crypto.randomUUID(), offer.request_id, offer.id,
-      request.customer_user_id, offer.provider_user_id, offer.price, offer.currency ?? "OMR", now,
-    ],
-  );
+      request.customer_user_id, offer.provider_user_id, offer.price, requireCurrencyCode(offer.currency), now,
+      ],
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/unique|duplicate|already exists/i.test(message)) throw new Error("REQUEST_NOT_OPEN");
+    throw error;
+  }
 
   await db.prepare("UPDATE service_offers SET status = 'accepted', updated_at = ?1 WHERE id = ?2").bind(now, offerId).run();
   await db
@@ -1144,7 +1528,7 @@ export async function updateJobStatus(orderId: string, to: OrderStatus, byUserId
         .bind(nowMySqlDateTime(), String(order.provider_user_id))
         .run();
     }
-    if (String(order.request_id)) {
+    if (order.request_id != null && String(order.request_id).trim()) {
       await db
         .prepare("UPDATE service_requests SET status = 'completed', updated_at = ?1 WHERE id = ?2")
         .bind(nowMySqlDateTime(), String(order.request_id))
@@ -1177,8 +1561,8 @@ export async function getJobDetail(orderId: string, viewerUserId?: string | null
   const order = row(await db.prepare("SELECT * FROM service_orders WHERE id = ?1").bind(orderId).first<Record<string, unknown>>());
   if (!order) return null;
   if (viewerUserId && String(order.customer_user_id) !== viewerUserId && String(order.provider_user_id) !== viewerUserId) return null;
-  order.request = await getRequestFull(String(order.request_id));
-  order.offer = row(await db.prepare("SELECT * FROM service_offers WHERE id = ?1").bind(order.offer_id).first<Record<string, unknown>>());
+  order.request = order.request_id == null ? null : await getRequestFull(String(order.request_id));
+  order.offer = order.offer_id == null ? null : row(await db.prepare("SELECT * FROM service_offers WHERE id = ?1").bind(order.offer_id).first<Record<string, unknown>>());
   order.timeline = await listJobTimeline(orderId);
   order.messages = await threadMessages("order", orderId);
   order.reviews = await listReviews({ orderId });
@@ -1231,6 +1615,16 @@ export async function addReviewFull(input: {
   const order = await db.prepare("SELECT * FROM service_orders WHERE id = ?1").bind(input.orderId).first<Record<string, unknown>>();
   if (!order) throw new Error("ORDER_NOT_FOUND");
   if (order.status !== ORDER_STATUS.COMPLETED) throw new Error("ORDER_NOT_COMPLETED");
+
+  const isCustomer = String(order.customer_user_id) === input.reviewerUserId;
+  const isProvider = String(order.provider_user_id) === input.reviewerUserId;
+  if (!isCustomer && !isProvider) throw new Error("NOT_PARTICIPANT");
+
+  const expectedRevieweeUserId = isCustomer
+    ? String(order.provider_user_id)
+    : String(order.customer_user_id);
+  if (input.revieweeUserId !== expectedRevieweeUserId) throw new Error("INVALID_REVIEWEE");
+
   const existing = await db
     .prepare("SELECT id FROM service_reviews WHERE order_id = ?1 AND reviewer_user_id = ?2")
     .bind(input.orderId, input.reviewerUserId)
@@ -1241,8 +1635,8 @@ export async function addReviewFull(input: {
     db,
     `INSERT INTO service_reviews
       (id, order_id, reviewer_user_id, reviewee_user_id, rating, comment,
-       quality_rating, punctuality_rating, communication_rating, value_rating, recommend, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
+       quality_rating, punctuality_rating, communication_rating, value_rating, recommend, is_hidden, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, ?12)`,
     [
       crypto.randomUUID(), input.orderId, input.reviewerUserId, input.revieweeUserId,
       input.rating, input.comment ?? null,
@@ -1447,6 +1841,44 @@ export async function getAdminOverview(): Promise<{
     count("SELECT COUNT(*) AS count FROM service_orders"),
   ]);
   return { pendingProviders, approvedProviders, publishedRequests, openOffers, activeJobs, openReports, totalRequests, totalOffers, totalJobs };
+}
+
+export async function getAdminMarketplaceSnapshot(): Promise<{
+  recentProviders: Array<Record<string, unknown>>;
+  recentRequests: Array<Record<string, unknown>>;
+  recentOrders: Array<Record<string, unknown>>;
+  recentReports: Array<Record<string, unknown>>;
+}> {
+  const db = await getServicesDb();
+  const [providers, requests, orders, reports] = await Promise.all([
+    db.prepare(
+      `SELECT p.id, p.display_name_ar, p.display_name_en, p.business_name, p.status, p.phone,
+              p.governorate, p.is_featured, p.created_at
+       FROM service_provider_profiles p ORDER BY p.created_at DESC LIMIT 20`,
+    ).all<Record<string, unknown>>(),
+    db.prepare(
+      `SELECT r.id, r.reference_number, r.title, r.status, r.urgency, r.budget_min, r.budget_max,
+              r.currency, r.created_at, c.name_ar AS category_name_ar
+       FROM service_requests r LEFT JOIN service_categories c ON c.id = r.category_id
+       ORDER BY r.created_at DESC LIMIT 20`,
+    ).all<Record<string, unknown>>(),
+    db.prepare(
+      `SELECT o.id, o.status, o.agreed_price, o.currency, o.scheduled_at, o.created_at,
+              r.reference_number, r.title AS request_title
+       FROM service_orders o LEFT JOIN service_requests r ON r.id = o.request_id
+       ORDER BY o.created_at DESC LIMIT 20`,
+    ).all<Record<string, unknown>>(),
+    db.prepare(
+      `SELECT id, target_type, target_id, reason, status, created_at
+       FROM service_reports ORDER BY created_at DESC LIMIT 20`,
+    ).all<Record<string, unknown>>(),
+  ]);
+  return {
+    recentProviders: providers.results ?? [],
+    recentRequests: requests.results ?? [],
+    recentOrders: orders.results ?? [],
+    recentReports: reports.results ?? [],
+  };
 }
 
 /* ============================================================
@@ -1805,4 +2237,40 @@ export async function processOutbox(limit = 50): Promise<number> {
     }
   }
   return events.length;
+}
+
+/* ============================================================
+ * Participant analytics (canonical Services counters)
+ * ============================================================ */
+
+/**
+ * Canonical replacement for the counters `/api/service-analytics` used to read
+ * from the non-canonical Drizzle/PG service tables (`lib/db/schemas/services-schema.ts`).
+ *
+ * All five values come from the canonical marketplace store, keyed on the same
+ * account identifier (`user_id` / `customer_user_id` / `provider_user_id`) the
+ * rest of the marketplace uses.
+ */
+export async function getUserServiceAnalytics(userId: string): Promise<{
+  requests: number;
+  offers: number;
+  jobs: number;
+  completedJobs: number;
+  avgRating: number;
+}> {
+  const db = await getServicesDb();
+  const [requestsRow, offersRow, jobsRow, completedRow] = await Promise.all([
+    db.prepare("SELECT COUNT(*) AS count FROM service_requests WHERE customer_user_id = ?1").bind(userId).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) AS count FROM service_offers WHERE provider_user_id = ?1").bind(userId).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) AS count FROM service_orders WHERE provider_user_id = ?1").bind(userId).first<{ count: number }>(),
+    db.prepare("SELECT COUNT(*) AS count FROM service_orders WHERE provider_user_id = ?1 AND status = ?2").bind(userId, ORDER_STATUS.COMPLETED).first<{ count: number }>(),
+  ]);
+  const reviews = await providerReviews(userId);
+  return {
+    requests: Number(requestsRow?.count ?? 0),
+    offers: Number(offersRow?.count ?? 0),
+    jobs: Number(jobsRow?.count ?? 0),
+    completedJobs: Number(completedRow?.count ?? 0),
+    avgRating: reviews.ratingAvg,
+  };
 }

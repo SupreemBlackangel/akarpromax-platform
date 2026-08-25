@@ -59,6 +59,8 @@ export function distanceKm(
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+export const PLATFORM_MAX_SERVICE_RADIUS_KM = 10;
+
 const toNum = (value: unknown): number | null => {
   if (value == null || value === "") return null;
   const n = Number(value);
@@ -83,30 +85,40 @@ export function computeMatchScore(
   let score = 40;
   reasons.push("category_match");
 
+  const requestCity = String(request.city_id || "").trim().toLowerCase();
+  const providerCity = String(provider.city_id || "").trim().toLowerCase();
+
+  // Marketplace policy: a provider must serve the same city. Coordinates,
+  // when available on both sides, additionally enforce a hard 10 km cap.
+  if (requestCity && providerCity && requestCity !== providerCity) return null;
+
   const requestLat = toNum(request.latitude);
   const requestLng = toNum(request.longitude);
   const providerLat = toNum(provider.latitude);
   const providerLng = toNum(provider.longitude);
-  const radius = toNum(provider.service_radius_km) ?? 50;
+  const providerRadius = toNum(provider.service_radius_km) ?? PLATFORM_MAX_SERVICE_RADIUS_KM;
+  const effectiveRadius = Math.max(0.1, Math.min(providerRadius, PLATFORM_MAX_SERVICE_RADIUS_KM));
 
   let distance: number | null = null;
-  if (requestLat != null && requestLng != null && providerLat != null && providerLng != null) {
+  const requestHasGeo = requestLat != null && requestLng != null;
+  const providerHasGeo = providerLat != null && providerLng != null;
+
+  if (requestHasGeo && providerHasGeo) {
     distance = distanceKm(
       { latitude: requestLat, longitude: requestLng },
       { latitude: providerLat, longitude: providerLng },
     );
-    if (distance != null && distance > radius) return null;
+    if (distance != null && distance > effectiveRadius) return null;
     if (distance != null) {
-      score += Math.max(0, 30 - Math.round(distance));
-      reasons.push(`distance_${Math.round(distance)}km`);
+      score += Math.max(0, 30 - Math.round(distance * 2));
+      reasons.push(`distance_${Math.round(distance * 10) / 10}km`);
     }
   } else {
-    const requestCity = String(request.city_id || "").toLowerCase();
-    const providerCity = String(provider.city_id || "").toLowerCase();
-    if (requestCity && providerCity && requestCity === providerCity) {
-      score += 12;
-      reasons.push("same_city");
-    }
+    // Missing coordinates are allowed only when both sides still resolve to
+    // the same city; never fall back to country-wide matching.
+    if (!requestCity || !providerCity || requestCity !== providerCity) return null;
+    score += 12;
+    reasons.push("same_city");
   }
 
   const urgency = String(request.urgency || "").toLowerCase();

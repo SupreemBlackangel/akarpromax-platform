@@ -2,7 +2,7 @@ import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDay
 import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
 import { AD_CHANNELS, isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
-import { sectionVariants } from "@/src/constants/advertising";
+import { canonicalPlacementFor, sectionVariants } from "@/src/constants/advertising";
 import type { DeviceType } from "@/src/constants/advertising";
 
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
@@ -108,6 +108,7 @@ export function parseAd(row: AdEngineRow): ParsedAd {
     approvalStatus: row.approval_status,
     isActive: toBool(row.is_active),
     isFeatured: toBool(row.is_featured),
+    isFallback: toBool(row.is_fallback),
     isGlobal: toBool(row.is_global),
     totalImpressions: toNumber(row.total_impressions),
     totalClicks: toNumber(row.total_clicks),
@@ -128,6 +129,14 @@ type CreativeRow = {
   duration_seconds: number;
   status: string;
 };
+
+const ACTIVE_ADS_CACHE_TTL_MS = 30_000;
+const DAILY_STATS_CACHE_TTL_MS = 5_000;
+
+let activeAdsCache: { expiresAt: number; value: ParsedAd[] } | null = null;
+let activeAdsPromise: Promise<ParsedAd[]> | null = null;
+let dailyStatsCache: { key: string; expiresAt: number; value: Map<string, { campaign_id: string; impressions: number; unique_impressions: number; clicks: number; unique_clicks: number; conversions: number; spent_amount: number }> } | null = null;
+let dailyStatsPromise: Promise<Map<string, { campaign_id: string; impressions: number; unique_impressions: number; clicks: number; unique_clicks: number; conversions: number; spent_amount: number }>> | null = null;
 
 export async function loadCreatives(db: D1Database, campaignIds: string[]): Promise<Map<string, ParsedCreative[]>> {
   const map = new Map<string, ParsedCreative[]>();
@@ -160,7 +169,7 @@ export async function loadCreatives(db: D1Database, campaignIds: string[]): Prom
   return map;
 }
 
-export async function loadActiveAds(db: D1Database, now = new Date()): Promise<ParsedAd[]> {
+async function queryActiveAds(db: D1Database, now: Date): Promise<ParsedAd[]> {
   const rows = await db
     .prepare(
       `SELECT id, internal_name, advertiser_name, campaign_type, status, media_type,
@@ -198,22 +207,54 @@ export async function loadActiveAds(db: D1Database, now = new Date()): Promise<P
   return ads;
 }
 
+export async function loadActiveAds(db: D1Database, now = new Date()): Promise<ParsedAd[]> {
+  const timestamp = Date.now();
+  if (activeAdsCache && activeAdsCache.expiresAt > timestamp) return activeAdsCache.value;
+  if (activeAdsPromise) return activeAdsPromise;
+
+  activeAdsPromise = queryActiveAds(db, now)
+    .then((value) => {
+      activeAdsCache = { value, expiresAt: Date.now() + ACTIVE_ADS_CACHE_TTL_MS };
+      return value;
+    })
+    .finally(() => {
+      activeAdsPromise = null;
+    });
+  return activeAdsPromise;
+}
+
+type DailyStat = { campaign_id: string; impressions: number; unique_impressions: number; clicks: number; unique_clicks: number; conversions: number; spent_amount: number };
+
+async function loadDailyStats(db: D1Database, today: string): Promise<Map<string, DailyStat>> {
+  const timestamp = Date.now();
+  if (dailyStatsCache?.key === today && dailyStatsCache.expiresAt > timestamp) return dailyStatsCache.value;
+  if (dailyStatsPromise) return dailyStatsPromise;
+
+  dailyStatsPromise = db
+    .prepare(
+      `SELECT campaign_id, impressions, unique_impressions, clicks, unique_clicks, conversions, spent_amount
+       FROM ad_daily_statistics
+       WHERE stat_date = ?1`,
+    )
+    .bind(today)
+    .all<DailyStat>()
+    .then((daily) => {
+      const value = new Map<string, DailyStat>();
+      for (const row of daily.results) value.set(row.campaign_id, row);
+      dailyStatsCache = { key: today, value, expiresAt: Date.now() + DAILY_STATS_CACHE_TTL_MS };
+      return value;
+    })
+    .finally(() => {
+      dailyStatsPromise = null;
+    });
+  return dailyStatsPromise;
+}
+
 export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, now = new Date()): Promise<EngineStats> {
   const today = formatDateTime(now);
-  const dailyMap = new Map<string, { campaign_id: string; impressions: number; unique_impressions: number; clicks: number; unique_clicks: number; conversions: number; spent_amount: number }>();
 
   if (ctx.sessionId || ctx.userId) {
     const windowStart = frequencyWindowSince("day", now);
-    const daily = await db
-      .prepare(
-        `SELECT campaign_id, impressions, unique_impressions, clicks, unique_clicks, conversions, spent_amount
-         FROM ad_daily_statistics
-         WHERE stat_date = ?1`,
-      )
-      .bind(today)
-      .all<{ campaign_id: string; impressions: number; unique_impressions: number; unique_clicks: number; clicks: number; conversions: number; spent_amount: number }>();
-    for (const row of daily.results) dailyMap.set(row.campaign_id, row);
-
     const conditions = ["tracked_at >= ?"];
     const params: unknown[] = [windowStart];
     if (ctx.sessionId) {
@@ -224,7 +265,7 @@ export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, no
       conditions.push("user_id = ?");
       params.push(ctx.userId);
     }
-    const frequency = await db
+    const [dailyMap, frequency] = await Promise.all([loadDailyStats(db, today), db
       .prepare(
         `SELECT campaign_id, COUNT(*) AS n
          FROM ad_impressions
@@ -232,21 +273,13 @@ export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, no
          GROUP BY campaign_id`,
       )
       .bind(...(params as [unknown, ...unknown[]]))
-      .all<{ campaign_id: string; n: number }>();
+      .all<{ campaign_id: string; n: number }>()]);
     const frequencyMap = new Map<string, number>();
     for (const row of frequency.results) frequencyMap.set(row.campaign_id, row.n);
     return { daily: dailyMap, userFrequency: frequencyMap };
   }
 
-  const daily = await db
-    .prepare(
-      `SELECT campaign_id, impressions, unique_impressions, clicks, unique_clicks, conversions, spent_amount
-       FROM ad_daily_statistics
-       WHERE stat_date = ?1`,
-    )
-    .bind(today)
-    .all<{ campaign_id: string; impressions: number; unique_impressions: number; unique_clicks: number; clicks: number; conversions: number; spent_amount: number }>();
-  for (const row of daily.results) dailyMap.set(row.campaign_id, row);
+  const dailyMap = await loadDailyStats(db, today);
   return { daily: dailyMap, userFrequency: new Map() };
 }
 
@@ -267,6 +300,16 @@ function isChannelMatch(ad: ParsedAd, ctx: ResolvedAdContext): boolean {
 function isPlacementMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
   if (ad.placements.length === 0) return { ok: true, score: 50 };
   if (ad.placements.includes(ctx.placement)) return { ok: true, score: 100 };
+
+  const canonical = canonicalPlacementFor(ctx.placement);
+
+  if (
+    canonical &&
+    ad.placements.includes(canonical)
+  ) {
+    return { ok: true, score: 95 };
+  }
+
   return { ok: false, score: 0 };
 }
 
@@ -330,44 +373,39 @@ function isTagIntersect(adTypes: string[], tags: string[] | undefined): boolean 
 
 function isGeoMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; score: number } {
   const countryCode = ctx.countryCode?.toLowerCase() ?? "";
-  const hasCountry = Boolean(countryCode);
+  let score = 0;
 
-  if (hasCountry) {
-    if (!ad.targetAllCountries && ad.countries.length > 0 && !ad.countries.includes(countryCode)) {
-      return { ok: false, score: 0 };
-    }
-  }
-
-  if (ad.districtIds.length > 0 && !ad.targetAllDistricts) {
-    const district = ctx.districtId != null ? String(ctx.districtId).toLowerCase() : "";
-    if (!district || !ad.districtIds.some((item) => item.toLowerCase() === district)) return { ok: false, score: 0 };
-    return { ok: true, score: 90 };
+  if (ad.countries.length > 0 && !ad.targetAllCountries) {
+    if (!countryCode || !ad.countries.includes(countryCode)) return { ok: false, score: 0 };
+    score += 40;
   }
 
   if (ad.regionIds.length > 0 && !ad.targetAllRegions) {
     const region = ctx.regionId != null ? String(ctx.regionId).toLowerCase() : "";
     if (!region || !ad.regionIds.some((item) => item.toLowerCase() === region)) return { ok: false, score: 0 };
-    return { ok: true, score: 60 };
+    score += 60;
   }
 
   if (ad.cities.length > 0 && !ad.targetAllCities) {
-    const city = ctx.cityId != null ? String(ctx.cityId).toLowerCase() : ctx.cityId ? String(ctx.cityId).toLowerCase() : "";
+    const city = ctx.cityId != null ? String(ctx.cityId).toLowerCase() : "";
     if (!city || !ad.cities.some((item) => item.toLowerCase() === city)) return { ok: false, score: 0 };
-    return { ok: true, score: 75 };
+    score += 75;
   }
 
-  let score = hasCountry ? 40 : 0;
+  if (ad.districtIds.length > 0 && !ad.targetAllDistricts) {
+    const district = ctx.districtId != null ? String(ctx.districtId).toLowerCase() : "";
+    if (!district || !ad.districtIds.some((item) => item.toLowerCase() === district)) return { ok: false, score: 0 };
+    score += 90;
+  }
 
-  if (
-    ad.latitude != null &&
-    ad.longitude != null &&
-    ad.radiusKm != null &&
-    ad.radiusKm > 0 &&
-    ctx.latitude != null &&
-    ctx.longitude != null
-  ) {
-    const distance = calculateDistanceKm(ad.latitude, ad.longitude, ctx.latitude, ctx.longitude);
-    if (distance > ad.radiusKm) return { ok: false, score: 0 };
+  const targetLatitude = ad.latitude;
+  const targetLongitude = ad.longitude;
+  const targetRadiusKm = ad.radiusKm;
+  const hasRadiusTarget = targetLatitude != null && targetLongitude != null && targetRadiusKm != null && targetRadiusKm > 0;
+  if (hasRadiusTarget) {
+    if (ctx.latitude == null || ctx.longitude == null) return { ok: false, score: 0 };
+    const distance = calculateDistanceKm(targetLatitude, targetLongitude, ctx.latitude, ctx.longitude);
+    if (distance > targetRadiusKm) return { ok: false, score: 0 };
     score += Math.max(0, 100 - Math.round(distance));
   }
 
@@ -522,10 +560,57 @@ function campaignImpressions(ad: ParsedAd, stats?: EngineStats): number {
   return ad.totalImpressions + (daily?.impressions ?? 0);
 }
 
+const HOUSE_FILL_THRESHOLD = 3;
+
+function selectHouseCandidates(
+  allAds: ParsedAd[],
+  ctx: ResolvedAdContext,
+  used: Set<string>,
+  stats?: EngineStats,
+): ScoredAd[] {
+  const houseAds = allAds.filter(
+    (ad) => ad.isFallback && ad.isActive && ad.approvalStatus === "approved" && !used.has(ad.id),
+  );
+
+  const placementMatch = houseAds.filter(
+    (ad) => ad.placements.length === 0 || ad.placements.includes(ctx.placement),
+  );
+  const globalAds = placementMatch.filter((ad) => ad.isGlobal);
+  const placementSpecific = placementMatch.filter((ad) => !ad.isGlobal);
+  const ordered = [...placementSpecific, ...globalAds];
+
+  return ordered
+    .map((ad) => {
+      const section = isSectionMatch(ad, ctx);
+      const placement = isPlacementMatch(ad, ctx);
+      const device = isDeviceMatch(ad, ctx);
+      const language = isLanguageMatch(ad, ctx);
+      const geo = isGeoMatch(ad, ctx);
+      if (!geo.ok) return null;
+      const score =
+        (section.ok ? section.score : 0) +
+        (placement.ok ? placement.score : 0) +
+        (device.ok ? device.score : 0) +
+        (language.ok ? language.score : 0) +
+        (geo.ok ? geo.score : 0) +
+        ad.priority * 10 +
+        ad.weight;
+      return { ad, score };
+    })
+    .filter((candidate): candidate is ScoredAd => candidate !== null)
+    .sort((a, b) => {
+      if (a.ad.isGlobal !== b.ad.isGlobal) return a.ad.isGlobal ? 1 : -1;
+      if (a.ad.priority !== b.ad.priority) return a.ad.priority - b.ad.priority;
+      return b.ad.weight - a.ad.weight;
+    });
+}
+
 export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: MatchOptions = {}): Promise<AdMatchResult[]> {
   const now = options.now ?? new Date();
-  const ads = options.ads ?? (await loadActiveAds(db, now));
-  const stats = options.stats ?? (await loadEngineStats(db, ctx, now));
+  const [ads, stats] = await Promise.all([
+    options.ads ? Promise.resolve(options.ads) : loadActiveAds(db, now),
+    options.stats ? Promise.resolve(options.stats) : loadEngineStats(db, ctx, now),
+  ]);
   const count = Math.max(1, options.count ?? 1);
   const used = options.usedCampaignIds ?? new Set<string>();
 
@@ -554,6 +639,15 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
   if (picks.length < count) {
     const leftovers = allEligible.filter((candidate) => !used.has(candidate.ad.id));
     for (const candidate of leftovers) {
+      if (picks.length >= count) break;
+      picks.push(candidate);
+      used.add(candidate.ad.id);
+    }
+  }
+
+  if (picks.length < count) {
+    const houseCandidates = selectHouseCandidates(ads, ctx, used, stats);
+    for (const candidate of houseCandidates) {
       if (picks.length >= count) break;
       picks.push(candidate);
       used.add(candidate.ad.id);

@@ -1,0 +1,65 @@
+import { pgTable, text, integer, timestamp, boolean, uuid, jsonb, index } from 'drizzle-orm/pg-core';
+
+export const propertyOfferTypes = pgTable('property_offer_types', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull().unique(),
+  nameAr: text('name_ar').notNull(),
+  nameEn: text('name_en').notNull(),
+  nameTr: text('name_tr'),
+  descriptionAr: text('description_ar'),
+  descriptionEn: text('description_en'),
+  descriptionTr: text('description_tr'),
+  displayOrder: integer('display_order').default(0),
+  isActive: boolean('is_active').default(true),
+  allowDirect: boolean('allow_direct').default(true),
+  allowAuction: boolean('allow_auction').default(true),
+  allowFixedAuction: boolean('allow_fixed_auction').default(true),
+  allowOpenAuction: boolean('allow_open_auction').default(true),
+  allowedCountries: jsonb('allowed_countries').default([]),
+  allowedPropertyCategories: jsonb('allowed_property_categories').default([]),
+  requiresVerification: boolean('requires_verification').default(false),
+  requiresDocuments: boolean('requires_documents').default(false),
+  requiresTerms: boolean('requires_terms').default(true),
+  contractTemplateType: text('contract_template_type'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  codeIdx: index('property_offer_types_code_idx').on(table.code),
+  isActiveIdx: index('property_offer_types_is_active_idx').on(table.isActive),
+}));
+
+export const propertyOffers = pgTable('property_offers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  propertyId: uuid('property_id').notNull(),
+  offerTypeId: uuid('offer_type_id').references(() => propertyOfferTypes.id),
+  marketingMethod: text('marketing_method').notNull(),
+  auctionType: text('auction_type'),
+  status: text('status').default('draft'),
+  price: text('price'),
+  currency: text('currency').default('SAR'),
+  negotiable: boolean('negotiable').default(false),
+  details: jsonb('details').default({}),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  propertyIdIdx: index('property_offers_property_id_idx').on(table.propertyId),
+  offerTypeIdIdx: index('property_offers_offer_type_id_idx').on(table.offerTypeId),
+  statusIdx: index('property_offers_status_idx').on(table.status),
+}));
+
+export const propertyOfferTypesSeed = [
+  { code: 'SALE', nameAr: 'بيع', nameEn: 'Sale', allowDirect: true, allowAuction: true, allowFixedAuction: true, allowOpenAuction: true, contractTemplateType: 'SALE' },
+  { code: 'RENT', nameAr: 'إيجار', nameEn: 'Rent', allowDirect: true, allowAuction: true, allowFixedAuction: true, allowOpenAuction: true, contractTemplateType: 'LEASE' },
+  { code: 'TAQBEEL', nameAr: 'تقبيل', nameEn: 'Taqbeel', allowDirect: true, allowAuction: true, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'TAQBEEL' },
+  { code: 'FARAGH', nameAr: 'فروغ', nameEn: 'Faragh', allowDirect: true, allowAuction: false, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'FARAGH' },
+  { code: 'INVESTMENT', nameAr: 'استثمار', nameEn: 'Investment', allowDirect: true, allowAuction: true, allowFixedAuction: true, allowOpenAuction: true, contractTemplateType: 'INVESTMENT' },
+  { code: 'ASSIGNMENT', nameAr: 'تنازل', nameEn: 'Assignment', allowDirect: true, allowAuction: false, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'ASSIGNMENT' },
+  { code: 'USUFRUCT', nameAr: 'حق انتفاع', nameEn: 'Usufruct', allowDirect: true, allowAuction: true, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'USUFRUCT' },
+  { code: 'LEASE_TO_OWN', nameAr: 'إيجار منتهي بالتملك', nameEn: 'Lease to Own', allowDirect: true, allowAuction: false, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'LEASE_TO_OWN' },
+  { code: 'EXCHANGE', nameAr: 'مقايضة', nameEn: 'Exchange', allowDirect: true, allowAuction: false, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'EXCHANGE' },
+  { code: 'PARTNERSHIP', nameAr: 'شراكة', nameEn: 'Partnership', allowDirect: true, allowAuction: true, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'PARTNERSHIP' },
+  { code: 'SHARE_SALE', nameAr: 'بيع حصة', nameEn: 'Share Sale', allowDirect: true, allowAuction: false, allowFixedAuction: false, allowOpenAuction: false, contractTemplateType: 'SHARE_SALE' },
+];

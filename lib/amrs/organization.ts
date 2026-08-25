@@ -1,4 +1,5 @@
 import { eq, and, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { organizations, organizationMembers, organizationBranches } from "@/lib/db/schema";
 import type { OrganizationType, OrganizationClassification, OrganizationRole, OrganizationStatus } from "@/lib/amrs/contracts/common";
@@ -83,7 +84,7 @@ export async function createOrganization(
   const { db, end } = getDb();
   try {
     return await db.transaction(async (tx) => {
-      const baseSlug = slugify(input.nameEn || input.nameAr || `org-${Date.now()}`);
+      const baseSlug = slugify(input.nameEn || input.nameAr || "") || `org-${randomUUID().slice(0, 12)}`;
 
       let slug = baseSlug;
       let attempt = 0;
@@ -216,17 +217,48 @@ export async function addOrganizationMember(
 ): Promise<OrganizationMembershipRecord> {
   const { db, end } = getDb();
   try {
-    const [membership] = await db
-      .insert(organizationMembers)
-      .values({
-        organizationId,
-        userId,
-        role,
-        status: "active",
-        invitedBy,
-      })
-      .returning();
-    return membership as OrganizationMembershipRecord;
+    return await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, organizationId),
+            eq(organizationMembers.userId, userId),
+          ),
+        )
+        .limit(1);
+
+      if (existing?.status === "active") {
+        throw new Error("ALREADY_MEMBER");
+      }
+
+      if (existing) {
+        const [reactivated] = await tx
+          .update(organizationMembers)
+          .set({
+            role,
+            status: "active",
+            invitedBy,
+            joinedAt: new Date(),
+          })
+          .where(eq(organizationMembers.id, existing.id))
+          .returning();
+        return reactivated as OrganizationMembershipRecord;
+      }
+
+      const [membership] = await tx
+        .insert(organizationMembers)
+        .values({
+          organizationId,
+          userId,
+          role,
+          status: "active",
+          invitedBy,
+        })
+        .returning();
+      return membership as OrganizationMembershipRecord;
+    });
   } finally {
     await end();
   }

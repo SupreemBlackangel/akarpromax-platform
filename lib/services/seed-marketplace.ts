@@ -64,6 +64,17 @@ type CategorySeed = {
   dynamicFields: DynamicField[];
 };
 
+const GROUP_CATEGORIES: CategorySeed[] = [
+  { code: "home-maintenance", nameAr: "صيانة وإصلاح المنزل", nameEn: "Home maintenance & repair", nameTr: "Ev bakım ve onarım", icon: "Wrench", dynamicFields: [] },
+  { code: "construction-finishing", nameAr: "البناء والتشطيب", nameEn: "Construction & finishing", nameTr: "İnşaat ve bitirme", icon: "HardHat", dynamicFields: [] },
+  { code: "cleaning-care", nameAr: "التنظيف والعناية", nameEn: "Cleaning & care", nameTr: "Temizlik ve bakım", icon: "Sparkles", dynamicFields: [] },
+  { code: "moving-logistics", nameAr: "النقل والخدمات اللوجستية", nameEn: "Moving & logistics", nameTr: "Taşıma ve lojistik", icon: "Truck", dynamicFields: [] },
+  { code: "engineering-realestate", nameAr: "الهندسة والخدمات العقارية", nameEn: "Engineering & real estate", nameTr: "Mühendislik ve gayrimenkul", icon: "Landmark", dynamicFields: [] },
+  { code: "outdoor-security", nameAr: "الخدمات الخارجية والأمن", nameEn: "Outdoor & security", nameTr: "Dış mekan ve güvenlik", icon: "ShieldCheck", dynamicFields: [] },
+  { code: "business-professional", nameAr: "الخدمات المهنية والأعمال", nameEn: "Professional & business", nameTr: "Profesyonel ve iş hizmetleri", icon: "BriefcaseBusiness", dynamicFields: [] },
+  { code: "technology-media", nameAr: "التقنية والإعلام", nameEn: "Technology & media", nameTr: "Teknoloji ve medya", icon: "MonitorSmartphone", dynamicFields: [] },
+];
+
 const ROOT_CATEGORIES: CategorySeed[] = [
   { code: "cleaning", nameAr: "تنظيف", nameEn: "Cleaning", nameTr: "Temizlik", icon: "Sparkles", priceMin: 10, priceMax: 50, dynamicFields: [F.propertyType, F.area, F.rooms, F.serviceType, F.preferredDay] },
   { code: "maintenance", nameAr: "صيانة", nameEn: "Maintenance", nameTr: "Bakım", icon: "Wrench", requiresVisit: true, priceMin: 20, priceMax: 200, dynamicFields: [F.issue, F.propertyType, F.buildingAge, F.preferredDay, F.preferredTime] },
@@ -91,6 +102,39 @@ const ROOT_CATEGORIES: CategorySeed[] = [
   { code: "photography", nameAr: "تصوير عقاري", nameEn: "Property photography", nameTr: "Emlak fotoğrafçılığı", icon: "Camera", priceMin: 30, priceMax: 400, dynamicFields: [F.propertyType, F.area, F.preferredTime] },
   { code: "it-services", nameAr: "خدمات تقنية", nameEn: "IT services", nameTr: "BT hizmetleri", icon: "Monitor", priceMin: 20, priceMax: 500, dynamicFields: [F.serviceType, F.budgetNote] },
 ];
+
+const ADDITIONAL_CATEGORIES: CategorySeed[] = [
+  { code: "appliance-repair", nameAr: "صيانة الأجهزة المنزلية", nameEn: "Appliance repair", nameTr: "Ev aletleri onarımı", icon: "Refrigerator", requiresVisit: true, priceMin: 10, priceMax: 180, dynamicFields: [F.issue, F.brand, F.preferredTime] },
+  { code: "waterproofing", nameAr: "عزل مائي وحراري", nameEn: "Waterproofing & insulation", nameTr: "Su ve ısı yalıtımı", icon: "Umbrella", requiresVisit: true, priceMin: 80, priceMax: 2500, dynamicFields: [F.propertyType, F.area, F.issue] },
+  { code: "tiling", nameAr: "تركيب بلاط وسيراميك", nameEn: "Tiling", nameTr: "Fayans döşeme", icon: "Grid3X3", requiresVisit: true, priceMin: 40, priceMax: 1800, dynamicFields: [F.area, F.materials, F.preferredDay] },
+  { code: "gypsum", nameAr: "جبس وديكور", nameEn: "Gypsum & decor", nameTr: "Alçı ve dekor", icon: "PanelsTopLeft", requiresVisit: true, priceMin: 60, priceMax: 2500, dynamicFields: [F.area, F.style, F.budgetNote] },
+  { code: "glass-aluminum", nameAr: "ألمنيوم وزجاج", nameEn: "Aluminium & glass", nameTr: "Alüminyum ve cam", icon: "PanelTop", requiresVisit: true, priceMin: 50, priceMax: 3000, dynamicFields: [F.issue, F.area, F.materials] },
+  { code: "masonry", nameAr: "بناء وطابوق", nameEn: "Masonry", nameTr: "Duvarcılık", icon: "BrickWall", requiresVisit: true, priceMin: 100, priceMax: 5000, dynamicFields: [F.area, F.floors, F.materials] },
+  { code: "roofing", nameAr: "أسقف ومظلات", nameEn: "Roofing & shades", nameTr: "Çatı ve gölgelik", icon: "Warehouse", requiresVisit: true, priceMin: 100, priceMax: 6000, dynamicFields: [F.area, F.materials, F.budgetNote] },
+  { code: "elevators", nameAr: "مصاعد وسلالم كهربائية", nameEn: "Elevators & escalators", nameTr: "Asansör ve yürüyen merdiven", icon: "ArrowUpDown", requiresLicense: true, requiresVisit: true, priceMin: 150, priceMax: 15000, dynamicFields: [F.issue, F.floors, F.serviceType] },
+  { code: "solar-energy", nameAr: "طاقة شمسية", nameEn: "Solar energy", nameTr: "Güneş enerjisi", icon: "SunMedium", requiresLicense: true, requiresVisit: true, priceMin: 300, priceMax: 12000, dynamicFields: [F.propertyType, F.area, F.budgetNote] },
+  { code: "water-tanks", nameAr: "خزانات ومضخات مياه", nameEn: "Water tanks & pumps", nameTr: "Su deposu ve pompalar", icon: "Cylinder", requiresVisit: true, priceMin: 20, priceMax: 1200, dynamicFields: [F.issue, F.serviceType, F.preferredTime] },
+  { code: "locksmith", nameAr: "أقفال ومفاتيح", nameEn: "Locksmith", nameTr: "Çilingir", icon: "KeyRound", priceMin: 8, priceMax: 120, dynamicFields: [F.issue, F.preferredTime] },
+  { code: "curtains-upholstery", nameAr: "ستائر وتنجيد", nameEn: "Curtains & upholstery", nameTr: "Perde ve döşeme", icon: "Armchair", priceMin: 25, priceMax: 1000, dynamicFields: [F.furniture, F.materials, F.style] },
+  { code: "demolition-removal", nameAr: "هدم وإزالة مخلفات", nameEn: "Demolition & debris removal", nameTr: "Yıkım ve moloz kaldırma", icon: "Construction", requiresLicense: true, requiresVisit: true, priceMin: 100, priceMax: 8000, dynamicFields: [F.area, F.issue, F.access] },
+  { code: "facilities-management", nameAr: "إدارة وصيانة المرافق", nameEn: "Facilities management", nameTr: "Tesis yönetimi", icon: "BuildingCog", requiresLicense: true, priceMin: 200, priceMax: 10000, dynamicFields: [F.propertyType, F.area, F.serviceType] },
+  { code: "drone-photography", nameAr: "تصوير جوي ودرون", nameEn: "Drone photography", nameTr: "Drone çekimi", icon: "Plane", requiresLicense: true, priceMin: 80, priceMax: 800, dynamicFields: [F.propertyType, F.area, F.preferredTime] },
+];
+
+const ALL_SERVICE_CATEGORIES = [...ROOT_CATEGORIES, ...ADDITIONAL_CATEGORIES];
+
+const CATEGORY_GROUP_BY_CODE: Record<string, string> = {
+  cleaning: "cleaning-care", "home-services": "cleaning-care", "pest-control": "cleaning-care", "pool-cleaning": "cleaning-care",
+  maintenance: "home-maintenance", "ac-repair": "home-maintenance", electrical: "home-maintenance", plumbing: "home-maintenance", carpentry: "home-maintenance", "appliance-repair": "home-maintenance", locksmith: "home-maintenance", "water-tanks": "home-maintenance",
+  renovation: "construction-finishing", painting: "construction-finishing", waterproofing: "construction-finishing", tiling: "construction-finishing", gypsum: "construction-finishing", "glass-aluminum": "construction-finishing", masonry: "construction-finishing", roofing: "construction-finishing", elevators: "construction-finishing", "curtains-upholstery": "construction-finishing", "demolition-removal": "construction-finishing",
+  moving: "moving-logistics",
+  landscaping: "outdoor-security", security: "outdoor-security", "smart-home": "outdoor-security", "solar-energy": "outdoor-security",
+  "interior-design": "engineering-realestate", architectural: "engineering-realestate", surveying: "engineering-realestate", inspection: "engineering-realestate", "property-management": "engineering-realestate", "facilities-management": "engineering-realestate",
+  "legal-services": "business-professional", accounting: "business-professional", "real-estate-marketing": "business-professional",
+  photography: "technology-media", "drone-photography": "technology-media", "it-services": "technology-media",
+};
+
+const INSTANT_BOOKING_CODES = new Set(["cleaning", "home-services", "ac-repair", "electrical", "plumbing", "appliance-repair", "pest-control", "pool-cleaning", "locksmith"]);
 
 type ProviderSeed = {
   email: string;
@@ -291,58 +335,97 @@ const REQUESTS: RequestSeed[] = [
 ];
 
 export async function seedServicesMarketplace(db: SeedDb): Promise<void> {
-  await seedCategories(db);
+  await seedServiceTaxonomy(db);
   await seedUsersAndProviders(db);
   await seedRequests(db);
   await seedDemoJob(db);
 }
 
-async function seedCategories(db: SeedDb): Promise<void> {
+/**
+ * Production-safe reference data. It creates only the service taxonomy and
+ * never inserts demo users, providers, requests, offers, or jobs.
+ */
+export async function seedServiceTaxonomy(db: SeedDb): Promise<void> {
   const COUNTRY = "OM";
-  const sortOrders = new Map<string, number>();
-  for (const category of ROOT_CATEGORIES) {
-    const existing = await db
-      .prepare("SELECT id FROM service_categories WHERE country_code = ?1 AND code = ?2")
-      .bind(COUNTRY, category.code)
-      .first<{ id: string }>();
+  type ExistingCategory = { id: string; code: string };
+  const existingResult = await db
+    .prepare("SELECT id, code FROM service_categories WHERE country_code = ?1")
+    .bind(COUNTRY)
+    .all<ExistingCategory>();
+  const existingByCode = new Map((existingResult.results ?? []).map((category) => [category.code, category]));
+  const idByCode = new Map<string, string>();
+  for (const category of [...GROUP_CATEGORIES, ...ALL_SERVICE_CATEGORIES]) {
+    idByCode.set(category.code, existingByCode.get(category.code)?.id ?? crypto.randomUUID());
+  }
+
+  const statements: unknown[] = [];
+  const queueUpsert = (
+    category: CategorySeed,
+    parentId: string | null,
+    sortOrder: number,
+    options: { featured?: boolean; bookingMode?: "instant" | "quotes" | "both"; group?: boolean } = {},
+  ) => {
+    const descriptionAr = options.group
+      ? `خدمات ${category.nameAr} من محترفين موثوقين في سلطنة عُمان`
+      : `اطلب خدمة ${category.nameAr}، قارن العروض واختر المحترف الأنسب بثقة`;
+    const descriptionEn = options.group
+      ? `Trusted ${category.nameEn.toLowerCase()} services across Oman`
+      : `Request ${category.nameEn.toLowerCase()}, compare offers and choose the right professional`;
+    const descriptionTr = `${category.nameTr} hizmetlerini güvenilir uzmanlardan alın`;
+    const existing = existingByCode.get(category.code);
     if (existing) {
-      await db
-        .prepare(
-          `UPDATE service_categories
-           SET name_ar = ?1, name_en = ?2, name_tr = ?3, icon = ?4, image_url = NULL,
-               requires_license = ?5, requires_visit = ?6, price_min = ?7, price_max = ?8,
-               dynamic_fields = ?9, sort_order = ?10, updated_at = ?11
-           WHERE id = ?12`,
-        )
-        .bind(
-          category.nameAr, category.nameEn, category.nameTr,
-          category.icon, category.requiresLicense ? 1 : 0, category.requiresVisit ? 1 : 0,
-          category.priceMin ?? null, category.priceMax ?? null,
-          JSON.stringify(category.dynamicFields), sortOrders.get(category.code) ?? ROOT_CATEGORIES.indexOf(category) + 1,
-          nowSql(), existing.id,
-        )
-        .run();
-      continue;
+      // Upgrade the old flat/demo taxonomy exactly once. The legacy marker in
+      // its placeholder description disappears after this update, so later
+      // admin edits are never reset by the reference-data bootstrap.
+      statements.push(
+        db.prepare(
+          `UPDATE service_categories SET
+             parent_id = CASE WHEN description_ar LIKE '%وصف تفصيلي%' OR description_en LIKE '%detailed description%' THEN COALESCE(parent_id, ?1) ELSE parent_id END,
+             description_ar = CASE WHEN description_ar IS NULL OR description_ar LIKE '%وصف تفصيلي%' THEN ?2 ELSE description_ar END,
+             description_en = CASE WHEN description_en IS NULL OR description_en LIKE '%detailed description%' THEN ?3 ELSE description_en END,
+             description_tr = CASE WHEN description_tr IS NULL OR description_tr LIKE '%ayrıntılı açıklama%' THEN ?4 ELSE description_tr END,
+             booking_mode = CASE WHEN description_ar LIKE '%وصف تفصيلي%' OR description_en LIKE '%detailed description%' THEN ?5 ELSE booking_mode END,
+             is_featured = CASE WHEN description_ar LIKE '%وصف تفصيلي%' OR description_en LIKE '%detailed description%' THEN ?6 ELSE is_featured END,
+             updated_at = ?7
+           WHERE id = ?8`,
+        ).bind(parentId, descriptionAr, descriptionEn, descriptionTr, options.bookingMode ?? "quotes", options.featured ? 1 : 0, nowSql(), existing.id),
+      );
+      return;
     }
-    await db
-      .prepare(
+
+    statements.push(
+      db.prepare(
         `INSERT OR IGNORE INTO service_categories
           (id, parent_id, country_code, code, name_ar, name_en, name_tr, description_ar, description_en,
            description_tr, icon, image_url, requires_license, requires_visit, price_min, price_max,
-           dynamic_fields, sort_order, is_active, created_at, updated_at)
-         VALUES (?1, NULL, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, NULL, ?11, ?12, ?13, ?14, ?15, ?16, 1, ?17, ?17)`,
-      )
-      .bind(
-        crypto.randomUUID(), COUNTRY, category.code,
+           dynamic_fields, sort_order, is_active, is_featured, booking_mode, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, NULL, ?12, ?13, ?14, ?15,
+                 ?16, ?17, 1, ?18, ?19, ?20, ?20)`,
+      ).bind(
+        idByCode.get(category.code), parentId, COUNTRY, category.code,
         category.nameAr, category.nameEn, category.nameTr,
-        `${category.nameAr} - وصف تفصيلي`, `${category.nameEn} - detailed description`, `${category.nameTr} - ayrıntılı açıklama`,
+        descriptionAr, descriptionEn, descriptionTr,
         category.icon, category.requiresLicense ? 1 : 0, category.requiresVisit ? 1 : 0,
         category.priceMin ?? null, category.priceMax ?? null,
-        JSON.stringify(category.dynamicFields), ROOT_CATEGORIES.indexOf(category) + 1,
-        nowSql(),
-      )
-      .run();
+        JSON.stringify(category.dynamicFields), sortOrder,
+        options.featured ? 1 : 0, options.bookingMode ?? "quotes", nowSql(),
+      ),
+    );
+  };
+
+  for (const [index, group] of GROUP_CATEGORIES.entries()) {
+    queueUpsert(group, null, (index + 1) * 100, { group: true, bookingMode: "quotes" });
   }
+
+  for (const [index, category] of ALL_SERVICE_CATEGORIES.entries()) {
+    const groupCode = CATEGORY_GROUP_BY_CODE[category.code];
+    const parentId = groupCode ? idByCode.get(groupCode) ?? null : null;
+    queueUpsert(category, parentId, index + 1, {
+      featured: index < 12,
+      bookingMode: INSTANT_BOOKING_CODES.has(category.code) ? "both" : "quotes",
+    });
+  }
+  if (statements.length) await db.batch(statements);
 }
 
 async function seedUsersAndProviders(db: SeedDb): Promise<void> {

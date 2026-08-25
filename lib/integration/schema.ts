@@ -114,6 +114,30 @@ export const INTEGRATION_TABLES_SQL: string[] = [
     payload TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  `CREATE TABLE IF NOT EXISTS office_property_links (
+    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    sponsor_id VARCHAR(80) NOT NULL,
+    device_id VARCHAR(36) NULL,
+    external_id VARCHAR(120) NOT NULL,
+    property_id VARCHAR(64) NOT NULL,
+    status VARCHAR(24) NOT NULL DEFAULT 'active',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS office_property_media_links (
+    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    sponsor_id VARCHAR(80) NOT NULL,
+    device_id VARCHAR(36) NULL,
+    property_id VARCHAR(64) NOT NULL,
+    external_id VARCHAR(120) NOT NULL,
+    media_key VARCHAR(160) NOT NULL,
+    content_hash VARCHAR(64) NULL,
+    media_id VARCHAR(64) NOT NULL,
+    object_key VARCHAR(255) NOT NULL,
+    status VARCHAR(24) NOT NULL DEFAULT 'active',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
   `CREATE TABLE IF NOT EXISTS office_news_deliveries (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     news_id VARCHAR(36) NOT NULL,
@@ -149,6 +173,11 @@ export const INTEGRATION_INDEXES_SQL: string[] = [
   `CREATE INDEX IF NOT EXISTS office_realtime_scope_idx ON office_realtime_events (scope, sponsor_id, office_id, created_at)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS office_realtime_event_id_unique ON office_realtime_events (event_id)`,
   `CREATE INDEX IF NOT EXISTS office_news_device_idx ON office_news_deliveries (device_id, news_id)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS office_property_links_sponsor_external_unique ON office_property_links (sponsor_id, external_id)`,
+  `CREATE INDEX IF NOT EXISTS office_property_links_property_idx ON office_property_links (property_id)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS office_property_media_links_key_unique ON office_property_media_links (property_id, media_key)`,
+  `CREATE INDEX IF NOT EXISTS office_property_media_links_sponsor_idx ON office_property_media_links (sponsor_id, external_id)`,
+  `CREATE INDEX IF NOT EXISTS office_property_media_links_media_idx ON office_property_media_links (media_id)`,
 ];
 
 function isDuplicateKeyError(message: string): boolean {

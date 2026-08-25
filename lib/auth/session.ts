@@ -1,8 +1,8 @@
 import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 
-import { users } from "@/lib/db/schema";
+import { users, sessionRevocations } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
 import { permissionsForSessionRole } from "@/lib/auth/identity-map";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
@@ -89,6 +89,48 @@ export function resetRevokedSessionsForTests(): void {
   revokedSessionJtis.clear();
 }
 
+/**
+ * Durable revocation: Next bundles route handlers and server pages as separate
+ * module graphs (and dev additionally splits request workers), so the in-memory
+ * `revokedSessionJtis` set above is NOT shared by the page bundle. Logout would
+ * revoke for `/api/*` but still leave SSR pages accepting the old cookie.
+ * Persisting the jti in PG makes the check shared across every bundle/process.
+ */
+export async function persistSessionRevocation(jti: string, userId: string, expiresAt: Date): Promise<void> {
+  try {
+    const { db, end } = getDb();
+    try {
+      await db
+        .insert(sessionRevocations)
+        .values({ jti, userId, revokedAt: new Date(), expiresAt })
+        .onConflictDoNothing();
+      await db.delete(sessionRevocations).where(lt(sessionRevocations.expiresAt, new Date()));
+    } finally {
+      await end();
+    }
+  } catch {
+    // Non-fatal: the in-memory set still revokes within the current bundle.
+  }
+}
+
+async function isPersistedSessionRevoked(jti: string): Promise<boolean> {
+  try {
+    const { db, end } = getDb();
+    try {
+      const rows = await db
+        .select({ jti: sessionRevocations.jti })
+        .from(sessionRevocations)
+        .where(eq(sessionRevocations.jti, jti))
+        .limit(1);
+      return rows.length > 0;
+    } finally {
+      await end();
+    }
+  } catch {
+    return false;
+  }
+}
+
 export type SessionCookieOptions = {
   httpOnly: boolean;
   secure: boolean;
@@ -124,7 +166,10 @@ export async function createSession(payload: CreateSessionInput) {
 export async function getSession(explicitCookieHeader?: string): Promise<SessionPayload | null> {
   const token = await readSessionCookieValue(explicitCookieHeader);
   if (!token) return null;
-  return verifySessionPayload(token, currentSecret());
+  const payload = await verifySessionPayload(token, currentSecret());
+  if (!payload) return null;
+  if (await isPersistedSessionRevoked(payload.jti)) return null;
+  return payload;
 }
 
 async function readSessionCookieValue(explicitCookieHeader?: string): Promise<string | null> {
@@ -162,6 +207,7 @@ function parseCookieHeader(raw: string): Record<string, string> {
 export async function getSessionUser(token: string) {
   const payload = await verifySessionPayload(token, currentSecret());
   if (!payload) return null;
+  if (await isPersistedSessionRevoked(payload.jti)) return null;
   try {
     const { db, end } = getDb();
     try {
@@ -186,6 +232,7 @@ export async function destroySession() {
     const payload = await verifySessionPayload(token, currentSecret());
     if (payload?.jti) {
       revokeSessionJti(payload.jti);
+      await persistSessionRevocation(payload.jti, payload.userId, new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000));
       logSecurityEvent("AUTH_SESSION_INVALIDATED", {});
     }
   }

@@ -192,6 +192,7 @@ export type ParsedAd = {
   approvalStatus: string;
   isActive: boolean;
   isFeatured: boolean;
+  isFallback: boolean;
   isGlobal: boolean;
   totalImpressions: number;
   totalClicks: number;

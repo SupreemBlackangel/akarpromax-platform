@@ -4,7 +4,8 @@ import { ensureAdSchema } from "@/lib/ad-schema";
 import { ensureI18nSchema } from "@/lib/i18n-schema";
 import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
-import { seedServicesMarketplace } from "@services/seed-marketplace";
+import { seedServiceTaxonomy, seedServicesMarketplace } from "@services/seed-marketplace";
+import { isServicesDemoSeedEnabled } from "@/lib/services/demo-seed-gate";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
 import { ensureNewsSchema } from "@/lib/news/schema";
 
@@ -645,7 +646,18 @@ async function ensureMysqlSchema(db: D1Database): Promise<void> {
   await seedNews(db);
   await seedSponsorPlans(db);
   await seedLocalAdminAccess(db);
-  await seedServicesMarketplace(db);
+
+  // The Services taxonomy is reference/catalog data and stays unconditional:
+  // without it a fresh market has no professions to register against.
+  await seedServiceTaxonomy(db);
+
+  // L1C-0.5B1 — CONTAINED. The unconditional Services marketplace demo seed
+  // that used to run on every MySQL bootstrap is removed. The demo graph now
+  // requires the explicit SEED_DEMO_DATA=true opt-in and is refused under
+  // NODE_ENV=production. See lib/services/demo-seed-gate.ts.
+  if (isServicesDemoSeedEnabled()) {
+    await seedServicesMarketplace(db);
+  }
 }
 
 async function seedLocalAdminAccess(db: D1Database) {

@@ -46,6 +46,11 @@ function cleanNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function cleanCoordinate(value: unknown, limit: number): number | undefined {
+  const parsed = cleanNumber(value);
+  return parsed != null && parsed >= -limit && parsed <= limit ? parsed : undefined;
+}
+
 function cleanTagList(value: unknown, maxItems = 30): string[] {
   if (!Array.isArray(value)) return [];
   return [...new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim().toLowerCase()).filter((item) => item.length > 0 && item.length <= 60))].slice(0, maxItems);
@@ -82,8 +87,8 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
     regionId: input.regionId != null ? String(input.regionId).slice(0, 100) : undefined,
     cityId: input.cityId != null ? String(input.cityId).slice(0, 100) : undefined,
     districtId: input.districtId != null ? String(input.districtId).slice(0, 100) : undefined,
-    latitude: cleanNumber(input.latitude),
-    longitude: cleanNumber(input.longitude),
+    latitude: cleanCoordinate(input.latitude, 90),
+    longitude: cleanCoordinate(input.longitude, 180),
     language,
     deviceType,
     operatingSystem: operatingSystem || undefined,
@@ -98,5 +103,5 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
 }
 
 export function isValidPlacement(placement: string): boolean {
-  return placement.length > 0 && placement.length <= 64 && /^[a-z0-9_-]+$/.test(placement) && Boolean(AD_PLACEMENTS[placement]);
+  return placement.length > 0 && placement.length <= 64 && /^[a-z0-9_-]+$/i.test(placement) && Boolean(AD_PLACEMENTS[placement]);
 }

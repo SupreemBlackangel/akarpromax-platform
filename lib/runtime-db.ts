@@ -1,4 +1,3 @@
-import { getMysqlRuntimeDb } from "@/lib/mysql-runtime";
 import { getPgRuntimeDb } from "@/lib/pg-runtime";
 import { ensureContentSchema } from "@/lib/content-schema";
 import { getRuntimeEnv, type DbProvider } from "@/lib/config/runtime-env";
@@ -58,7 +57,7 @@ export function selectSchemaMode(): Promise<SchemaSelection> {
           db = await getPgRuntimeDb();
           break;
         case "mysql":
-          db = await getMysqlRuntimeDb();
+          db = await (await import("@/lib/mysql-runtime")).getMysqlRuntimeDb();
           break;
         case "d1":
           db = (await import("cloudflare:workers")).env.DB as D1Database;

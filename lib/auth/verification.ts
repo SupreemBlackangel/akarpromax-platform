@@ -68,9 +68,9 @@ export async function buildVerificationRecord(params: {
   now?: Date;
 }): Promise<VerificationRecord> {
   const now = params.now ?? new Date();
-  const ttl = params.ttlMs ?? (params.purpose === "otp" || params.purpose === "password_reset" ? OTP_TTL_MS : VERIFICATION_TOKEN_TTL_MS);
   const withToken = params.withToken ?? true;
   const withOtp = params.withOtp ?? false;
+  const ttl = params.ttlMs ?? (withOtp && !withToken ? OTP_TTL_MS : VERIFICATION_TOKEN_TTL_MS);
   const tokenValue = withToken ? (params.tokenValue ?? (await generateVerificationTokenValue())) : undefined;
   const otpValue = withOtp ? (params.otpValue ?? generateOtpValue()) : undefined;
   return {

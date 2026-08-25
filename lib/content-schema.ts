@@ -2,7 +2,8 @@ import { ensureAdSchema } from "@/lib/ad-schema";
 import { ensureI18nSchema } from "@/lib/i18n-schema";
 import { ensureServicesSchema } from "@/lib/services-schema";
 import { ensureServicesMarketplaceSchema } from "@/lib/services-marketplace-schema";
-import { seedServicesMarketplace } from "@services/seed-marketplace";
+import { seedServiceTaxonomy, seedServicesMarketplace } from "@services/seed-marketplace";
+import { isServicesDemoSeedEnabled } from "@/lib/services/demo-seed-gate";
 import { ensurePropertiesSchema } from "@/lib/properties-schema";
 import { ensureCompanySchema } from "@/lib/company-schema";
 import { ensureIntegrationSchema } from "@/lib/integration/schema";
@@ -545,7 +546,7 @@ async function seedSponsorPlans(db: D1Database) {
  * Postgres (PgRuntimeDb) adapter. Both dialects accept this DDL after the
  * adapter's translateSql() applies placeholder/conflict transforms.
  */
-export const CONTENT_SCHEMA_VERSION = 1;
+export const CONTENT_SCHEMA_VERSION = 3;
 
 const SCHEMA_META_SQL =
   `CREATE TABLE IF NOT EXISTS ak_content_schema_meta (version INTEGER PRIMARY KEY NOT NULL)`.trim();
@@ -558,14 +559,32 @@ async function isContentSchemaApplied(db: D1Database): Promise<boolean> {
   return !!row;
 }
 
+async function isContentSchemaVersionApplied(db: D1Database, version: number): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT 1 AS ok FROM ak_content_schema_meta WHERE version = ?1")
+    .bind(version)
+    .first<{ ok: number }>();
+  return !!row;
+}
+
 export async function ensureContentSchema(db: D1Database): Promise<void> {
-  // Fast path: in production the schema bootstrap is a set of round trips per
-  // statement against a remote Postgres/MySQL target (~100s on first boot).
-  // Once applied, skip the full DDL+seed run on every subsequent boot via the
-  // ak_content_schema_meta latch. In development (D1 local / dev) we always
-  // re-run the idempotent DDL + COUNT-guarded seeds so a locally-cleared DB
-  // repopulates automatically on restart.
-  if (isProduction() && (await isContentSchemaApplied(db).catch(() => false))) return;
+  // Remote Postgres/MySQL must never replay hundreds of DDL statements from a
+  // request path. Use the schema-version latch in both development and
+  // production; only local D1 keeps the convenient restart bootstrap.
+  const configuredProvider = String(process.env.DB_PROVIDER ?? "d1").toLowerCase();
+  const useSchemaLatch = isProduction() || configuredProvider === "postgres" || configuredProvider === "mysql";
+  if (useSchemaLatch) {
+    if (await isContentSchemaApplied(db).catch(() => false)) return;
+    // v3 only upgrades the canonical services taxonomy. Databases already on
+    // v2 have every required table/column, so avoid a multi-minute replay of
+    // the full remote schema bootstrap.
+    if (await isContentSchemaVersionApplied(db, 2).catch(() => false)) {
+      await seedServiceTaxonomy(db);
+      await db.prepare(SCHEMA_META_SQL).run();
+      await db.prepare("INSERT OR IGNORE INTO ak_content_schema_meta (version) VALUES (?1)").bind(CONTENT_SCHEMA_VERSION).run();
+      return;
+    }
+  }
   await db.batch(CONTENT_TABLES_SQL.map((sql) => db.prepare(sql)));
   await ensureAdSchema(db);
   await ensureI18nSchema(db);
@@ -575,6 +594,9 @@ export async function ensureContentSchema(db: D1Database): Promise<void> {
   await ensureCompanySchema(db);
   await ensureIntegrationSchema(db);
   await ensureNewsSchema(db);
+  // The catalog is production reference data, not demo content. Without it a
+  // fresh market has no professions to register against or request.
+  await seedServiceTaxonomy(db);
 
   // Demo/seeding data is a development/preview concern only. Production boots
   // run schema (DDL) but must NOT inject demo rows through the request path;
@@ -585,6 +607,14 @@ export async function ensureContentSchema(db: D1Database): Promise<void> {
     await seedSponsorPlans(db);
     await seedIntegrationDemo(db);
     await seedNews(db);
+  }
+
+  // L1C-0.5B1 — CONTAINED. The Services marketplace demo graph (providers,
+  // customer requests, offers, orders, reviews, timeline) is operational
+  // Services data. It is NOT enabled by non-production mode: it requires the
+  // explicit SEED_DEMO_DATA=true opt-in and is refused under NODE_ENV=production.
+  // See lib/services/demo-seed-gate.ts. Reference taxonomy above is unaffected.
+  if (isServicesDemoSeedEnabled()) {
     await seedServicesMarketplace(db);
   }
   await db.prepare(SCHEMA_META_SQL).run();

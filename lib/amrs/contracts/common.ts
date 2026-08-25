@@ -40,7 +40,7 @@ export type ActivityLevel =
 
 export type AvailabilityState = "available" | "limited" | "unavailable";
 
-export type OrganizationType = "real_estate" | "business" | "other";
+export type OrganizationType = "real_estate" | "law_office" | "business" | "other";
 
 export type OrganizationClassification =
   | "startup"
@@ -63,7 +63,7 @@ export type ProfessionalStatus =
 export type OrganizationStatus =
   | "draft"
   | "pending_review"
-  | "active"
+  | "active" | "rejected"
   | "suspended"
   | "deleted";
 

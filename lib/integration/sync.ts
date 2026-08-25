@@ -4,6 +4,12 @@ import {
   type OfficeSyncStatus,
   type OfficeSyncOperationType,
 } from "@/lib/integration/constants";
+import {
+  OfficePropertyError,
+  archiveOfficeProperty,
+  getOfficePropertyLink,
+  upsertOfficeProperty,
+} from "@/lib/integration/office-property";
 
 export type SyncPushItem = {
   operationType: OfficeSyncOperationType;
@@ -34,6 +40,8 @@ export type SyncPushResult = {
     idempotencyKey: string;
     status: OfficeSyncStatus;
     entityId: string;
+    /** Canonical `properties.id` this office entity maps to, when known. */
+    propertyId?: string | null;
     conflictReason?: string;
     serverCopy?: Record<string, unknown> | null;
   }>;
@@ -47,96 +55,51 @@ function nowIso(): string {
   return new Date().toISOString().slice(0, 19).replace("T", " ");
 }
 
-const PROPERTY_NOT_NULL_DEFAULTS: Record<string, unknown> = {
-  status: "active",
-  listing_type: "for-sale",
-  property_type: "villa",
-  country_code: "om",
-  currency: "OMR",
-  title_ar: "",
-  title_en: "",
-  title_tr: "",
-  description_ar: "",
-  description_en: "",
-  description_tr: "",
-  price: 0,
-  bedrooms: 0,
-  bathrooms: 0,
-  parking_slots: 0,
-  features_ar: "[]",
-  features_en: "[]",
-  features_tr: "[]",
-  is_featured: 0,
-  priority: 100,
-};
+/**
+ * Office sync writes property data through lib/integration/office-property.ts,
+ * which owns the canonical `properties` model, the sponsor-scoped identity
+ * mapping and the moderation status. This module only owns the operation log,
+ * the idempotency guarantee and the conflict decision.
+ */
+const SUPPORTED_OPERATIONS = new Set<string>(["property.upsert", "property.delete"]);
 
-function pickPropertyColumns(payload: Record<string, unknown>): Array<[string, unknown]> {
-  const entries: Array<[string, unknown]> = [];
-  const columns: Array<[string, string]> = [
-    ["slug", "slug"],
-    ["status", "status"],
-    ["listingType", "listing_type"],
-    ["propertyType", "property_type"],
-    ["countryCode", "country_code"],
-    ["cityId", "city_id"],
-    ["district", "district"],
-    ["titleAr", "title_ar"],
-    ["titleEn", "title_en"],
-    ["titleTr", "title_tr"],
-    ["areaTextAr", "area_text_ar"],
-    ["areaTextEn", "area_text_en"],
-    ["areaTextTr", "area_text_tr"],
-    ["descriptionAr", "description_ar"],
-    ["descriptionEn", "description_en"],
-    ["descriptionTr", "description_tr"],
-    ["price", "price"],
-    ["currency", "currency"],
-    ["builtUpArea", "built_up_area"],
-    ["landArea", "land_area"],
-    ["bedrooms", "bedrooms"],
-    ["bathrooms", "bathrooms"],
-    ["parkingSlots", "parking_slots"],
-    ["featuresAr", "features_ar"],
-    ["featuresEn", "features_en"],
-    ["featuresTr", "features_tr"],
-    ["imageUrl", "image_url"],
-    ["isFeatured", "is_featured"],
-    ["priority", "priority"],
-  ];
-  for (const [source, column] of columns) {
-    const value = payload[source];
-    if (value !== undefined && value !== null) {
-      entries.push([column, column.startsWith("features_") ? JSON.stringify(value) : value]);
-    }
-  }
-  for (const [column, fallback] of Object.entries(PROPERTY_NOT_NULL_DEFAULTS)) {
-    if (!entries.some(([name]) => name === column)) entries.push([column, fallback]);
-  }
-  return entries;
-}
-
-const OPERATION_FIELD_MAP: Record<string, { table: string; keyColumn: string; pickColumns: (payload: Record<string, unknown>) => Array<[string, unknown]> }> = {
-  "property.upsert": {
-    table: "property_listings",
-    keyColumn: "id",
-    pickColumns: pickPropertyColumns,
-  },
-};
-
-async function serverVersionOf(db: D1Database, operationType: string, entityId: string): Promise<{ updatedAt: string | null; row: Record<string, unknown> | null }> {
-  const mapping = OPERATION_FIELD_MAP[operationType];
-  if (!mapping) return { updatedAt: null, row: null };
+async function serverVersionOf(
+  db: D1Database,
+  sponsorId: string,
+  operationType: string,
+  entityId: string,
+): Promise<{ updatedAt: string | null; row: Record<string, unknown> | null; propertyId: string | null }> {
+  if (!SUPPORTED_OPERATIONS.has(operationType)) return { updatedAt: null, row: null, propertyId: null };
+  const link = await getOfficePropertyLink(sponsorId, entityId);
+  if (!link) return { updatedAt: null, row: null, propertyId: null };
   const row = await db
-    .prepare(`SELECT * FROM ${mapping.table} WHERE ${mapping.keyColumn} = ?1 LIMIT 1`)
-    .bind(entityId)
+    .prepare("SELECT * FROM properties WHERE id = ?1 LIMIT 1")
+    .bind(link.propertyId)
     .first<Record<string, unknown>>();
-  return { updatedAt: row?.updated_at ? String(row.updated_at) : null, row: row ?? null };
+  return {
+    updatedAt: row?.updated_at ? String(row.updated_at) : null,
+    row: row ?? null,
+    propertyId: link.propertyId,
+  };
 }
 
-export async function syncPush(deviceId: string, items: SyncPushItem[], decideConflict?: (server: Record<string, unknown> | null, incoming: SyncPushItem) => SyncConflictDecision): Promise<SyncPushResult> {
+/**
+ * Applies a batch of office operations.
+ *
+ * `sponsorId` MUST come from the authenticated device credential. It is the
+ * only ownership key used to resolve, create or archive a property, so a device
+ * can never reach a row belonging to another sponsor no matter what it sends.
+ */
+export async function syncPush(
+  deviceId: string,
+  sponsorId: string,
+  items: SyncPushItem[],
+  decideConflict?: (server: Record<string, unknown> | null, incoming: SyncPushItem) => SyncConflictDecision,
+): Promise<SyncPushResult> {
   const db = await getIntegrationDb();
   const result: SyncPushResult = { accepted: 0, conflicts: 0, duplicates: 0, items: [] };
   const now = nowIso();
+  const owner = String(sponsorId ?? "").trim();
 
   for (const item of items) {
     const existingOp = await db
@@ -145,13 +108,22 @@ export async function syncPush(deviceId: string, items: SyncPushItem[], decideCo
       .first<{ id: string; status: string }>();
 
     if (existingOp && existingOp.status === "synced") {
+      // Idempotent replay: report the mapping again, never write a second row.
+      const replayLink = await getOfficePropertyLink(owner, item.entityId);
       result.duplicates += 1;
-      result.items.push({ idempotencyKey: item.idempotencyKey, status: "synced", entityId: item.entityId });
+      result.items.push({
+        idempotencyKey: item.idempotencyKey,
+        status: "synced",
+        entityId: item.entityId,
+        propertyId: replayLink?.propertyId ?? null,
+      });
       continue;
     }
 
     const opId = existingOp?.id ?? crypto.randomUUID();
-    const { updatedAt: serverUpdatedAt, row: serverRow } = await serverVersionOf(db, item.operationType, item.entityId);
+    const { updatedAt: serverUpdatedAt, row: serverRow, propertyId: linkedPropertyId } =
+      await serverVersionOf(db, owner, item.operationType, item.entityId);
+    let propertyId: string | null = linkedPropertyId;
 
     let finalStatus: OfficeSyncStatus = "synced";
     let conflictReason: string | null = null;
@@ -168,6 +140,7 @@ export async function syncPush(deviceId: string, items: SyncPushItem[], decideCo
           idempotencyKey: item.idempotencyKey,
           status: "conflict",
           entityId: item.entityId,
+          propertyId,
           conflictReason,
           serverCopy: serverRow,
         });
@@ -178,45 +151,42 @@ export async function syncPush(deviceId: string, items: SyncPushItem[], decideCo
     }
 
     if (shouldApply) {
-      const mapping = OPERATION_FIELD_MAP[item.operationType];
-      if (!mapping) {
+      if (!SUPPORTED_OPERATIONS.has(item.operationType)) {
         finalStatus = "failed";
         conflictReason = "unsupported_operation";
+      } else if (!owner) {
+        finalStatus = "failed";
+        conflictReason = "SPONSOR_REQUIRED";
       } else {
         try {
           if (item.operationType === "property.upsert") {
-            const pairs = OPERATION_FIELD_MAP["property.upsert"].pickColumns(item.payload);
-            const cols = pairs.map(([name]) => name);
-            if (!cols.length) {
-              finalStatus = "failed";
-              conflictReason = "empty_payload";
-            } else {
-              const values = cols.map((name) => pairs.find(([c]) => c === name)?.[1]);
-              const insertCols = ["id", ...cols].join(", ");
-              const insertPlaceholders = ["?1", ...cols.map((_, i) => `?${i + 2}`)].join(", ");
-              const updateClauses = cols.map((c, i) => `${c} = ?${i + 2}`).join(", ");
-              const createdIdx = cols.length + 2;
-              const updatedIdx = cols.length + 3;
-              await db
-                .prepare(
-                  `INSERT INTO property_listings (${insertCols}, created_at, updated_at)
-                   VALUES (${insertPlaceholders}, ?${createdIdx}, ?${updatedIdx})
-                   ON CONFLICT("id") DO UPDATE SET ${updateClauses}, updated_at = ?${updatedIdx}`,
-                )
-                .bind(item.entityId, ...values, now, now)
-                .run();
-            }
-          } else if (item.operationType === "property.delete") {
-            await db.prepare("UPDATE property_listings SET status = 'deleted', updated_at = ?1 WHERE id = ?2").bind(now, item.entityId).run();
+            const outcome = await upsertOfficeProperty({
+              sponsorId: owner,
+              deviceId,
+              externalId: item.entityId,
+              payload: item.payload,
+              now,
+            });
+            propertyId = outcome.propertyId;
+          } else {
+            const outcome = await archiveOfficeProperty({
+              sponsorId: owner,
+              externalId: item.entityId,
+              now,
+            });
+            propertyId = outcome.propertyId;
           }
         } catch (error) {
           finalStatus = "failed";
-          conflictReason = error instanceof Error ? error.message.slice(0, 200) : "db_error";
+          conflictReason = error instanceof OfficePropertyError
+            ? error.code
+            : error instanceof Error
+              ? error.message.slice(0, 200)
+              : "db_error";
         }
       }
     }
 
-    const statusBefore = existingOp?.status ?? null;
     await db
       .prepare(
         `INSERT INTO office_sync_operations
@@ -240,10 +210,17 @@ export async function syncPush(deviceId: string, items: SyncPushItem[], decideCo
     if (finalStatus === "synced") {
       result.accepted += 1;
     }
-    if (!existingOp && finalStatus === "failed") {
-      result.items.push({ idempotencyKey: item.idempotencyKey, status: "failed", entityId: item.entityId, conflictReason: conflictReason ?? undefined });
-    } else if (!existingOp && finalStatus !== "conflict") {
-      result.items.push({ idempotencyKey: item.idempotencyKey, status: finalStatus, entityId: item.entityId, conflictReason: conflictReason ?? undefined });
+    if (finalStatus !== "conflict") {
+      // Exactly one result entry per submitted item, including retries of a
+      // previously failed operation, so the desktop queue can always resolve
+      // what happened to the item it sent.
+      result.items.push({
+        idempotencyKey: item.idempotencyKey,
+        status: finalStatus,
+        entityId: item.entityId,
+        propertyId,
+        conflictReason: conflictReason ?? undefined,
+      });
     }
   }
 

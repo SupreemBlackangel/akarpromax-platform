@@ -35,6 +35,51 @@ function nowIso(): string {
   return new Date().toISOString().slice(0, 19).replace("T", " ");
 }
 
+/**
+ * Normalize a stored expiry value to a UTC epoch timestamp (ms).
+ *
+ * Handles both storage backends without special-casing either:
+ * - D1 stores the naive UTC text "YYYY-MM-DD HH:MM:SS" produced by nowIso()
+ *   -> parsed as UTC by appending "Z".
+ * - PostgreSQL stores the same naive text in a `timestamp without time zone`
+ *   column, but node-postgres converts it to a JS Date whose LOCAL components
+ *   reproduce the stored string (see pg_typeof probe: read-back shifts by the
+ *   Node runtime offset). Reconstruct the UTC instant from those components
+ *   so the value keeps the UTC semantics the server used when writing it.
+ * - ISO-8601 strings (with T/Z/offset) and numeric epoch values are accepted
+ *   as-is.
+ *
+ * Returns null when the value cannot be parsed -> callers must fail closed.
+ */
+export function toUtcEpochMs(value: unknown): number | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    const t = value.getTime();
+    if (Number.isNaN(t)) return null;
+    return Date.UTC(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate(),
+      value.getHours(),
+      value.getMinutes(),
+      value.getSeconds(),
+      value.getMilliseconds(),
+    );
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? (value < 1e12 ? value * 1000 : value) : null;
+  }
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) {
+    const n = Number(raw);
+    return Number.isFinite(n) ? (n < 1e12 ? n * 1000 : n) : null;
+  }
+  const naiveUtc = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(raw);
+  const ms = Date.parse(naiveUtc ? `${raw.replace(" ", "T")}Z` : raw);
+  return Number.isNaN(ms) ? null : ms;
+}
+
 export async function startPairing(input: StartPairingInput): Promise<{ code: string; expiresAt: string }> {
   const db = await getIntegrationDb();
   const code = randomPairingCode();
@@ -64,7 +109,8 @@ export async function completePairing(input: CompletePairingInput): Promise<Pair
     .first<Record<string, unknown>>();
   if (!pairing) throw new Error("PAIRING_CODE_NOT_FOUND");
   if (pairing.status !== "pending") throw new Error("PAIRING_CODE_USED");
-  if (String(pairing.expires_at) < now) throw new Error("PAIRING_CODE_EXPIRED");
+  const expiryMs = toUtcEpochMs(pairing.expires_at);
+  if (expiryMs === null || expiryMs <= Date.now()) throw new Error("PAIRING_CODE_EXPIRED");
 
   const sponsorId = String(pairing.sponsor_id);
   const officeId = pairing.office_id ? String(pairing.office_id) : null;
