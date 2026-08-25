@@ -1,3 +1,8 @@
+import {
+  STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS,
+  STANDARD_PUBLIC_AD_SLOT_DEFINITIONS,
+} from "@/src/config/standard-public-ad-registry";
+
 export const PLATFORM_SECTIONS = {
   HOME: "home",
   PROPERTIES: "properties",
@@ -214,54 +219,10 @@ const LEGACY_AD_PLACEMENTS: Record<string, PlacementMeta> = {
   office_services_inline: legacyPlacement("office_services_inline", "داخل خدمات المكتب", "Office services inline", "Ofis hizmetleri içi", ["office"], "horizontal", { channel: "office", adminSelectable: true, pageFamily: "office", position: "services-inline", aspectRatio: "5:2" }),
 };
 
-type StandardWebsitePlacementFamily = {
-  key: string;
-  section: PlatformSection;
-  label: LocalizedLabel;
-  prefix: string;
-};
-
-const STANDARD_WEBSITE_FAMILIES: StandardWebsitePlacementFamily[] = [
-  { key: "home", section: "home", label: label("الرئيسية", "Home", "Ana Sayfa"), prefix: "web_home" },
-  { key: "properties", section: "properties", label: label("العقارات", "Properties", "Gayrimenkuller"), prefix: "web_properties" },
-  { key: "services", section: "services", label: label("الخدمات", "Services", "Hizmetler"), prefix: "web_services" },
-  { key: "providers", section: "providers", label: label("المحترفون", "Professionals", "Uzmanlar"), prefix: "web_providers" },
-  { key: "provider-detail", section: "providers", label: label("تفاصيل المحترف", "Professional Detail", "Uzman Detayı"), prefix: "web_provider_detail" },
-  { key: "offices", section: "offices", label: label("شركات و مكاتب عقارية", "Real Estate Companies & Offices", "Emlak Sirketleri ve Ofisleri"), prefix: "web_offices" },
-  { key: "office-detail", section: "offices", label: label("تفاصيل المكتب العقاري", "Real Estate Office Detail", "Emlak Ofisi Detayi"), prefix: "web_office_detail" },
-  { key: "companies", section: "companies", label: label("شركات أخرى", "Other Companies", "Diger Sirketler"), prefix: "web_companies" },
-  { key: "company-detail", section: "companies", label: label("تفاصيل الشركة", "Company Detail", "Sirket Detayi"), prefix: "web_company_detail" },
-  { key: "organizations", section: "organizations", label: label("الشركات", "Companies", "Şirketler"), prefix: "web_organizations" },
-  { key: "organization-detail", section: "organizations", label: label("تفاصيل الشركة", "Company Detail", "Şirket Detayı"), prefix: "web_organization_detail" },
-  { key: "directory", section: "directory", label: label("الدليل", "Directory", "Dizin"), prefix: "web_directory" },
-  { key: "community", section: "community", label: label("منتدى البناء و العقار", "Construction & Real Estate Forum", "Insaat ve Gayrimenkul Forumu"), prefix: "web_community" },
-  { key: "knowledge", section: "knowledge", label: label("الكتب والبرامج", "Books & Software", "Kitaplar ve Yazilimlar"), prefix: "web_knowledge" },
-  { key: "about", section: "about", label: label("من نحن", "About Us", "Hakkimizda"), prefix: "web_about" },
-  { key: "news", section: "news", label: label("الأخبار", "News", "Haberler"), prefix: "web_news" },
-  { key: "property-detail", section: "properties", label: label("تفاصيل العقار", "Property Detail", "Mülk Detayı"), prefix: "web_property_detail" },
-];
-
-const STANDARD_SLOT_DEFINITIONS: Array<{
-  suffix: string;
-  position: string;
-  shape: PlacementMeta["shape"];
-  aspectRatio: string;
-  label: LocalizedLabel;
-}> = [
-  { suffix: "hero", position: "hero", shape: "horizontal", aspectRatio: "5:2", label: label("هيرو", "Hero", "Hero") },
-  { suffix: "side_left_01", position: "side-left-01", shape: "vertical", aspectRatio: "4:5", label: label("يسار 1", "Left 01", "Sol 01") },
-  { suffix: "side_left_02", position: "side-left-02", shape: "vertical", aspectRatio: "4:5", label: label("يسار 2", "Left 02", "Sol 02") },
-  { suffix: "side_right_01", position: "side-right-01", shape: "vertical", aspectRatio: "4:5", label: label("يمين 1", "Right 01", "Sağ 01") },
-  { suffix: "side_right_02", position: "side-right-02", shape: "vertical", aspectRatio: "4:5", label: label("يمين 2", "Right 02", "Sağ 02") },
-  { suffix: "bottom_01", position: "bottom-01", shape: "horizontal", aspectRatio: "3:2", label: label("سفلي 1", "Bottom 01", "Alt 01") },
-  { suffix: "bottom_02", position: "bottom-02", shape: "horizontal", aspectRatio: "3:2", label: label("سفلي 2", "Bottom 02", "Alt 02") },
-  { suffix: "bottom_03", position: "bottom-03", shape: "horizontal", aspectRatio: "3:2", label: label("سفلي 3", "Bottom 03", "Alt 03") },
-];
-
 const STANDARD_WEBSITE_PLACEMENTS = Object.fromEntries(
-  STANDARD_WEBSITE_FAMILIES.flatMap((family) =>
-    STANDARD_SLOT_DEFINITIONS.map((slot) => {
-      const key = `${family.prefix}_${slot.suffix}`;
+  Object.entries(STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS).flatMap(([familyKey, family]) =>
+    Object.values(STANDARD_PUBLIC_AD_SLOT_DEFINITIONS).map((slot) => {
+      const key = `${family.prefix}_${slot.placementSuffix}`;
       return [
         key,
         {
@@ -271,10 +232,10 @@ const STANDARD_WEBSITE_PLACEMENTS = Object.fromEntries(
             `${family.label.en} — ${slot.label.en}`,
             `${family.label.tr} — ${slot.label.tr}`,
           ),
-          sections: [family.section],
+          sections: [family.section as PlatformSection],
           channel: "website",
           shape: slot.shape,
-          pageFamily: family.key,
+          pageFamily: familyKey,
           position: slot.position,
           aspectRatio: slot.aspectRatio,
           adminSelectable: true,
@@ -284,10 +245,66 @@ const STANDARD_WEBSITE_PLACEMENTS = Object.fromEntries(
   ),
 ) as Record<string, PlacementMeta>;
 
+const ALL_PUBLIC_SECTIONS: PlatformSection[] = [
+  "home",
+  "properties",
+  "services",
+  "providers",
+  "organizations",
+  "companies",
+  "directory",
+  "news",
+  "tools",
+  "offices",
+  "engineering-tools",
+  "contractors",
+  "consultations",
+  "auctions",
+  "community",
+  "knowledge",
+  "about",
+  "contact",
+  "advertise",
+];
+
+const STANDARD_SHELL_PLACEMENTS = Object.fromEntries(
+  Object.values(STANDARD_PUBLIC_AD_SLOT_DEFINITIONS).map((slot) => [
+    slot.canonical,
+    {
+      key: slot.canonical,
+      label: label(slot.label.ar, slot.label.en, slot.label.tr),
+      sections: ALL_PUBLIC_SECTIONS,
+      channel: "website",
+      shape: slot.shape,
+      pageFamily: "standard-shell",
+      position: slot.position,
+      aspectRatio: slot.aspectRatio,
+      adminSelectable: true,
+    } satisfies PlacementMeta,
+  ] as const),
+) as Record<string, PlacementMeta>;
+
 export const AD_PLACEMENTS: Record<string, PlacementMeta> = {
   ...LEGACY_AD_PLACEMENTS,
   ...STANDARD_WEBSITE_PLACEMENTS,
+  ...STANDARD_SHELL_PLACEMENTS,
 };
+
+const CANONICAL_PLACEMENT_BY_POSITION = new Map<string, string>(
+  Object.values(STANDARD_PUBLIC_AD_SLOT_DEFINITIONS).map((slot) => [slot.position, slot.canonical] as const),
+);
+
+/** Resolve a family-specific standard placement to its canonical shell slot. */
+export function canonicalPlacementFor(placement: string): string | null {
+  if (STANDARD_SHELL_PLACEMENTS[placement]) return placement;
+  const meta = AD_PLACEMENTS[placement];
+  if (!meta) return null;
+
+  const position = meta.position;
+  if (!position) return null;
+
+  return CANONICAL_PLACEMENT_BY_POSITION.get(position) ?? null;
+}
 
 export function isPlacementValidForSection(placement: string, section: PlatformSection): boolean {
   const meta = AD_PLACEMENTS[placement];

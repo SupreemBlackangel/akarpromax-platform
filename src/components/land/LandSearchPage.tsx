@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -111,13 +111,13 @@ export function LandSearchPage() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 space-y-3">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 space-y-3">
               <h2 className="font-bold text-gray-900 dark:text-white">Filters</h2>
 
               <select
                 value={filters.governorate}
                 onChange={e => updateFilter('governorate', e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
               >
                 <option value="">All Governorates</option>
                 {OMAN_GOVERNORATES.map(g => (
@@ -130,13 +130,13 @@ export function LandSearchPage() {
                 placeholder="City"
                 value={filters.city}
                 onChange={e => updateFilter('city', e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
               />
 
               <select
                 value={filters.type}
                 onChange={e => updateFilter('type', e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
               >
                 <option value="">All Types</option>
                 {LAND_TYPES.map(t => (
@@ -150,14 +150,14 @@ export function LandSearchPage() {
                   placeholder="Min Area (sqm)"
                   value={filters.minArea}
                   onChange={e => updateFilter('minArea', e.target.value)}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max Area (sqm)"
                   value={filters.maxArea}
                   onChange={e => updateFilter('maxArea', e.target.value)}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
                 />
               </div>
 
@@ -167,21 +167,21 @@ export function LandSearchPage() {
                   placeholder="Min Price (OMR)"
                   value={filters.minPrice}
                   onChange={e => updateFilter('minPrice', e.target.value)}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max Price (OMR)"
                   value={filters.maxPrice}
                   onChange={e => updateFilter('maxPrice', e.target.value)}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
                 />
               </div>
 
               <select
                 value={filters.sort}
                 onChange={e => updateFilter('sort', e.target.value)}
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-[var(--color-surface)] dark:bg-gray-800 px-3 py-2 text-sm"
               >
                 <option value="newest">Newest First</option>
                 <option value="price_asc">Price: Low to High</option>
@@ -191,12 +191,15 @@ export function LandSearchPage() {
               </select>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
               <div className="h-80 rounded-xl overflow-hidden">
                 <LandMap
                   parcels={parcels}
                   selectedParcel={selectedParcel}
-                  onSelectParcel={setSelectedParcel}
+                  onSelectParcel={(mapParcel) => {
+                    const full = parcels.find((p) => p.id === mapParcel.id);
+                    setSelectedParcel(full ?? null);
+                  }}
                 />
               </div>
             </div>
@@ -212,7 +215,7 @@ export function LandSearchPage() {
             {loading ? (
               <div className="grid sm:grid-cols-2 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 animate-pulse">
+                  <div key={i} className="bg-[var(--color-surface)] dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 animate-pulse">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4" />
                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
@@ -220,7 +223,7 @@ export function LandSearchPage() {
                 ))}
               </div>
             ) : parcels.length === 0 ? (
-              <div className="text-center py-24 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
+              <div className="text-center py-24 bg-[var(--color-surface)] dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
                 <div className="text-6xl mb-4">🏗️</div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">No parcels found</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Try adjusting your filters</p>
@@ -231,12 +234,12 @@ export function LandSearchPage() {
                   <Link
                     key={parcel.id}
                     href={`/land/${parcel.id}`}
-                    className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 transition hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
+                    className="group bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 transition hover:border-[var(--color-primary)]/30 dark:hover:border-blue-700 hover:shadow-md"
                     onMouseEnter={() => setSelectedParcel(parcel)}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-[var(--color-primary)] dark:group-hover:text-blue-400">
                           {parcel.title}
                         </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -244,7 +247,7 @@ export function LandSearchPage() {
                         </p>
                       </div>
                       {parcel.isVerified && (
-                        <span className="text-blue-500 text-xs font-bold">✓ Verified</span>
+                        <span className="text-[var(--color-primary)] text-xs font-bold">✓ Verified</span>
                       )}
                     </div>
                     <div className="mt-3 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -252,7 +255,7 @@ export function LandSearchPage() {
                       {parcel.area && <span>{Number(parcel.area).toLocaleString()} sqm</span>}
                     </div>
                     {parcel.price && (
-                      <p className="mt-2 text-sm font-bold text-blue-600 dark:text-blue-400">
+                      <p className="mt-2 text-sm font-bold text-[var(--color-primary)] dark:text-blue-400">
                         {Number(parcel.price).toLocaleString()} {parcel.currency}
                       </p>
                     )}

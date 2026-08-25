@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#064e3b"/>
+      <stop offset="100%" style="stop-color:#10b981"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="600" height="200" rx="16" fill="url(#bg)"/>
+  
+  <!-- Decorative -->
+  <circle cx="520" cy="40" r="80" fill="rgba(255,255,255,0.05)"/>
+  
+  <!-- Content -->
+  <text x="40" y="60" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white">أدوات مجانية للمهندسين</text>
+  <text x="40" y="100" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.75)">حاسبات هندسية وخطط مشاريع</text>
+  
+  <!-- CTA -->
+  <rect x="40" y="130" width="150" height="40" rx="20" fill="rgba(255,255,255,0.2)"/>
+  <text x="115" y="155" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">استخدم الأدوات</text>
+  
+  <!-- Icons -->
+  <text x="420" y="90" font-family="Arial, sans-serif" font-size="48" fill="rgba(255,255,255,0.15)">📐</text>
+  <text x="500" y="90" font-family="Arial, sans-serif" font-size="48" fill="rgba(255,255,255,0.15)">🏗️</text>
+</svg>

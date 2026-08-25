@@ -1,6 +1,6 @@
 import type { Translation, TranslationStringKey } from "@/src/types/site";
 import { BriefcaseBusiness, Building2, Hammer, Home, Info, LibraryBig, Megaphone, MessagesSquare, Phone, Wrench, type LucideIcon } from "lucide-react";
-import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
+import { PUBLIC_ROUTE_AD_POLICIES, type PublicAdPolicy } from "@/src/config/public-ad-policy";
 
 export type PrimaryPublicNavId =
   | "home"
@@ -15,9 +15,7 @@ export type PrimaryPublicNavId =
   | "about"
   | "contact";
 
-export type PublicNavAdPolicy =
-  | { mode: "safe-no-ads" }
-  | { mode: "standard"; family: StandardPublicAdLayoutKey };
+export type PublicNavAdPolicy = PublicAdPolicy;
 
 export type PublicNavItem = {
   key: PrimaryPublicNavId;
@@ -71,7 +69,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Home,
     pageFamily: "home",
     componentPath: "app/page.tsx",
-    adPolicy: { mode: "standard", family: "home" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/"],
     activeWhen: (currentPath) => hasPathPrefix("/", currentPath),
   },
   {
@@ -81,7 +79,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Building2,
     pageFamily: "properties",
     componentPath: "app/properties/page.tsx",
-    adPolicy: { mode: "standard", family: "properties" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/properties"],
     activeWhen: (currentPath) => hasPathPrefix("/properties", currentPath),
   },
   {
@@ -91,7 +89,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Wrench,
     pageFamily: "engineering-tools",
     componentPath: "app/tools/page.tsx",
-    adPolicy: { mode: "safe-no-ads" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/tools"],
     activeWhen: (currentPath) => hasPathPrefix("/tools", currentPath),
   },
   {
@@ -101,7 +99,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Hammer,
     pageFamily: "services",
     componentPath: "app/services/page.tsx",
-    adPolicy: { mode: "standard", family: "services" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/services"],
     activeWhen: (currentPath) => {
       const { pathname } = splitCurrentPath(currentPath);
       return pathname === "/services" || pathname.startsWith("/services/") || pathname.startsWith("/service-requests") || pathname.startsWith("/providers/") || pathname === "/providers/apply";
@@ -114,7 +112,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Building2,
     pageFamily: "real-estate-companies",
     componentPath: "app/offices/page.tsx",
-    adPolicy: { mode: "standard", family: "offices" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/offices"],
     activeWhen: (currentPath) => hasPathPrefix("/offices", currentPath),
   },
   {
@@ -124,7 +122,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: BriefcaseBusiness,
     pageFamily: "other-companies",
     componentPath: "app/companies/page.tsx",
-    adPolicy: { mode: "standard", family: "companies" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/companies"],
     activeWhen: (currentPath) => hasPathPrefix("/companies", currentPath),
   },
   {
@@ -134,7 +132,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: MessagesSquare,
     pageFamily: "community",
     componentPath: "app/community/page.tsx",
-    adPolicy: { mode: "standard", family: "community" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/community"],
     activeWhen: (currentPath) => hasPathPrefix("/community", currentPath),
   },
   {
@@ -144,7 +142,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: LibraryBig,
     pageFamily: "knowledge",
     componentPath: "app/knowledge/page.tsx",
-    adPolicy: { mode: "standard", family: "knowledge" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/knowledge"],
     activeWhen: (currentPath) => hasPathPrefix("/knowledge", currentPath),
   },
   {
@@ -154,7 +152,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Megaphone,
     pageFamily: "advertise",
     componentPath: "app/advertise/page.tsx",
-    adPolicy: { mode: "safe-no-ads" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/advertise"],
     activeWhen: (currentPath) => hasPathPrefix("/advertise", currentPath),
   },
   {
@@ -164,7 +162,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Info,
     pageFamily: "about",
     componentPath: "app/about/page.tsx",
-    adPolicy: { mode: "standard", family: "about" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/about"],
     activeWhen: (currentPath) => hasPathPrefix("/about", currentPath),
   },
   {
@@ -174,7 +172,7 @@ export const PUBLIC_NAV: PublicNavItem[] = [
     icon: Phone,
     pageFamily: "contact",
     componentPath: "app/contact/page.tsx",
-    adPolicy: { mode: "safe-no-ads" },
+    adPolicy: PUBLIC_ROUTE_AD_POLICIES["/contact"],
     activeWhen: (currentPath) => hasPathPrefix("/contact", currentPath),
   },
 ];

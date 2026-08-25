@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -37,7 +37,7 @@ export default function LegalCenterClient({ slug }: Props) {
       }}
     >
       <PageContainer className="py-8" dir={locale === "ar" ? "rtl" : "ltr"}>
-        <div className="mb-6 flex flex-wrap gap-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+        <div className="mb-6 flex flex-wrap gap-2 text-sm font-semibold text-[var(--color-primary)] dark:text-[var(--color-primary)]">
           {[
             ["/legal", locale === "ar" ? "المركز القانوني" : locale === "tr" ? "Hukuk Merkezi" : "Legal Center"],
             ["/legal/terms", locale === "ar" ? "الشروط العامة" : locale === "tr" ? "Genel Şartlar" : "General Terms"],
@@ -53,19 +53,19 @@ export default function LegalCenterClient({ slug }: Props) {
             ["/legal/intellectual-property", locale === "ar" ? "الملكية الفكرية" : locale === "tr" ? "Fikri Mülkiyet" : "IP"],
             ["/legal/data-retention", locale === "ar" ? "الاحتفاظ بالبيانات" : locale === "tr" ? "Veri Saklama" : "Data Retention"],
           ].map(([href, label]) => (
-            <Link key={href} href={href} className="rounded-full bg-blue-50 px-3 py-1 dark:bg-blue-900/30">
+            <Link key={href} href={href} className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 dark:bg-blue-900/30">
               {label}
             </Link>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <div className="rounded-2xl border border-amber-200 bg-[var(--accent-soft)] px-5 py-4 text-sm font-bold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           REQUIRES HUMAN LEGAL REVIEW BEFORE PRODUCTION
         </div>
 
         <div className="mt-6 space-y-6">
           {doc.sections.map((section) => (
-            <section key={section.heading} className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <section key={section.heading} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="text-xl font-black text-gray-900 dark:text-white">{section.heading}</h2>
               <div className="mt-3 space-y-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
                 {section.paragraphs.map((paragraph) => (

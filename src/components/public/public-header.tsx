@@ -4,6 +4,7 @@ import type { PublicNavItem } from "@/src/config/public-navigation";
 import Button from "@/src/components/ui/Button";
 import PageContainer from "@/src/components/layout/PageContainer";
 import SearchTrigger from "@/src/components/public/search-trigger";
+import CountrySwitcher from "@/src/components/public/CountrySwitcher";
 
 type PublicHeaderProps = {
   labels: Translation;
@@ -45,6 +46,7 @@ export default function PublicHeader({
 
         {/* Desktop: right side controls */}
         <div className="flex items-center gap-2 ml-auto">
+          <CountrySwitcher />
           {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
           <div className="hidden items-center gap-2 md:flex">
             {viewer.authenticated ? (
@@ -57,14 +59,9 @@ export default function PublicHeader({
                 </Button>
               </>
             ) : (
-              <>
-                <Button variant="ghost" size="sm" onClick={onLogin}>
-                  {labels.login}
-                </Button>
-                <Button variant="primary" size="sm" onClick={onLogin}>
-                  {labels.register}
-                </Button>
-              </>
+              <Button variant="primary" size="sm" onClick={onLogin}>
+                {labels.login}
+              </Button>
             )}
           </div>
         </div>

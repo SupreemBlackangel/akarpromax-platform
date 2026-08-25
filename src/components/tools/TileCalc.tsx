@@ -46,7 +46,6 @@ export function TileCalc({ locale }: Props) {
       tiles: locale === "ar" ? "عدد البلاطات" : locale === "tr" ? "Gerekli Seramik Sayısı" : "Tiles Needed",
       adhesive: locale === "ar" ? "أكياس اللاصق" : locale === "tr" ? "Yapıştırıcı Torbaları" : "Adhesive Bags",
       grout: locale === "ar" ? "مونة (كغ)" : locale === "tr" ? "Derz Dolgusu (kg)" : "Grout (kg)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -68,13 +67,6 @@ export function TileCalc({ locale }: Props) {
         </div>
       </ToolAdvancedOptions>
 
-      <button
-        type="button"
-        onClick={() => setInput({ roomLength: 4, roomWidth: 3, tileLength: 600, tileWidth: 600, wastePercent: 7 })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mt-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

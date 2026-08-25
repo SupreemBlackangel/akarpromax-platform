@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useId, useState } from "react";
 
@@ -17,7 +17,7 @@ export function ToolAdvancedOptions({ label, children, defaultOpen = false }: To
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:focus:ring-blue-400"
+        className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] dark:focus:ring-blue-400"
         aria-expanded={open}
         aria-controls={panelId}
       >

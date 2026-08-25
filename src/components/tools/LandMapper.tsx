@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/src/types/site";
@@ -37,6 +37,7 @@ export function LandMapper({ locale }: Props) {
     try {
       const isImage = file.type.startsWith("image/");
       const isPdf = file.type === "application/pdf";
+      let allText = "";
 
       if (isImage) {
         setPreviewUrl(URL.createObjectURL(file));
@@ -50,6 +51,7 @@ export function LandMapper({ locale }: Props) {
           },
         });
         const text = result.data.text;
+        allText = text;
         setOcrText(text);
         setProgress(80);
       } else if (isPdf) {
@@ -62,7 +64,6 @@ export function LandMapper({ locale }: Props) {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-        let allText = "";
         const maxPages = Math.min(pdf.numPages, 5);
         for (let i = 1; i <= maxPages; i++) {
           const page = await pdf.getPage(i);
@@ -102,9 +103,11 @@ export function LandMapper({ locale }: Props) {
       setStage("extracting");
       setProgress(85);
 
-      const zone = detectUtmZone(ocrText || "39");
-      const extracted = extractCoordinates(ocrText || "", zone);
-      const details = extractLandDetails(ocrText || "");
+      // `detectUtmZone` reports only what the document states. Without a stated
+      // zone, UTM rows are skipped rather than converted against a guess.
+      const zone = detectUtmZone(allText || ocrText || "");
+      const extracted = extractCoordinates(allText || ocrText || "", zone);
+      const details = extractLandDetails(allText || ocrText || "");
 
       setPoints(extracted);
       setLandDetails(details);
@@ -196,7 +199,7 @@ export function LandMapper({ locale }: Props) {
           <button
             onClick={() => fileRef.current?.click()}
             disabled={stage !== "idle" && stage !== "done" && stage !== "error"}
-            className="w-full px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-semibold transition-colors min-h-[48px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full px-5 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:bg-gray-400 text-white rounded-lg text-sm font-semibold transition-colors min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
           >
             {locale === "ar" ? "📁 اختر صورة أو PDF للصك" : "📁 Choose deed image or PDF"}
           </button>
@@ -209,13 +212,13 @@ export function LandMapper({ locale }: Props) {
               <span className="text-xs text-gray-500 dark:text-gray-400">{progress}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div className={`h-2 rounded-full transition-all duration-300 ${stage === "error" ? "bg-red-500" : stage === "done" ? "bg-green-500" : "bg-blue-500"}`} style={{ width: `${progress}%` }} />
+              <div className={`h-2 rounded-full transition-all duration-300 ${stage === "error" ? "bg-[var(--color-error-soft)]0" : stage === "done" ? "bg-green-500" : "bg-[var(--color-primary-soft)]0"}`} style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
 
         {stage === "error" && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm">{errorMsg}</div>
+          <div className="bg-[var(--color-error-soft)] dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm">{errorMsg}</div>
         )}
 
         {stage === "done" && (
@@ -234,7 +237,7 @@ export function LandMapper({ locale }: Props) {
               )}
 
               {Object.keys(landDetails).length > 0 && (
-                <div className="mb-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                <div className="mb-4 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
                     {locale === "ar" ? "بيانات الصك" : "Deed Details"}
                   </h3>
@@ -248,13 +251,13 @@ export function LandMapper({ locale }: Props) {
               )}
 
               {points.length > 0 && (
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                       {locale === "ar" ? "الإحداثيات المستخرجة" : "Extracted coordinates"} ({points.length})
                     </h3>
                     {areaM2 && (
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                      <span className="text-xs font-bold text-[var(--color-primary)] dark:text-blue-400">
                         A = {areaM2.toLocaleString(locale === "ar" ? "ar-OM" : "en-US", { maximumFractionDigits: 2 })} m²
                       </span>
                     )}
@@ -281,7 +284,7 @@ export function LandMapper({ locale }: Props) {
                             <td className="py-1">
                               <button
                                 onClick={() => copyText(`${pt.lat}\t${pt.lng}`, i)}
-                                className="text-gray-400 hover:text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                                className="text-gray-400 hover:text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded"
                                 aria-label={`Copy point ${pt.label}`}
                               >
                                 {copiedIdx === i ? "✓" : "📋"}
@@ -297,7 +300,7 @@ export function LandMapper({ locale }: Props) {
 
               {ocrText && (
                 <details className="mt-4">
-                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 min-h-[44px] flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 min-h-[44px] flex items-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] rounded">
                     {locale === "ar" ? "عرض النص المستخرج من OCR" : "Show OCR extracted text"}
                   </summary>
                   <pre className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-700 dark:text-gray-300 overflow-x-auto max-h-60 whitespace-pre-wrap font-mono">

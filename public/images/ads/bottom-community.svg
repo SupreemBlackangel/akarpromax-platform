@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#08265b"/>
+      <stop offset="100%" style="stop-color:#1672e8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="600" height="200" rx="16" fill="url(#bg)"/>
+  
+  <!-- Decorative -->
+  <circle cx="500" cy="100" r="120" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="520" cy="80" r="80" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  
+  <!-- Content -->
+  <text x="40" y="60" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white">انضم لأكبر مجتمع عقاري</text>
+  <text x="40" y="100" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.75)">شارك خبراتك واحصل على فرص حصرية</text>
+  
+  <!-- CTA -->
+  <rect x="40" y="130" width="150" height="40" rx="20" fill="#f59e0b"/>
+  <text x="115" y="155" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">سجل الآن مجاناً</text>
+  
+  <!-- Trust badges -->
+  <text x="400" y="60" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.6)">✓ آمن وموثوق</text>
+  <text x="400" y="85" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.6)">✓ دعم فني 24/7</text>
+  <text x="400" y="110" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.6)">✓ بدون رسوم خفية</text>
+</svg>

@@ -41,7 +41,6 @@ export function PaintCalc({ locale }: Props) {
       totalArea: locale === "ar" ? "المساحة الكلية" : locale === "tr" ? "Toplam Alan" : "Total Area",
       liters: locale === "ar" ? "البويات (لتر)" : locale === "tr" ? "Boya (litre)" : "Paint (liters)",
       gallons: locale === "ar" ? "البويات (جالون)" : locale === "tr" ? "Boya (galon)" : "Paint (gallons)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -62,13 +61,6 @@ export function PaintCalc({ locale }: Props) {
         </div>
       </ToolAdvancedOptions>
 
-      <button
-        type="button"
-        onClick={() => setInput({ wallArea: 45, ceilingArea: 15, coats: 2, coveragePerLiter: 10 })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mt-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

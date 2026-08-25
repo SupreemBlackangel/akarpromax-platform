@@ -5,6 +5,7 @@ import type { DeviceType } from "@/src/constants/advertising";
 import type { AdMatchResult } from "@/lib/ads/types";
 import { isVideoAsset } from "@/src/data/locations";
 import FloatingAdSlotActions from "@/src/components/FloatingAdSlotActions";
+import { useGeo } from "@/src/contexts/GeoContext";
 
 type AdSlotProps = {
   placement: string;
@@ -22,6 +23,7 @@ type AdSlotProps = {
   eager?: boolean;
   requestable?: boolean;
   onRequestAd?: () => void;
+  onStatusChange?: (empty: boolean) => void;
   onViewDetails?: (slotData: {
     slotId: string;
     slotCode: string;
@@ -126,9 +128,17 @@ export default function AdSlot({
   eager = false,
   requestable = false,
   onRequestAd,
+  onStatusChange,
   onViewDetails,
   onContact,
 }: AdSlotProps) {
+  const geo = useGeo();
+  const resolvedCountry = geo.isGlobal ? "" : geo.countryCode || country;
+  const resolvedRegion = geo.isGlobal ? "" : geo.governorate;
+  const resolvedCity = geo.isGlobal ? "" : geo.city || city || "";
+  const resolvedDistrict = geo.isGlobal ? "" : geo.district;
+  const resolvedLatitude = geo.isGlobal ? null : geo.latitude;
+  const resolvedLongitude = geo.isGlobal ? null : geo.longitude;
   const [{ ads, currentIndex, loaded }, dispatch] = useReducer(adSlotReducer, { ads: [], currentIndex: 0, loaded: false });
   const [deviceType, setDeviceType] = useState<DeviceType>(providedDeviceType ?? detectDeviceType());
   const [prevProvidedDeviceType, setPrevProvidedDeviceType] = useState(providedDeviceType);
@@ -138,6 +148,7 @@ export default function AdSlot({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const impressedRef = useRef<Set<string>>(new Set());
   const sessionId = useRef<string>("");
+  const onStatusChangeRef = useRef(onStatusChange);
 
   const ad = ads[currentIndex] ?? null;
   const paused = hovering || tabHidden;
@@ -146,6 +157,10 @@ export default function AdSlot({
     setPrevProvidedDeviceType(providedDeviceType);
     if (providedDeviceType) setDeviceType(providedDeviceType);
   }
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
 
   useEffect(() => {
     sessionId.current = getSessionId();
@@ -165,7 +180,9 @@ export default function AdSlot({
     const controller = new AbortController();
     impressedRef.current = new Set();
     dispatch({ type: "reset" });
+    onStatusChangeRef.current?.(false);
     (async () => {
+      let matched: AdMatchResult[] = [];
       try {
         const res = await fetch("/api/ads/match", {
           method: "POST",
@@ -174,8 +191,12 @@ export default function AdSlot({
             placement,
             path,
             domain: typeof window !== "undefined" ? window.location.hostname : undefined,
-            countryCode: country,
-            cityId: city,
+            countryCode: resolvedCountry,
+            regionId: resolvedRegion,
+            cityId: resolvedCity,
+            districtId: resolvedDistrict,
+            latitude: resolvedLatitude,
+            longitude: resolvedLongitude,
             language: locale,
             deviceType,
             entityType,
@@ -190,16 +211,19 @@ export default function AdSlot({
         });
         const data = await res.json();
         if (controller.signal.aborted) return;
-        const matched: AdMatchResult[] = Array.isArray(data.ads) ? data.ads : [];
+        matched = Array.isArray(data.ads) ? data.ads : [];
         dispatch({ type: "matched", ads: matched });
       } catch {
         if (!controller.signal.aborted) dispatch({ type: "matched", ads: [] });
       } finally {
-        if (!controller.signal.aborted) dispatch({ type: "done" });
+        if (!controller.signal.aborted) {
+          dispatch({ type: "done" });
+          if (!requestable) onStatusChangeRef.current?.(matched.length === 0);
+        }
       }
     })();
     return () => controller.abort();
-  }, [categoryId, city, country, deviceType, entityId, entityType, locale, path, placement, tags]);
+  }, [categoryId, deviceType, entityId, entityType, locale, path, placement, requestable, resolvedCity, resolvedCountry, resolvedDistrict, resolvedLatitude, resolvedLongitude, resolvedRegion, tags]);
 
   useEffect(() => {
     if (ads.length < 2 || reducedMotion || paused) return;
@@ -210,6 +234,15 @@ export default function AdSlot({
     }, seconds * 1000);
     return () => window.clearTimeout(timer);
   }, [ads, currentIndex, paused, reducedMotion]);
+
+  useEffect(() => {
+    if (loaded || ads.length > 0 || requestable) return;
+    const timer = window.setTimeout(() => {
+      dispatch({ type: "done" });
+      onStatusChangeRef.current?.(true);
+    }, 60000);
+    return () => window.clearTimeout(timer);
+  }, [ads.length, loaded, requestable]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -229,8 +262,12 @@ export default function AdSlot({
           token: currentAd.trackingToken,
           placement,
           path,
-          countryCode: country,
-          cityId: city,
+          countryCode: resolvedCountry,
+          regionId: resolvedRegion,
+          cityId: resolvedCity,
+          districtId: resolvedDistrict,
+          latitude: resolvedLatitude,
+          longitude: resolvedLongitude,
           language: locale,
           deviceType,
           entityType,
@@ -255,7 +292,7 @@ export default function AdSlot({
       observer.disconnect();
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [ads, currentIndex, categoryId, city, country, deviceType, entityId, entityType, locale, path, placement, tags]);
+  }, [ads, currentIndex, categoryId, deviceType, entityId, entityType, locale, path, placement, resolvedCity, resolvedCountry, resolvedDistrict, resolvedLatitude, resolvedLongitude, resolvedRegion, tags]);
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!ad) return;
@@ -269,8 +306,12 @@ export default function AdSlot({
         token: ad.trackingToken,
         placement,
         path,
-        countryCode: country,
-        cityId: city,
+        countryCode: resolvedCountry,
+        regionId: resolvedRegion,
+        cityId: resolvedCity,
+        districtId: resolvedDistrict,
+        latitude: resolvedLatitude,
+        longitude: resolvedLongitude,
         language: locale,
         deviceType,
         entityType,
@@ -294,18 +335,21 @@ export default function AdSlot({
     return <div className={`ad-slot ad-slot-${variant} ad-slot-skeleton${className ? ` ${className}` : ""}`} aria-hidden="true" />;
   }
   if (!ad) {
-    if (!requestable) return null;
+    if (!requestable) {
+      return null;
+    }
     const slotData = {
       slotId: `${placement}-${entityType ?? "page"}-${entityId ?? "default"}`,
       slotCode: placement,
       pageType: entityType ?? "page",
       pageUrl: path ?? (typeof window !== "undefined" ? window.location.pathname : ""),
       adPosition: placement,
-      country,
-      region: city,
-      city,
-      latitude: undefined as number | undefined,
-      longitude: undefined as number | undefined,
+      country: resolvedCountry,
+      region: resolvedRegion || undefined,
+      city: resolvedCity || undefined,
+      district: resolvedDistrict || undefined,
+      latitude: resolvedLatitude ?? undefined,
+      longitude: resolvedLongitude ?? undefined,
       radiusKm: undefined as number | undefined,
       language: locale,
       userId: undefined as string | undefined,

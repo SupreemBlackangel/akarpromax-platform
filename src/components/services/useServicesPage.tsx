@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { translations } from "@/src/data/translations";
 import type { Locale, ViewerContext } from "@/src/types/site";
-import AccountDialog from "@/src/components/AccountDialog";
+import { useGeo } from "@/src/contexts/GeoContext";
+
+const AccountDialog = dynamic(() => import("@/src/components/AccountDialog"), {
+  ssr: false,
+});
 
 export type Flat = Record<string, string>;
 
@@ -24,6 +29,7 @@ export type UseServicesPageOptions = {
 };
 
 export function useServicesPage(options: UseServicesPageOptions = {}) {
+  const geo = useGeo();
   const [locale, setLocale] = useState<Locale>(options.locale ?? (() => {
     if (typeof window === "undefined") return "ar";
     const stored = window.localStorage.getItem("akarpromax-locale");
@@ -34,8 +40,8 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [accountMode, setAccountMode] = useState<"login" | "register">("login");
-  const country = options.country ?? "om";
-  const city = options.city ?? "om-muscat";
+  const country = options.country ?? (geo.isGlobal ? "" : geo.countryCode);
+  const city = options.city ?? geo.city;
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {
@@ -115,13 +121,20 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
     dir,
     country,
     city,
+    governorate: geo.governorate,
+    district: geo.district,
+    latitude: geo.latitude,
+    longitude: geo.longitude,
+    isGlobal: geo.isGlobal,
+    locationSource: geo.source,
+    countryConfig: geo.countryConfig,
     loading,
     showLogin,
     accountMode,
     openLogin,
     handleAuthenticated,
     handleLogout,
-    AccountDialog: (
+    AccountDialog: showLogin ? (
       <AccountDialog
         locale={locale}
         open={showLogin}
@@ -130,7 +143,7 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
         onClose={() => setShowLogin(false)}
         onAuthenticated={handleAuthenticated}
       />
-    ),
+    ) : null,
     copy: translations[locale],
   };
 }

@@ -39,7 +39,6 @@ export function SlopeCalc({ locale }: Props) {
       ratio: locale === "ar" ? "نسبة الميل" : locale === "tr" ? "Eğim Oranı" : "Slope Ratio",
       angle: locale === "ar" ? "زاوية الانحدار" : locale === "tr" ? "Eğim Açısı" : "Slope Angle",
       category: locale === "ar" ? "تصنيف الميل" : locale === "tr" ? "Eğim Kategorisi" : "Slope Category",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -53,13 +52,6 @@ export function SlopeCalc({ locale }: Props) {
         <ToolNumericInput label={t("distance")} unit="m" step="0.01" min={0} value={input.horizontalDistance} onChange={set("horizontalDistance")} />
       </form>
 
-      <button
-        type="button"
-        onClick={() => setInput({ heightDiff: 0.3, horizontalDistance: 6 })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

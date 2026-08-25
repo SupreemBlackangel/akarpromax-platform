@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
@@ -120,7 +120,7 @@ export default function NewsPageClient() {
               onClick={() => setSelectedCategory(category)}
               className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
                 selectedCategory === category
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[var(--color-primary)] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
               }`}
             >
@@ -129,7 +129,7 @@ export default function NewsPageClient() {
           ))}
         </div>
 
-        {error && <div className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">{error}</div>}
+        {error && <div className="mb-6 rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-200">{error}</div>}
 
         <Grid columns={3}>
           {loading
@@ -141,21 +141,21 @@ export default function NewsPageClient() {
                 const summary = pickLocaleValue(locale, item, "summary") || pickLocaleValue(locale, item, "body").slice(0, 220);
                 const href = item.linkUrl || item.sourceUrl;
                 return (
-                  <article key={item.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                  <article key={item.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-surface)] dark:border-gray-800 dark:bg-gray-900">
                     {item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element -- dynamic news image URL
-                      <img src={item.imageUrl} alt="" className="h-44 w-full object-cover" />
+                      <img src={item.imageUrl} alt="" width={560} height={176} loading="lazy" decoding="async" className="h-44 w-full object-cover" />
                     ) : (
                       <div className="h-44 w-full bg-gradient-to-br from-blue-100 to-emerald-100 dark:from-blue-950 dark:to-emerald-950" />
                     )}
                     <div className="p-5">
                       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-                        <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{item.category}</span>
+                        <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-blue-900/40 dark:text-[var(--color-primary)]">{item.category}</span>
                         {item.isBreaking && (
-                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">{locale === "ar" ? "عاجل" : locale === "tr" ? "Son Dakika" : "Breaking"}</span>
+                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-[var(--color-error)] dark:bg-red-900/40 dark:text-red-300">{locale === "ar" ? "عاجل" : locale === "tr" ? "Son Dakika" : "Breaking"}</span>
                         )}
                         {item.isPinned && (
-                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{locale === "ar" ? "مثبت" : locale === "tr" ? "Sabit" : "Pinned"}</span>
+                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]">{locale === "ar" ? "مثبت" : locale === "tr" ? "Sabit" : "Pinned"}</span>
                         )}
                       </div>
                       <h2 className="text-xl font-black text-gray-900 dark:text-white">{title}</h2>
@@ -170,7 +170,7 @@ export default function NewsPageClient() {
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black dark:bg-white dark:text-gray-900"
+                            className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black dark:bg-[var(--color-surface)] dark:text-gray-900"
                           >
                             {locale === "ar" ? "اقرأ المزيد" : locale === "tr" ? "Devamını oku" : "Read more"}
                           </a>

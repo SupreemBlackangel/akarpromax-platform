@@ -46,7 +46,6 @@ export function MixRatioCalc({ locale }: Props) {
       cementBags: locale === "ar" ? "أكياس الأسمنت" : locale === "tr" ? "Çimento Torbaları" : "Cement Bags",
       sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
       gravel: locale === "ar" ? "الزلط (طن)" : locale === "tr" ? "Çakıl (ton)" : "Gravel (tons)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -65,13 +64,6 @@ export function MixRatioCalc({ locale }: Props) {
         />
       </form>
 
-      <button
-        type="button"
-        onClick={() => setInput({ volumeM3: 10, ratio: [1, 2, 4] })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

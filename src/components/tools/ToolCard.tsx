@@ -56,9 +56,16 @@ const STATUS_CLASSES: Record<string, string> = {
 type Props = {
   tool: ToolDefinition;
   locale: string;
+  active?: boolean;
+  onSelect?: (id: string) => void;
 };
 
-export function ToolCard({ tool, locale }: Props) {
+export function ToolCard({
+  tool,
+  locale,
+  active = false,
+  onSelect,
+}: Props) {
   const label = locale === "ar" ? tool.ar : locale === "tr" ? tool.tr : tool.en;
   const desc = locale === "ar" ? tool.descAr : locale === "tr" ? tool.descTr : tool.descEn;
   const statusLabel = STATUS_LABELS[tool.status]?.[locale] ?? tool.status;
@@ -68,8 +75,15 @@ export function ToolCard({ tool, locale }: Props) {
   return (
     <Link
       href={`/tools?tool=${tool.id}`}
-      className="tc-card"
+      className={`tc-card${active ? " tc-card--active" : ""}`}
       aria-label={`${label} — ${statusLabel}`}
+      aria-current={active ? "true" : undefined}
+      onClick={(event) => {
+        if (!onSelect) return;
+
+        event.preventDefault();
+        onSelect(tool.id);
+      }}
     >
       <div className="tc-card-header">
         <span className="tc-card-icon-wrap">
@@ -79,11 +93,6 @@ export function ToolCard({ tool, locale }: Props) {
       </div>
       <h3 className="tc-card-title">{label}</h3>
       <p className="tc-card-desc">{desc}</p>
-      <div className="tc-card-footer">
-        <span className="tc-card-action">
-          {locale === "ar" ? "فتح الأداة" : locale === "tr" ? "Aracı aç" : "Open Tool"}
-        </span>
-      </div>
     </Link>
   );
 }

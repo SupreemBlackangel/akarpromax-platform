@@ -1,5 +1,5 @@
 import type { Locale } from "@/src/types/site";
-import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
+import { PUBLIC_ROUTE_AD_POLICIES, type PublicAdPolicy } from "@/src/config/public-ad-policy";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -21,7 +21,7 @@ export type PublicDestinationKey = "community" | "knowledge" | "advertise" | "ab
 export type PublicDestinationPage = {
   key: PublicDestinationKey;
   currentPath: string;
-  adLayout: { mode: "safe-no-ads" } | { mode: "standard"; family: StandardPublicAdLayoutKey };
+  adLayout: PublicAdPolicy;
   eyebrow: LocalizedText;
   title: LocalizedText;
   description: LocalizedText;
@@ -36,7 +36,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
   community: {
     key: "community",
     currentPath: "/community",
-    adLayout: { mode: "standard", family: "community" },
+    adLayout: PUBLIC_ROUTE_AD_POLICIES["/community"],
     eyebrow: text("منتدى البناء و العقار", "Construction & Real Estate Forum", "Insaat ve Gayrimenkul Forumu"),
     title: text("منتدى البناء و العقار", "Construction & Real Estate Forum", "Insaat ve Gayrimenkul Forumu"),
     description: text(
@@ -71,7 +71,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
   knowledge: {
     key: "knowledge",
     currentPath: "/knowledge",
-    adLayout: { mode: "standard", family: "knowledge" },
+    adLayout: PUBLIC_ROUTE_AD_POLICIES["/knowledge"],
     eyebrow: text("الكتب والبرامج", "Books & Software", "Kitaplar ve Yazilimlar"),
     title: text("الكتب والبرامج", "Books & Software", "Kitaplar ve Yazilimlar"),
     description: text(
@@ -98,7 +98,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
   advertise: {
     key: "advertise",
     currentPath: "/advertise",
-    adLayout: { mode: "safe-no-ads" },
+    adLayout: PUBLIC_ROUTE_AD_POLICIES["/advertise"],
     eyebrow: text("اعلن معنا", "Advertise with Us", "Bizimle Reklam Verin"),
     title: text("اعلن معنا", "Advertise with Us", "Bizimle Reklam Verin"),
     description: text(
@@ -139,7 +139,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
   about: {
     key: "about",
     currentPath: "/about",
-    adLayout: { mode: "standard", family: "about" },
+    adLayout: PUBLIC_ROUTE_AD_POLICIES["/about"],
     eyebrow: text("من نحن", "About Us", "Hakkimizda"),
     title: text("من نحن", "About Us", "Hakkimizda"),
     description: text(
@@ -169,7 +169,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
   contact: {
     key: "contact",
     currentPath: "/contact",
-    adLayout: { mode: "safe-no-ads" },
+    adLayout: PUBLIC_ROUTE_AD_POLICIES["/contact"],
     eyebrow: text("اتصل بنا", "Contact Us", "Iletisim"),
     title: text("اتصل بنا", "Contact Us", "Iletisim"),
     description: text(

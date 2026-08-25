@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
+import { matchesOrganizationPublicMode, type OrganizationPublicMode } from "@/src/lib/organizations/public-mode";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
@@ -24,8 +25,6 @@ type OrganizationRow = {
   descriptionTr: string | null;
 };
 
-type Mode = "offices" | "companies";
-
 function pick(locale: "ar" | "en" | "tr", item: OrganizationRow, key: "name" | "description"): string {
   if (key === "name") {
     if (locale === "tr") return item.nameTr || item.nameEn || item.nameAr || item.slug;
@@ -35,10 +34,6 @@ function pick(locale: "ar" | "en" | "tr", item: OrganizationRow, key: "name" | "
   if (locale === "tr") return item.descriptionTr || item.descriptionEn || item.descriptionAr || "";
   if (locale === "en") return item.descriptionEn || item.descriptionAr || item.descriptionTr || "";
   return item.descriptionAr || item.descriptionEn || item.descriptionTr || "";
-}
-
-function matchesMode(mode: Mode, type: string): boolean {
-  return mode === "offices" ? type === "real_estate" : type === "business" || type === "other";
 }
 
 const COPY = {
@@ -74,7 +69,7 @@ const COPY = {
   },
 } as const;
 
-export default function OrganizationDiscoveryPage({ mode }: { mode: Mode }) {
+export default function OrganizationDiscoveryPage({ mode }: { mode: OrganizationPublicMode }) {
   const { locale, viewer, dir, country, city, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
   const [items, setItems] = useState<OrganizationRow[]>([]);
   const [search, setSearch] = useState("");
@@ -95,7 +90,7 @@ export default function OrganizationDiscoveryPage({ mode }: { mode: Mode }) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         if (controller.signal.aborted) return;
         const organizations = Array.isArray(data.organizations) ? data.organizations : [];
-        setItems(organizations.filter((item) => matchesMode(mode, item.type)));
+        setItems(organizations.filter((item) => matchesOrganizationPublicMode(mode, item.type)));
       } catch {
         if (!controller.signal.aborted) {
           setError(locale === "ar" ? "تعذر تحميل الشركات حالياً" : locale === "tr" ? "Sirketler su anda yuklenemedi" : "The companies could not be loaded right now.");
@@ -145,7 +140,7 @@ export default function OrganizationDiscoveryPage({ mode }: { mode: Mode }) {
           />
         </div>
 
-        {error && <div className="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-200">{error}</div>}
+        {error && <div className="mb-6 rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm text-[var(--color-error)] dark:bg-red-900/30 dark:text-red-200">{error}</div>}
 
         <Grid columns={3}>
           {loading
@@ -153,9 +148,9 @@ export default function OrganizationDiscoveryPage({ mode }: { mode: Mode }) {
                 <div key={index} className="h-48 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
               ))
             : filtered.map((item) => (
-                <Link key={item.id} href={`${pageCopy.detailBasePath}/${item.id}`} className="block rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
+                <Link key={item.id} href={`${pageCopy.detailBasePath}/${item.id}`} className="block rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 transition hover:border-[var(--color-primary)]/30 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700">
                   <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold">
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{item.type}</span>
+                    <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-blue-900/40 dark:text-[var(--color-primary)]">{item.type}</span>
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{item.classification}</span>
                   </div>
                   <h2 className="text-xl font-black text-gray-900 dark:text-white">{pick(locale, item, "name")}</h2>

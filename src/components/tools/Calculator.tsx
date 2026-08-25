@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useState } from "react";
 import { ToolCalculatorShell } from "./ToolCalculatorShell";
@@ -199,14 +199,14 @@ export function Calculator({ locale }: CalcProps) {
             <button
               key={i}
               onClick={() => handleButton(btn.action)}
-              className={`h-12 min-h-[48px] rounded-lg text-sm font-semibold transition-all active:scale-95 border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`h-12 min-h-[48px] rounded-lg text-sm font-semibold transition-all active:scale-95 border focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
                 btn.action === "equals"
-                  ? "col-span-2 bg-blue-600 hover:bg-blue-700 text-white border-blue-700"
+                  ? "col-span-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white border-blue-700"
                   : btn.action.startsWith("op") || btn.action === "clear" || btn.action === "backspace"
                     ? "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                     : btn.action.startsWith("m") || btn.action === "mc" || btn.action === "mr" || btn.action === "ms"
                       ? "bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/60 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700"
-                      : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700"
+                      : "bg-[var(--color-surface)] dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700"
               }`}
             >
               {btn.label}

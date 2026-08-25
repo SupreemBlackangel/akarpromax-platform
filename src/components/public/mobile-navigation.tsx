@@ -103,16 +103,9 @@ export default function MobileNavigation({
       <button
         type="button"
         onClick={onLogin}
-        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
-      >
-        {labels.login}
-      </button>
-      <button
-        type="button"
-        onClick={onLogin}
         className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
       >
-        {labels.register}
+        {labels.login}
       </button>
     </>
   );

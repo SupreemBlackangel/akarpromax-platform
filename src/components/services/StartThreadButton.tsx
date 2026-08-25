@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { apiFetch } from "@services-client";
@@ -50,7 +50,7 @@ export default function StartThreadButton({
   };
 
   return (
-    <button type="button" onClick={() => void start()} disabled={busy} className={className || "rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"}>
+    <button type="button" onClick={() => void start()} disabled={busy} className={className || "rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50"}>
       {label}
     </button>
   );

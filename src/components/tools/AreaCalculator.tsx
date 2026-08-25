@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useMemo, useState } from "react";
 import { ToolCalculatorShell } from "./ToolCalculatorShell";
@@ -154,10 +154,10 @@ export function AreaCalculator({ locale }: Props) {
             <button
               key={s}
               onClick={() => setShape(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
                 shape === s
-                  ? "bg-blue-600 text-white"
-                  : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
               }`}
             >
               {s === "polygon" ? (locale === "ar" ? "مضلع" : "Polygon") : s === "triangle" ? (locale === "ar" ? "مثلث" : "Triangle") : s === "regular" ? (locale === "ar" ? "شكل منتظم" : "Regular") : (locale === "ar" ? "دائرة" : "Circle")}
@@ -176,7 +176,7 @@ export function AreaCalculator({ locale }: Props) {
                 onChange={(e) => setPolygonText(e.target.value)}
                 rows={5}
                 dir="ltr"
-                className="w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 placeholder={"0,0\n100,0\n100,50\n0,50"}
               />
               <p className="text-xs text-gray-400 mt-1">
@@ -192,8 +192,8 @@ export function AreaCalculator({ locale }: Props) {
                   <button
                     key={m}
                     onClick={() => setTriMode(m)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      triMode === m ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+                      triMode === m ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
                     }`}
                   >
                     {m === "sss" ? "SSS (3 أضلاع)" : "SAS (ضلاع وزاوية)"}
@@ -229,11 +229,11 @@ export function AreaCalculator({ locale }: Props) {
 
         {rawArea !== null ? (
           <div className="space-y-3">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-              <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+            <div className="bg-[var(--color-primary-soft)] dark:bg-blue-900/20 rounded-lg p-4 text-center">
+              <div className="text-xs text-[var(--color-primary)] dark:text-blue-400 mb-1">
                 {locale === "ar" ? "المساحة" : "Area"}
               </div>
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300 font-mono">
+              <div className="text-2xl font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] font-mono">
                 {formatNum(rawArea)} {labels.m2}
               </div>
             </div>
@@ -244,8 +244,8 @@ export function AreaCalculator({ locale }: Props) {
                   key={c.unit}
                   className={`rounded-lg p-3 text-center border transition-colors cursor-pointer ${
                     c.unit === unit
-                      ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
-                      : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-blue-200"
+                      ? "bg-[var(--color-primary-soft)] dark:bg-blue-900/20 border-[var(--color-primary)]/30 dark:border-blue-700"
+                      : "bg-[var(--color-surface)] dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-[var(--color-primary)]/30"
                   }`}
                   onClick={() => setUnit(c.unit)}
                 >
@@ -262,7 +262,7 @@ export function AreaCalculator({ locale }: Props) {
             />
           </div>
         ) : (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
+          <div className="bg-[var(--color-error-soft)] dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-4 text-sm text-center">
             {locale === "ar" ? "أدخل القيم المطلوبة لحساب المساحة" : "Enter the required values to calculate area"}
           </div>
         )}

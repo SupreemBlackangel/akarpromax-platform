@@ -51,10 +51,15 @@ type PublicPageShellProps = {
   cookieNotice?: boolean;
   currentPath?: string;
   adLayout?: PublicAdLayout;
+  /**
+   * Starts the page with the navigation rail collapsed without overwriting the
+   * visitor's stored preference. Used by full-width tool surfaces.
+   */
+  defaultSidebarCollapsed?: boolean;
   children: ReactNode;
 };
 
-export default function PublicPageShell({
+export default function PublicPageShellClient({
   locale,
   copy,
   viewer,
@@ -69,20 +74,49 @@ export default function PublicPageShell({
   cookieNotice = false,
   currentPath = "/",
   adLayout,
+  defaultSidebarCollapsed = false,
   children,
 }: PublicPageShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cookieVisible, setCookieVisible] = useState(() => {
-    if (!cookieNotice || typeof window === "undefined") return false;
-    try {
-      const stored = window.localStorage.getItem(COOKIE_STORAGE_KEY);
-      return stored !== "accepted" && stored !== "rejected" && stored !== "managed";
-    } catch { return false; }
-  });
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try { return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"; } catch { return false; }
-  });
+  const [cookieVisible, setCookieVisible] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Browser storage can only be read after mount, and SSR must not diverge
+  // from the first client render. The reads are deferred to a microtask so the
+  // effect body itself does not set state and trigger a cascading render.
+  useEffect(() => {
+    let cancelled = false;
+
+    const readStoredPreferences = () => {
+      if (cancelled) return;
+
+      let nextCookieVisible = false;
+      if (cookieNotice) {
+        try {
+          const stored = window.localStorage.getItem(COOKIE_STORAGE_KEY);
+          nextCookieVisible = stored !== "accepted" && stored !== "rejected" && stored !== "managed";
+        } catch {
+          nextCookieVisible = false;
+        }
+      }
+      setCookieVisible(nextCookieVisible);
+
+      let nextSidebarCollapsed = defaultSidebarCollapsed;
+      try {
+        nextSidebarCollapsed =
+          defaultSidebarCollapsed || window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+      } catch {
+        nextSidebarCollapsed = defaultSidebarCollapsed;
+      }
+      setSidebarCollapsed(nextSidebarCollapsed);
+    };
+
+    queueMicrotask(readStoredPreferences);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cookieNotice, defaultSidebarCollapsed]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => {

@@ -15,7 +15,7 @@ import CookieNotice from "@/src/components/public/cookie-notice";
 import ToastRegion from "@/src/components/public/toast-region";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
-import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar } from "@/src/config/public-navigation";
+import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar, type PublicNavItem, type BreadcrumbItem } from "@/src/config/public-navigation";
 
 const LocationBar = dynamic(() => import("@/src/components/public/LocationBar"), { ssr: false });
 const PwaManager = dynamic(() => import("@/src/components/public/PwaManager"), { ssr: false });

@@ -41,7 +41,6 @@ export function BeamCalc({ locale }: Props) {
       stirrups: locale === "ar" ? "كانات" : locale === "tr" ? "Etringler" : "Stirrups",
       rebarKg: locale === "ar" ? "حديد (كغ)" : locale === "tr" ? "Donatı (kg)" : "Rebar (kg)",
       density: locale === "ar" ? "كثافة الحديد (كغ/م³)" : locale === "tr" ? "Donatı Yoğunluğu (kg/m³)" : "Rebar Density (kg/m³)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -56,13 +55,6 @@ export function BeamCalc({ locale }: Props) {
         <ToolNumericInput label={t("length")} unit="m" step="0.01" min={0} value={input.length} onChange={set("length")} />
       </form>
 
-      <button
-        type="button"
-        onClick={() => setInput({ b: 0.3, h: 0.6, length: 6 })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

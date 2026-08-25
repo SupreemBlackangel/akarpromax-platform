@@ -94,6 +94,8 @@ export type Translation = {
   navAdvertise: string;
   navAbout: string;
   navContact: string;
+  navTerms: string;
+  navPrivacy: string;
   navFindMyLand: string;
   navWorkspace: string;
   navMyRequests: string;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, formatTime, messageContextLabel } from "@services-client";
@@ -84,7 +84,7 @@ export default function ThreadMessages({
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                   mine
-                    ? "bg-blue-600 text-white rounded-br-md"
+                    ? "bg-[var(--color-primary)] text-white rounded-br-md"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-md"
                 }`}
               >
@@ -104,9 +104,9 @@ export default function ThreadMessages({
             if (e.key === "Enter") void send();
           }}
           placeholder={t("services.writeMessage") ?? "اكتب رسالة..."}
-          className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
         />
-        <button onClick={() => void send()} disabled={sending || !body.trim()} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold transition">
+        <button onClick={() => void send()} disabled={sending || !body.trim()} className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-sm font-bold transition">
           {t("services.send") ?? "إرسال"}
         </button>
       </div>

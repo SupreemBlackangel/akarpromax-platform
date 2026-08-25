@@ -1,10 +1,17 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Avatar from "@services-ui/Avatar";
 import { RequestStatusPill, OfferStatusPill, OrderStatusPill, ProviderStatusPill } from "@services-ui/ServiceStatusBadges";
 import { formatMoney, formatDate, nameFor, parseJsonArray, type StatusColor } from "@services-client";
 import type { Locale } from "@/src/types/site";
+import {
+  Armchair, Axe, BadgeCheck, BriefcaseBusiness, Bug, Building2, Calculator,
+  Camera, Construction, Cpu, Droplets, Grid3X3, Hammer, HardHat, Home, KeyRound, Landmark,
+  LandPlot, Megaphone, Monitor, MonitorSmartphone, Paintbrush, Plane, Refrigerator, Ruler,
+  Scale, SearchCheck, Shield, ShieldCheck, Snowflake, Sparkles, SunMedium, Trees, Truck,
+  Umbrella, Waves, Wrench, Zap, type LucideIcon,
+} from "lucide-react";
 
 export type CategoryRow = Record<string, unknown> & {
   id: string;
@@ -22,6 +29,13 @@ export type CategoryRow = Record<string, unknown> & {
   price_min?: number | null;
   price_max?: number | null;
   is_active?: number;
+  parent_id?: string | null;
+  is_featured?: number;
+  booking_mode?: "instant" | "quotes" | "both";
+  badge_ar?: string | null;
+  badge_en?: string | null;
+  provider_count?: number;
+  open_request_count?: number;
   dynamic_fields_parsed?: Array<Record<string, unknown>>;
 };
 
@@ -43,7 +57,23 @@ export type ProviderRow = Record<string, unknown> & {
   response_rate?: number;
   city_id?: string | null;
   is_business?: number;
+  governorate?: string | null;
+  is_featured?: number;
+  is_accepting_requests?: number;
 };
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  Armchair, Axe, BriefcaseBusiness, Bug, Building2, BuildingCog: Building2, Calculator, Camera,
+  Construction, Cpu, Droplets, Grid3X3, Hammer, HardHat, Home, KeyRound, Landmark,
+  LandPlot, Megaphone, Monitor, MonitorSmartphone, Paintbrush, Plane, Refrigerator, Ruler,
+  Scale, SearchCheck, Shield, ShieldCheck, Snowflake, Sparkles, SunMedium, Trees, Truck,
+  Umbrella, Waves, Wrench, Zap,
+};
+
+export function ServiceCategoryIcon({ name, className = "h-6 w-6" }: { name?: string | null; className?: string }) {
+  const Icon = name ? CATEGORY_ICONS[name] ?? Wrench : Wrench;
+  return <Icon aria-hidden="true" className={className} strokeWidth={1.9} />;
+}
 
 export type RequestRow = Record<string, unknown> & {
   id: string;
@@ -95,14 +125,21 @@ export type OfferRow = Record<string, unknown> & {
 
 export type JobRow = Record<string, unknown> & {
   id: string;
-  request_id: string;
-  offer_id: string;
-  customer_user_id: string;
-  provider_user_id: string;
+  request_id?: string | null;
+  offer_id?: string | null;
+  customer_user_id?: string;
+  provider_user_id?: string;
+  source_type?: string;
+  viewer_role?: string;
+  service_title_snapshot?: string | null;
   status: string;
   total_price?: number;
+  price?: number;
+  price_snapshot?: number;
   currency?: string;
+  currency_snapshot?: string;
   scheduled_date?: string | null;
+  scheduled_at?: string | null;
   address?: string | null;
   notes?: string | null;
   created_at?: string;
@@ -115,7 +152,7 @@ export function RatingStars({ value, count }: { value?: number | null; count?: n
   const stars = Array.from({ length: 5 }, (_, i) => (i < filled ? "★" : "☆"));
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="text-amber-400 tracking-tight" dir="ltr">{stars.join("")}</span>
+      <span className="text-[var(--accent)] tracking-tight" dir="ltr">{stars.join("")}</span>
       <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{v.toFixed(1)}</span>
       {count != null && <span className="text-xs text-gray-500 dark:text-gray-400">({count})</span>}
     </span>
@@ -128,23 +165,26 @@ export function CategoryCard({ category, locale }: { category: CategoryRow; loca
   return (
     <Link
       href={`/services/catalog/${category.code}`}
-      className="group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:hover:border-blue-700"
     >
       <div className="flex items-center justify-between">
-        <span className="h-11 w-11 grid place-items-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-2xl">
-          {category.icon ?? "🛠"}
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition group-hover:bg-[var(--color-primary)] group-hover:text-white dark:bg-blue-950/60 dark:text-[var(--color-primary)]">
+          <ServiceCategoryIcon name={category.icon} />
         </span>
-        <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
-          {category.requires_license ? "مرخّص" : "عمومي"}
+        <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
+          {category.booking_mode === "both" || category.booking_mode === "instant" ? "حجز مباشر" : "طلب عروض"}
         </span>
       </div>
-      <h3 className="mt-3 font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">{name}</h3>
-      {description && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{description}</p>}
-      {category.price_min != null && (
-        <p className="mt-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-          {formatMoney(category.price_min)} – {formatMoney(category.price_max)}
-        </p>
-      )}
+      <h3 className="mt-4 font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] dark:text-white dark:group-hover:text-[var(--color-primary)]">{name}</h3>
+      {description && <p className="mt-1.5 min-h-10 text-sm leading-5 text-[var(--color-text-muted)] line-clamp-2 dark:text-[var(--color-text-muted)]">{description}</p>}
+      {/* CURRENCY POLICY: service_categories carries price_min/price_max but NO
+          currency column, so an indicative price here could only be rendered by
+          inventing a platform currency. The monetary display is removed until
+          taxonomy/pricing semantics are explicitly designed; non-monetary
+          metadata stays. Do not re-add a category currency in this phase. */}
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border)] pt-3 text-xs dark:border-[var(--color-border)]">
+        <p className="text-[var(--color-text-muted)]">{Number(category.provider_count ?? 0)} محترف</p>
+      </div>
     </Link>
   );
 }
@@ -155,18 +195,19 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
   return (
     <Link
       href={`/providers/${provider.id}`}
-      className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700"
+      className="block rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:hover:border-blue-700"
     >
       <div className="flex items-center gap-3">
         <Avatar name={name} src={provider.logo_url} index={index} />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-bold text-gray-900 dark:text-white">{name}</h3>
+          <h3 className="flex items-center gap-1.5 truncate font-black text-[var(--color-text-primary)] dark:text-white">{name}{provider.status === "approved" && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-label="موثّق" />}</h3>
           <RatingStars value={provider.rating_avg} count={provider.rating_count} locale={locale} />
         </div>
-        <ProviderStatusPill status={provider.status} locale={locale} />
+        {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-[10px] font-black text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
       </div>
       {bio && <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{bio}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+        {provider.governorate && <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.governorate}</span>}
         <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.jobs_completed ?? 0} أعمال</span>
         <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.completion_rate ?? 100}% إنجاز</span>
         <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.response_rate ?? 100}% استجابة</span>
@@ -183,7 +224,7 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
   return (
     <Link
       href={`/service-requests/${request.id}`}
-      className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700"
+      className="block bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30 dark:hover:border-blue-700"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-bold text-gray-900 dark:text-white">{request.title || request.reference_number || "طلب خدمة"}</h3>
@@ -193,7 +234,7 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
       {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{request.description}</p>}
       {answersSummary && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{answersSummary}</p>}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+        <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-blue-400">
           {formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}
         </span>
         <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300">{categoryName}</span>
@@ -205,7 +246,7 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
 export function OfferCard({ offer, locale, customer = false }: { offer: OfferRow; locale: Locale; customer?: boolean }) {
   const name = offer.business_name || nameFor(locale, offer.display_name_ar, offer.display_name_en, null, "مقدم خدمة");
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+    <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {customer ? (
@@ -225,7 +266,7 @@ export function OfferCard({ offer, locale, customer = false }: { offer: OfferRow
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
           <span className="block text-xs text-gray-500 dark:text-gray-400">السعر</span>
-          <span className="font-bold text-blue-600 dark:text-blue-400">{formatMoney(offer.price, offer.currency)}</span>
+          <span className="font-bold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(offer.price, offer.currency)}</span>
         </div>
         <div>
           <span className="block text-xs text-gray-500 dark:text-gray-400">الإجمالي</span>
@@ -246,32 +287,32 @@ export function OfferCard({ offer, locale, customer = false }: { offer: OfferRow
       </div>
       {offer.offer_notes && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{offer.offer_notes}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-        {Boolean(offer.materials_included) && <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">المواد متضمنة</span>}
-        {Boolean(offer.needs_visit) && <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">يتطلب معاينة</span>}
+        {Boolean(offer.materials_included) && <span className="px-2 py-0.5 rounded-md bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300">المواد متضمنة</span>}
+        {Boolean(offer.needs_visit) && <span className="px-2 py-0.5 rounded-md bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]">يتطلب معاينة</span>}
       </div>
     </div>
   );
 }
 
 export function JobCard({ job, locale, viewerEmail }: { job: JobRow; locale: Locale; viewerEmail: string | null }) {
-  const role = viewerEmail === job.provider_user_id ? "provider" : "customer";
+  const role = job.viewer_role === "provider" || viewerEmail === job.provider_user_id ? "provider" : "customer";
   return (
     <Link
       href={`/dashboard/services/jobs/${job.id}`}
-      className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700"
+      className="block bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30 dark:hover:border-blue-700"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-bold text-gray-900 dark:text-white">مهمة #{String(job.id).slice(0, 8)}</h3>
+        <h3 className="font-bold text-gray-900 dark:text-white">{job.source_type === "direct_booking" ? job.service_title_snapshot || "حجز مباشر" : `مهمة #${String(job.id).slice(0, 8)}`}</h3>
         <OrderStatusPill status={job.status} locale={locale} />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
         <div>
           <span className="block text-xs text-gray-500 dark:text-gray-400">القيمة</span>
-          <span className="font-semibold text-blue-600 dark:text-blue-400">{formatMoney(job.total_price, job.currency)}</span>
+          <span className="font-semibold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(job.price_snapshot ?? job.total_price ?? job.price, job.currency_snapshot ?? job.currency)}</span>
         </div>
         <div>
           <span className="block text-xs text-gray-500 dark:text-gray-400">الموعد</span>
-          <span className="text-gray-800 dark:text-gray-100">{formatDate(job.scheduled_date)}</span>
+          <span className="text-gray-800 dark:text-gray-100">{formatDate(job.scheduled_at ?? job.scheduled_date)}</span>
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

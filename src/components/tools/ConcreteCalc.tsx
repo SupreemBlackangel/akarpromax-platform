@@ -10,11 +10,10 @@ import { ToolSecondaryActions } from "./ToolSecondaryActions";
 
 type Props = { locale: string };
 
-const EXAMPLE: ConcreteInput = { length: 5, width: 3, thickness: 0.2 };
 
 export function ConcreteCalc({ locale }: Props) {
   const dir = locale === "ar" ? "rtl" : "ltr";
-  const [input, setInput] = usePersistedState<ConcreteInput>("concrete", { length: 0, width: 0, thickness: 0 });
+  const [input, setInput] = usePersistedState<ConcreteInput>("concrete", { length: 0, width: 0, thickness: 0, bagsPerM3: 7 });
 
   const result = useMemo(() => {
     if (input.length <= 0 || input.width <= 0 || input.thickness <= 0) return null;
@@ -45,12 +44,12 @@ export function ConcreteCalc({ locale }: Props) {
       length: locale === "ar" ? "الطول" : locale === "tr" ? "Uzunluk" : "Length",
       width: locale === "ar" ? "العرض" : locale === "tr" ? "Genişlik" : "Width",
       thickness: locale === "ar" ? "السماكة" : locale === "tr" ? "Kalınlık" : "Thickness",
+      bagsPerM3: locale === "ar" ? "أكياس الأسمنت لكل م³" : locale === "tr" ? "m³ başına çimento" : "Cement bags per m³",
       volume: locale === "ar" ? "حجم الخرسانة" : locale === "tr" ? "Beton Hacmi" : "Concrete Volume",
       cement: locale === "ar" ? "أكياس الأسمنت (50 كغ)" : locale === "tr" ? "Çimento Torbaları (50 kg)" : "Cement Bags (50 kg)",
       sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
       gravel: locale === "ar" ? "الحصى (طن)" : locale === "tr" ? "Çakıl (ton)" : "Gravel (tons)",
       water: locale === "ar" ? "الماء (لتر)" : locale === "tr" ? "Su (litre)" : "Water (liters)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       download: locale === "ar" ? "تنزيل" : locale === "tr" ? "İndir" : "Download",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
@@ -64,15 +63,9 @@ export function ConcreteCalc({ locale }: Props) {
         <ToolNumericInput label={t("length")} unit="m" step="0.01" min={0} value={input.length} onChange={set("length")} />
         <ToolNumericInput label={t("width")} unit="m" step="0.01" min={0} value={input.width} onChange={set("width")} />
         <ToolNumericInput label={t("thickness")} unit="m" step="0.01" min={0} value={input.thickness} onChange={set("thickness")} />
+        <ToolNumericInput label={t("bagsPerM3")} unit="كيس/م³" step="0.5" min={0} value={input.bagsPerM3 ?? 7} onChange={set("bagsPerM3")} />
       </form>
 
-      <button
-        type="button"
-        onClick={() => setInput(EXAMPLE)}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

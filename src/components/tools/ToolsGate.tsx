@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { Locale } from "@/src/types/site";
 
@@ -32,7 +32,7 @@ export function ToolsGate({ locale, state, onRequestLogin, children }: ToolsGate
           <p className="text-gray-500 dark:text-gray-400 mb-5">يجب تسجيل الدخول أولاً للوصول إلى الأدوات الهندسية.</p>
           <button
             onClick={onRequestLogin}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
+            className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm font-semibold transition-colors"
           >
             {locale === "ar" ? "تسجيل الدخول" : locale === "tr" ? "Giriş yap" : "Log in"}
           </button>

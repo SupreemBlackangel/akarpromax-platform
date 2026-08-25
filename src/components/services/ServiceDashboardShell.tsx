@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -56,11 +56,11 @@ function NotificationsBell({ locale }: { locale: Locale }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={bellLabel}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-lg transition hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-800 bg-[var(--color-surface)] dark:bg-gray-900 text-lg transition hover:bg-gray-50 dark:hover:bg-gray-800"
       >
         🔔
         {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black text-white">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)]0 px-1 text-[10px] font-black text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -68,10 +68,10 @@ function NotificationsBell({ locale }: { locale: Locale }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 z-50 mt-2 w-80 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl">
+          <div className="absolute left-0 z-50 mt-2 w-80 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[var(--color-surface)] dark:bg-gray-900 shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-4 py-3">
               <span className="text-sm font-black text-gray-900 dark:text-white">التنبيهات</span>
-              <button type="button" onClick={() => void markAll()} className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+              <button type="button" onClick={() => void markAll()} className="text-xs font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">
                 تحديد الكل كمقروء
               </button>
             </div>
@@ -134,7 +134,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
           type="button"
           className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
             isActive
-              ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+              ? "bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]"
               : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           }`}
         >
@@ -149,7 +149,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
               href={child.href}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition ${
                 active === child.key
-                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                  ? "bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
@@ -168,14 +168,14 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
       href={item.href}
       className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
         isActive
-          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+          ? "bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]"
           : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
       }`}
     >
       <span>{item.icon}</span>
       <span>{t(item.labelKey)}</span>
       {badgeValue > 0 && (
-        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-error-soft)]0 rounded-full">
           {badgeValue > 99 ? "99+" : badgeValue}
         </span>
       )}
@@ -234,12 +234,12 @@ export default function ServiceDashboardShell({
         </div>
         <div className="flex items-center gap-3">
           <NotificationsBell locale={locale} />
-          <Link href="/services" className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">← {t("services.market") ?? "السوق"}</Link>
+          <Link href="/services" className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">← {t("services.market") ?? "السوق"}</Link>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-6 items-start">
-        <aside className="lg:sticky lg:top-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3">
+        <aside className="lg:sticky lg:top-4 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3">
           <nav className="flex flex-col gap-1" aria-label={t("services.navigation") ?? "التنقل"}>
             {visibleItems.map((item) => renderNavItem(item, active, t, badgeCounts))}
           </nav>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getCachedLocation, setCachedLocation, detectCountryByTimezone, detectCountryByLanguage } from "@/src/location-utils";
@@ -166,7 +166,7 @@ export default function LocationPicker({
   }, []);
 
   const inputClass = (compact ? "px-2 py-1 text-xs " : "px-3 py-2 text-sm ") +
-    "w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed";
+    "w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed";
   const labelClass = "block text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5";
 
   if (readOnly) {
@@ -187,9 +187,9 @@ export default function LocationPicker({
       {autoDetect && (
         <div className="flex items-center gap-2">
           <button type="button" onClick={handleDetect} disabled={disabled || detecting}
-            className="px-3 py-1.5 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-blue-400 rounded-lg hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/50 disabled:opacity-50 transition-colors flex items-center gap-1.5"
           >
-            {detecting ? <span className="inline-block w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /> : <span>⌖</span>}
+            {detecting ? <span className="inline-block w-3 h-3 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" /> : <span>⌖</span>}
             {detecting ? names.detecting : names.detect}
           </button>
           {detectError && <span className="text-xs text-red-500">{detectError}</span>}

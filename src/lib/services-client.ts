@@ -1,3 +1,5 @@
+import { getCurrency } from "@/lib/market/currency-registry";
+
 export class ServiceError extends Error {
   code: string;
   status: number;
@@ -39,6 +41,9 @@ export type StatusColor = "default" | "success" | "warning" | "error" | "info";
 
 export function requestStatusLabel(status: string, locale: "ar" | "en" | "tr"): string {
   const labels: Record<string, Record<string, string>> = {
+    pending_provider: { ar: "بانتظار مقدم الخدمة", en: "Awaiting provider", tr: "Sağlayıcı bekleniyor" },
+    confirmed: { ar: "مؤكد", en: "Confirmed", tr: "Onaylandı" },
+    declined: { ar: "مرفوض", en: "Declined", tr: "Reddedildi" },
     draft: { ar: "مسودة", en: "Draft", tr: "Taslak" },
     published: { ar: "منشور", en: "Published", tr: "Yayınlandı" },
     receiving_offers: { ar: "يستقبل عروضاً", en: "Receiving offers", tr: "Teklif alınıyor" },
@@ -59,6 +64,9 @@ export function requestStatusLabel(status: string, locale: "ar" | "en" | "tr"): 
 
 export function requestStatusColor(status: string): StatusColor {
   const map: Record<string, StatusColor> = {
+    pending_provider: "warning",
+    confirmed: "success",
+    declined: "error",
     published: "info",
     receiving_offers: "info",
     offer_selected: "warning",
@@ -138,9 +146,21 @@ export function providerStatusColor(status: string): StatusColor {
   return map[status] ?? "default";
 }
 
-export function formatMoney(value: number | null | undefined, currency = "OMR"): string {
-  const n = Number(value ?? 0);
-  return `${n.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${currency}`;
+/**
+ * Formats a stored amount in ITS OWN currency.
+ *
+ * CURRENCY POLICY (binding): there is no default currency and no fallback.
+ * An amount with no usable currency is not a price, so it renders as an em
+ * dash rather than being denominated in something the platform picked.
+ * Decimals come from the canonical registry. No FX, no country inference.
+ */
+export function formatMoney(value: number | null | undefined, currency: string | null | undefined): string {
+  if (value == null) return "—";
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "—";
+  const definition = getCurrency(currency);
+  if (!definition) return "—";
+  return `${amount.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: definition.decimals })} ${definition.code}`;
 }
 
 export function formatDate(value: string | null | undefined): string {

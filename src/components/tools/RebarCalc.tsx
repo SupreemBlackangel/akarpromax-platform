@@ -39,7 +39,6 @@ export function RebarCalc({ locale }: Props) {
       totalKg: locale === "ar" ? "الوزن الكلي (كغ)" : locale === "tr" ? "Toplam Ağırlık (kg)" : "Total Weight (kg)",
       totalTons: locale === "ar" ? "الوزن الكلي (طن)" : locale === "tr" ? "Toplam Ağırlık (ton)" : "Total Weight (tons)",
       formula: locale === "ar" ? "d² ÷ 162" : locale === "tr" ? "d² ÷ 162" : "d² ÷ 162",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -59,13 +58,6 @@ export function RebarCalc({ locale }: Props) {
         <ToolNumericInput label={t("count")} step="1" min={1} inputMode="numeric" value={input.count} onChange={set("count")} />
       </form>
 
-      <button
-        type="button"
-        onClick={() => setInput({ barDiameter: 16, barLength: 12, count: 50 })}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       <div className="mt-4 space-y-3">
         <ToolResultCard

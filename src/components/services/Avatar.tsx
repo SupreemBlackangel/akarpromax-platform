@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
 const palette = [
-  "bg-blue-600", "bg-emerald-600", "bg-amber-500", "bg-rose-500",
+  "bg-[var(--color-primary)]", "bg-[var(--color-success)]", "bg-[var(--accent-soft)]0", "bg-rose-500",
   "bg-indigo-600", "bg-teal-600", "bg-orange-500", "bg-violet-600",
 ];
 
@@ -30,7 +30,7 @@ export default function Avatar({
         alt={name}
         loading="lazy"
         onError={() => setFailed(true)}
-        className={`${sizeClasses} flex-none rounded-full bg-white dark:bg-gray-800 object-cover border border-gray-200 dark:border-gray-700`}
+        className={`${sizeClasses} flex-none rounded-full bg-[var(--color-surface)] dark:bg-gray-800 object-cover border border-gray-200 dark:border-gray-700`}
       />
     );
   }

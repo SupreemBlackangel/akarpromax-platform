@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import Link from "next/link";
-import { Search, X, Wrench, Star, ArrowLeft } from "lucide-react";
+import { Search, X, Wrench, Star, ArrowLeft, FileText } from "lucide-react";
 import { languageOptions, translations } from "@/src/data/translations";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import AccountDialog from "@/src/components/AccountDialog";
-import { ToolsGate, type ToolsGateState } from "@/src/components/tools/ToolsGate";
 import { ToolCard } from "@/src/components/tools/ToolCard";
 import { ToolsEmptyState } from "@/src/components/tools/ToolsEmptyState";
 import { TOOLS_DATA, type ToolCategory } from "@/src/data/toolsData";
@@ -46,7 +45,8 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType<any>> = {
   coordinate: lazy(() => import("@/src/components/tools/CoordinateConverter").then((m) => ({ default: m.CoordinateConverter }))),
   points2dxf: lazy(() => import("@/src/components/tools/PointsToDxf").then((m) => ({ default: m.PointsToDxf }))),
   pdf2word: lazy(() => import("@/src/components/tools/PdfToWord").then((m) => ({ default: m.PdfToWord }))),
-  landmapper: lazy(() => import("@/src/components/tools/LandMapper").then((m) => ({ default: m.LandMapper }))),
+  // Keep old shared links working, but route both names to the restored unified tool.
+  landmapper: lazy(() => import("@/src/components/tools/FindMyLand").then((m) => ({ default: m.FindMyLand }))),
   findmyland: lazy(() => import("@/src/components/tools/FindMyLand").then((m) => ({ default: m.FindMyLand }))),
 };
 
@@ -67,25 +67,26 @@ function detectDeviceType(): "desktop" | "tablet" | "mobile" {
   return "desktop";
 }
 
+const FLAGSHIP_ID = "findmyland";
+const FLAGSHIP = TOOLS_DATA.find((t) => t.id === FLAGSHIP_ID)!;
+const FLAGSHIP_SECONDARY_ID = "pdf2word";
+const FLAGSHIP_SECONDARY = TOOLS_DATA.find((t) => t.id === FLAGSHIP_SECONDARY_ID)!;
+
 function readActiveToolParam(): string | null {
   if (typeof window === "undefined") return null;
   const tool = new URLSearchParams(window.location.search).get("tool");
-  return tool && TOOLS_DATA.some((t) => t.id === tool) ? tool : null;
+  if (!tool) return null;
+  if (tool === FLAGSHIP_ID || tool === FLAGSHIP_SECONDARY_ID) return tool;
+  return TOOLS_DATA.some((t) => t.id === tool) ? tool : null;
 }
 
-const FLAGSHIP_ID = "findmyland";
-const FLAGSHIP = TOOLS_DATA.find((t) => t.id === FLAGSHIP_ID)!;
-
 export function ToolsPageClient() {
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "ar";
-    const stored = window.localStorage.getItem("akarpromax-locale");
-    return stored === "en" || stored === "tr" ? stored : "ar";
-  });
-  const [gateState, setGateState] = useState<ToolsGateState>("loading");
+  // SSR and first client render must be identical.
+  // Browser preference is restored after mount.
+  const [locale, setLocale] = useState<Locale>("ar");
   const [showLogin, setShowLogin] = useState(false);
   const [accountMode, setAccountMode] = useState<"login" | "register">("login");
-  const [activeTool, setActiveTool] = useState<ToolId | null>(() => readActiveToolParam());
+  const [activeTool, setActiveTool] = useState<ToolId | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("default");
@@ -99,44 +100,78 @@ export function ToolsPageClient() {
   });
   const [country] = useState("om");
   const [city] = useState("om-muscat");
-  const [deviceType] = useState<"desktop" | "tablet" | "mobile">(() => detectDeviceType());
+  const [deviceType, setDeviceType] =
+    useState<"desktop" | "tablet" | "mobile">("desktop");
   const dir = locale === "ar" ? "rtl" : "ltr";
   const toolAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = dir;
-    window.localStorage.setItem("akarpromax-locale", locale);
-  }, [dir, locale]);
+    let cancelled = false;
+    try {
+      const stored = window.localStorage.getItem("akarpromax-locale");
+      if (stored === "en" || stored === "tr") {
+        queueMicrotask(() => {
+          if (!cancelled) setLocale(stored);
+        });
+      }
+    } catch {}
+
+    const syncRouteState = () => {
+      setActiveTool(readActiveToolParam());
+    };
+
+    const syncDeviceType = () => {
+      setDeviceType(detectDeviceType());
+    };
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      syncRouteState();
+      syncDeviceType();
+    });
+
+    window.addEventListener("popstate", syncRouteState);
+    window.addEventListener("resize", syncDeviceType);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("popstate", syncRouteState);
+      window.removeEventListener("resize", syncDeviceType);
+    };
+  }, []);
 
   useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = dir;
+
+    try {
+      window.localStorage.setItem("akarpromax-locale", locale);
+    } catch {}
+  }, [dir, locale]);
+
+  // Authentication enriches the public shell only.
+  // Engineering tools remain usable without a separate permission gate.
+  useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/user-context", { cache: "no-store", signal: controller.signal })
+
+    fetch("/api/user-context", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((data: ViewerContext & { permissions: string[] }) => {
+      .then((data: ViewerContext) => {
         setViewer(data);
-        if (!data.authenticated) {
-          setGateState("unauthenticated");
-          return;
-        }
-        setGateState(data.permissions.includes("tools.use") ? "granted" : "forbidden");
       })
-      .catch(() => {
-        setGateState("unauthenticated");
-      });
+      .catch(() => {});
+
     return () => controller.abort();
   }, []);
 
   const handleAuthenticated = useCallback((v: ViewerContext) => {
     setViewer(v);
-    if (v.authenticated) {
-      setGateState(v.permissions.includes("tools.use") ? "granted" : "forbidden");
-    } else {
-      setGateState("unauthenticated");
-    }
     setShowLogin(false);
   }, []);
 
@@ -144,8 +179,14 @@ export function ToolsPageClient() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {}
-    setViewer({ authenticated: false, email: null, displayName: "Guest", role: "guest", countryCode: null, permissions: [] });
-    setGateState("unauthenticated");
+    setViewer({
+      authenticated: false,
+      email: null,
+      displayName: "Guest",
+      role: "guest",
+      countryCode: null,
+      permissions: [],
+    });
   }, []);
 
   const requestLogin = useCallback((mode: "login" | "register" = "login") => {
@@ -161,7 +202,7 @@ export function ToolsPageClient() {
   );
 
   const filteredTools = useMemo(() => {
-    let result = TOOLS_DATA.filter((t) => t.id !== FLAGSHIP_ID);
+    let result = TOOLS_DATA.filter((t) => t.id !== FLAGSHIP_ID && t.id !== FLAGSHIP_SECONDARY_ID);
 
     if (selectedCategory !== "all") {
       result = result.filter((t) => t.category === selectedCategory);
@@ -203,6 +244,15 @@ export function ToolsPageClient() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       return getToolNameForSearch(FLAGSHIP).includes(q);
+    }
+    return true;
+  }, [selectedCategory, searchQuery, getToolNameForSearch]);
+
+  const showFlagshipSecondary = useMemo(() => {
+    if (selectedCategory !== "all" && FLAGSHIP_SECONDARY.category !== selectedCategory) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return getToolNameForSearch(FLAGSHIP_SECONDARY).includes(q);
     }
     return true;
   }, [selectedCategory, searchQuery, getToolNameForSearch]);
@@ -249,58 +299,63 @@ export function ToolsPageClient() {
       country={country}
       city={city}
       deviceType={deviceType}
-      currentPath={activeTool === "findmyland" ? "/tools?tool=findmyland" : "/tools"}
-      adLayout={{ mode: "safe-no-ads" }}
+      currentPath={activeTool === "findmyland" || activeTool === "pdf2word" ? `/tools?tool=${activeTool}` : "/tools"}
+      adLayout={{ mode: "standard", family: "tools" }}
+      defaultSidebarCollapsed={activeTool !== null}
       onLogin={() => requestLogin("login")}
       onLogout={handleLogout}
     >
       <div dir={dir} className="tc-page">
-        <ToolsGate locale={locale} state={gateState} onRequestLogin={() => requestLogin("login")}>
-          <div className="container">
+        <div className="container">
 
-            {/* ===== HERO ===== */}
-            <section className="tc-hero">
-              <span className="tc-hero-icon">
-                <Wrench size={28} strokeWidth={1.6} />
-              </span>
-              <h1 className="tc-hero-title">
-                {locale === "ar" ? "الأدوات الهندسية" : locale === "tr" ? "Mühendislik Araçları" : "Engineering Tools"}
-              </h1>
-              <p className="tc-hero-desc">
-                {locale === "ar"
-                  ? "أدوات احترافية للمهندسين والمقاولين وشركات التشييد — مجانية ودقيقة"
-                  : locale === "tr"
-                    ? "Mühendisler ve müteahhitler için profesyonel araçlar — ücretsiz ve hassas"
-                    : "Professional tools for engineers and contractors — free and accurate"}
-              </p>
-            </section>
-
-            {/* ===== FLAGSHIP CARD ===== */}
-            {showFlagship && (
-              <Link
-                href={`/tools?tool=${FLAGSHIP.id}`}
-                className="tc-flagship"
-                aria-label={locale === "ar" ? FLAGSHIP.ar : locale === "tr" ? FLAGSHIP.tr : FLAGSHIP.en}
-              >
-                <div className="tc-flagship-badge">
-                  <Star size={12} strokeWidth={2.2} />
-                  <span>{locale === "ar" ? "الأداة الرئيسية" : locale === "tr" ? "Ana Araç" : "Flagship Tool"}</span>
-                </div>
-                <div className="tc-flagship-body">
-                  <div className="tc-flagship-icon">
-                    <Star size={32} strokeWidth={1.5} />
-                  </div>
-                  <div className="tc-flagship-text">
-                    <h2 className="tc-flagship-title">{FLAGSHIP.ar}</h2>
-                    <p className="tc-flagship-sub">{FLAGSHIP.en} — {FLAGSHIP.tr}</p>
-                    <p className="tc-flagship-desc">{FLAGSHIP.descAr}</p>
-                  </div>
-                  <div className="tc-flagship-cta">
-                    <span>{locale === "ar" ? "جرّبها الآن" : locale === "tr" ? "Hemen Dene" : "Try It Now"}</span>
-                    <ArrowLeft size={16} strokeWidth={2} />
-                  </div>
-                </div>
-              </Link>
+            {/* ===== FLAGSHIP CARDS ===== */}
+            {(showFlagship || showFlagshipSecondary) && (
+              <div className="tc-flagship-grid">
+                {showFlagship && (
+                  <Link
+                    href={`/tools?tool=${FLAGSHIP.id}`}
+                    className="tc-flagship"
+                    aria-label={locale === "ar" ? FLAGSHIP.ar : locale === "tr" ? FLAGSHIP.tr : FLAGSHIP.en}
+                    onClick={(event) => { event.preventDefault(); handleSelectTool(FLAGSHIP.id); }}
+                  >
+                    <div className="tc-flagship-body">
+                      <div className="tc-flagship-icon">
+                        <Star size={24} strokeWidth={1.5} />
+                      </div>
+                      <div className="tc-flagship-text">
+                        <h2 className="tc-flagship-title">{FLAGSHIP.ar}</h2>
+                        <p className="tc-flagship-desc">{FLAGSHIP.descAr}</p>
+                      </div>
+                      <div className="tc-flagship-cta">
+                        <span>{locale === "ar" ? "جرّبها الآن" : locale === "tr" ? "Hemen Dene" : "Try It Now"}</span>
+                        <ArrowLeft size={16} strokeWidth={2} />
+                      </div>
+                    </div>
+                  </Link>
+                )}
+                {showFlagshipSecondary && (
+                  <Link
+                    href={`/tools?tool=${FLAGSHIP_SECONDARY.id}`}
+                    className="tc-flagship tc-flagship--secondary"
+                    aria-label={locale === "ar" ? FLAGSHIP_SECONDARY.ar : locale === "tr" ? FLAGSHIP_SECONDARY.tr : FLAGSHIP_SECONDARY.en}
+                    onClick={(event) => { event.preventDefault(); handleSelectTool(FLAGSHIP_SECONDARY.id); }}
+                  >
+                    <div className="tc-flagship-body">
+                      <div className="tc-flagship-icon">
+                        <FileText size={24} strokeWidth={1.5} />
+                      </div>
+                      <div className="tc-flagship-text">
+                        <h2 className="tc-flagship-title">{FLAGSHIP_SECONDARY.ar}</h2>
+                        <p className="tc-flagship-desc">{FLAGSHIP_SECONDARY.descAr}</p>
+                      </div>
+                      <div className="tc-flagship-cta">
+                        <span>{locale === "ar" ? "جرّبها الآن" : locale === "tr" ? "Hemen Dene" : "Try It Now"}</span>
+                        <ArrowLeft size={16} strokeWidth={2} />
+                      </div>
+                    </div>
+                  </Link>
+                )}
+              </div>
             )}
 
             {/* ===== TOOLBAR ===== */}
@@ -363,13 +418,13 @@ export function ToolsPageClient() {
               </div>
               <div className="tc-toolbar-info">
                 <span className="tc-results-count">
-                  {filteredTools.length + (showFlagship ? 1 : 0) === totalTools
+                  {filteredTools.length + (showFlagship ? 1 : 0) + (showFlagshipSecondary ? 1 : 0) === totalTools
                     ? (locale === "ar" ? `${totalTools} أداة` : locale === "tr" ? `${totalTools} araç` : `${totalTools} tools`)
                     : (locale === "ar"
-                        ? `${filteredTools.length + (showFlagship ? 1 : 0)} من ${totalTools} أداة`
+                        ? `${filteredTools.length + (showFlagship ? 1 : 0) + (showFlagshipSecondary ? 1 : 0)} من ${totalTools} أداة`
                         : locale === "tr"
-                          ? `${filteredTools.length + (showFlagship ? 1 : 0)} / ${totalTools} araç`
-                          : `${filteredTools.length + (showFlagship ? 1 : 0)} of ${totalTools} tools`)}
+                          ? `${filteredTools.length + (showFlagship ? 1 : 0) + (showFlagshipSecondary ? 1 : 0)} / ${totalTools} araç`
+                          : `${filteredTools.length + (showFlagship ? 1 : 0) + (showFlagshipSecondary ? 1 : 0)} of ${totalTools} tools`)}
                 </span>
                 {(searchQuery || selectedCategory !== "all" || sortBy !== "default") && (
                   <button type="button" className="tc-clear-filters" onClick={clearFilters}>
@@ -387,6 +442,8 @@ export function ToolsPageClient() {
                     key={tool.id}
                     tool={tool}
                     locale={locale}
+                    active={activeTool === tool.id}
+                    onSelect={handleSelectTool}
                   />
                 ))}
               </div>
@@ -419,8 +476,7 @@ export function ToolsPageClient() {
                 </div>
               </div>
             )}
-          </div>
-        </ToolsGate>
+        </div>
       </div>
       <AccountDialog
         locale={locale}

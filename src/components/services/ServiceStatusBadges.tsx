@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { StatusColor } from "@services-client";
 import { requestStatusLabel, requestStatusColor, offerStatusLabel, offerStatusColor, orderStatusLabel, orderStatusColor, providerStatusLabel, providerStatusColor } from "@services-client";
@@ -6,9 +6,9 @@ import { requestStatusLabel, requestStatusColor, offerStatusLabel, offerStatusCo
 const colorClasses: Record<StatusColor, string> = {
   default: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300",
   success: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300",
-  warning: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
-  error: "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300",
-  info: "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+  warning: "bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]",
+  error: "bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-300",
+  info: "bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]",
 };
 
 export function StatusPill({ label, color, className = "" }: { label: string; color: StatusColor; className?: string }) {

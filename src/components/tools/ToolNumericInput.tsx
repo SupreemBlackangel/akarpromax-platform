@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const SPIN_CLASS = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-const BASE_CLASS = `w-full px-3 py-2 text-[16px] sm:text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent ${SPIN_CLASS}`;
-const ERROR_CLASS = "border-red-400 dark:border-red-500 focus:ring-red-200 dark:focus:ring-red-800";
+const BASE_CLASS = `w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:focus:ring-blue-400 focus:border-transparent ${SPIN_CLASS}`;
+const ERROR_CLASS = "border-red-400 dark:border-[var(--color-error)] focus:ring-red-200 dark:focus:ring-red-800";
 
 type ToolNumericInputProps = {
   value: number;
@@ -22,19 +22,7 @@ type ToolNumericInputProps = {
 export function ToolNumericInput({
   value, onChange, label, unit, step, min, max, error, inputMode = "decimal", className,
 }: ToolNumericInputProps) {
-  const ref = useRef<HTMLInputElement>(null);
   const [localError, setLocalError] = useState<string | undefined>(error);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const form = ref.current?.form;
-      if (!form) return;
-      const inputs = Array.from(form.querySelectorAll<HTMLInputElement>("input[type='number']"));
-      const idx = inputs.indexOf(ref.current!);
-      if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -58,7 +46,6 @@ export function ToolNumericInput({
         {unit && <span className="text-gray-400 dark:text-gray-500 ml-1">({unit})</span>}
       </label>
       <input
-        ref={ref}
         type="number"
         inputMode={inputMode}
         value={value || ""}
@@ -66,7 +53,6 @@ export function ToolNumericInput({
         max={max}
         step={step}
         onChange={handleChange}
-        onKeyDown={handleKeyDown}
         aria-invalid={!!showError}
         aria-describedby={describedBy}
         className={`${BASE_CLASS}${showError ? ` ${ERROR_CLASS}` : ""}${className ? ` ${className}` : ""}`}

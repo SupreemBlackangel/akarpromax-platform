@@ -6,7 +6,7 @@ import type { Translation } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
 import type { BreadcrumbItem } from "@/src/config/public-navigation";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
-import PublicPageShellImpl from "@/src/components/public/public-page-shell";
+import PublicPageShellClient from "@/src/components/public/public-page-shell-client";
 
 type PageHeaderNode = {
   title: string;
@@ -52,6 +52,7 @@ type Props = {
   cookieNotice?: boolean;
   currentPath?: string;
   adLayout?: PublicAdLayout;
+  defaultSidebarCollapsed?: boolean;
   children: ReactNode;
 };
 
@@ -85,14 +86,23 @@ export default function PublicPageShell({
   cookieNotice = false,
   currentPath: explicitPath,
   adLayout,
+  defaultSidebarCollapsed,
   children,
 }: Props) {
-  const [path] = useSyncExternalStore(subscribeToLocation, getLocationSnapshot, () => EMPTY_SERVER_PATH);
+  // useSyncExternalStore returns the snapshot itself, not a tuple. Destructuring
+  // it as an array took the string's first character on the client ("/") and
+  // undefined on the server, so every page using this shell hydrated with a
+  // different currentPath than it was server-rendered with.
+  const path = useSyncExternalStore(
+    subscribeToLocation,
+    getLocationSnapshot,
+    () => EMPTY_SERVER_PATH
+  );
 
   const resolvedPath = explicitPath ?? path;
 
   return (
-    <PublicPageShellImpl
+    <PublicPageShellClient
       locale={locale}
       copy={copy}
       viewer={viewer}
@@ -107,8 +117,9 @@ export default function PublicPageShell({
       adLayout={adLayout}
       cookieNotice={cookieNotice}
       currentPath={resolvedPath}
+      defaultSidebarCollapsed={defaultSidebarCollapsed}
     >
       {children}
-    </PublicPageShellImpl>
+    </PublicPageShellClient>
   );
 }

@@ -35,13 +35,20 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     key: "useful",
     titleKey: "usefulTitle",
-    links: [{ key: "apply", labelKey: "navApply", href: "/providers/apply" }],
+    links: [
+      { key: "apply", labelKey: "navApply", href: "/providers/apply" },
+      { key: "advertise", labelKey: "navAdvertise", href: "/advertise" },
+      { key: "about", labelKey: "navAbout", href: "/about" },
+      { key: "contact", labelKey: "navContact", href: "/contact" },
+    ],
   },
   {
     key: "legal",
     titleKey: "footerLegalTitle",
-    links: [],
-    deferred: true,
+    links: [
+      { key: "terms", labelKey: "navTerms", href: "/terms" },
+      { key: "privacy", labelKey: "navPrivacy", href: "/privacy" },
+    ],
   },
 ];
 

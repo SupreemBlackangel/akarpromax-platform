@@ -11,7 +11,6 @@ import { ToolSecondaryActions } from "./ToolSecondaryActions";
 
 type Props = { locale: string };
 
-const EXAMPLE: BrickInput = { wallLength: 5, wallHeight: 3, brickLength: 250, brickWidth: 120, brickHeight: 60, mortarThickness: 10 };
 
 export function BrickCalc({ locale }: Props) {
   const dir = locale === "ar" ? "rtl" : "ltr";
@@ -52,7 +51,6 @@ export function BrickCalc({ locale }: Props) {
       bricks: locale === "ar" ? "عدد الطوب" : locale === "tr" ? "Gerekli Tuğla Sayısı" : "Bricks Needed",
       cement: locale === "ar" ? "أكياس الأسمنت" : locale === "tr" ? "Çimento Torbaları" : "Cement Bags",
       sand: locale === "ar" ? "الرمل (طن)" : locale === "tr" ? "Kum (ton)" : "Sand (tons)",
-      example: locale === "ar" ? "مثال" : locale === "tr" ? "Örnek" : "Example",
       copy: locale === "ar" ? "نسخ" : locale === "tr" ? "Kopyala" : "Copy",
       share: locale === "ar" ? "مشاركة" : locale === "tr" ? "Paylaş" : "Share",
     };
@@ -75,13 +73,6 @@ export function BrickCalc({ locale }: Props) {
         </div>
       </ToolAdvancedOptions>
 
-      <button
-        type="button"
-        onClick={() => setInput(EXAMPLE)}
-        className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors mt-3 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {t("example")}
-      </button>
 
       {result && (
         <div className="mt-4 space-y-3">

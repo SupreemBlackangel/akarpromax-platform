@@ -95,6 +95,9 @@ const LABELS: Record<Locale, {
   missingError: string;
   genericError: string;
   invalidCredentials: string;
+  accountBlocked: string;
+  rateLimited: string;
+  loginUnavailable: string;
   alreadyRegistered: string;
   welcome: string;
 }> = {
@@ -145,6 +148,9 @@ const LABELS: Record<Locale, {
     missingError: "أكمل جميع الحقول المطلوبة",
     genericError: "حدث خطأ، حاول مجددًا",
     invalidCredentials: "بيانات الدخول غير صحيحة",
+    accountBlocked: "الحساب غير مفعّل أو موقوف. تحقق من بريدك أو تواصل مع الدعم.",
+    rateLimited: "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
+    loginUnavailable: "تعذر تسجيل الدخول حالياً. حاول مرة أخرى.",
     alreadyRegistered: "هذا البريد أو الهاتف مسجل مسبقًا",
     welcome: "أهلًا بك",
   },
@@ -195,6 +201,9 @@ const LABELS: Record<Locale, {
     missingError: "Please fill in all required fields",
     genericError: "Something went wrong, try again",
     invalidCredentials: "Incorrect email/phone or password",
+    accountBlocked: "Account is inactive or suspended. Check your email or contact support.",
+    rateLimited: "Too many attempts. Please wait and try again.",
+    loginUnavailable: "Sign-in is temporarily unavailable. Please try again.",
     alreadyRegistered: "This email or phone is already registered",
     welcome: "Welcome",
   },
@@ -245,6 +254,9 @@ const LABELS: Record<Locale, {
     missingError: "Lütfen tüm zorunlu alanları doldurun",
     genericError: "Bir hata oluştu, tekrar deneyin",
     invalidCredentials: "E-posta/telefon veya şifre hatalı",
+    accountBlocked: "Hesap etkin değil veya askıya alınmış. E-postanızı kontrol edin veya destekle iletişime geçin.",
+    rateLimited: "Çok fazla deneme. Lütfen bekleyip tekrar deneyin.",
+    loginUnavailable: "Giriş şu anda kullanılamıyor. Lütfen tekrar deneyin.",
     alreadyRegistered: "Bu e-posta veya telefon zaten kayıtlı",
     welcome: "Hoş geldin",
   },
@@ -372,7 +384,7 @@ export default function AccountDialog({
     setLocationDetected(false);
   }, []);
 
-  const setFieldError = useCallback((key: "emailError" | "phoneError" | "passwordError" | "nameError" | "missingError" | "genericError" | "invalidCredentials" | "alreadyRegistered") => {
+  const setFieldError = useCallback((key: "emailError" | "phoneError" | "passwordError" | "nameError" | "missingError" | "genericError" | "invalidCredentials" | "accountBlocked" | "rateLimited" | "loginUnavailable" | "alreadyRegistered") => {
     setError(labels[key]);
   }, [labels]);
 
@@ -495,9 +507,14 @@ export default function AccountDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
-      const data: LoginResponse = await response.json();
+      const data: LoginResponse = await response.json().catch(() => ({} as LoginResponse));
       if (!response.ok) {
         if (data.error === "invalid_credentials") return setFieldError("invalidCredentials");
+        if (data.error === "account_blocked") return setFieldError("accountBlocked");
+        if (data.error === "rate_limited" || response.status === 429) return setFieldError("rateLimited");
+        // 403 origin_rejected / 5xx backend failures: a clear "unavailable"
+        // message instead of the generic one, without leaking internals.
+        if (response.status >= 500 || data.error === "origin_rejected") return setFieldError("loginUnavailable");
         return setFieldError("genericError");
       }
       if (data.user) {

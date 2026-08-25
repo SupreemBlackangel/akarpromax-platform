@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="600" height="200" rx="16" fill="url(#bg)"/>
+  
+  <!-- Decorative -->
+  <circle cx="530" cy="160" r="100" fill="rgba(255,255,255,0.05)"/>
+  
+  <!-- Content -->
+  <text x="40" y="60" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white">أخبار العقار</text>
+  <text x="40" y="100" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.75)">تابع آخر أخبار السوق العقاري</text>
+  
+  <!-- CTA -->
+  <rect x="40" y="130" width="150" height="40" rx="20" fill="rgba(255,255,255,0.2)"/>
+  <text x="115" y="155" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">اقرأ المزيد</text>
+  
+  <!-- News preview -->
+  <rect x="350" y="40" width="220" height="120" rx="12" fill="rgba(255,255,255,0.1)"/>
+  <text x="460" y="80" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">📈 ارتفاع أسعار العقارات</text>
+  <text x="460" y="110" font-family="Arial, sans-serif" font-size="11" fill="rgba(255,255,255,0.7)" text-anchor="middle">آخر التحديثات من السوق</text>
+</svg>

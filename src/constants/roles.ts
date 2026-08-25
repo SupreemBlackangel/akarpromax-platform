@@ -36,11 +36,19 @@ export const ROLE_CATALOG: Record<SponsorRole, RoleCatalogEntry> = {
     descriptionAr: "زائر غير مسجل في المنصة",
     permissions: [],
   },
+  // The canonical capability of a normal registered User. It deliberately
+  // carries SERVICE_REQUESTS_MANAGE_OWN: requesting a service is customer
+  // behaviour, not provider behaviour, so a User never has to become a
+  // ProfessionalProfile to ask for work. Every own-request route authorises by
+  // row ownership (service_requests.customer_user_id); this permission only
+  // opens creation and the customer sidebar. It grants NO provider capability
+  // (offers, provider profile, matching workspace) and NO *_ALL/supervisor
+  // capability — those stay on service_provider / service_supervisor.
   viewer: {
     nameAr: "مستخدم مشاهدة",
     nameEn: "Viewer",
-    descriptionAr: "يستطيع مشاهدة المحتوى العام فقط",
-    permissions: [PERMISSIONS.TOOLS_USE],
+    descriptionAr: "يستطيع تصفح المحتوى العام وإنشاء وإدارة طلبات الخدمة الخاصة به",
+    permissions: [PERMISSIONS.TOOLS_USE, PERMISSIONS.SERVICE_REQUESTS_MANAGE_OWN],
   },
   analyst: {
     nameAr: "محلل التقارير",

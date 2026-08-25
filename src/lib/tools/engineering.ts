@@ -1,6 +1,6 @@
 export type UnitSystem = "metric" | "imperial";
 
-export type ConcreteInput = { length: number; width: number; thickness: number };
+export type ConcreteInput = { length: number; width: number; thickness: number; bagsPerM3?: number };
 export type ConcreteResult = { volumeM3: number; cementBags: number; sandTons: number; gravelTons: number; waterLiters: number };
 
 export type BeamInput = { b: number; h: number; length: number };
@@ -37,29 +37,35 @@ const CEMENT_DENSITY = 1440;
 
 export function calcConcrete(input: ConcreteInput): ConcreteResult {
   const volume = input.length * input.width * input.thickness;
-  const cementBags = Math.ceil(volume * (CEMENT_DENSITY / CEMENT_BAG_KG));
-  const sandTons = parseFloat(((volume * SAND_DENSITY) / 1000).toFixed(2));
-  const gravelTons = parseFloat(((volume * GRAVEL_DENSITY) / 1000).toFixed(2));
+  // Cement bags per m³ is user-adjustable (default 7 bags/m³ for a 1:2:4 mix).
+  const bagsPerM3 = input.bagsPerM3 && input.bagsPerM3 > 0 ? input.bagsPerM3 : 7;
+  const cementBags = Math.ceil(volume * bagsPerM3);
+  // Standard 1:2:4 (M15) mix. Dry-material volume ≈ 1.54 × wet concrete volume.
+  const dryVolume = volume * 1.54;
+  const totalParts = 1 + 2 + 4;
+  const sandVolume = (2 / totalParts) * dryVolume;
+  const gravelVolume = (4 / totalParts) * dryVolume;
+  const sandTons = parseFloat(((sandVolume * SAND_DENSITY) / 1000).toFixed(2));
+  const gravelTons = parseFloat(((gravelVolume * GRAVEL_DENSITY) / 1000).toFixed(2));
   const waterLiters = Math.round(volume * WATER_PER_M3);
   return { volumeM3: parseFloat(volume.toFixed(3)), cementBags, sandTons, gravelTons, waterLiters };
 }
 
 export function calcBeam(input: BeamInput): BeamResult {
   const volume = input.b * input.h * input.length;
-  const rebarDensity = 7850;
   const mainBars = Math.ceil((input.b * 100 + input.h * 100) / 50) * 2;
   const stirrupSpacing = 0.15;
   const stirrups = Math.ceil(input.length / stirrupSpacing) + 1;
   const perim = 2 * (input.b + input.h) - 0.08;
-  const stirrupWeight = stirrups * perim * 0.888;
-  const mainWeight = mainBars * input.length * getBarWeight(input.b > 0.3 ? 16 : 12);
-  const rebarKg = parseFloat(((mainWeight + stirrupWeight) * rebarDensity / 1000).toFixed(1));
+  const stirrupWeight = parseFloat((stirrups * perim * 0.888).toFixed(2));
+  const mainWeight = parseFloat((mainBars * input.length * getBarWeight(input.b > 0.3 ? 16 : 12)).toFixed(2));
+  const totalRebarKg = parseFloat((mainWeight + stirrupWeight).toFixed(1));
   return {
     volumeM3: parseFloat(volume.toFixed(3)),
     mainBars,
     stirrups,
-    rebarKg: parseFloat(((mainWeight + stirrupWeight) * 0.001 * 7850).toFixed(1)),
-    rebarDensity: parseFloat((rebarKg / Math.max(volume, 0.001)).toFixed(0)),
+    rebarKg: totalRebarKg,
+    rebarDensity: parseFloat((totalRebarKg / Math.max(volume, 0.001)).toFixed(0)),
   };
 }
 
@@ -81,8 +87,12 @@ export function calcBrick(input: BrickInput): BrickResult {
   const brickUnitH = input.brickHeight + input.mortarThickness;
   const bricksPerM2 = 1 / ((brickUnitL / 1000) * (brickUnitH / 1000));
   const bricksNeeded = Math.ceil(wallArea * bricksPerM2);
-  const cementTons = parseFloat(((bricksNeeded * 0.003) * (CEMENT_DENSITY / 1000)).toFixed(2));
-  const sandTons = parseFloat(((bricksNeeded * 0.005) * (SAND_DENSITY / 1000)).toFixed(2));
+  // ~0.03 m³ mortar per m² of wall, 1:4 cement:sand mix.
+  const mortarPerBrick = 0.03 / Math.max(bricksPerM2, 1);
+  const mortarCementVolume = mortarPerBrick * 0.2;
+  const mortarSandVolume = mortarPerBrick * 0.8;
+  const cementTons = parseFloat(((bricksNeeded * mortarCementVolume * CEMENT_DENSITY) / 1000).toFixed(2));
+  const sandTons = parseFloat(((bricksNeeded * mortarSandVolume * SAND_DENSITY) / 1000).toFixed(2));
   return { bricksNeeded, cementBags: Math.ceil(cementTons * 1000 / CEMENT_BAG_KG), sandTons };
 }
 

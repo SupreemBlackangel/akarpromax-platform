@@ -13,6 +13,8 @@ export type PublicAdSlotConfig = {
   variant: "hero" | "horizontal" | "vertical";
   lazy: boolean;
   used: boolean;
+  /** Canonical frame id (e.g. HERO, LEFT_01). Optional for legacy slots. */
+  canonical?: string;
 };
 
 export const PUBLIC_TOP_AD: PublicAdSlotConfig = {

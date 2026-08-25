@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+﻿import { useId, type ReactNode } from "react";
 import { cn } from "@/src/utils/cn";
 
 type SwitchProps = {
@@ -48,7 +48,7 @@ export default function Switch({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none block size-[18px] rounded-[var(--radius-pill)] bg-white shadow-[var(--shadow-sm)] transition-transform duration-[var(--motion-fast)]",
+          "pointer-events-none block size-[18px] rounded-[var(--radius-pill)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)] transition-transform duration-[var(--motion-fast)]",
           "translate-x-0.5 rtl:-translate-x-0.5",
           "data-[state=checked]:translate-x-[calc(100%-2px)] rtl:data-[state=checked]:-translate-x-[calc(100%-2px)]",
         )}
