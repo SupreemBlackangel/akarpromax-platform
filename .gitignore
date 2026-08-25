@@ -120,6 +120,11 @@ tmp/_scratch/
 .fml-oman-saudi-final-backup-*/
 _ai-backup/
 _auctions_current_snapshot/
+
+# PROTECTED — the live AkarProMax Office desktop app deployment (exe, dll,
+# webui, database). NOT scratch, NOT a backup snapshot. Gitignored only
+# because it's a large binary deployment folder, not because it's disposable.
+# NEVER delete this directory.
 AkarApp_LIVE/
 
 # exported hand-off packages to external assistants/devs (not source)
