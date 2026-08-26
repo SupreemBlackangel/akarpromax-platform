@@ -5,6 +5,8 @@ import Button from "@/src/components/ui/Button";
 import PageContainer from "@/src/components/layout/PageContainer";
 import SearchTrigger from "@/src/components/public/search-trigger";
 import CountrySwitcher from "@/src/components/public/CountrySwitcher";
+import ThemeSwitcher from "@/src/components/public/ThemeSwitcher";
+import CurrencyChip from "@/src/components/public/CurrencyChip";
 
 type PublicHeaderProps = {
   labels: Translation;
@@ -47,6 +49,8 @@ export default function PublicHeader({
         {/* Desktop: right side controls */}
         <div className="flex items-center gap-2 ml-auto">
           <CountrySwitcher />
+          <CurrencyChip />
+          <ThemeSwitcher labels={labels} />
           {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
           <div className="hidden items-center gap-2 md:flex">
             {viewer.authenticated ? (
