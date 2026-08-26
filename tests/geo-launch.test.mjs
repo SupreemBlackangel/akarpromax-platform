@@ -51,10 +51,13 @@ test("manual location wins over automatic detection and persists as an atomic hi
   assert.equal(resolved.city, "sa-riyadh");
 });
 
-test("missing detection has a deterministic global scope, never a random country", () => {
+test("missing detection defaults deterministically to the home market (Oman)", () => {
+  // Product decision: with no signal at all, the platform scopes to its home
+  // market so location/currency surfaces render complete. "All countries"
+  // stays an explicit user choice, never a fallback.
   assert.deepEqual(resolvePlatformLocation({}), {
-    countryCode: "", governorate: "", city: "", district: "",
-    latitude: null, longitude: null, isGlobal: true, source: "fallback",
+    countryCode: "om", governorate: "", city: "", district: "",
+    latitude: null, longitude: null, isGlobal: false, source: "fallback",
   });
 });
 

@@ -73,7 +73,10 @@ export function resolvePlatformLocation(input: {
   if (auto && normalizeGeoToken(auto.countryCode)) {
     return fromSignal(auto, "auto");
   }
-  return fromSignal({ isGlobal: true }, "fallback");
+  // No signal at all: default to the platform's home market (Oman) so the
+  // header location cluster, currency and country-scoped surfaces render
+  // complete. "All countries" remains an explicit choice, never a fallback.
+  return fromSignal({ countryCode: "om" }, "fallback");
 }
 
 export type GeoAliasRow = {

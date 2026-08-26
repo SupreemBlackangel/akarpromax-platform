@@ -62,32 +62,7 @@ export default function PublicHeader({
           </a>
         </div>
 
-        {/* Primary navigation — fills the header center on wide screens,
-            V3 main-nav style; the floating sidebar stays the full map. */}
-        {showDesktopNavigation && (
-          <nav aria-label={labels.mainNavAria} className="hidden min-w-0 items-center gap-0.5 xl:flex">
-            {navItems.slice(0, 6).map((item) => {
-              const active = isNavItemActive(item, currentPath);
-              return (
-                <a
-                  key={item.key}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-                    active
-                      ? "bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"
-                      : "text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)]",
-                  )}
-                >
-                  {labels[item.labelKey]}
-                </a>
-              );
-            })}
-          </nav>
-        )}
-
-        {/* Tool clusters + actions */}
+        {/* Tool clusters + actions — same single top row as the brand, V3 style */}
         <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
           <div className="header-tool-cluster">
             <CountrySwitcher />
@@ -117,6 +92,35 @@ export default function PublicHeader({
           </div>
         </div>
       </PageContainer>
+
+      {/* Primary navigation strip — its own row under the tools, so the top
+          row stays a single line; the floating sidebar stays the full map. */}
+      {showDesktopNavigation && (
+        <div className="hidden border-t border-[color:var(--color-border)]/60 lg:block">
+          <PageContainer>
+            <nav aria-label={labels.mainNavAria} className="flex items-center justify-center gap-1 py-1.5">
+              {navItems.slice(0, 6).map((item) => {
+                const active = isNavItemActive(item, currentPath);
+                return (
+                  <a
+                    key={item.key}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                      active
+                        ? "bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"
+                        : "text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)]",
+                    )}
+                  >
+                    {labels[item.labelKey]}
+                  </a>
+                );
+              })}
+            </nav>
+          </PageContainer>
+        </div>
+      )}
     </header>
   );
 }
