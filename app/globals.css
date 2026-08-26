@@ -1086,9 +1086,11 @@ html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:
 .ad-slot-hero .ad-slot-cta { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; margin-top: 21px; border-radius: 11px; font-weight: 800; transition: transform .18s ease, background .18s ease, color .18s ease; }
 .ad-slot-hero .ad-slot-link:hover .ad-slot-cta { background: #f4c86a; color: #122d5e; transform: translateY(-2px); }
 
-/* Home family only: hero goes edge-to-edge with square corners, V3 style. */
-[data-standard-public-ad-layout="home"] .public-ad-layout-container:has(.standard-public-ad-hero) { padding-top: 0; }
-[data-standard-public-ad-layout="home"] .standard-public-ad-hero { margin-inline: calc(50% - 50vw); }
+/* Home family only: hero goes edge-to-edge with square corners, V3 style.
+   The percentage-margin breakout under-bleeds inside a padded container, so
+   instead the hero's own container drops its padding entirely. */
+[data-standard-public-ad-layout="home"] .public-ad-layout-container:has(.standard-public-ad-hero) { max-width: none; padding-top: 0 !important; padding-inline: 0 !important; }
+[data-standard-public-ad-layout="home"] .standard-public-ad-hero { margin-inline: 0; }
 [data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-link { border-radius: 0; }
 [data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-copy { margin-inline: auto; width: min(100% - 40px, 1240px); max-width: none; }
 [data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-copy > * { max-width: 760px; }
