@@ -46,6 +46,15 @@ async function dbFlat(locale: Locale, force = false): Promise<FlatBundle> {
   return flat;
 }
 
+/**
+ * Read-only access to the static (compiled) translation floor for a locale,
+ * flattened to dot-path keys. Used by the admin API to report whether a key
+ * has a static fallback independent of the DB overlay.
+ */
+export function getStaticFlatBundle(locale: Locale): Readonly<FlatBundle> {
+  return fallbackFlat(locale);
+}
+
 export function invalidateLocaleCaches(): void {
   dbFlatCache.clear();
 }

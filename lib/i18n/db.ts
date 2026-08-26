@@ -82,6 +82,35 @@ async function findKeyId(db: D1Database, namespaceId: string, key: string): Prom
   return row?.id ?? null;
 }
 
+export type CreateKeyResult = { created: boolean; id: string };
+
+/**
+ * Create a translation key (and its namespace when missing).
+ * Returns `created: false` with the existing id when the key already exists.
+ */
+export async function createI18nKey(
+  namespace: string,
+  key: string,
+  description?: string | null,
+): Promise<CreateKeyResult> {
+  const db = await getRuntimeDb();
+  const namespaceId = await upsertNamespace(db, namespace, null);
+  const existing = await findKeyId(db, namespaceId, key);
+  if (existing) return { created: false, id: existing };
+  const id = crypto.randomUUID();
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO i18n_keys (id, namespace_id, \`key\`, description, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?5)`,
+    )
+    .bind(id, namespaceId, key, description ?? null, nowSql())
+    .run();
+  const after = await findKeyId(db, namespaceId, key);
+  if (after && after !== id) return { created: false, id: after };
+  invalidateTranslationCache();
+  return { created: true, id: after ?? id };
+}
+
 export type UpsertTranslation = {
   key: string;
   locale: Locale;
