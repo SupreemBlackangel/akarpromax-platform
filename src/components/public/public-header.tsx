@@ -17,6 +17,7 @@ type PublicHeaderProps = {
   onLogin: () => void;
   onLogout: () => void;
   onOpenMenu: () => void;
+  onToggleSidebar?: () => void;
   showDesktopNavigation?: boolean;
 };
 
@@ -29,6 +30,7 @@ export default function PublicHeader({
   onLogin,
   onLogout,
   onOpenMenu,
+  onToggleSidebar,
   showDesktopNavigation = true,
 }: PublicHeaderProps) {
   return (
@@ -39,6 +41,11 @@ export default function PublicHeader({
           <Button variant="ghost" size="icon" className="md:hidden rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
             <Menu aria-hidden="true" className="size-5" />
           </Button>
+          {onToggleSidebar && (
+            <Button variant="ghost" size="icon" className="hidden md:inline-flex rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onToggleSidebar}>
+              <Menu aria-hidden="true" className="size-5" />
+            </Button>
+          )}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-[11px_11px_2px_11px] bg-[color:var(--color-primary)] font-black text-white shadow-[inset_0_-4px_0_rgba(0,0,0,.14)]" aria-hidden="true">A</span>

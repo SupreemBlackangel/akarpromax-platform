@@ -203,6 +203,7 @@ export function PublicShellLayout({
             onLogin={onLogin}
             onLogout={onLogout}
             onOpenMenu={onOpenMenu}
+            onToggleSidebar={showPublicSidebar ? onToggleSidebar : undefined}
             showDesktopNavigation={showHeaderNav && !showPublicSidebar}
           />
 

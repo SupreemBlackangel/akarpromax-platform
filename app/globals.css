@@ -1069,3 +1069,31 @@ html[data-theme="dark"] .ad-slot-empty {
    adds .is-peek-open, which reveals it without pinning. */
 .public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(100%); }
 html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(-100%); }
+
+/* ── V3-look hero: full-height cover media, vertically centered copy,
+      gold accent line, pill eyebrow chip, white CTA. The generic ad-slot
+      DOM (media/copy/eyebrow/title/accent/desc/cta) is restyled only. ── */
+.ad-slot-hero { min-height: clamp(410px, 43vw, 540px); }
+.ad-slot-hero.ad-slot-skeleton { min-height: clamp(410px, 43vw, 540px); }
+.ad-slot-hero .ad-slot-link { display: flex; align-items: center; overflow: hidden; isolation: isolate; }
+.ad-slot-hero .ad-slot-media { position: absolute; inset: 0; z-index: 0; }
+.ad-slot-hero .ad-slot-asset { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.ad-slot-hero .ad-slot-copy { position: relative; z-index: 1; inset-inline: auto; bottom: auto; max-width: 760px; padding: clamp(34px, 5vw, 56px) clamp(20px, 4vw, 56px) clamp(56px, 7vw, 88px); }
+.ad-slot-hero .ad-slot-eyebrow { backdrop-filter: blur(8px); color: #c8dcff; }
+.ad-slot-hero .ad-slot-title { display: block; font-size: clamp(42px, 6vw, 72px); font-weight: 800; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
+.ad-slot-hero .ad-slot-accent { display: block; color: #f4c86a; font-size: clamp(38px, 5.2vw, 64px); font-weight: 800; font-style: normal; line-height: 1.1; letter-spacing: -.03em; text-shadow: 0 5px 24px rgba(0,0,0,.32); }
+.ad-slot-hero .ad-slot-desc { margin-top: 13px; max-width: 610px; color: rgba(230,240,255,.9); font-weight: 500; }
+.ad-slot-hero .ad-slot-cta { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; margin-top: 21px; border-radius: 11px; font-weight: 800; transition: transform .18s ease, background .18s ease, color .18s ease; }
+.ad-slot-hero .ad-slot-link:hover .ad-slot-cta { background: #f4c86a; color: #122d5e; transform: translateY(-2px); }
+
+/* Home family only: hero goes edge-to-edge with square corners, V3 style. */
+[data-standard-public-ad-layout="home"] .public-ad-layout-container:has(.standard-public-ad-hero) { padding-top: 0; }
+[data-standard-public-ad-layout="home"] .standard-public-ad-hero { margin-inline: calc(50% - 50vw); }
+[data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-link { border-radius: 0; }
+[data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-copy { margin-inline: auto; width: min(100% - 40px, 1240px); max-width: none; }
+[data-standard-public-ad-layout="home"] .standard-public-ad-hero .ad-slot-copy > * { max-width: 760px; }
+@media (max-width: 720px) {
+  .ad-slot-hero { min-height: 480px; }
+  .ad-slot-hero .ad-slot-title { font-size: clamp(38px, 11vw, 52px); }
+  .ad-slot-hero .ad-slot-accent { font-size: clamp(32px, 9vw, 44px); }
+}
