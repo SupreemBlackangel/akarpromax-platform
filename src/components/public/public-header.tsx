@@ -40,8 +40,13 @@ export default function PublicHeader({
   showDesktopNavigation = true,
 }: PublicHeaderProps) {
   return (
-    <header className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
-      <PageContainer className="flex min-h-16 flex-wrap items-center gap-x-3 gap-y-2 py-2">
+    // relative z-30: the backdrop-blur creates a stacking context that traps
+    // the dropdowns; without an explicit z-index the news ticker (a later
+    // sibling in the sticky block) paints over them.
+    <header className="relative z-30 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
+      {/* size="wide": the complete location cluster + preferences + account
+          need more than the default 1140px to stay on ONE row with the brand. */}
+      <PageContainer size="wide" className="flex min-h-16 flex-wrap items-center gap-x-2 gap-y-2 py-2">
         {/* Menu trigger (mobile sheet) + brand — always visible */}
         <div className="flex min-w-0 items-center gap-2">
           <Button variant="ghost" size="icon" className="md:hidden rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
