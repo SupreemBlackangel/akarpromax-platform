@@ -217,7 +217,7 @@ export function PublicShellLayout({
             onLogout={onLogout}
             onOpenMenu={onOpenMenu}
             onToggleSidebar={showPublicSidebar ? onToggleSidebar : undefined}
-            showDesktopNavigation={showHeaderNav && !showPublicSidebar}
+            showDesktopNavigation={showHeaderNav}
           />
 
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />

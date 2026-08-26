@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import type { Translation, ViewerContext } from "@/src/types/site";
-import type { PublicNavItem } from "@/src/config/public-navigation";
+import { isNavItemActive, type PublicNavItem } from "@/src/config/public-navigation";
+import { cn } from "@/src/utils/cn";
 import Button from "@/src/components/ui/Button";
 import PageContainer from "@/src/components/layout/PageContainer";
 import SearchTrigger from "@/src/components/public/search-trigger";
@@ -60,6 +61,31 @@ export default function PublicHeader({
             </span>
           </a>
         </div>
+
+        {/* Primary navigation — fills the header center on wide screens,
+            V3 main-nav style; the floating sidebar stays the full map. */}
+        {showDesktopNavigation && (
+          <nav aria-label={labels.mainNavAria} className="hidden min-w-0 items-center gap-0.5 xl:flex">
+            {navItems.slice(0, 6).map((item) => {
+              const active = isNavItemActive(item, currentPath);
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                    active
+                      ? "bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"
+                      : "text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)]",
+                  )}
+                >
+                  {labels[item.labelKey]}
+                </a>
+              );
+            })}
+          </nav>
+        )}
 
         {/* Tool clusters + actions */}
         <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
