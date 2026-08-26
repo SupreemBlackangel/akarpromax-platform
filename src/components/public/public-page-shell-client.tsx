@@ -79,7 +79,9 @@ export default function PublicPageShellClient({
 }: PublicPageShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cookieVisible, setCookieVisible] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // The floating panel starts closed so the page renders full-width; the
+  // stored preference (read below after mount) can reopen it.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   // Browser storage can only be read after mount, and SSR must not diverge
   // from the first client render. The reads are deferred to a microtask so the
@@ -101,12 +103,13 @@ export default function PublicPageShellClient({
       }
       setCookieVisible(nextCookieVisible);
 
-      let nextSidebarCollapsed = defaultSidebarCollapsed;
+      // Closed unless the user explicitly left it open last time.
+      let nextSidebarCollapsed = true;
       try {
         nextSidebarCollapsed =
-          defaultSidebarCollapsed || window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+          defaultSidebarCollapsed || window.localStorage.getItem(SIDEBAR_STORAGE_KEY) !== "false";
       } catch {
-        nextSidebarCollapsed = defaultSidebarCollapsed;
+        nextSidebarCollapsed = true;
       }
       setSidebarCollapsed(nextSidebarCollapsed);
     };

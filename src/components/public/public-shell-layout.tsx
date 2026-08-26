@@ -189,7 +189,8 @@ export function PublicShellLayout({
         searchHref={searchHref}
       />
 
-      <div className="flex min-h-[100dvh] flex-col md:flex-row">
+      <div className="flex min-h-[100dvh] flex-col">
+        {/* Floating overlay panel — fixed positioned, consumes no layout width. */}
         {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
         <div className="flex min-w-0 flex-1 flex-col">

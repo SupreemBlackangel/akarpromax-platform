@@ -33,24 +33,29 @@ export default function PublicHeader({
 }: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-[var(--layer-header)] border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
-      <PageContainer className="flex min-h-14 items-center justify-between gap-4">
-        {/* Mobile menu trigger + brand (mobile only) */}
-        <div className="flex items-center gap-2 md:hidden">
-          <Button variant="ghost" size="icon" aria-label={labels.showMenu} onClick={onOpenMenu}>
+      <PageContainer className="flex min-h-16 flex-wrap items-center gap-x-3 gap-y-2 py-2">
+        {/* Menu trigger (mobile sheet) + brand — always visible */}
+        <div className="flex min-w-0 items-center gap-2">
+          <Button variant="ghost" size="icon" className="md:hidden rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
             <Menu aria-hidden="true" className="size-5" />
           </Button>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- mobile-only brand */}
-          <a href="/" aria-label={labels.brandTitle} className="inline-flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-[color:var(--color-primary)] font-bold text-white text-xs">A</span>
-            <span className="text-sm font-bold text-[color:var(--color-text-primary)]">{labels.brandTitle}</span>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
+          <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-[11px_11px_2px_11px] bg-[color:var(--color-primary)] font-black text-white shadow-[inset_0_-4px_0_rgba(0,0,0,.14)]" aria-hidden="true">A</span>
+            <span className="flex min-w-0 flex-col leading-tight">
+              <strong className="truncate text-[15px] font-black text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
+              <small className="hidden truncate text-[10px] font-bold text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>
+            </span>
           </a>
         </div>
 
-        {/* Desktop: right side controls */}
-        <div className="flex items-center gap-2 ml-auto">
-          <CountrySwitcher />
-          <CurrencyChip />
-          <ThemeSwitcher labels={labels} />
+        {/* Tool clusters + actions */}
+        <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
+          <div className="header-tool-cluster flex items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
+            <CountrySwitcher />
+            <CurrencyChip />
+            <ThemeSwitcher labels={labels} />
+          </div>
           {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
           <div className="hidden items-center gap-2 md:flex">
             {viewer.authenticated ? (

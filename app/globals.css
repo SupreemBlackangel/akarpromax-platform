@@ -1049,3 +1049,23 @@ html[data-theme="dark"] .ad-slot-empty {
     object-position: center center;
   }
 }
+
+/* Header tool cluster: joined pill group (country / currency / theme).
+   Inner triggers keep their own hover states but drop borders/backgrounds
+   so the cluster reads as one control, V3-header style. */
+.header-tool-cluster > div > button,
+.header-tool-cluster > span {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.header-tool-cluster > div:first-child > button { border-start-start-radius: 11px; border-end-start-radius: 11px; }
+.header-tool-cluster > :last-child > button { border-start-end-radius: 11px; border-end-end-radius: 11px; }
+
+/* Floating public sidebar: unpinned ("collapsed") slides the panel off the
+   inline-start edge (right in RTL, left in LTR); the edge handle overhangs
+   on the viewport side so it stays reachable. Hovering the handle or panel
+   adds .is-peek-open, which reveals it without pinning. */
+.public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(100%); }
+html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(-100%); }
