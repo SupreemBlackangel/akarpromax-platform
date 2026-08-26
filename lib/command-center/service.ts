@@ -271,7 +271,7 @@ export async function getCommandCenterOverview(): Promise<CommandCenterOverview>
   const adTotal = Object.values(campaignByStatus).reduce((s, n) => s + n, 0);
   const impressions = Number(adImpressionsTotal?.impressions ?? 0);
   const clicks = Number(adImpressionsTotal?.clicks ?? 0);
-  const propertyTotal = Object.values(propertyByType).reduce((s, n) => s + n, 0);
+  const propertyTotal = propertyByType.results.reduce((s, r) => s + Number(r.total), 0);
   const providerRows = serviceProviders.results;
   const providerTotal = providerRows.reduce((s, r) => s + Number(r.total), 0);
   const userTotal = Object.values(usersByRole).reduce((s, n) => s + n, 0);

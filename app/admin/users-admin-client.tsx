@@ -46,6 +46,8 @@ const emptyForm = {
   status: "active",
 };
 
+const PAGE_SIZE = 10;
+
 export default function UsersAdminClient({
   initialUser,
 }: {
@@ -61,10 +63,26 @@ export default function UsersAdminClient({
   const [users, setUsers] = useState<AccessUser[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const canWrite = identity.permissions.includes(PERMISSIONS.USERS_CREATE) || identity.permissions.includes(PERMISSIONS.USERS_UPDATE);
   const canDelete = identity.permissions.includes(PERMISSIONS.USERS_DELETE);
+
+  const pageCount = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const pagedUsers = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function openCreateDialog() {
+    setForm(emptyForm);
+    setDialogOpen(true);
+  }
+
+  function openEditDialog(user: AccessUser) {
+    setForm({ email: user.email, displayName: user.displayName || "", role: user.role as SponsorRole, countryCode: user.countryCode?.toLowerCase() || "om", status: user.status });
+    setDialogOpen(true);
+  }
 
   const load = useCallback(async () => {
     const response = await fetch("/api/advertiser-access", { cache: "no-store" });
@@ -78,7 +96,10 @@ export default function UsersAdminClient({
     const timer = window.setTimeout(() => {
       void load()
         .catch((error) => setMessage(error instanceof Error ? error.message : "حدث خطأ غير متوقع"))
-        .finally(() => setBusy(false));
+        .finally(() => {
+          setBusy(false);
+          setLoaded(true);
+        });
     }, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
@@ -97,6 +118,7 @@ export default function UsersAdminClient({
       if (!response.ok) throw new Error(data.error || "تعذر حفظ المستخدم");
       await load();
       setForm(emptyForm);
+      setDialogOpen(false);
       setMessage("تم حفظ المستخدم بنجاح.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر حفظ المستخدم");
@@ -128,7 +150,10 @@ export default function UsersAdminClient({
     <>
       <header className="advertiser-admin-header">
         <div><p>الوصول والصلاحيات</p><h1>إدارة المستخدمين</h1></div>
-        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+        <div className="admin-header-actions">
+          <Link href="/" target="_blank">معاينة الموقع ↗</Link>
+          {canWrite && <button type="button" className="admin-primary" onClick={openCreateDialog}>+ إضافة مستخدم</button>}
+        </div>
       </header>
 
         {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
@@ -140,33 +165,49 @@ export default function UsersAdminClient({
           <article><span>مدراء عامون</span><strong>{users.filter((user) => user.role === "super_admin").length.toLocaleString("ar-EG")}</strong><small>صلاحية شاملة</small></article>
         </div>
 
-        <div className="admin-access-grid">
-          <div className="admin-panel">
-            <div className="admin-panel-title"><div><p>الحسابات</p><h2>مستخدمو نظام المعلنين</h2></div><span>{users.length} سجل</span></div>
-            <div className="admin-access-list">
-              {users.map((user) => {
-                const countryCode = user.countryCode;
-                const country = countryCode ? countries.find(([id]) => id === countryCode.toLowerCase())?.[1] ?? countryCode.toUpperCase() : null;
-                return (
-                <article key={user.id}>
-                  <span>{(user.displayName || user.email).slice(0, 1).toUpperCase()}</span>
-                  <div><strong>{user.displayName || user.email}</strong><small>{user.email}</small></div>
-                  <b>{roleNameAr(user.role)}{country ? ` • ${country}` : ""}</b>
-                  <i className={user.status}>{user.status === "active" ? "نشط" : "معطل"}</i>
-                  <div className="admin-row-actions">
-                    {canWrite && <button type="button" onClick={() => { setForm({ email: user.email, displayName: user.displayName || "", role: user.role as SponsorRole, countryCode: user.countryCode?.toLowerCase() || "om", status: user.status }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>تعديل</button>}
-                    {canDelete && <button className="danger" type="button" onClick={() => deleteUser(user.id)}>إزالة</button>}
-                  </div>
-                </article>
-                );
-              })}
-              {!users.length && <div className="admin-empty"><span>◇</span><strong>لا يوجد مستخدمون بعد</strong></div>}
+        <div className="admin-panel">
+          <div className="admin-panel-title"><div><p>الحسابات</p><h2>مستخدمو نظام المعلنين</h2></div><span>{users.length} سجل</span></div>
+          {!loaded ? (
+            <div style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "32px 0" }}>
+              <div style={{ fontSize: 28, marginBottom: 10, opacity: 0.5 }}>⏳</div>
+              <p>جارٍ تحميل المستخدمين...</p>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="admin-access-list">
+                {pagedUsers.map((user) => {
+                  const countryCode = user.countryCode;
+                  const country = countryCode ? countries.find(([id]) => id === countryCode.toLowerCase())?.[1] ?? countryCode.toUpperCase() : null;
+                  return (
+                  <article key={user.id}>
+                    <span>{(user.displayName || user.email).slice(0, 1).toUpperCase()}</span>
+                    <div><strong>{user.displayName || user.email}</strong><small>{user.email}</small></div>
+                    <b>{roleNameAr(user.role)}{country ? ` • ${country}` : ""}</b>
+                    <i className={user.status}>{user.status === "active" ? "نشط" : "معطل"}</i>
+                    <div className="admin-row-actions">
+                      {canWrite && <button type="button" onClick={() => openEditDialog(user)}>تعديل</button>}
+                      {canDelete && <button className="danger" type="button" onClick={() => deleteUser(user.id)}>إزالة</button>}
+                    </div>
+                  </article>
+                  );
+                })}
+                {!users.length && <div className="admin-empty"><span>◇</span><strong>لا يوجد مستخدمون بعد</strong>{canWrite && <button type="button" onClick={openCreateDialog}>إضافة أول مستخدم</button>}</div>}
+              </div>
+              {pageCount > 1 && (
+                <div className="admin-subnav" style={{ justifyContent: "center", marginTop: 14 }}>
+                  <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>السابق</button>
+                  <span style={{ alignSelf: "center", fontSize: 10, color: "var(--color-text-muted)" }}>صفحة {page} من {pageCount}</span>
+                  <button type="button" disabled={page >= pageCount} onClick={() => setPage((p) => p + 1)}>التالي</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-          {canWrite && (
-            <form className="admin-panel admin-access-form" onSubmit={saveUser}>
-              <div className="admin-panel-title"><div><p>إضافة / تعديل</p><h2>بيانات المستخدم</h2></div></div>
+        {dialogOpen && canWrite && (
+          <div className="admin-dialog-backdrop" onClick={() => setDialogOpen(false)}>
+            <form className="admin-dialog admin-access-form" onSubmit={saveUser} onClick={(event) => event.stopPropagation()}>
+              <div className="admin-dialog-head"><div><p>إضافة / تعديل</p><h2>بيانات المستخدم</h2></div><button type="button" onClick={() => setDialogOpen(false)}>×</button></div>
               <label>الاسم<input value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
               <label>البريد الإلكتروني<input type="email" required dir="ltr" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
               <label>الدور<select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as SponsorRole })}>{assignableRoles.map((id) => <option value={id} key={id}>{roleNameAr(id)}</option>)}</select></label>
@@ -174,10 +215,13 @@ export default function UsersAdminClient({
                 <label>الدولة<select value={form.countryCode} onChange={(event) => setForm({ ...form, countryCode: event.target.value })}>{countries.map(([id, label]) => <option value={id} key={id}>{label}</option>)}</select></label>
               )}
               <label>الحالة<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="active">نشط</option><option value="disabled">معطل</option></select></label>
-              <button className="admin-primary" type="submit" disabled={busy}>حفظ المستخدم</button>
+              <div className="admin-dialog-actions">
+                <button type="button" onClick={() => setDialogOpen(false)}>إلغاء</button>
+                <button className="admin-primary" type="submit" disabled={busy}>حفظ المستخدم</button>
+              </div>
             </form>
-          )}
-        </div>
+          </div>
+        )}
     </>
   );
 }

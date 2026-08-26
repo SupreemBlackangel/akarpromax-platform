@@ -75,6 +75,10 @@ const navGroups: NavGroup[] = [
 
 function canSee(permission: string | string[] | undefined, granted: string[]): boolean {
   if (!permission) return true;
+  // "*" is the super-admin wildcard (see hasScopedPermission in
+  // src/constants/permissions.ts) — a role granted only ["*"] must still see
+  // every sidebar item, not just the ones with no permission requirement.
+  if (granted.includes("*")) return true;
   return Array.isArray(permission)
     ? permission.some((item) => granted.includes(item))
     : granted.includes(permission);

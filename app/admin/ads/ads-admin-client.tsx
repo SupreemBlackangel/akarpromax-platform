@@ -38,6 +38,7 @@ type CreativeDraft = {
 };
 
 const MAX_AD_CREATIVES = 5;
+const PAGE_SIZE = 10;
 
 type Campaign = {
   id: string;
@@ -482,9 +483,11 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   const [previewLocale, setPreviewLocale] = useState<"ar" | "en" | "tr">("ar");
   const [form, setForm] = useState<FormState>(emptyForm(["om"]));
   const [busy, setBusy] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [message, setMessage] = useState("");
+  const [page, setPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = identity.permissions.includes(PERMISSIONS.ADS_CREATE) || identity.permissions.includes(PERMISSIONS.ADS_UPDATE);
@@ -514,7 +517,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       if (!mounted) return;
       Promise.all([loadCampaigns(), loadAssets()])
         .catch((error) => { if (mounted) setMessage(error instanceof Error ? error.message : "تعذر تحميل مركز الإعلانات"); })
-        .finally(() => { if (mounted) setBusy(false); });
+        .finally(() => { if (mounted) { setBusy(false); setLoaded(true); } });
     });
     return () => { mounted = false; };
   }, []);
@@ -525,6 +528,10 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     impressions: campaigns.reduce((sum, item) => sum + item.totalImpressions, 0),
     clicks: campaigns.reduce((sum, item) => sum + item.totalClicks, 0),
   }), [campaigns]);
+
+  const pageCount = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pagedCampaigns = campaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function startCreate(asset?: Asset) {
     const initialCountries = identity.countryCode ? [identity.countryCode.toLowerCase()] : ["om"];
@@ -768,8 +775,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   return (
     <>
       <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files || undefined); event.currentTarget.value = ""; }} />
-      {!editing && (
-        <>
+      <>
           <header className="ads-admin-header">
             <div><p>محرك الإعلانات الذكي</p><h1>مركز إدارة الحملات</h1></div>
             <div><Link href="/" target="_blank">المعاينة المباشرة</Link>{canEdit && <button type="button" onClick={() => startCreate()}>+ حملة جديدة</button>}</div>
@@ -790,17 +796,34 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
         {activeView === "campaigns" && <section className="ads-panel">
           <div className="ads-panel-title"><div><p>الحملات</p><h2>إعلانات المحرك الذكي</h2></div><span>{campaigns.length} حملة</span></div>
-          <div className="ads-campaign-list">
-            {campaigns.map((campaign) => <article key={campaign.id}>
-              <div className="ads-campaign-thumb">{campaign.mediaType === "video" ? <video src={campaign.mediaUrl} poster={campaign.posterUrl || undefined} muted preload="metadata" /> : <img src={campaign.mediaUrl} alt="" />}<span>{campaign.mediaType === "video" ? "فيديو" : "صورة"}</span></div>
-              <div className="ads-campaign-main"><span className={`ads-status ads-status-${campaign.status}`}>{statusLabel(campaign.status)}</span><span className={`ads-badge ads-badge-${campaign.approvalStatus}`}>{approvalLabel(campaign.approvalStatus)}</span><strong>{campaign.internalName}</strong><small>{campaign.advertiserName} • {campaignTypeLabel(campaign.campaignType)}</small><small>{campaign.channels.length ? campaign.channels.map((channel) => channelLabels[channel] ?? channel).join(" + ") : "الموقع"}</small><small className="ads-campaign-targets">{campaign.placements.length ? campaign.placements.slice(0, 3).map((placement) => AD_PLACEMENTS[placement]?.label.ar ?? placement).join("، ") : "بدون مواضع"}{campaign.placements.length > 3 ? ` +${campaign.placements.length - 3}` : ""}</small></div>
-              <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
-              <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
-              <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
-              <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}</div>
-            </article>)}
-            {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والمواضع والاستهداف والموازنة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
-          </div>
+          {!loaded ? (
+            <div className="admin-skeleton">
+              <div className="admin-skeleton-row" />
+              <div className="admin-skeleton-row" />
+              <div className="admin-skeleton-row" />
+            </div>
+          ) : (
+            <>
+              <div className="ads-campaign-list">
+                {pagedCampaigns.map((campaign) => <article key={campaign.id}>
+                  <div className="ads-campaign-thumb">{campaign.mediaType === "video" ? <video src={campaign.mediaUrl} poster={campaign.posterUrl || undefined} muted preload="metadata" /> : <img src={campaign.mediaUrl} alt="" />}<span>{campaign.mediaType === "video" ? "فيديو" : "صورة"}</span></div>
+                  <div className="ads-campaign-main"><span className={`ads-status ads-status-${campaign.status}`}>{statusLabel(campaign.status)}</span><span className={`ads-badge ads-badge-${campaign.approvalStatus}`}>{approvalLabel(campaign.approvalStatus)}</span><strong>{campaign.internalName}</strong><small>{campaign.advertiserName} • {campaignTypeLabel(campaign.campaignType)}</small><small>{campaign.channels.length ? campaign.channels.map((channel) => channelLabels[channel] ?? channel).join(" + ") : "الموقع"}</small><small className="ads-campaign-targets">{campaign.placements.length ? campaign.placements.slice(0, 3).map((placement) => AD_PLACEMENTS[placement]?.label.ar ?? placement).join("، ") : "بدون مواضع"}{campaign.placements.length > 3 ? ` +${campaign.placements.length - 3}` : ""}</small></div>
+                  <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
+                  <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
+                  <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
+                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}</div>
+                </article>)}
+                {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والمواضع والاستهداف والموازنة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
+              </div>
+              {pageCount > 1 && (
+                <div className="admin-subnav" style={{ justifyContent: "center", marginTop: 14 }}>
+                  <button type="button" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, Math.min(pageCount, p) - 1))}>السابق</button>
+                  <span style={{ alignSelf: "center", fontSize: 10, color: "var(--color-text-muted)" }}>صفحة {currentPage} من {pageCount}</span>
+                  <button type="button" disabled={currentPage >= pageCount} onClick={() => setPage((p) => Math.min(pageCount, p) + 1)}>التالي</button>
+                </div>
+              )}
+            </>
+          )}
         </section>}
 
         {activeView === "media" && <section className="ads-panel">
@@ -812,11 +835,11 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
         {activeView === "analytics" && canAnalytics && <AnalyticsPanel />}
         </>
-      )}
 
-      {editing && <section className="ads-wizard-shell">
-        <form className="ads-wizard" onSubmit={saveCampaign}>
-          <header className="ads-wizard-head"><div><p>{form.id ? "تعديل الحملة" : "حملة جديدة"}</p><h2>إعداد حملة المحرك الذكي</h2></div><button type="button" onClick={() => setEditing(false)}>العودة للحملات</button></header>
+      {editing && (
+      <div className="ads-dialog-backdrop" onClick={() => setEditing(false)}>
+        <form className="ads-dialog ads-wizard" onSubmit={saveCampaign} onClick={(event) => event.stopPropagation()}>
+          <div className="ads-dialog-head"><div><p>{form.id ? "تعديل الحملة" : "حملة جديدة"}</p><h2>إعداد حملة المحرك الذكي</h2></div><button type="button" aria-label="إغلاق" onClick={() => setEditing(false)}>×</button></div>
           <nav className="ads-wizard-steps" aria-label="خطوات إعداد الحملة">{["الأساسيات", "الوسائط", "المحتوى", "المواضع", "الاستهداف", "الجدولة والموازنة", "المعاينة"].map((label, index) => <button type="button" key={label} className={wizardStep === index + 1 ? "active" : wizardStep > index + 1 ? "done" : ""} onClick={() => setWizardStep(index + 1)}><span>{index + 1}</span>{label}</button>)}</nav>
           {message && <div className="ads-wizard-message" role="status">{message}</div>}
 
@@ -952,7 +975,8 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
           <footer className="ads-wizard-actions"><button type="button" onClick={() => wizardStep === 1 ? setEditing(false) : setWizardStep((step) => step - 1)}>{wizardStep === 1 ? "إلغاء" : "السابق"}</button>{wizardStep < 7 ? <button className="primary" type="button" onClick={() => setWizardStep((step) => step + 1)}>التالي</button> : <button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button>}</footer>
         </form>
-      </section>}
+      </div>
+      )}
     </>
   );
 }

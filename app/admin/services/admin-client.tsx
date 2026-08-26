@@ -7,7 +7,6 @@ import {
   ShieldAlert, Star, Tags, Users,
 } from "lucide-react";
 
-import AdminPageShell from "@/src/components/AdminPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { ServiceCategoryIcon, type CategoryRow } from "@services-ui/ServiceCards";
 import { apiFetch, formatDate, nameFor } from "@services-client";
@@ -54,7 +53,7 @@ function currencyLabel(value: unknown): string {
   return getCurrency(typeof value === "string" ? value : null)?.code ?? "عملة غير محددة";
 }
 export default function ServicesAdminClient() {
-  const { locale, setLocale, viewer, dir, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
+  const { locale, setLocale, dir, AccountDialog } = useServicesPage();
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot>({ recentProviders: [], recentRequests: [], recentOrders: [], recentReports: [] });
@@ -171,7 +170,7 @@ export default function ServicesAdminClient() {
   const inputClass = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)] dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:text-[var(--color-surface-muted)] dark:focus:ring-[var(--color-primary-soft)]";
 
   return (
-    <AdminPageShell locale={locale} copy={copy} viewer={viewer} activeSection="services" onLogin={() => openLogin("login")} onLogout={handleLogout}>
+    <>
       <main dir={dir} className="p-4 md:p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-wider text-[var(--color-primary)]">مركز التحكم</p><h1 className="mt-1 text-2xl font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface)]">إدارة سوق الخدمات</h1><p className="mt-1 text-sm text-[var(--color-text-muted)]">تحكم بالمحتوى والمهن والحرفيين والطلبات والتشغيل من مكان واحد.</p></div><div className="flex gap-2"><Link href="/services" target="_blank" className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-black text-[var(--color-text-secondary)] dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:text-[var(--color-surface-muted)]">معاينة السوق<ExternalLink className="h-4 w-4" /></Link><select value={locale} onChange={(event) => setLocale(event.target.value as "ar" | "en" | "tr")} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs dark:border-[var(--color-border)] dark:bg-[var(--color-surface)]"><option value="ar">العربية</option><option value="en">English</option><option value="tr">Türkçe</option></select></div></div>
 
@@ -207,7 +206,7 @@ export default function ServicesAdminClient() {
         {!loading && tab === "reports" && <AdminPanel title="البلاغات والمراجعة" description="معالجة بلاغات الطلبات والملفات والمحادثات."><SimpleRows rows={reports} empty="لا توجد بلاغات" render={(report) => <><div><p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface-muted)]">{report.reason || report.description || "بلاغ"}</p><p className="text-xs text-[var(--color-text-muted)]">{report.target_type} · {formatDate(report.created_at)}</p></div><div className="flex items-center gap-2"><Status value={report.status || "open"} />{(report.status === "open" || report.status === "in_review") && <button onClick={() => resolveReport(report)} disabled={busy} className="rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-[11px] font-black text-white">معالجة</button>}</div></>} /></AdminPanel>}
       </main>
       {AccountDialog}
-    </AdminPageShell>
+    </>
   );
 }
 

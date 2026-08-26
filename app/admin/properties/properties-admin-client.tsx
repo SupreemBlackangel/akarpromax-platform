@@ -1,7 +1,6 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
-import AdminPageShell from "@/src/components/AdminPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import AdminPropertyModeration from "@/components/properties/AdminPropertyModeration";
 
@@ -64,9 +63,10 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function PropertiesAdminClient() {
-  const { locale, copy, viewer, dir, openLogin, handleLogout } = useServicesPage();
+  const { dir } = useServicesPage();
   const [section, setSection] = useState<"moderation" | "taxonomy">("moderation");
   const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
+  const [taxonomyLoading, setTaxonomyLoading] = useState(true);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -77,6 +77,7 @@ export default function PropertiesAdminClient() {
   const load = useCallback(() => {
     const controller = new AbortController();
     (async () => {
+      setTaxonomyLoading(true);
       setMessage("");
       try {
         const res = await fetch("/api/admin/properties/taxonomy", { signal: controller.signal });
@@ -89,6 +90,8 @@ export default function PropertiesAdminClient() {
         if (!controller.signal.aborted) {
           setMessage("Failed to load taxonomy data");
         }
+      } finally {
+        if (!controller.signal.aborted) setTaxonomyLoading(false);
       }
     })();
     return () => controller.abort();
@@ -120,6 +123,12 @@ export default function PropertiesAdminClient() {
     });
     setEditing(true);
     setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditing(false);
+    setForm(EMPTY_FORM);
   };
 
   const handleSubmit = async () => {
@@ -202,190 +211,179 @@ export default function PropertiesAdminClient() {
     }
   };
 
-  const inputCls = "w-full px-3 py-2 rounded-lg bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
-
   return (
-    <AdminPageShell
-      locale={locale}
-      copy={copy}
-      viewer={viewer}
-      activeSection="properties"
-      onLogin={() => openLogin("login")}
-      onLogout={handleLogout}
-    >
-      <div className="max-w-6xl mx-auto px-4 py-8" dir={dir}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">إدارة العقارات</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">مراجعة العقارات المرسلة، والتصنيفات وأنواع العقارات</p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSection("moderation")}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${section === "moderation" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]"}`}
-            >
-              مراجعة العقارات
-            </button>
-            <button
-              onClick={() => setSection("taxonomy")}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${section === "taxonomy" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]"}`}
-            >
-              التصنيفات
-            </button>
+      <div dir={dir}>
+        <header className="advertiser-admin-header">
+          <div><p>إدارة السوق العقاري</p><h1>إدارة العقارات</h1></div>
+          <div className="admin-header-actions">
             {section === "taxonomy" && (
-              <button onClick={() => openCreate("category")} className="px-4 py-2 rounded-xl text-sm font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition">
-                + تصنيف جديد
-              </button>
+              <button type="button" className="admin-primary" onClick={() => openCreate("category")}>+ تصنيف جديد</button>
             )}
           </div>
-        </div>
+        </header>
+
+        <nav className="admin-subnav" aria-label="أقسام إدارة العقارات">
+          <button className={section === "moderation" ? "active" : ""} type="button" onClick={() => setSection("moderation")}>
+            <span aria-hidden="true">◎</span>مراجعة العقارات
+          </button>
+          <button className={section === "taxonomy" ? "active" : ""} type="button" onClick={() => setSection("taxonomy")}>
+            <span aria-hidden="true">▤</span>التصنيفات وأنواع العقارات
+          </button>
+        </nav>
+
+        {section === "taxonomy" && message && (
+          <div className="admin-message" role="status">
+            {message}
+            <button type="button" onClick={() => setMessage("")}>×</button>
+          </div>
+        )}
 
         {section === "moderation" && <AdminPropertyModeration />}
 
-        {section === "taxonomy" && message && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-[var(--color-error-soft)] dark:bg-red-900/30 border border-[var(--color-error)]/30 dark:border-red-800 text-sm text-[var(--color-error)] dark:text-[var(--color-error)]">
-            {message}
-          </div>
+        {section === "taxonomy" && (
+          <section className="admin-panel">
+            <div className="admin-panel-title">
+              <div><p>التصنيفات</p><h2>تصنيفات وأنواع العقارات</h2></div>
+              <span>{categories.length} تصنيف</span>
+            </div>
+
+            {taxonomyLoading ? (
+              <div className="admin-skeleton">
+                <div className="admin-skeleton-row" />
+                <div className="admin-skeleton-row" />
+                <div className="admin-skeleton-row" />
+              </div>
+            ) : (
+              <div className="admin-access-list">
+                {categories.map((cat) => (
+                  <article key={cat.id}>
+                    <span aria-hidden="true">{cat.icon ?? "📂"}</span>
+                    <div>
+                      <strong>{cat.label_en}</strong>
+                      <small>{cat.label_ar} / {cat.label_tr}</small>
+                    </div>
+                    <b>{cat.types.length} نوع · #{cat.sort_order}</b>
+                    <i className={cat.is_active ? "" : "disabled"}>{cat.is_active ? "نشط" : "معطل"}</i>
+                    <div className="admin-row-actions">
+                      <button type="button" onClick={() => openEdit("category", cat)}>تعديل</button>
+                      <button type="button" onClick={() => openCreate("type", cat.id)}>+ نوع</button>
+                      <button type="button" className="danger" onClick={() => handleDelete("category", cat.id)}>حذف</button>
+                      <button type="button" onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)}>
+                        {expandedCat === cat.id ? "▲" : "▼"} {cat.types.length}
+                      </button>
+                    </div>
+                    {expandedCat === cat.id && (
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        {cat.types.length === 0 ? (
+                          <div className="admin-empty">
+                            <span>◇</span>
+                            <strong>لا توجد أنواع في هذا التصنيف</strong>
+                            <p>أضف أول نوع لهذا التصنيف.</p>
+                            <button type="button" onClick={() => openCreate("type", cat.id)}>+ إضافة نوع</button>
+                          </div>
+                        ) : (
+                          <div className="admin-access-list">
+                            {cat.types.map((typ) => (
+                              <article key={typ.id}>
+                                <span aria-hidden="true">{typ.icon ?? "📌"}</span>
+                                <div>
+                                  <strong>{typ.label_en}</strong>
+                                  <small>{typ.label_ar} / {typ.label_tr}</small>
+                                </div>
+                                <b>#{typ.sort_order}</b>
+                                <i className={typ.is_active ? "" : "disabled"}>{typ.is_active ? "نشط" : "معطل"}</i>
+                                <div className="admin-row-actions">
+                                  <button type="button" onClick={() => openEdit("type", typ)}>تعديل</button>
+                                  <button type="button" className="danger" onClick={() => handleDelete("type", typ.id)}>حذف</button>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
+                {!categories.length && (
+                  <div className="admin-empty">
+                    <span>◇</span>
+                    <strong>لا توجد تصنيفات بعد</strong>
+                    <p>أضف أول تصنيف عقاري لتنظيم العقارات.</p>
+                    <button type="button" onClick={() => openCreate("category")}>+ إضافة أول تصنيف</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
         )}
 
         {section === "taxonomy" && showForm && (
-          <div className="mb-6 p-6 rounded-2xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">
-              {editing ? "تعديل" : "إضافة"} {form.kind === "category" ? "تصنيف" : "نوع"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">الاسم بالإنجليزية</label>
-                <input value={form.label_en} onChange={(e) => setForm({ ...form, label_en: e.target.value })} className={inputCls} placeholder="Label EN" />
+          <div className="admin-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) closeForm(); }}>
+            <div className="admin-dialog">
+              <div className="admin-dialog-head">
+                <div><p>{editing ? "تعديل" : "إضافة"}</p><h2>{form.kind === "category" ? "تصنيف عقاري" : "نوع عقار"}</h2></div>
+                <button type="button" aria-label="إغلاق" onClick={closeForm}>×</button>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">الاسم بالعربية</label>
-                <input value={form.label_ar} onChange={(e) => setForm({ ...form, label_ar: e.target.value })} className={inputCls} placeholder="Label AR" dir="rtl" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">الاسم بالتركية</label>
-                <input value={form.label_tr} onChange={(e) => setForm({ ...form, label_tr: e.target.value })} className={inputCls} placeholder="Label TR" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">الأيقونة</label>
-                <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} className={inputCls} placeholder="🏠" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">الترتيب</label>
-                <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} className={inputCls} />
-              </div>
-              {form.kind === "type" && !editing && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">التصنيف الأب</label>
-                  <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className={inputCls}>
-                    <option value="">— اختر التصنيف —</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.label_en} / {cat.label_ar}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-4 mt-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
-                نشط
-              </label>
-              {form.kind === "type" && (
-                <>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input type="checkbox" checked={form.show_in_search} onChange={(e) => setForm({ ...form, show_in_search: e.target.checked })} className="rounded" />
-                    يظهر في البحث
+
+              <div className="admin-form-grid">
+                <label>
+                  الاسم بالإنجليزية
+                  <input value={form.label_en} onChange={(e) => setForm({ ...form, label_en: e.target.value })} placeholder="Label EN" />
+                </label>
+                <label>
+                  الاسم بالعربية
+                  <input value={form.label_ar} onChange={(e) => setForm({ ...form, label_ar: e.target.value })} placeholder="Label AR" dir="rtl" />
+                </label>
+                <label>
+                  الاسم بالتركية
+                  <input value={form.label_tr} onChange={(e) => setForm({ ...form, label_tr: e.target.value })} placeholder="Label TR" />
+                </label>
+                <label>
+                  الأيقونة
+                  <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="🏠" />
+                </label>
+                <label>
+                  الترتيب
+                  <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} />
+                </label>
+                {form.kind === "type" && !editing && (
+                  <label>
+                    التصنيف الأب
+                    <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                      <option value="">— اختر التصنيف —</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.label_en} / {cat.label_ar}</option>
+                      ))}
+                    </select>
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input type="checkbox" checked={form.show_in_add_property} onChange={(e) => setForm({ ...form, show_in_add_property: e.target.checked })} className="rounded" />
-                    يظهر في إضافة عقار
-                  </label>
-                </>
-              )}
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button onClick={handleSubmit} disabled={busy || !form.label_en || !form.label_ar || !form.label_tr} className="px-5 py-2 rounded-xl text-sm font-bold bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition">
-                {busy ? "جاري الحفظ..." : editing ? "حفظ التعديلات" : "إنشاء"}
-              </button>
-              <button onClick={() => { setShowForm(false); setEditing(false); setForm(EMPTY_FORM); }} className="px-5 py-2 rounded-xl text-sm font-bold border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                إلغاء
-              </button>
+                )}
+              </div>
+
+              <fieldset>
+                <legend>الحالة والظهور</legend>
+                <label><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />نشط</label>
+                {form.kind === "type" && (
+                  <>
+                    <label><input type="checkbox" checked={form.show_in_search} onChange={(e) => setForm({ ...form, show_in_search: e.target.checked })} />يظهر في البحث</label>
+                    <label><input type="checkbox" checked={form.show_in_add_property} onChange={(e) => setForm({ ...form, show_in_add_property: e.target.checked })} />يظهر في إضافة عقار</label>
+                  </>
+                )}
+              </fieldset>
+
+              <div className="admin-dialog-actions">
+                <button type="button" onClick={closeForm}>إلغاء</button>
+                <button
+                  className="admin-primary"
+                  type="button"
+                  disabled={busy || !form.label_en || !form.label_ar || !form.label_tr}
+                  onClick={handleSubmit}
+                >
+                  {busy ? "جاري الحفظ..." : editing ? "حفظ التعديلات" : "إنشاء"}
+                </button>
+              </div>
             </div>
           </div>
         )}
-
-        {section === "taxonomy" && (
-        <div className="space-y-4">
-          {categories.length === 0 && (
-            <div className="text-center py-12 text-gray-400 dark:text-gray-500 text-sm">لا توجد تصنيفات بعد.</div>
-          )}
-          {categories.map((cat) => (
-            <div key={cat.id} className="rounded-2xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{cat.icon ?? "📂"}</span>
-                  <div>
-                    <div className="font-bold text-gray-900 dark:text-[var(--color-surface)] text-sm">{cat.label_en}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{cat.label_ar} / {cat.label_tr}</div>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${cat.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
-                    {cat.is_active ? "نشط" : "معطل"}
-                  </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">#{cat.sort_order}</span>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => openEdit("category", cat)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/50 transition">
-                    تعديل
-                  </button>
-                  <button onClick={() => openCreate("type", cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50 transition">
-                    + نوع
-                  </button>
-                  <button onClick={() => handleDelete("category", cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-[var(--color-error)] hover:bg-red-100 dark:hover:bg-red-900/50 transition">
-                    حذف
-                  </button>
-                  <button onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                    {expandedCat === cat.id ? "▲" : "▼"} {cat.types.length}
-                  </button>
-                </div>
-              </div>
-              {expandedCat === cat.id && (
-                <div className="px-5 py-3">
-                  {cat.types.length === 0 && (
-                    <div className="text-xs text-gray-400 dark:text-gray-500 py-2">لا توجد أنواع في هذا التصنيف.</div>
-                  )}
-                  <div className="space-y-2">
-                    {cat.types.map((typ) => (
-                      <div key={typ.id} className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg">{typ.icon ?? "📌"}</span>
-                          <div>
-                            <div className="text-sm font-bold text-gray-800 dark:text-gray-100">{typ.label_en}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{typ.label_ar} / {typ.label_tr}</div>
-                          </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${typ.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
-                            {typ.is_active ? "نشط" : "معطل"}
-                          </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">#{typ.sort_order}</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => openEdit("type", typ)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:hover:bg-blue-900/50 transition">
-                            تعديل
-                          </button>
-                          <button onClick={() => handleDelete("type", typ.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-[var(--color-error)] hover:bg-red-100 dark:hover:bg-red-900/50 transition">
-                            حذف
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        )}
       </div>
-    </AdminPageShell>
   );
 }

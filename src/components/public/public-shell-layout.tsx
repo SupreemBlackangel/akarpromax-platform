@@ -16,6 +16,7 @@ import ToastRegion from "@/src/components/public/toast-region";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
 import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar, type PublicNavItem, type BreadcrumbItem } from "@/src/config/public-navigation";
+import { PERMISSIONS } from "@/src/constants/permissions";
 
 const LocationBar = dynamic(() => import("@/src/components/public/LocationBar"), { ssr: false });
 const PwaManager = dynamic(() => import("@/src/components/public/PwaManager"), { ssr: false });
@@ -112,12 +113,23 @@ export function PublicShellLayout({
   const showHeaderNav = shouldShowHeaderPublicNavigation(currentPath);
   const usesStandardAdLayout = adLayout?.mode === "standard";
   const hidesPublicAds = adLayout?.mode === "safe-no-ads";
+  const isPlatformAdmin =
+    viewer.authenticated &&
+    (viewer.permissions.includes("*") || viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW));
   const sidebarFooter = viewer.authenticated ? (
     <div className="flex flex-col gap-[var(--space-3)]">
       <div className="min-w-0">
         <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
         <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
       </div>
+      {isPlatformAdmin && (
+        <a
+          href="/admin"
+          className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-center text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+        >
+          {locale === "ar" ? "لوحة التحكم" : locale === "tr" ? "Yönetim Paneli" : "Admin Panel"}
+        </a>
+      )}
       <button
         type="button"
         onClick={onLogout}

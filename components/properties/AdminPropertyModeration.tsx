@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MapPin, Search, CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Search, CheckCircle2, XCircle } from 'lucide-react';
 
 type AdminMedia = { id: string; url: string; type: string };
 
@@ -43,14 +43,14 @@ const STATUS_TABS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'الكل' },
 ];
 
-const STATUS_BADGE: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  pending_review: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
-  sold: 'bg-blue-100 text-blue-700',
-  rented: 'bg-indigo-100 text-indigo-700',
-  archived: 'bg-gray-200 text-gray-500',
+const STATUS_CLASS: Record<string, string> = {
+  draft: 'status-draft',
+  pending_review: 'status-pending',
+  approved: 'status-active',
+  rejected: 'status-rejected',
+  sold: 'status-active',
+  rented: 'status-active',
+  archived: 'status-archived',
 };
 
 const DEAL_LABEL: Record<string, string> = { sale: 'للبيع', rent: 'للإيجار' };
@@ -156,25 +156,25 @@ export default function AdminPropertyModeration() {
   );
 
   return (
-    <div dir="rtl">
+    <section className="admin-panel" dir="rtl">
+      <div className="admin-panel-title">
+        <div><p>المراجعة</p><h2>قائمة العقارات المرسلة</h2></div>
+        <span>{total} عقار</span>
+      </div>
+
       {/* Status tabs */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <nav className="admin-subnav" aria-label="حالة العقارات">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
+            className={status === tab.value ? "active" : ""}
             type="button"
             onClick={() => { setStatus(tab.value); setPage(1); setExpanded(null); }}
-            className={`rounded-xl px-4 py-2 text-xs font-black transition ${
-              status === tab.value
-                ? 'bg-[var(--color-primary)] text-white'
-                : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]'
-            }`}
           >
-            {tab.label}
-            <span className="ms-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]">{countFor(tab.value)}</span>
+            {tab.label} ({countFor(tab.value)})
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Search */}
       <form
@@ -196,70 +196,61 @@ export default function AdminPropertyModeration() {
       </form>
 
       {notice && (
-        <div className="mb-4 rounded-xl bg-[var(--color-primary-soft)] px-4 py-2.5 text-xs font-bold text-[var(--color-primary)]" role="status">
+        <div className="admin-message" role="status">
           {notice}
+          <button type="button" onClick={() => setNotice("")}>×</button>
         </div>
       )}
 
       {loading ? (
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-          ))}
+        <div className="admin-skeleton">
+          <div className="admin-skeleton-row" />
+          <div className="admin-skeleton-row" />
+          <div className="admin-skeleton-row" />
+          <div className="admin-skeleton-row" />
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 dark:bg-red-900/20 px-5 py-8 text-center text-sm font-bold text-red-700 dark:text-red-300">
-          {error}
-          <div>
-            <button type="button" onClick={() => load()} className="mt-3 rounded-xl bg-red-600 px-4 py-2 text-xs font-black text-white">إعادة المحاولة</button>
-          </div>
+        <div className="admin-empty">
+          <span>⚠</span>
+          <strong>تعذر تحميل العقارات</strong>
+          <p>{error}</p>
+          <button type="button" onClick={() => load()}>إعادة المحاولة</button>
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] px-5 py-12 text-center text-sm font-bold text-[var(--color-text-muted)]">
-          لا توجد عقارات في هذه الحالة.
+        <div className="admin-empty">
+          <span>◇</span>
+          <strong>لا توجد عقارات في هذه الحالة</strong>
+          <p>ستظهر العقارات هنا عند وصول طلبات جديدة.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="text-xs font-bold text-[var(--color-text-muted)]">{total} عقار</div>
+        <div className="advertiser-admin-list">
           {rows.map((row) => {
             const cover = row.media?.find((m) => m.url)?.url || '/placeholder.svg';
-            const badge = STATUS_BADGE[row.status ?? 'draft'] ?? 'bg-gray-100 text-gray-600';
+            const statusClass = STATUS_CLASS[row.status ?? 'draft'] ?? 'status-draft';
             const isOpen = expanded === row.id;
             return (
-              <div key={row.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-                <div className="flex items-center gap-4 p-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- runtime-managed URL */}
-                  <img src={cover} alt="" width={80} height={60} loading="lazy" decoding="async" className="h-14 w-20 rounded-xl object-cover bg-gray-100" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm font-black text-[var(--color-text-primary)] truncate">{row.titleAr || row.titleEn || 'عقار'}</strong>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${badge}`}>{STATUS_TABS.find((t) => t.value === row.status)?.label ?? row.status}</span>
-                      {row.dealType && <span className="rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-text-secondary)]">{DEAL_LABEL[row.dealType] ?? row.dealType}</span>}
-                      {row.propertyType && <span className="rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-text-secondary)]">{row.propertyType}</span>}
-                    </div>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-[var(--color-text-muted)] truncate">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      {[row.country, row.governorate, row.city, row.district].filter(Boolean).join(' / ') || '—'}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
-                      المالك: {row.owner?.name || '—'} ({row.owner?.role || 'user'}) · أُرسل: {row.updatedAt ? new Date(row.updatedAt).toLocaleDateString('ar') : '—'}
-                    </p>
-                  </div>
-                  <div className="text-end shrink-0">
-                    <div className="text-sm font-black text-[var(--color-primary)]">{Number(row.price ?? 0).toLocaleString('ar')} {row.currency || 'SAR'}</div>
-                    <div className="text-[11px] text-[var(--color-text-muted)]">{row.area ? `${row.area} م²` : ''}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : row.id)}
-                    className="inline-flex items-center gap-1 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-black text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] transition shrink-0"
-                  >
-                    <Eye className="h-3.5 w-3.5" /> مراجعة {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              <article key={row.id}>
+                <div className="admin-campaign-art" style={{ backgroundImage: `url("${cover}")` }}>
+                  <span aria-hidden="true">🏠</span>
+                </div>
+                <div className="admin-advertiser-main">
+                  <span className={`admin-status ${statusClass}`}>{STATUS_TABS.find((t) => t.value === row.status)?.label ?? row.status}</span>
+                  <strong>{row.titleAr || row.titleEn || 'عقار'}</strong>
+                  <small>
+                    {[row.country, row.governorate, row.city, row.district].filter(Boolean).join(' / ') || '—'}
+                    {' · '}المالك: {row.owner?.name || '—'}
+                  </small>
+                </div>
+                <div><small>السعر</small><strong>{Number(row.price ?? 0).toLocaleString('ar')} {row.currency || 'SAR'}</strong></div>
+                <div><small>النوع</small><strong>{row.dealType ? (DEAL_LABEL[row.dealType] ?? row.dealType) : '—'}</strong></div>
+                <div className="admin-row-actions">
+                  <button type="button" onClick={() => setExpanded(isOpen ? null : row.id)}>
+                    مراجعة {isOpen ? '▲' : '▼'}
                   </button>
                 </div>
 
                 {isOpen && (
-                  <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 space-y-4">
+                  <div style={{ gridColumn: "1 / -1" }} className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 space-y-4">
                     {row.media && row.media.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {row.media.map((m) => (
@@ -310,30 +301,26 @@ export default function AdminPropertyModeration() {
                     )}
                   </div>
                 )}
-              </div>
+              </article>
             );
           })}
-
-          {pages > 1 && (
-            <div className="flex justify-center gap-2 pt-3">
-              {Array.from({ length: pages }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setPage(i + 1)}
-                  className={`h-9 w-9 rounded-xl text-xs font-black transition ${
-                    i + 1 === page
-                      ? 'bg-[var(--color-primary)] text-white'
-                      : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)]'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
-    </div>
+
+      {!loading && !error && pages > 1 && (
+        <div className="admin-subnav" style={{ justifyContent: "center", marginTop: 14 }}>
+          {Array.from({ length: pages }, (_, i) => (
+            <button
+              key={i}
+              className={i + 1 === page ? "active" : ""}
+              type="button"
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

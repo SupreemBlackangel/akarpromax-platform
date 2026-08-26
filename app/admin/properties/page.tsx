@@ -1,4 +1,5 @@
-﻿import { redirect } from "next/navigation";
+﻿import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSessionIdentity, hasPermission } from "@/lib/identity-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import PropertiesAdminClient from "./properties-admin-client";
@@ -12,13 +13,12 @@ async function PropertiesAdminGate() {
   if (!identity.authenticated) redirect("/");
   if (!REQUIRED_PERMISSIONS.some((p) => hasPermission(identity, p))) {
     return (
-      <div dir="rtl" className="min-h-[50vh] grid place-items-center px-4">
-        <div className="text-center max-w-md">
-          <div className="text-5xl mb-4">🔒</div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">403 — صلاحية مطلوبة</h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            حسابك لا يملك صلاحيات إدارة العقارات.
-          </p>
+      <div className="advertiser-admin-denied" dir="rtl">
+        <div>
+          <span>🔒</span>
+          <h1>403 — صلاحية مطلوبة</h1>
+          <p>حسابك لا يملك صلاحيات إدارة العقارات.</p>
+          <Link href="/">العودة إلى المنصة</Link>
         </div>
       </div>
     );
