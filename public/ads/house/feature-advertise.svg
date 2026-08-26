@@ -1,0 +1,20 @@
+<svg width="400" height="500" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" font-family="Cairo, Tahoma, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a0e2e"/>
+      <stop offset="100%" stop-color="#c2185b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" rx="18" fill="url(#bgA)"/>
+  <g transform="translate(150,55)" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.95">
+    <path d="M10 60 L60 30 L100 10 V90 L60 70 L10 90 Z" stroke-linejoin="round"/>
+    <line x1="10" y1="60" x2="10" y2="90"/>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#ffd9ec" font-size="15" font-weight="900" letter-spacing="1.5">عقار بروماكس</text>
+  <text x="200" y="300" text-anchor="middle" fill="#ffffff" font-size="27" font-weight="900">أعلن معنا</text>
+  <text x="200" y="332" text-anchor="middle" fill="#ffe1ee" font-size="14" font-weight="700">وصولك لعملائك المستهدفين يبدأ هنا</text>
+  <g transform="translate(115,365)">
+    <rect width="170" height="46" rx="23" fill="#ffffff"/>
+    <text x="85" y="30" text-anchor="middle" fill="#4a0e2e" font-size="16" font-weight="900">انضم كمعلن</text>
+  </g>
+</svg>

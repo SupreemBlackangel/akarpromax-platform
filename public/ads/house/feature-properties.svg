@@ -1,0 +1,19 @@
+<svg width="400" height="500" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" font-family="Cairo, Tahoma, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgP" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#123a8a"/>
+      <stop offset="100%" stop-color="#1769ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" rx="18" fill="url(#bgP)"/>
+  <g transform="translate(0,60)" fill="#ffffff" opacity="0.95">
+    <path transform="translate(150,0)" d="M50 10 L100 55 V150 H65 V100 H35 V150 H0 V55 Z" fill="none" stroke="#ffffff" stroke-width="9" stroke-linejoin="round"/>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#d8af55" font-size="15" font-weight="900" letter-spacing="1.5">عقار بروماكس</text>
+  <text x="200" y="300" text-anchor="middle" fill="#ffffff" font-size="27" font-weight="900">ابحث عن عقارك المثالي</text>
+  <text x="200" y="332" text-anchor="middle" fill="#dce7ff" font-size="14" font-weight="700">آلاف الإعلانات العقارية الموثّقة</text>
+  <g transform="translate(115,365)">
+    <rect width="170" height="46" rx="23" fill="#ffffff"/>
+    <text x="85" y="30" text-anchor="middle" fill="#123a8a" font-size="16" font-weight="900">تصفّح العقارات</text>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+<svg width="1000" height="400" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" font-family="Cairo, Tahoma, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f2a63"/>
+      <stop offset="55%" stop-color="#1769ff"/>
+      <stop offset="100%" stop-color="#3f8cff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1000" height="400" rx="20" fill="url(#bg)"/>
+  <rect width="1000" height="400" rx="20" fill="url(#glow)"/>
+  <g opacity="0.15" fill="#ffffff">
+    <circle cx="905" cy="70" r="120"/>
+    <circle cx="60" cy="360" r="90"/>
+  </g>
+  <g transform="translate(60,90)">
+    <text x="0" y="0" fill="#d8af55" font-size="20" font-weight="900" letter-spacing="2">عقار بروماكس</text>
+    <text x="0" y="60" fill="#ffffff" font-size="48" font-weight="900">منصتك العقارية الشاملة</text>
+    <text x="0" y="105" fill="#dce7ff" font-size="21" font-weight="700">عقارات · خدمات هندسية · أدوات ذكية · إعلانات مدارة</text>
+    <g transform="translate(0,150)">
+      <rect width="190" height="52" rx="26" fill="#ffffff"/>
+      <text x="95" y="34" text-anchor="middle" fill="#0f2a63" font-size="19" font-weight="900">تصفّح العقارات</text>
+    </g>
+    <g transform="translate(210,150)">
+      <rect width="190" height="52" rx="26" fill="none" stroke="#ffffff" stroke-width="2"/>
+      <text x="95" y="34" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="900">استكشف الخدمات</text>
+    </g>
+  </g>
+  <g transform="translate(760,150)" fill="#ffffff" opacity="0.92">
+    <rect x="0" y="0" width="150" height="150" rx="18" fill="#ffffff" opacity="0.1"/>
+    <path d="M75 25 L135 70 V130 H95 V95 H55 V130 H15 V70 Z" fill="none" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"/>
+  </g>
+</svg>

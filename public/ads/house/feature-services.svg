@@ -1,0 +1,19 @@
+<svg width="400" height="500" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" font-family="Cairo, Tahoma, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgS" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b3d33"/>
+      <stop offset="100%" stop-color="#159169"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" rx="18" fill="url(#bgS)"/>
+  <g transform="translate(150,60)" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.95">
+    <path d="M50 0 L61 20 L84 24 L67 41 L71 64 L50 53 L29 64 L33 41 L16 24 L39 20 Z" stroke-linejoin="round"/>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#d8af55" font-size="15" font-weight="900" letter-spacing="1.5">عقار بروماكس</text>
+  <text x="200" y="300" text-anchor="middle" fill="#ffffff" font-size="27" font-weight="900">سوق الخدمات الهندسية</text>
+  <text x="200" y="332" text-anchor="middle" fill="#dcfff1" font-size="14" font-weight="700">مزوّدو خدمات موثوقون بجودة مضمونة</text>
+  <g transform="translate(115,365)">
+    <rect width="170" height="46" rx="23" fill="#ffffff"/>
+    <text x="85" y="30" text-anchor="middle" fill="#0b3d33" font-size="16" font-weight="900">استكشف الخدمات</text>
+  </g>
+</svg>

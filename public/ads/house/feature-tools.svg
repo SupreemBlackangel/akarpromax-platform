@@ -1,0 +1,19 @@
+<svg width="400" height="500" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" font-family="Cairo, Tahoma, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a3b0b"/>
+      <stop offset="100%" stop-color="#d8af55"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" rx="18" fill="url(#bgT)"/>
+  <g transform="translate(150,55)" fill="#ffffff" opacity="0.95">
+    <path d="M20 70 L58 32 A16 16 0 0 1 74 16 L84 6 L94 16 L84 26 A16 16 0 0 1 68 42 L30 80 Z" stroke="#ffffff" stroke-width="2"/>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#2c1c05" font-size="15" font-weight="900" letter-spacing="1.5">عقار بروماكس</text>
+  <text x="200" y="300" text-anchor="middle" fill="#ffffff" font-size="27" font-weight="900">أدوات هندسية ذكية</text>
+  <text x="200" y="332" text-anchor="middle" fill="#3a2a08" font-size="14" font-weight="700">حاسبات وتحويلات ومعالجة ملفات فورية</text>
+  <g transform="translate(115,365)">
+    <rect width="170" height="46" rx="23" fill="#ffffff"/>
+    <text x="85" y="30" text-anchor="middle" fill="#5a3b0b" font-size="16" font-weight="900">جرّب الأدوات</text>
+  </g>
+</svg>
