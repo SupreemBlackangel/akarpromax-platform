@@ -22,6 +22,7 @@
     "db:generate:mysql": "drizzle-kit generate --config drizzle.mysql.config.ts",
     "db:migrate:mysql": "drizzle-kit migrate --config drizzle.mysql.config.ts",
     "seed:i18n": "tsx scripts/seed-i18n.ts",
+    "seed:news": "tsx scripts/seed-news.ts",
     "seed:services": "tsx scripts/seed-services.ts",
     "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts",
     "seed:auth:admin": "tsx scripts/seed-auth-admin.ts",

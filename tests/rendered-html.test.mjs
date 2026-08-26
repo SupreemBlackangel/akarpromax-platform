@@ -211,10 +211,11 @@ test("includes the region-filtered news ticker, management API and admin panel",
   assert.match(ticker, /tickerPause/);
   assert.match(ticker, /tickerPlay/);
   assert.match(ticker, /className="ticker-item"/);
-  assert.doesNotMatch(ticker, /ticker-link/);
-  assert.doesNotMatch(ticker, /_blank/);
-  assert.doesNotMatch(ticker, /isExternalLink/);
-  assert.doesNotMatch(ticker, /href=\{item\.linkUrl\}/);
+  assert.match(ticker, /ticker-link/);
+  assert.match(ticker, /target="_blank" rel="noopener noreferrer"/);
+  assert.match(ticker, /isExternalLink/);
+  assert.match(ticker, /href=\{item\.linkUrl\}/);
+  assert.match(styles, /\.ticker-link/);
   assert.match(newsApi, /n\.scope = 'global' OR \(n\.scope = 'country' AND lower\(n\.country_code\) = \?1\)/);
   assert.match(newsApi, /n\.scope = 'city'/);
   assert.match(newsApi, /NEWS_PUBLISH/);

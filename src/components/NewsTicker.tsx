@@ -21,7 +21,16 @@ type NewsItem = {
 type TickerItem = {
   id: string;
   title: string;
+  linkUrl?: string | null;
 };
+
+function isExternalLink(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function isRelativeLink(url: string): boolean {
+  return url.startsWith("/") && !url.startsWith("//");
+}
 
 function localizedTitle(item: NewsItem, locale: Locale): string {
   if (locale === "ar") return item.titleAr;
@@ -62,6 +71,7 @@ export default function NewsTicker({ copy, locale, country, city }: Props) {
             data.items.map((item: NewsItem) => ({
               id: item.id,
               title: localizedTitle(item, locale),
+              linkUrl: typeof item.linkUrl === "string" && item.linkUrl.trim() ? item.linkUrl.trim() : null,
             })),
           );
         }
@@ -154,7 +164,13 @@ export default function NewsTicker({ copy, locale, country, city }: Props) {
           <div className="ticker-marquee" style={{ transform: offset }}>
             {display.map((item) => (
               <span key={item.id} className="ticker-item">
-                {item.title}
+                {item.linkUrl && isExternalLink(item.linkUrl) ? (
+                  <a className="ticker-link" href={item.linkUrl} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                ) : item.linkUrl && isRelativeLink(item.linkUrl) ? (
+                  <a className="ticker-link" href={item.linkUrl}>{item.title}</a>
+                ) : (
+                  item.title
+                )}
                 <span className="ticker-dot" aria-hidden="true">•</span>
               </span>
             ))}

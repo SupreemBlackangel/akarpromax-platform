@@ -924,6 +924,242 @@ function AnalyticsTab() {
   );
 }
 
+type TickerRow = {
+  item: NewsItem;
+  placement: NewsPlacement | null;
+  effectivePriority: number;
+};
+
+/**
+ * Mirrors lib/news/delivery.ts row-scope semantics: only active rows within
+ * their date window can resolve on any channel.
+ */
+function isRowLive(item: NewsItem): boolean {
+  if (item.status !== "active") return false;
+  const today = new Date().toISOString().slice(0, 10);
+  if (item.startAt && item.startAt.slice(0, 10) > today) return false;
+  if (item.endAt && item.endAt.slice(0, 10) < today) return false;
+  return true;
+}
+
+function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }) {
+  const [placements, setPlacements] = useState<NewsPlacement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [feedEmpty, setFeedEmpty] = useState(false);
+
+  const loadPlacements = async () => {
+    const res = await fetch("/api/news/placements", { cache: "no-store" });
+    const data = await res.json();
+    if (Array.isArray(data.placements)) setPlacements(data.placements);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [placementsRes, feedRes] = await Promise.all([
+          fetch("/api/news/placements", { cache: "no-store" }),
+          fetch("/api/news/feed?channel=WEBSITE_TICKER&country=om&lang=ar", { cache: "no-store" }),
+        ]);
+        const placementsData = await placementsRes.json();
+        const feedData = await feedRes.json();
+        if (!cancelled) {
+          if (Array.isArray(placementsData.placements)) setPlacements(placementsData.placements);
+          setFeedEmpty(!Array.isArray(feedData.items) || feedData.items.length === 0);
+        }
+      } catch {
+        if (!cancelled) setMessage("تعذر تحميل بيانات الشريط.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Mirrors lib/news/delivery.ts resolution: an explicit WEBSITE_TICKER
+  // placement wins; a row with no placements at all falls back to the implicit
+  // default placement (defaultPlacementFor) and thus still reaches the ticker.
+  const rows = useMemo<TickerRow[]>(() => {
+    const list: TickerRow[] = [];
+    for (const item of news) {
+      if (!isRowLive(item)) continue;
+      const tickerPlacement = placements.find((p) => p.newsId === item.id && p.channel === "WEBSITE_TICKER") ?? null;
+      const hasAnyPlacement = placements.some((p) => p.newsId === item.id);
+      if (!tickerPlacement && hasAnyPlacement) continue;
+      list.push({
+        item,
+        placement: tickerPlacement,
+        effectivePriority: tickerPlacement ? tickerPlacement.priority : item.priority,
+      });
+    }
+    // Smaller priority renders first in the ticker (same direction as delivery ranking).
+    return list.sort((a, b) => a.effectivePriority - b.effectivePriority || b.item.updatedAt.localeCompare(a.item.updatedAt));
+  }, [news, placements]);
+
+  /**
+   * Ensures the row has a concrete news_placements row, creating one on first
+   * write (POST) that mirrors the implicit default placement of the item.
+   */
+  async function ensurePlacement(row: TickerRow, overrides: { priority?: number; status?: "active" | "paused" }): Promise<boolean> {
+    const payload = row.placement
+      ? { id: row.placement.id, ...overrides }
+      : {
+          newsId: row.item.id,
+          channel: "WEBSITE_TICKER",
+          pageMode: "ALL_PAGES",
+          countryCode: row.item.countryCode,
+          cityId: row.item.cityId,
+          priority: overrides.priority ?? row.item.priority,
+          status: overrides.status ?? "active",
+        };
+    const res = await fetch("/api/news/placements", {
+      method: row.placement ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      setMessage(data.error ?? "فشل تحديث استهداف الشريط.");
+      return false;
+    }
+    return true;
+  }
+
+  async function move(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= rows.length || busy) return;
+    const a = rows[index];
+    const b = rows[target];
+    // Swap effective priorities; when equal, nudge so the move is visible.
+    let priorityA = b.effectivePriority;
+    let priorityB = a.effectivePriority;
+    if (priorityA === priorityB) {
+      if (direction === -1) priorityA = Math.max(1, priorityB - 1);
+      else priorityB = Math.max(1, priorityA - 1);
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      const okA = await ensurePlacement(a, { priority: priorityA });
+      const okB = okA && (await ensurePlacement(b, { priority: priorityB }));
+      if (okA && okB) await loadPlacements();
+    } catch {
+      setMessage("خطأ في الاتصال بالخادم.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleTickerPause(row: TickerRow) {
+    if (busy) return;
+    const nextStatus = row.placement?.status === "paused" ? "active" : "paused";
+    setBusy(true);
+    setMessage("");
+    try {
+      if (await ensurePlacement(row, { status: nextStatus })) await loadPlacements();
+    } catch {
+      setMessage("خطأ في الاتصال بالخادم.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">شريط الأخبار</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">العناصر التي تظهر حاليًا في شريط الموقع (قناة WEBSITE_TICKER) — الأولوية الأصغر تظهر أولًا.</p>
+      </div>
+
+      {feedEmpty && !loading && (
+        <div className="mb-4 px-4 py-3 bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)] rounded-lg text-sm font-semibold">
+          الشريط الحي فارغ — الموقع يعرض الآن نصوص الاحتياط الثابتة.
+          <span className="block mt-1 text-xs font-normal">فعّل خبرًا واحدًا على الأقل (الحالة «منشورة») أو شغّل استهداف WEBSITE_TICKER الموقوف حتى يعود الشريط الحي للعمل.</span>
+        </div>
+      )}
+
+      {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
+
+      {loading ? (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">جارٍ التحميل...</p>
+      ) : rows.length === 0 ? (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد عناصر موجهة للشريط حاليًا — انشر خبرًا أو أضف استهداف WEBSITE_TICKER.</p>
+      ) : (
+        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">الترتيب</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">العنوان</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">الحالة</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">النطاق</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">الأولوية</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">رابط</th>
+                <th className="px-4 py-3 text-gray-500 dark:text-gray-400 font-medium">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => {
+                const paused = row.placement?.status === "paused";
+                const country = row.placement?.countryCode ?? row.item.countryCode;
+                return (
+                  <tr key={row.item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => move(index, -1)}
+                          disabled={!canUpdate || busy || index === 0}
+                          aria-label="تحريك لأعلى"
+                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors disabled:opacity-40"
+                        >▲</button>
+                        <button
+                          onClick={() => move(index, 1)}
+                          disabled={!canUpdate || busy || index === rows.length - 1}
+                          aria-label="تحريك لأسفل"
+                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors disabled:opacity-40"
+                        >▼</button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">{row.item.titleAr}</div>
+                      {!row.placement && <div className="text-xs text-gray-400">استهداف افتراضي (بدون سجل مخصص)</div>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 text-xs rounded-lg ${paused ? "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]" : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300"}`}>
+                        {paused ? "موقوف" : "نشط"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{country ? countryName(country) : "كل الدول"}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.effectivePriority}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                      {row.item.linkUrl ? <span title={row.item.linkUrl}>نعم</span> : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {canUpdate && (
+                        <button
+                          onClick={() => toggleTickerPause(row)}
+                          disabled={busy}
+                          className="px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded transition-colors disabled:opacity-40"
+                        >
+                          {paused ? "تشغيل" : "إيقاف"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function NewsAdminClient({ initialUser }: { initialUser: { email: string; displayName: string } }) {
   const [identity, setIdentity] = useState<Identity>({
     authenticated: true,
@@ -941,7 +1177,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("om");
-  const [tab, setTab] = useState<"news" | "sources" | "analytics">("news");
+  const [tab, setTab] = useState<"news" | "ticker" | "sources" | "analytics">("news");
 
   const can = (permission: string) => identity.permissions.includes(permission);
   const canPublish = can(PERMISSIONS.NEWS_PUBLISH);
@@ -1109,6 +1345,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
       <main className="p-6 max-w-6xl mx-auto">
         <div className="mb-6 flex items-center gap-1 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-1 w-fit">
           <button onClick={() => setTab("news")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "news" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>الأخبار</button>
+          <button onClick={() => setTab("ticker")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "ticker" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>شريط الأخبار</button>
           {canSources && (
             <button onClick={() => setTab("sources")} className={`px-4 py-2 text-sm rounded-lg transition-colors ${tab === "sources" ? "bg-[var(--color-primary)] text-white" : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>المصادر</button>
           )}
@@ -1119,6 +1356,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
 
         {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
 
+        {tab === "ticker" && <TickerTab news={news} canUpdate={can(PERMISSIONS.NEWS_UPDATE)} />}
         {tab === "sources" && canSources && <SourcesTab can={can} />}
         {tab === "analytics" && canAnalytics && <AnalyticsTab />}
 
