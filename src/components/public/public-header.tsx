@@ -39,7 +39,7 @@ export default function PublicHeader({
   showDesktopNavigation = true,
 }: PublicHeaderProps) {
   return (
-    <header className="sticky top-0 z-[var(--layer-header)] border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
+    <header className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
       <PageContainer className="flex min-h-16 flex-wrap items-center gap-x-3 gap-y-2 py-2">
         {/* Menu trigger (mobile sheet) + brand — always visible */}
         <div className="flex min-w-0 items-center gap-2">

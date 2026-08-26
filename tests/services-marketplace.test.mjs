@@ -56,8 +56,9 @@ test("services admin exists behind a permission gate and manages providers, repo
   assert.match(page, /SERVICE_CATEGORIES_MANAGE/);
   assert.match(page, /SERVICE_PROVIDERS_REVIEW/);
   assert.match(page, /PermissionGuard/);
-  assert.match(client, /AdminPageShell/);
-  assert.match(client, /activeSection="services"/);
+  // The services admin renders inside the shared /admin shell; the old
+  // AdminPageShell wrapper (a duplicate header/sidebar) was removed.
+  assert.doesNotMatch(client, /AdminPageShell/);
   assert.match(client, /api\/service-admin/);
   assert.match(client, /api\/service-providers\?admin=1&limit=100/);
   assert.match(client, /api\/service-marketplace-settings/);

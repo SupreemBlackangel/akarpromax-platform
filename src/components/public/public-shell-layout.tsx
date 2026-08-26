@@ -193,6 +193,8 @@ export function PublicShellLayout({
         {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
         <div className="flex min-w-0 flex-1 flex-col">
+          {/* Header + news ticker pin together as one sticky block. */}
+          <div className="sticky top-0 z-[var(--layer-header)]">
           <PublicHeader
             labels={labels}
             locale={locale}
@@ -207,9 +209,10 @@ export function PublicShellLayout({
             showDesktopNavigation={showHeaderNav && !showPublicSidebar}
           />
 
-          <PwaManager />
-
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />
+          </div>
+
+          <PwaManager />
 
           <main id="main-content" tabIndex={-1} className="public-main outline-none">
             {!usesStandardAdLayout && !hidesPublicAds && PUBLIC_TOP_AD.used && (
