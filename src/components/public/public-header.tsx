@@ -67,6 +67,8 @@ export default function PublicHeader({
             <CountrySwitcher />
             <LocationCluster locale={locale} />
             <CurrencyChip />
+          </div>
+          <div className="header-tool-cluster flex items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
             <LanguageSwitcher labels={labels} />
             <ThemeSwitcher labels={labels} />
           </div>
