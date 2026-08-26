@@ -70,7 +70,7 @@ export default function LanguageSwitcher({ labels }: { labels: Translation }) {
           <div
             role="listbox"
             aria-label={labels.languageAria}
-            className="absolute left-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
+            className="absolute start-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
           >
             {languageOptions.map((option) => (
               <button

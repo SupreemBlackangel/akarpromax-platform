@@ -8,9 +8,12 @@ import CountrySwitcher from "@/src/components/public/CountrySwitcher";
 import ThemeSwitcher from "@/src/components/public/ThemeSwitcher";
 import CurrencyChip from "@/src/components/public/CurrencyChip";
 import LanguageSwitcher from "@/src/components/public/LanguageSwitcher";
+import LocationCluster from "@/src/components/public/LocationCluster";
+import type { Locale } from "@/src/types/site";
 
 type PublicHeaderProps = {
   labels: Translation;
+  locale?: Locale;
   navItems: PublicNavItem[];
   currentPath: string;
   viewer: ViewerContext;
@@ -24,6 +27,7 @@ type PublicHeaderProps = {
 
 export default function PublicHeader({
   labels,
+  locale = "ar",
   navItems,
   currentPath,
   viewer,
@@ -59,8 +63,9 @@ export default function PublicHeader({
 
         {/* Tool clusters + actions */}
         <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
-          <div className="header-tool-cluster flex items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
+          <div className="header-tool-cluster flex max-w-full flex-wrap items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
             <CountrySwitcher />
+            <LocationCluster locale={locale} />
             <CurrencyChip />
             <LanguageSwitcher labels={labels} />
             <ThemeSwitcher labels={labels} />

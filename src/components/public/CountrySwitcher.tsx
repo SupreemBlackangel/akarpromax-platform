@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { Globe, ChevronDown, Check } from "lucide-react";
 import { useGeo, type CountryConfig } from "@/src/contexts/GeoContext";
+
+const subscribeNoop = () => () => {};
+/** False during SSR/hydration, true after mount — keeps first client render
+    identical to the server HTML (see React hydration contract). */
+function useMounted(): boolean {
+  return useSyncExternalStore(subscribeNoop, () => true, () => false);
+}
 
 function flagEmoji(code: string): string {
   const cc = code.trim().toUpperCase();
@@ -23,6 +30,7 @@ export default function CountrySwitcher() {
 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const mounted = useMounted();
 
   const handleSelect = useCallback(
     (code: string) => {
@@ -58,7 +66,7 @@ export default function CountrySwitcher() {
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        {isGlobal || !countryCode ? (
+        {!mounted || isGlobal || !countryCode ? (
           <Globe className="h-4 w-4 text-[var(--color-text-muted)]" />
         ) : (
           <span aria-hidden="true">{flagEmoji(countryCode)}</span>
@@ -80,7 +88,7 @@ export default function CountrySwitcher() {
           <div
             role="listbox"
             aria-label="اختر الدولة"
-            className="absolute left-0 top-full z-50 mt-1 max-h-72 w-56 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
+            className="absolute start-0 top-full z-50 mt-1 max-h-72 w-56 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
           >
             {/* Global option */}
             <button

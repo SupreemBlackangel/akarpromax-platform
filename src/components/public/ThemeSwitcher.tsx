@@ -83,7 +83,7 @@ export default function ThemeSwitcher({ labels }: { labels: Translation }) {
           <div
             role="listbox"
             aria-label={labels.themeAria}
-            className="absolute left-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
+            className="absolute start-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl"
           >
             {themeOptions.map((option) => (
               <button

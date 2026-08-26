@@ -18,7 +18,6 @@ import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layo
 import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar, type PublicNavItem, type BreadcrumbItem } from "@/src/config/public-navigation";
 import { PERMISSIONS } from "@/src/constants/permissions";
 
-const LocationBar = dynamic(() => import("@/src/components/public/LocationBar"), { ssr: false });
 const PwaManager = dynamic(() => import("@/src/components/public/PwaManager"), { ssr: false });
 const NewsTicker = dynamic(() => import("@/src/components/NewsTicker"), { ssr: false });
 const AdSlotFrame = dynamic(() => import("@/src/components/ads/ad-slot-frame"), { ssr: false });
@@ -196,6 +195,7 @@ export function PublicShellLayout({
         <div className="flex min-w-0 flex-1 flex-col">
           <PublicHeader
             labels={labels}
+            locale={locale}
             navItems={navItems}
             currentPath={currentPath}
             viewer={viewer}
@@ -208,7 +208,6 @@ export function PublicShellLayout({
           />
 
           <PwaManager />
-          <LocationBar />
 
           <NewsTicker copy={labels} locale={locale} country={country} city={city} />
 
