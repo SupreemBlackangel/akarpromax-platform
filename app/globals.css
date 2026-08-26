@@ -1059,31 +1059,45 @@ html[data-theme="dark"] .ad-slot-empty {
   display: flex;
   align-items: center;
   max-width: 100%;
+  height: 36px;
   /* overflow stays visible: the country/language/theme dropdowns are
      absolutely positioned inside and a scroll container would clip them.
      Narrow screens are handled by hiding district/address below lg and
      truncating the select widths instead. */
+  overflow: visible;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--color-surface-muted) 72%, transparent);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-xs);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  box-shadow: 0 2px 7px rgba(25, 64, 123, .04);
+  white-space: nowrap;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
 .header-tool-cluster:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent); }
 .header-tool-cluster > * { flex: 0 0 auto; }
 .header-tool-cluster > * + * { border-inline-start: 1px solid var(--color-border); }
-/* Inner triggers keep their own hover states but drop borders/backgrounds
-   so the cluster reads as one control. */
+/* Top-level triggers/chips (switcher buttons, selects, currency chip,
+   address/locate) take the exact V3 chip metrics: 34px tall, compact bold
+   primary-blue text, soft-blue hover. Dropdown option buttons sit one level
+   deeper and keep their own styling. */
 .header-tool-cluster > div > button,
+.header-tool-cluster > button,
+.header-tool-cluster > select,
 .header-tool-cluster > span {
+  height: 34px;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  color: var(--color-primary) !important; /* wins over per-trigger Tailwind color utilities */
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
-.header-tool-cluster > div:first-child > button { border-start-start-radius: 11px; border-end-start-radius: 11px; }
-.header-tool-cluster > :last-child > button { border-start-end-radius: 11px; border-end-end-radius: 11px; }
+.header-tool-cluster > div > button:hover,
+.header-tool-cluster > button:hover,
+.header-tool-cluster > select:hover { background: var(--color-primary-soft); }
+.header-tool-cluster > div:first-child > button { border-start-start-radius: 9px; border-end-start-radius: 9px; }
+.header-tool-cluster > :last-child > button { border-start-end-radius: 9px; border-end-end-radius: 9px; }
 
 /* Floating public sidebar: unpinned ("collapsed") slides the panel off the
    inline-start edge (right in RTL, left in LTR); the edge handle overhangs
