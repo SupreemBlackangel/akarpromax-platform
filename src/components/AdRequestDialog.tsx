@@ -8,6 +8,12 @@ type Props = {
   open: boolean;
   placement: string;
   countryCode: string;
+  /** Canonical frame id (HERO, LEFT_01, ...) shown to the visitor and stored with the request. */
+  canonical?: string;
+  /** Standard ad-layout family (home, properties, ...) of the page the slot was clicked on. */
+  family?: string;
+  city?: string;
+  path?: string;
   onClose: () => void;
 };
 
@@ -131,7 +137,7 @@ const LABELS: Record<"ar" | "en" | "tr", Labels> = {
   },
 };
 
-export default function AdRequestDialog({ locale, open, placement, countryCode, onClose }: Props) {
+export default function AdRequestDialog({ locale, open, placement, countryCode, canonical, family, city, path, onClose }: Props) {
   const labels = LABELS[locale];
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -173,7 +179,7 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
 
   if (!open) return null;
 
-  const placementName = AD_PLACEMENTS[placement]?.label[locale] ?? placement;
+  const placementName = AD_PLACEMENTS[placement]?.label[locale] ?? canonical ?? placement;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -198,6 +204,10 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
         body: JSON.stringify({
           placement,
           countryCode,
+          canonical,
+          family,
+          city,
+          path,
           advertiserName: name.trim(),
           contactEmail: email.trim(),
           contactPhone: phone.trim(),

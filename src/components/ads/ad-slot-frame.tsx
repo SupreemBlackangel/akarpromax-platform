@@ -40,13 +40,20 @@ type AdSlotFrameProps = {
   tags?: string[];
   className?: string;
   requestable?: boolean;
-  onRequestAd?: () => void;
+  /** Called with the slot config when the visitor asks to advertise in this frame. */
+  onRequestAd?: (config: PublicAdSlotConfig) => void;
 };
 
 const REVIEW_LABEL: Record<"ar" | "en" | "tr", string> = {
   ar: "مساحة إعلانية",
   en: "Ad space",
   tr: "Reklam alanı",
+};
+
+const REQUEST_LABEL: Record<"ar" | "en" | "tr", string> = {
+  ar: "+ اعلن هنا",
+  en: "+ Advertise here",
+  tr: "+ Burada reklam verin",
 };
 
 export default function AdSlotFrame({
@@ -102,15 +109,29 @@ export default function AdSlotFrame({
       data-canonical={config.canonical ?? config.key}
     >
       {isEmpty && !reviewMode ? (
-        <div
-          className={`ad-slot ad-slot-${config.variant} ad-slot-empty`}
-          role="img"
-          aria-label={`${label}: ${config.placement}`}
-          data-slot-key={config.key}
-        >
-          <span className="ad-slot-empty-label">{REVIEW_LABEL[locale]}</span>
-          <span className="ad-slot-empty-placement">{config.canonical ?? config.key}</span>
-        </div>
+        onRequestAd ? (
+          <button
+            type="button"
+            className={`ad-slot ad-slot-${config.variant} ad-slot-empty ad-slot-requestable-empty`}
+            aria-label={`${REQUEST_LABEL[locale]} — ${config.canonical ?? config.key}`}
+            data-slot-key={config.key}
+            onClick={() => onRequestAd(config)}
+          >
+            <span className="ad-slot-empty-label">{REVIEW_LABEL[locale]}</span>
+            <span className="ad-slot-empty-placement">{config.canonical ?? config.key}</span>
+            <span className="ad-slot-request-cta">{REQUEST_LABEL[locale]}</span>
+          </button>
+        ) : (
+          <div
+            className={`ad-slot ad-slot-${config.variant} ad-slot-empty`}
+            role="img"
+            aria-label={`${label}: ${config.placement}`}
+            data-slot-key={config.key}
+          >
+            <span className="ad-slot-empty-label">{REVIEW_LABEL[locale]}</span>
+            <span className="ad-slot-empty-placement">{config.canonical ?? config.key}</span>
+          </div>
+        )
       ) : reviewMode ? (
         <div className="ad-slot-review" role="img" aria-label={`${label}: ${config.placement}`} data-slot-key={config.key}>
           <span className="ad-slot-review-label">{REVIEW_LABEL[locale]}</span>
@@ -136,7 +157,7 @@ export default function AdSlotFrame({
           variant={config.variant}
           eager={!config.lazy}
           requestable={requestable}
-          onRequestAd={onRequestAd}
+          onRequestAd={onRequestAd ? () => onRequestAd(config) : undefined}
           onStatusChange={setIsEmpty}
         />
       ) : (

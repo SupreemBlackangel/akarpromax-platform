@@ -1,8 +1,11 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
-import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD } from "@/src/config/ad-placements";
+import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD, type PublicAdSlotConfig } from "@/src/config/ad-placements";
+import AdRequestDialog from "@/src/components/AdRequestDialog";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Breadcrumbs from "@/src/components/ui/Breadcrumbs";
 import PageHeader from "@/src/components/ui/PageHeader";
@@ -110,6 +113,14 @@ export function PublicShellLayout({
 }: PublicShellLayoutProps) {
   const showPublicSidebar = shouldUsePublicSidebar(currentPath);
   const showHeaderNav = shouldShowHeaderPublicNavigation(currentPath);
+
+  // Ad-request flow: clicking an empty ad frame opens the request dialog
+  // pre-bound to that exact slot (placement + canonical + page family).
+  const [adRequestSlot, setAdRequestSlot] = useState<PublicAdSlotConfig | null>(null);
+  const handleRequestAd = useCallback((config: PublicAdSlotConfig) => {
+    setAdRequestSlot(config);
+  }, []);
+  const closeAdRequest = useCallback(() => setAdRequestSlot(null), []);
   const usesStandardAdLayout = adLayout?.mode === "standard";
   const hidesPublicAds = adLayout?.mode === "safe-no-ads";
   const isPlatformAdmin =
@@ -224,6 +235,7 @@ export function PublicShellLayout({
                   country={country}
                   city={city}
                   deviceType={deviceType}
+                  onRequestAd={handleRequestAd}
                 />
               </PageContainer>
             )}
@@ -241,6 +253,7 @@ export function PublicShellLayout({
                 entityId={adLayout.entityId}
                 categoryId={adLayout.categoryId}
                 tags={adLayout.tags}
+                onRequestAd={handleRequestAd}
               >
                 {content}
               </StandardPublicAdLayout>
@@ -257,6 +270,7 @@ export function PublicShellLayout({
                   country={country}
                   city={city}
                   deviceType={deviceType}
+                  onRequestAd={handleRequestAd}
                 />
               </PageContainer>
             )}
@@ -279,6 +293,20 @@ export function PublicShellLayout({
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 
       <ToastRegion labels={labels} />
+
+      {adRequestSlot && (
+        <AdRequestDialog
+          locale={locale}
+          open
+          placement={adRequestSlot.placement}
+          canonical={adRequestSlot.canonical}
+          family={usesStandardAdLayout ? adLayout.family : undefined}
+          countryCode={country || "om"}
+          city={city}
+          path={currentPath}
+          onClose={closeAdRequest}
+        />
+      )}
     </div>
   );
 }

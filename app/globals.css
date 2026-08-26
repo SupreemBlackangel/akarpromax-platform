@@ -1124,3 +1124,10 @@ html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:
 @media (prefers-reduced-motion: reduce) {
   .ad-slot-hero .hero-ad-dots button.active span { animation: none; }
 }
+
+/* Clickable empty ad frame: same placeholder look plus an advertise CTA;
+   the whole frame is a button opening the pre-bound ad-request dialog. */
+.ad-slot-requestable-empty { cursor: pointer; border: 0; width: 100%; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.ad-slot-requestable-empty:hover { border-color: var(--color-primary); background: var(--color-primary-soft); transform: translateY(-1px); }
+.ad-slot-requestable-empty:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.ad-slot-request-cta { margin-top: 8px; padding: 6px 13px; border-radius: 999px; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 800; }

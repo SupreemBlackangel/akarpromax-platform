@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { DeviceType } from "@/src/constants/advertising";
+import type { PublicAdSlotConfig } from "@/src/config/ad-placements";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import { getStandardPublicAdLayout } from "@/src/config/standard-public-ad-layout";
 import PageContainer from "@/src/components/layout/PageContainer";
@@ -19,6 +20,8 @@ type StandardPublicAdLayoutProps = {
   entityId?: string | number;
   categoryId?: string | number;
   tags?: string[];
+  /** Called with the slot config when a visitor clicks an empty frame to advertise. */
+  onRequestAd?: (config: PublicAdSlotConfig) => void;
   children: ReactNode;
 };
 
@@ -34,6 +37,7 @@ export default function StandardPublicAdLayout({
   entityId,
   categoryId,
   tags,
+  onRequestAd,
   children,
 }: StandardPublicAdLayoutProps) {
   const layout = getStandardPublicAdLayout(family);
@@ -50,6 +54,7 @@ export default function StandardPublicAdLayout({
     entityId,
     categoryId,
     tags,
+    onRequestAd,
   };
 
   // NOTE (RTL): LEFT_01/LEFT_02 and RIGHT_01/RIGHT_02 are LOGICAL placement

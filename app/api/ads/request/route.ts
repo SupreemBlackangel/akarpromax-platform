@@ -3,10 +3,18 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 import { ensureAdSchema } from "@/lib/ad-schema";
 import { cleanUrl } from "@/lib/ads/admin";
 import { AD_PLACEMENTS } from "@/src/constants/advertising";
+import { STANDARD_PUBLIC_AD_LAYOUT_V1 } from "@/src/config/standard-public-ad-layout";
 
 export const dynamic = "force-dynamic";
 
-const REQUESTABLE_PLACEMENTS = ["side_left", "side_right"] as const;
+// Every placement of the standard public ad system (all families × all slots)
+// is requestable, plus the two legacy home-rail codes kept for old links.
+const REQUESTABLE_PLACEMENTS = new Set<string>(["side_left", "side_right"]);
+for (const family of Object.values(STANDARD_PUBLIC_AD_LAYOUT_V1)) {
+  for (const slot of Object.values(family.placements)) {
+    REQUESTABLE_PLACEMENTS.add(slot.placement);
+  }
+}
 
 function clean(value: unknown, maxLength: number): string {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -30,9 +38,17 @@ export async function POST(request: NextRequest) {
   }
 
   const placement = clean(body.placement, 64);
-  if (!REQUESTABLE_PLACEMENTS.includes(placement as (typeof REQUESTABLE_PLACEMENTS)[number])) {
+  if (!REQUESTABLE_PLACEMENTS.has(placement)) {
     return NextResponse.json({ error: "Unsupported placement" }, { status: 400 });
   }
+
+  // Optional slot context carried from the clicked frame.
+  const canonical = clean(body.canonical, 32);
+  const family = clean(body.family, 32).toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  const city = clean(body.city, 64);
+  const region = clean(body.region, 64);
+  const district = clean(body.district, 64);
+  const pagePath = clean(body.path, 160);
 
   const countryCode = clean(body.countryCode, 8).toLowerCase();
   if (!/^[a-z]{2}$/.test(countryCode)) {
@@ -67,7 +83,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "You already have a pending request for this spot" }, { status: 409 });
   }
 
-  const placementLabel = AD_PLACEMENTS[placement]?.label ?? { ar: placement, en: placement, tr: placement };
+  const placementDisplay = canonical || placement;
+  const placementLabel = AD_PLACEMENTS[placement]?.label ?? { ar: placementDisplay, en: placementDisplay, tr: placementDisplay };
   const id = crypto.randomUUID();
   const description = localizedText(message || (contactPhone ? `📞 ${contactPhone}` : ""));
 
@@ -99,7 +116,7 @@ export async function POST(request: NextRequest) {
     )
     .bind(
       id,
-      `${advertiserName} — ${placement}`,
+      `${advertiserName} — ${placementDisplay}`,
       advertiserName,
       "request",
       "draft",
@@ -125,18 +142,18 @@ export async function POST(request: NextRequest) {
       "Reklamı görüntüle",
       targetUrl,
       JSON.stringify([countryCode]),
-      "[]",
+      JSON.stringify(city ? [city] : []),
       JSON.stringify(["ar", "en", "tr"]),
       JSON.stringify(["desktop"]),
       100,
       100,
       null,
       null,
-      JSON.stringify(["home"]),
-      "[]",
+      JSON.stringify([family || "home"]),
+      JSON.stringify([family || "home"]),
       JSON.stringify([placement]),
-      "[]",
-      "[]",
+      JSON.stringify(region ? [region] : []),
+      JSON.stringify(district ? [district] : []),
       null,
       null,
       null,
@@ -181,7 +198,7 @@ export async function POST(request: NextRequest) {
         `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
          VALUES (?1, ?2, ?3, 'ad_campaign', ?4, ?5)`,
       )
-      .bind(crypto.randomUUID(), contactEmail, "ad.requested", id, JSON.stringify({ placement, countryCode }))
+      .bind(crypto.randomUUID(), contactEmail, "ad.requested", id, JSON.stringify({ placement, canonical, family, countryCode, city, region, district, path: pagePath }))
       .run();
   } catch {
     // audit best-effort

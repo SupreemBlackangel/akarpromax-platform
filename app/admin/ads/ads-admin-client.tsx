@@ -231,7 +231,7 @@ function approvalLabel(status: string) {
 }
 
 function campaignTypeLabel(type: string) {
-  return ({ platform: "المنصة", property: "عقار مميز", service: "خدمة", request: "طلب إعلان" } as Record<string, string>)[type] ?? type;
+  return ({ platform: "المنصة", property: "عقار مميز", service: "خدمة", request: "طلب إعلان", house: "إعلان داخلي" } as Record<string, string>)[type] ?? type;
 }
 
 function formatSize(bytes: number) {
@@ -488,6 +488,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   const [dragActive, setDragActive] = useState(false);
   const [message, setMessage] = useState("");
   const [page, setPage] = useState(1);
+  const [onlyPending, setOnlyPending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = identity.permissions.includes(PERMISSIONS.ADS_CREATE) || identity.permissions.includes(PERMISSIONS.ADS_UPDATE);
@@ -529,9 +530,13 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     clicks: campaigns.reduce((sum, item) => sum + item.totalClicks, 0),
   }), [campaigns]);
 
-  const pageCount = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
+  const visibleCampaigns = useMemo(
+    () => (onlyPending ? campaigns.filter((item) => item.approvalStatus === "pending") : campaigns),
+    [campaigns, onlyPending],
+  );
+  const pageCount = Math.max(1, Math.ceil(visibleCampaigns.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const pagedCampaigns = campaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pagedCampaigns = visibleCampaigns.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   function startCreate(asset?: Asset) {
     const initialCountries = identity.countryCode ? [identity.countryCode.toLowerCase()] : ["om"];
@@ -795,7 +800,11 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
         </div>
 
         {activeView === "campaigns" && <section className="ads-panel">
-          <div className="ads-panel-title"><div><p>الحملات</p><h2>إعلانات المحرك الذكي</h2></div><span>{campaigns.length} حملة</span></div>
+          <div className="ads-panel-title"><div><p>الحملات</p><h2>إعلانات المحرك الذكي</h2></div><span>{visibleCampaigns.length} حملة</span></div>
+          <nav className="admin-subnav" aria-label="تصفية الحملات">
+            <button type="button" className={onlyPending ? "" : "active"} onClick={() => { setOnlyPending(false); setPage(1); }}>الكل ({campaigns.length})</button>
+            <button type="button" className={onlyPending ? "active" : ""} onClick={() => { setOnlyPending(true); setPage(1); }}>طلبات بانتظار الاعتماد ({totals.pending})</button>
+          </nav>
           {!loaded ? (
             <div className="admin-skeleton">
               <div className="admin-skeleton-row" />
@@ -846,7 +855,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <section className="ads-form-section" hidden={wizardStep !== 1}><div><span>1</span><h3>البيانات الأساسية</h3></div><div className="ads-form-grid">
             <label>اسم الحملة الداخلي<input required value={form.internalName} onChange={(event) => setField("internalName", event.target.value)} /></label>
             <label>الجهة المعلنة<input required value={form.advertiserName} onChange={(event) => setField("advertiserName", event.target.value)} /></label>
-            <label>نوع الحملة<select value={form.campaignType} onChange={(event) => setField("campaignType", event.target.value)}><option value="platform">إعلان المنصة</option><option value="property">عقار مميز</option><option value="service">خدمة</option></select></label>
+            <label>نوع الحملة<select value={form.campaignType} onChange={(event) => setField("campaignType", event.target.value)}><option value="platform">إعلان المنصة</option><option value="property">عقار مميز</option><option value="service">خدمة</option><option value="request">طلب إعلان</option><option value="house">إعلان داخلي (House)</option></select></label>
             <label>رابط زر الإجراء<input required dir="ltr" value={form.targetUrl} onChange={(event) => setField("targetUrl", event.target.value)} /></label>
             <label>الحالة<select value={form.status} onChange={(event) => setField("status", event.target.value)}><option value="draft">مسودة</option>{canPublish && <option value="active">نشطة</option>}<option value="paused">متوقفة</option><option value="expired">منتهية</option></select></label>
             <label>حالة الاعتماد{canApprove ? <select value={form.approvalStatus} onChange={(event) => setField("approvalStatus", event.target.value)}>{APPROVAL_STATUSES.map((status) => <option key={status} value={status}>{approvalLabel(status)}</option>)}</select> : <input disabled value={approvalLabel(form.approvalStatus)} />}</label>
