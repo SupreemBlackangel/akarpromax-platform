@@ -50,8 +50,18 @@ export async function POST(request: NextRequest) {
   const district = clean(body.district, 64);
   const pagePath = clean(body.path, 160);
 
-  const countryCode = clean(body.countryCode, 8).toLowerCase();
-  if (!/^[a-z]{2}$/.test(countryCode)) {
+  // Multi-country targeting: `countryCodes` (array, max 23) is preferred; the
+  // legacy single `countryCode` field is still accepted as a fallback so older
+  // callers (e.g. /advertise) keep working unchanged.
+  const rawCodes = Array.isArray(body.countryCodes)
+    ? body.countryCodes
+    : [body.countryCode];
+  const countryCodes = [...new Set(
+    rawCodes
+      .map((code) => clean(code, 8).toLowerCase())
+      .filter((code) => /^[a-z]{2}$/.test(code)),
+  )].slice(0, 23);
+  if (!countryCodes.length) {
     return NextResponse.json({ error: "A valid country code is required" }, { status: 400 });
   }
 
@@ -60,6 +70,11 @@ export async function POST(request: NextRequest) {
   const contactPhone = clean(body.contactPhone, 40);
   const targetUrl = cleanUrl(body.targetUrl, true) || "";
   const message = clean(body.message, 320);
+  // Optional trilingual descriptions from the wizard; Arabic backfills the
+  // other languages, and the legacy `message` field stays as the fallback.
+  const descriptionAr = clean(body.descriptionAr, 320);
+  const descriptionEn = clean(body.descriptionEn, 320);
+  const descriptionTr = clean(body.descriptionTr, 320);
   const mediaUrl = cleanUrl(body.mediaUrl) ?? "";
 
   if (!advertiserName || !contactEmail || !targetUrl) {
@@ -86,7 +101,15 @@ export async function POST(request: NextRequest) {
   const placementDisplay = canonical || placement;
   const placementLabel = AD_PLACEMENTS[placement]?.label ?? { ar: placementDisplay, en: placementDisplay, tr: placementDisplay };
   const id = crypto.randomUUID();
-  const description = localizedText(message || (contactPhone ? `📞 ${contactPhone}` : ""));
+  const hasDescriptions = Boolean(descriptionAr || descriptionEn || descriptionTr);
+  const descriptionBase = descriptionAr || descriptionEn || descriptionTr;
+  const description = hasDescriptions
+    ? {
+        ar: descriptionAr || descriptionBase,
+        en: descriptionEn || descriptionBase,
+        tr: descriptionTr || descriptionBase,
+      }
+    : localizedText(message || (contactPhone ? `📞 ${contactPhone}` : ""));
 
   await db
     .prepare(
@@ -141,7 +164,7 @@ export async function POST(request: NextRequest) {
       "View ad",
       "Reklamı görüntüle",
       targetUrl,
-      JSON.stringify([countryCode]),
+      JSON.stringify(countryCodes),
       JSON.stringify(city ? [city] : []),
       JSON.stringify(["ar", "en", "tr"]),
       JSON.stringify(["desktop"]),
@@ -198,7 +221,7 @@ export async function POST(request: NextRequest) {
         `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
          VALUES (?1, ?2, ?3, 'ad_campaign', ?4, ?5)`,
       )
-      .bind(crypto.randomUUID(), contactEmail, "ad.requested", id, JSON.stringify({ placement, canonical, family, countryCode, city, region, district, path: pagePath }))
+      .bind(crypto.randomUUID(), contactEmail, "ad.requested", id, JSON.stringify({ placement, canonical, family, countryCode: countryCodes[0], countryCodes, hasDescriptions, city, region, district, path: pagePath }))
       .run();
   } catch {
     // audit best-effort

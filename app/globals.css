@@ -193,6 +193,8 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 .ticker-marquee { display: flex; align-items: center; width: 100%; will-change: transform; transition: transform .5s ease; }
 .ticker-item { flex: 0 0 100%; display: inline-flex; align-items: center; white-space: nowrap; }
 .ticker-dot { margin-inline-start: 20px; opacity: .7; }
+.ticker-link { color: inherit; text-decoration: none; }
+.ticker-link:hover, .ticker-link:focus-visible { text-decoration: underline; }
 .news-ticker.is-paused .ticker-marquee { transition: none; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .ticker-inner button { border: 0; background: transparent; color: #fff; font-size: 11px; cursor: pointer; }
@@ -736,6 +738,52 @@ html[data-theme="dark"] .ad-slot-request-btn strong { color: #e8efff; }
 .ad-request-success .account-avatar { border-radius: 12px; background: linear-gradient(135deg, #22a06b, #178a56); }
 html[data-theme="dark"] .ad-request-form input, html[data-theme="dark"] .ad-request-form textarea { border-color: #304867; background: #0f1d33; color: #e8efff; }
 html[data-theme="dark"] .ad-request-note { color: #8ea2c1; }
+
+/* ===== Ad request wizard (3-step) ===== */
+.ad-request-dialog.account-dialog { width: min(520px, 100%); }
+.ad-wizard-pane { display: flex; flex-direction: column; gap: 11px; }
+.ad-wizard-pane textarea { padding: 9px 11px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text-primary); font-size: 12px; outline: none; font-family: inherit; resize: vertical; }
+.ad-wizard-pane textarea:focus { border-color: var(--color-border-focus); box-shadow: 0 0 0 3px rgba(23,105,255,.12); }
+.ad-spot-summary { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-primary-soft); font-size: 11px; color: var(--color-text-secondary); }
+.ad-selected-countries { display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-selected-countries strong { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; background: #fff; color: var(--color-text-primary); font-size: 10px; font-weight: 800; box-shadow: 0 1px 4px rgba(25,64,123,.12); }
+.ad-section-label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); font-size: 10px; font-weight: 900; }
+.selection-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--blue); color: #fff; font-size: 9px; font-weight: 900; }
+.country-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; max-height: 250px; overflow-y: auto; padding: 3px; }
+.country-choice { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text-primary); cursor: pointer; font-size: 11px; font-weight: 700; text-align: start; }
+.country-choice > span:nth-child(2) { flex: 1; }
+.country-choice > b { color: var(--color-text-muted); font-weight: 900; }
+.country-choice:hover { border-color: var(--color-border-focus); }
+.country-choice.active { border-color: var(--blue); background: var(--color-primary-soft); color: var(--blue); }
+.country-choice.active > b { color: var(--blue); }
+.field-hint, .field-counter { color: var(--color-text-muted); font-size: 9px; }
+.field-counter { align-self: flex-end; }
+.field-error { color: #c03434; font-size: 10px; font-weight: 700; }
+.ad-description-head { display: flex; flex-direction: column; gap: 3px; margin-top: 3px; }
+.ad-description-head > strong { color: var(--color-text-primary); font-size: 12px; font-weight: 900; }
+.ad-language-fields { display: flex; flex-direction: column; gap: 10px; }
+.ad-language-fields label span { padding: 1px 6px; border-radius: 4px; background: var(--color-primary-soft); color: var(--blue); font-size: 8px; font-weight: 900; }
+.ad-dropzone { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 14px; border: 2px dashed var(--color-border-strong); border-radius: 12px; background: var(--color-surface-soft); color: var(--color-text-secondary); cursor: pointer; font-size: 11px; }
+.ad-dropzone:hover { border-color: var(--blue); background: var(--color-primary-soft); }
+.ad-dropzone strong { font-size: 12px; font-weight: 900; color: var(--color-text-primary); }
+.ad-dropzone small { font-size: 10px; color: var(--color-text-muted); }
+.ad-dropzone img { max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: contain; }
+.ad-dropzone.has-preview { border-style: solid; border-color: var(--blue); }
+.ad-upload-icon { font-size: 22px; color: var(--blue); }
+.ad-review-card { display: flex; flex-direction: column; gap: 7px; padding: 12px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface-soft); font-size: 11px; color: var(--color-text-secondary); }
+.ad-review-card > span { font-weight: 700; }
+.ad-review-description { margin: 0; color: var(--color-text-primary); font-size: 11px; line-height: 1.7; }
+.ad-review-languages { display: flex; gap: 6px; }
+.ad-review-languages span { padding: 2px 7px; border-radius: 5px; background: var(--color-primary-soft); color: var(--blue); font-size: 9px; font-weight: 800; }
+html[data-theme="dark"] .ad-wizard-pane textarea { border-color: #304867; background: #0f1d33; color: #e8efff; }
+html[data-theme="dark"] .ad-spot-summary { border-color: #253d63; background: #0f1d33; color: #b9c9e2; }
+html[data-theme="dark"] .ad-selected-countries strong { background: #16294a; color: #e8efff; box-shadow: none; }
+html[data-theme="dark"] .country-choice { border-color: #253d63; background: #0d1628; color: #e8efff; }
+html[data-theme="dark"] .country-choice.active { border-color: #5a9aef; background: #16294a; color: #9cc2ff; }
+html[data-theme="dark"] .ad-dropzone { border-color: #304867; background: #0d1628; color: #b9c9e2; }
+html[data-theme="dark"] .ad-dropzone strong { color: #e8efff; }
+html[data-theme="dark"] .ad-review-card { border-color: #253d63; background: #0d1628; color: #b9c9e2; }
+html[data-theme="dark"] .ad-review-description { color: #e8efff; }
 
 /* ===== Shared UI Components ===== */
 
