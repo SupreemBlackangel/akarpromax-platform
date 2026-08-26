@@ -44,10 +44,8 @@ export default function PublicHeader({
     // the dropdowns; without an explicit z-index the news ticker (a later
     // sibling in the sticky block) paints over them.
     <header className="relative z-30 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm">
-      {/* size="wide": the complete location cluster + preferences + account
-          need more than the default 1140px to stay on ONE row with the brand. */}
-      <PageContainer size="wide" className="flex min-h-16 flex-wrap items-center gap-x-2 gap-y-2 py-2">
-        {/* Menu trigger (mobile sheet) + brand — always visible */}
+      {/* Row 1 — menu trigger + brand */}
+      <PageContainer size="wide" className="flex min-h-14 flex-wrap items-center gap-x-2 gap-y-2 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <Button variant="ghost" size="icon" className="md:hidden rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
             <Menu aria-hidden="true" className="size-5" />
@@ -66,40 +64,9 @@ export default function PublicHeader({
             </span>
           </a>
         </div>
-
-        {/* Tool clusters + actions — same single top row as the brand, V3 style */}
-        <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
-          <div className="header-tool-cluster">
-            <CountrySwitcher />
-            <LocationCluster locale={locale} />
-            <CurrencyChip />
-          </div>
-          <div className="header-tool-cluster">
-            <LanguageSwitcher labels={labels} />
-            <ThemeSwitcher labels={labels} />
-          </div>
-          {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
-          <div className="hidden items-center gap-2 md:flex">
-            {viewer.authenticated ? (
-              <>
-                <span className="max-w-[140px] truncate text-sm font-medium text-[color:var(--color-text-primary)]">
-                  {viewer.displayName || viewer.email}
-                </span>
-                <Button variant="outline" size="sm" onClick={onLogout}>
-                  {labels.logout}
-                </Button>
-              </>
-            ) : (
-              <Button variant="primary" size="sm" onClick={onLogin}>
-                {labels.login}
-              </Button>
-            )}
-          </div>
-        </div>
       </PageContainer>
 
-      {/* Primary navigation strip — its own row under the tools, so the top
-          row stays a single line; the floating sidebar stays the full map. */}
+      {/* Row 2 — primary navigation strip */}
       {showDesktopNavigation && (
         <div className="hidden border-t border-[color:var(--color-border)]/60 lg:block">
           <PageContainer>
@@ -126,6 +93,38 @@ export default function PublicHeader({
           </PageContainer>
         </div>
       )}
+
+      {/* Row 3 — tool clusters + account actions, under the nav strip as requested */}
+      <div className="border-t border-[color:var(--color-border)]/60">
+        <PageContainer size="wide" className="flex flex-wrap items-center justify-center gap-2 py-1.5">
+          <div className="header-tool-cluster">
+            <CountrySwitcher />
+            <LocationCluster locale={locale} />
+            <CurrencyChip />
+          </div>
+          <div className="header-tool-cluster">
+            <LanguageSwitcher labels={labels} />
+            <ThemeSwitcher labels={labels} />
+          </div>
+          {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
+          <div className="hidden items-center gap-2 md:flex">
+            {viewer.authenticated ? (
+              <>
+                <span className="max-w-[140px] truncate text-sm font-medium text-[color:var(--color-text-primary)]">
+                  {viewer.displayName || viewer.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={onLogout}>
+                  {labels.logout}
+                </Button>
+              </>
+            ) : (
+              <Button variant="primary" size="sm" onClick={onLogin}>
+                {labels.login}
+              </Button>
+            )}
+          </div>
+        </PageContainer>
+      </div>
     </header>
   );
 }
