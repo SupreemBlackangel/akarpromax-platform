@@ -97,7 +97,9 @@ type AdSlotAction =
   | { type: "reset" }
   | { type: "matched"; ads: AdMatchResult[] }
   | { type: "done" }
-  | { type: "next" };
+  | { type: "next" }
+  | { type: "prev" }
+  | { type: "goto"; index: number };
 
 function adSlotReducer(state: AdSlotState, action: AdSlotAction): AdSlotState {
   switch (action.type) {
@@ -109,6 +111,10 @@ function adSlotReducer(state: AdSlotState, action: AdSlotAction): AdSlotState {
       return { ...state, loaded: true };
     case "next":
       return state.ads.length < 2 ? state : { ...state, currentIndex: (state.currentIndex + 1) % state.ads.length };
+    case "prev":
+      return state.ads.length < 2 ? state : { ...state, currentIndex: (state.currentIndex - 1 + state.ads.length) % state.ads.length };
+    case "goto":
+      return action.index < 0 || action.index >= state.ads.length ? state : { ...state, currentIndex: action.index };
   }
 }
 
@@ -144,6 +150,7 @@ export default function AdSlot({
   const [prevProvidedDeviceType, setPrevProvidedDeviceType] = useState(providedDeviceType);
   const [hovering, setHovering] = useState(false);
   const [tabHidden, setTabHidden] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState<boolean>(() => prefersReducedMotion());
   const containerRef = useRef<HTMLDivElement | null>(null);
   const impressedRef = useRef<Set<string>>(new Set());
@@ -151,7 +158,7 @@ export default function AdSlot({
   const onStatusChangeRef = useRef(onStatusChange);
 
   const ad = ads[currentIndex] ?? null;
-  const paused = hovering || tabHidden;
+  const paused = hovering || tabHidden || userPaused;
 
   if (providedDeviceType !== prevProvidedDeviceType) {
     setPrevProvidedDeviceType(providedDeviceType);
@@ -370,9 +377,17 @@ export default function AdSlot({
     );
   }
 
+  const heroControls = variant === "hero" && ads.length > 1;
+  const controlsLabel = locale === "ar" ? "التحكم في الإعلانات" : locale === "tr" ? "Reklam kontrolleri" : "Ad controls";
+  const prevLabel = locale === "ar" ? "الإعلان السابق" : locale === "tr" ? "Önceki reklam" : "Previous ad";
+  const nextLabel = locale === "ar" ? "الإعلان التالي" : locale === "tr" ? "Sonraki reklam" : "Next ad";
+  const pauseLabel = userPaused
+    ? (locale === "ar" ? "استئناف الإعلانات" : locale === "tr" ? "Reklamları sürdür" : "Resume ads")
+    : (locale === "ar" ? "إيقاف الإعلانات مؤقتًا" : locale === "tr" ? "Reklamları duraklat" : "Pause ads");
+
   return (
     <div
-      className={`ad-slot ad-slot-${variant}${className ? ` ${className}` : ""}`}
+      className={`ad-slot ad-slot-${variant}${paused && heroControls ? " is-paused" : ""}${className ? ` ${className}` : ""}`}
       ref={containerRef}
       dir={locale === "ar" ? "rtl" : "ltr"}
       onMouseEnter={() => setHovering(true)}
@@ -400,6 +415,29 @@ export default function AdSlot({
         </span>
         <span className="ad-slot-badge">{badgeLabel[locale]}</span>
       </a>
+      {heroControls && (
+        <div className="hero-ad-controls" aria-label={controlsLabel}>
+          <button className="hero-arrow" type="button" aria-label={prevLabel} onClick={() => dispatch({ type: "prev" })}>‹</button>
+          <div className="hero-ad-dots">
+            {ads.map((entry, index) => (
+              <button
+                key={`${entry.campaignId}:${entry.creativeId ?? index}`}
+                type="button"
+                className={index === currentIndex ? "active" : ""}
+                aria-label={`${locale === "ar" ? "عرض الإعلان" : locale === "tr" ? "Reklamı göster" : "Show ad"} ${index + 1}`}
+                aria-current={index === currentIndex || undefined}
+                onClick={() => dispatch({ type: "goto", index })}
+              >
+                <span style={index === currentIndex ? { animationDuration: `${Math.max(MIN_VISUAL_SECONDS, entry.durationSeconds ?? MIN_VISUAL_SECONDS)}s` } : undefined} />
+              </button>
+            ))}
+          </div>
+          <button className="hero-pause" type="button" aria-label={pauseLabel} aria-pressed={userPaused} onClick={() => setUserPaused((p) => !p)}>
+            {userPaused ? "▶" : "Ⅱ"}
+          </button>
+          <button className="hero-arrow" type="button" aria-label={nextLabel} onClick={() => dispatch({ type: "next" })}>›</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1097,3 +1097,28 @@ html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:
   .ad-slot-hero .ad-slot-title { font-size: clamp(38px, 11vw, 52px); }
   .ad-slot-hero .ad-slot-accent { font-size: clamp(32px, 9vw, 44px); }
 }
+
+/* ── V3-style hero carousel controls (arrows / progress dots / pause).
+      Rendered by AdSlot only for the hero variant with 2+ ads. ── */
+.ad-slot-hero { position: relative; }
+.ad-slot-hero .hero-ad-controls { position: absolute; z-index: 2; inset-inline-start: clamp(20px, 4vw, 56px); bottom: 26px; display: flex; align-items: center; gap: 9px; direction: ltr; }
+.ad-slot-hero .hero-ad-controls button { border: 0; color: #fff; cursor: pointer; }
+.ad-slot-hero .hero-arrow, .ad-slot-hero .hero-pause { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(4,22,48,.55); backdrop-filter: blur(10px); transition: background .18s ease, transform .18s ease; }
+.ad-slot-hero .hero-arrow { padding-bottom: 3px; font: 400 28px/1 Arial, sans-serif; }
+.ad-slot-hero .hero-pause { font: 700 11px/1 Arial, sans-serif; }
+.ad-slot-hero .hero-arrow:hover, .ad-slot-hero .hero-pause:hover { background: var(--color-primary); transform: translateY(-1px); }
+.ad-slot-hero .hero-arrow:focus-visible, .ad-slot-hero .hero-pause:focus-visible, .ad-slot-hero .hero-ad-dots button:focus-visible { outline: 3px solid #f4c86a; outline-offset: 3px; }
+.ad-slot-hero .hero-ad-dots { display: flex; align-items: center; gap: 7px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(4,22,48,.5); backdrop-filter: blur(10px); }
+.ad-slot-hero .hero-ad-dots button { width: 10px; height: 10px; padding: 0; border-radius: 999px; background: rgba(255,255,255,.4); transition: width .25s ease, background .25s ease; }
+.ad-slot-hero .hero-ad-dots button.active { width: 42px; overflow: hidden; background: rgba(255,255,255,.28); }
+.ad-slot-hero .hero-ad-dots button span { display: block; width: 100%; height: 100%; border-radius: inherit; }
+.ad-slot-hero .hero-ad-dots button.active span { background: #fff; transform-origin: left; animation: hero-progress 6s linear both; }
+.ad-slot-hero.is-paused .hero-ad-dots button.active span { animation-play-state: paused; }
+@keyframes hero-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (max-width: 720px) {
+  .ad-slot-hero .hero-ad-controls { inset-inline: 0; justify-content: center; bottom: 20px; }
+  .ad-slot-hero .hero-arrow, .ad-slot-hero .hero-pause { width: 36px; height: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-slot-hero .hero-ad-dots button.active span { animation: none; }
+}

@@ -7,6 +7,7 @@ import SearchTrigger from "@/src/components/public/search-trigger";
 import CountrySwitcher from "@/src/components/public/CountrySwitcher";
 import ThemeSwitcher from "@/src/components/public/ThemeSwitcher";
 import CurrencyChip from "@/src/components/public/CurrencyChip";
+import LanguageSwitcher from "@/src/components/public/LanguageSwitcher";
 
 type PublicHeaderProps = {
   labels: Translation;
@@ -61,6 +62,7 @@ export default function PublicHeader({
           <div className="header-tool-cluster flex items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
             <CountrySwitcher />
             <CurrencyChip />
+            <LanguageSwitcher labels={labels} />
             <ThemeSwitcher labels={labels} />
           </div>
           {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}

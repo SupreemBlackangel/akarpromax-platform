@@ -50,6 +50,17 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
     window.localStorage.setItem("akarpromax-locale", locale);
   }, [dir, locale]);
 
+  // The header LanguageSwitcher dispatches this event so every page using
+  // this hook switches live, without prop-drilling setLocale through the shell.
+  useEffect(() => {
+    const onLocaleChange = (event: Event) => {
+      const next = (event as CustomEvent).detail;
+      if (next === "ar" || next === "en" || next === "tr") setLocale(next);
+    };
+    window.addEventListener("akarpromax-locale-change", onLocaleChange);
+    return () => window.removeEventListener("akarpromax-locale-change", onLocaleChange);
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/user-context", { cache: "no-store", signal: controller.signal })
