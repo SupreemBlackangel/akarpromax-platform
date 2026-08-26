@@ -1050,9 +1050,31 @@ html[data-theme="dark"] .ad-slot-empty {
   }
 }
 
-/* Header tool cluster: joined pill group (country / currency / theme).
-   Inner triggers keep their own hover states but drop borders/backgrounds
-   so the cluster reads as one control, V3-header style. */
+/* Header tool cluster: joined pill group (country / location / currency /
+   language / theme), V3-header style. The class owns the full pill styling —
+   frame, dividers, dark mode via tokens, and horizontal scroll on narrow
+   screens instead of wrapping (wrapping breaks the pill outline and leaves
+   dangling dividers at line starts). */
+.header-tool-cluster {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  /* overflow stays visible: the country/language/theme dropdowns are
+     absolutely positioned inside and a scroll container would clip them.
+     Narrow screens are handled by hiding district/address below lg and
+     truncating the select widths instead. */
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface-muted) 72%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-xs);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.header-tool-cluster:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.header-tool-cluster > * { flex: 0 0 auto; }
+.header-tool-cluster > * + * { border-inline-start: 1px solid var(--color-border); }
+/* Inner triggers keep their own hover states but drop borders/backgrounds
+   so the cluster reads as one control. */
 .header-tool-cluster > div > button,
 .header-tool-cluster > span {
   border: 0;

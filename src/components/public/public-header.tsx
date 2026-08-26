@@ -89,12 +89,12 @@ export default function PublicHeader({
 
         {/* Tool clusters + actions */}
         <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
-          <div className="header-tool-cluster flex max-w-full flex-wrap items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
+          <div className="header-tool-cluster">
             <CountrySwitcher />
             <LocationCluster locale={locale} />
             <CurrencyChip />
           </div>
-          <div className="header-tool-cluster flex items-center rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 shadow-[var(--shadow-xs)] [&>*+*]:border-s [&>*+*]:border-[color:var(--color-border)]">
+          <div className="header-tool-cluster">
             <LanguageSwitcher labels={labels} />
             <ThemeSwitcher labels={labels} />
           </div>
