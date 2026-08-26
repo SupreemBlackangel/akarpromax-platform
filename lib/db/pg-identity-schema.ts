@@ -1,4 +1,5 @@
 import postgres, { type Sql } from "postgres";
+import { isProduction } from "@/lib/config/runtime-env";
 
 export const PG_IDENTITY_SCHEMA_VERSION = 5;
 
@@ -452,9 +453,22 @@ export async function ensurePgIdentitySchema(): Promise<PgIdentitySchemaStatus> 
     ensurePromise = (async () => {
       const client = openClient();
       try {
-        cachedStatus = await applyPgIdentitySchema(client, { schema: "public" });
+        // In production, schema DDL is applied exactly once at deploy time
+        // (`npm run db:bootstrap:pg`), never from a live request: running
+        // ~56 CREATE/ALTER statements on whichever process happens to field
+        // the first request after a deploy/restart/scale-out races against
+        // sibling instances doing the same thing concurrently, and requires
+        // the app's DB role to hold DDL privileges it otherwise doesn't
+        // need. Production only ever inspects and fails fast if absent.
+        cachedStatus = isProduction()
+          ? await inspectPgIdentitySchema(client, { schema: "public" })
+          : await applyPgIdentitySchema(client, { schema: "public" });
         if (!cachedStatus.ready) {
-          throw new Error(`PG identity schema incomplete: missing ${cachedStatus.missingTables.join(", ") || "unknown tables"}`);
+          throw new Error(
+            isProduction()
+              ? `PG identity schema incomplete: missing ${cachedStatus.missingTables.join(", ") || "unknown tables"} — run "npm run db:bootstrap:pg" against this database before starting the app`
+              : `PG identity schema incomplete: missing ${cachedStatus.missingTables.join(", ") || "unknown tables"}`,
+          );
         }
         return cachedStatus;
       } finally {

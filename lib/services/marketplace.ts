@@ -2005,11 +2005,20 @@ export async function isThreadParticipant(threadType: string, threadId: string, 
     return !!order && (order.customer_user_id === userId || order.provider_user_id === userId);
   }
   if (threadType === MESSAGE_CONTEXT.SERVICE_REQUEST) {
-    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(threadId).first<{ customer_user_id: string }>();
-    if (requestRow?.customer_user_id === userId) return true;
+    // threadId is a composite "{requestId}:{providerUserId}" key — each
+    // bidding provider gets an isolated conversation with the customer.
+    // Splitting on request/provider (rather than sharing one thread per
+    // request) prevents competing providers from reading each other's
+    // pricing and messages with the customer.
+    const [requestId, providerUserId] = threadId.split(":");
+    if (!requestId || !providerUserId) return false;
+    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(requestId).first<{ customer_user_id: string }>();
+    if (!requestRow) return false;
+    if (requestRow.customer_user_id === userId) return true;
+    if (userId !== providerUserId) return false;
     const offer = await db
       .prepare("SELECT id FROM service_offers WHERE request_id = ?1 AND provider_user_id = ?2 AND status != 'withdrawn' LIMIT 1")
-      .bind(threadId, userId)
+      .bind(requestId, providerUserId)
       .first<{ id: string }>();
     return !!offer;
   }
@@ -2048,8 +2057,13 @@ export async function resolveRecipientUserId(threadType: string, threadId: strin
     return order.customer_user_id;
   }
   if (threadType === MESSAGE_CONTEXT.SERVICE_REQUEST) {
-    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(threadId).first<{ customer_user_id: string }>();
-    return requestRow?.customer_user_id ?? null;
+    const [requestId, providerUserId] = threadId.split(":");
+    if (!requestId || !providerUserId) return null;
+    if (senderUserId === providerUserId) {
+      const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(requestId).first<{ customer_user_id: string }>();
+      return requestRow?.customer_user_id ?? null;
+    }
+    return providerUserId;
   }
   const participants = await db
     .prepare("SELECT user_id FROM service_message_participants WHERE thread_type = ?1 AND thread_id = ?2")
@@ -2065,6 +2079,63 @@ export async function resolveRecipientUserId(threadType: string, threadId: strin
   return null;
 }
 
+/**
+ * Authorizes who may actually be seeded as a participant when a thread is
+ * opened, keyed off verified table relationships rather than trusting the
+ * client's `participantIds` list — otherwise any authenticated user could
+ * self-enrol into an arbitrary thread, or add third parties to it.
+ *
+ * - `SERVICE_JOB` / `SERVICE_REQUEST`: only the customer and the specific
+ *   counter-party verified against `service_orders`/`service_offers`.
+ * - `PROFESSIONAL`: only the actor and the profile owner being contacted.
+ * - Everything else (no owning-entity table available here): `undefined`
+ *   when the thread is brand new (trust the caller's participantIds for
+ *   this one-time creation), otherwise `[actorUserId]` only.
+ * Returns an empty array when the actor has no legitimate claim at all.
+ */
+async function authorizedParticipantsFor(threadType: string, threadId: string, actorUserId: string): Promise<string[] | undefined> {
+  const db = await getServicesDb();
+  if (threadType === MESSAGE_CONTEXT.SERVICE_JOB) {
+    const order = await db
+      .prepare("SELECT customer_user_id, provider_user_id FROM service_orders WHERE id = ?1")
+      .bind(threadId)
+      .first<{ customer_user_id: string; provider_user_id: string }>();
+    if (!order || (order.customer_user_id !== actorUserId && order.provider_user_id !== actorUserId)) return [];
+    return [order.customer_user_id, order.provider_user_id];
+  }
+  if (threadType === MESSAGE_CONTEXT.SERVICE_REQUEST) {
+    const [requestId, providerUserId] = threadId.split(":");
+    if (!requestId || !providerUserId) return [];
+    const requestRow = await db.prepare("SELECT customer_user_id FROM service_requests WHERE id = ?1").bind(requestId).first<{ customer_user_id: string }>();
+    if (!requestRow) return [];
+    const isCustomer = requestRow.customer_user_id === actorUserId;
+    const isTheProvider = actorUserId === providerUserId;
+    if (!isCustomer && !isTheProvider) return [];
+    const offer = await db
+      .prepare("SELECT id FROM service_offers WHERE request_id = ?1 AND provider_user_id = ?2 AND status != 'withdrawn' LIMIT 1")
+      .bind(requestId, providerUserId)
+      .first<{ id: string }>();
+    if (!offer) return [];
+    return [requestRow.customer_user_id, providerUserId];
+  }
+  if (threadType === MESSAGE_CONTEXT.PROFESSIONAL) {
+    const profile = await db.prepare("SELECT user_id FROM service_provider_profiles WHERE id = ?1 LIMIT 1").bind(threadId).first<{ user_id: string }>();
+    if (!profile) return [actorUserId];
+    return [actorUserId, profile.user_id];
+  }
+  // GENERAL / PROPERTY / PROPERTY_REQUEST / ORGANIZATION: this module has no
+  // owning-entity table to verify these against (that data lives in a
+  // different runtime/database). The client-supplied participantIds are
+  // trusted ONLY the first time a thread is opened (the caller's own
+  // server-rendered page is what resolved that real ID, e.g. "contact this
+  // organization's owner") — never on a later call against an
+  // already-existing thread, which would let an unrelated third party
+  // silently inject themselves or someone else into an ongoing conversation.
+  const isNewThread = !(await isThreadParticipant(threadType, threadId, actorUserId))
+    && (await db.prepare("SELECT id FROM service_message_participants WHERE thread_type = ?1 AND thread_id = ?2 LIMIT 1").bind(threadType, threadId).first<{ id: string }>()) == null;
+  return isNewThread ? undefined : [actorUserId];
+}
+
 export async function startMessageThread(input: {
   threadType: string;
   threadId: string;
@@ -2075,7 +2146,12 @@ export async function startMessageThread(input: {
 }): Promise<{ threadType: string; threadId: string; title: string | null; contextLink: string | null; participantCount: number }> {
   if (!isMessageContext(input.threadType)) throw new Error("INVALID_THREAD_TYPE");
   if (!input.threadId.trim()) throw new Error("INVALID_THREAD_ID");
-  const participantIds = [...new Set([input.actorUserId, ...input.participantIds.filter(Boolean)])];
+  const verified = await authorizedParticipantsFor(input.threadType, input.threadId, input.actorUserId);
+  // `undefined` means: unverifiable context, but this is a brand-new thread
+  // — trust the caller's participantIds for this one-time creation.
+  const allowed = verified ?? [input.actorUserId, ...input.participantIds.filter(Boolean)];
+  if (!allowed.includes(input.actorUserId)) throw new Error("UNAUTHORIZED");
+  const participantIds = [...new Set(allowed)];
   await ensureContextThread(input.threadType, input.threadId, input.title, input.contextLink ?? contextLinkFor(input.threadType, input.threadId));
   for (const userId of participantIds) {
     await ensureMessageParticipant(input.threadType, input.threadId, userId);
@@ -2093,17 +2169,25 @@ export async function listInbox(userId: string): Promise<Array<Record<string, un
   const db = await getServicesDb();
   const keys = new Set<string>();
 
-  const customerRequests = await db
-    .prepare("SELECT id FROM service_requests WHERE customer_user_id = ?1")
+  // One thread per (request, bidding provider) pair — never one shared
+  // thread per request, which would let competing providers read each
+  // other's conversation with the customer.
+  const customerRequestThreads = await db
+    .prepare(`SELECT so.request_id AS request_id, so.provider_user_id AS provider_user_id
+              FROM service_offers so
+              JOIN service_requests sr ON sr.id = so.request_id
+              WHERE sr.customer_user_id = ?1 AND so.status != 'withdrawn'`)
     .bind(userId)
-    .all<{ id: string }>();
-  for (const r of customerRequests.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.id}`);
+    .all<{ request_id: string; provider_user_id: string }>();
+  for (const r of customerRequestThreads.results ?? []) {
+    keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.request_id}:${r.provider_user_id}`);
+  }
 
   const providerRequests = await db
     .prepare("SELECT request_id FROM service_offers WHERE provider_user_id = ?1 AND status != 'withdrawn'")
     .bind(userId)
     .all<{ request_id: string }>();
-  for (const r of providerRequests.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.request_id}`);
+  for (const r of providerRequests.results ?? []) keys.add(`${MESSAGE_CONTEXT.SERVICE_REQUEST}:${r.request_id}:${userId}`);
 
   const orders = await db
     .prepare("SELECT id FROM service_orders WHERE customer_user_id = ?1 OR provider_user_id = ?1")

@@ -35,13 +35,20 @@ export async function POST(request: NextRequest) {
   if (!isMessageContext(threadType) || !threadId) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
-  const thread = await startMessageThread({
-    threadType,
-    threadId,
-    title,
-    contextLink,
-    participantIds,
-    actorUserId: identity.email,
-  });
-  return NextResponse.json({ thread }, { status: 201 });
+  try {
+    const thread = await startMessageThread({
+      threadType,
+      threadId,
+      title,
+      contextLink,
+      participantIds,
+      actorUserId: identity.email,
+    });
+    return NextResponse.json({ thread }, { status: 201 });
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 403 });
+    }
+    throw error;
+  }
 }

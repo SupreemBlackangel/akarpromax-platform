@@ -73,27 +73,32 @@ test("messaging contract: one core, seven contexts, legacy values preserved", as
   assert.match(startButton, /api\/service-messages\/threads/, "entry point must start threads via the shared core");
 });
 
-test("legacy request threads keep working with derived participants", async () => {
+test("legacy request threads keep working with derived participants, isolated per provider", async () => {
   const db = setServicesDbForTesting(createInMemoryDb());
   db.seed("service_requests", [{ id: "r1", customer_user_id: "customer@x.com" }]);
   db.seed("service_offers", [{ id: "o1", request_id: "r1", provider_user_id: "provider@x.com", status: "sent" }]);
 
-  assert.equal(await isThreadParticipant("request", "r1", "customer@x.com"), true);
-  assert.equal(await isThreadParticipant("request", "r1", "provider@x.com"), true);
-  assert.equal(await isThreadParticipant("request", "r1", "outsider@x.com"), false);
-  assert.equal(await resolveRecipientUserId("request", "r1", "provider@x.com"), "customer@x.com");
+  // threadId is "{requestId}:{providerUserId}" — one isolated conversation
+  // per bidding provider, not one shared thread per request (that shared
+  // shape was a confirmed cross-provider leak — see the regression test
+  // below).
+  const threadId = "r1:provider@x.com";
+  assert.equal(await isThreadParticipant("request", threadId, "customer@x.com"), true);
+  assert.equal(await isThreadParticipant("request", threadId, "provider@x.com"), true);
+  assert.equal(await isThreadParticipant("request", threadId, "outsider@x.com"), false);
+  assert.equal(await resolveRecipientUserId("request", threadId, "provider@x.com"), "customer@x.com");
 
-  const id = await sendMessageFull({ threadType: "request", threadId: "r1", senderUserId: "provider@x.com", body: "مرحبا", recipientUserId: "customer@x.com" });
+  const id = await sendMessageFull({ threadType: "request", threadId, senderUserId: "provider@x.com", body: "مرحبا", recipientUserId: "customer@x.com" });
   assert.ok(id);
 
-  const messages = await threadMessages("request", "r1");
+  const messages = await threadMessages("request", threadId);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].body, "مرحبا");
 
   const customerInbox = await listInbox("customer@x.com");
   assert.equal(customerInbox.length, 1);
   assert.equal(customerInbox[0].thread_type, "request");
-  assert.equal(customerInbox[0].thread_id, "r1");
+  assert.equal(customerInbox[0].thread_id, threadId);
   assert.equal(customerInbox[0].message_count, 1);
   assert.equal(customerInbox[0].unread_count, 1);
 
@@ -101,9 +106,30 @@ test("legacy request threads keep working with derived participants", async () =
   assert.equal(providerInbox.length, 1);
   assert.equal(providerInbox[0].unread_count, 0);
 
-  await markThreadRead("request", "r1", "customer@x.com");
+  await markThreadRead("request", threadId, "customer@x.com");
   const readInbox = await listInbox("customer@x.com");
   assert.equal(readInbox[0].unread_count, 0);
+});
+
+test("SECURITY REGRESSION: a competing provider cannot read another provider's request conversation", async () => {
+  const db = setServicesDbForTesting(createInMemoryDb());
+  db.seed("service_requests", [{ id: "r1", customer_user_id: "customer@x.com" }]);
+  db.seed("service_offers", [
+    { id: "o1", request_id: "r1", provider_user_id: "p1@x.com", status: "sent" },
+    { id: "o2", request_id: "r1", provider_user_id: "p2@x.com", status: "sent" },
+  ]);
+
+  const p1Thread = "r1:p1@x.com";
+  await sendMessageFull({ threadType: "request", threadId: p1Thread, senderUserId: "p1@x.com", body: "سعري الخاص", recipientUserId: "customer@x.com" });
+
+  // p2 is a legitimate bidder on the SAME request, but must not be able to
+  // read p1's conversation with the customer.
+  assert.equal(await isThreadParticipant("request", p1Thread, "p2@x.com"), false);
+  const p2Inbox = await listInbox("p2@x.com");
+  assert.ok(!p2Inbox.some((t) => t.thread_id === p1Thread), "p2's inbox must not contain p1's thread");
+
+  const p2Thread = "r1:p2@x.com";
+  assert.equal(await isThreadParticipant("request", p2Thread, "p1@x.com"), false);
 });
 
 test("legacy order threads keep deriving both sides", async () => {
