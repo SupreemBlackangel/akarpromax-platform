@@ -22,6 +22,33 @@ const inter = Inter({
 
 const themeBootScript = `(function(){try{var saved=localStorage.getItem("akarpromax-theme");var mode=saved==="light"||saved==="dark"||saved==="system"?saved:"system";var resolved=mode==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):mode;document.documentElement.dataset.theme=resolved;document.documentElement.dataset.themeMode=mode;}catch(e){}})();`;
 
+// Search-engine structured data (Schema.org). One Organization + WebSite
+// graph on every page; entity-level types (RealEstateListing etc.) belong on
+// their own detail pages.
+const structuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://akarpromax.com/#organization",
+      name: "عقار بروماكس",
+      alternateName: "AkarProMax",
+      url: "https://akarpromax.com",
+      logo: "https://akarpromax.com/apple-touch-icon.png",
+      email: "info@akarpromax.om",
+      address: { "@type": "PostalAddress", addressLocality: "نزوى", addressCountry: "OM" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://akarpromax.com/#website",
+      name: "عقار بروماكس",
+      url: "https://akarpromax.com",
+      inLanguage: ["ar", "en", "tr"],
+      publisher: { "@id": "https://akarpromax.com/#organization" },
+    },
+  ],
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host") ?? "akarpromax.com";
@@ -46,13 +73,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "منصة عقارية تجمع العقارات والمكاتب والخدمات في تجربة واحدة موثوقة.",
       locale: "ar",
       type: "website",
-      images: [{ url: "/og.png", width: 1536, height: 1024, alt: "عقار بروماكس" }],
+      images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "عقار بروماكس" }],
     },
     twitter: {
       card: "summary_large_image",
       title: "عقار بروماكس | منصة العقار والخدمات الذكية",
       description: "اكتشف العقارات والمكاتب والخدمات المهنية بثقة.",
-      images: ["/og.png"],
+      images: ["/og.jpg"],
     },
   };
 }
@@ -69,6 +96,10 @@ export default function RootLayout({
           id="theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeBootScript }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: structuredData }}
         />
       </head>
       <body suppressHydrationWarning>
