@@ -6,6 +6,7 @@ import type { AdMatchResult } from "@/lib/ads/types";
 import { isVideoAsset } from "@/src/data/locations";
 import FloatingAdSlotActions from "@/src/components/FloatingAdSlotActions";
 import { useGeo } from "@/src/contexts/GeoContext";
+import { requestAdMatch } from "@/src/lib/ad-match-batcher";
 
 type AdSlotProps = {
   placement: string;
@@ -191,10 +192,8 @@ export default function AdSlot({
     (async () => {
       let matched: AdMatchResult[] = [];
       try {
-        const res = await fetch("/api/ads/match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        matched = await requestAdMatch(
+          {
             placement,
             path,
             domain: typeof window !== "undefined" ? window.location.hostname : undefined,
@@ -212,13 +211,10 @@ export default function AdSlot({
             tags,
             sessionId: sessionId.current,
             count: 3,
-          }),
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const data = await res.json();
+          },
+          controller.signal,
+        );
         if (controller.signal.aborted) return;
-        matched = Array.isArray(data.ads) ? data.ads : [];
         dispatch({ type: "matched", ads: matched });
       } catch {
         if (!controller.signal.aborted) dispatch({ type: "matched", ads: [] });
