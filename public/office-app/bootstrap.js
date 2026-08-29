@@ -233,19 +233,32 @@
       .catch(function () { return null; });
   }
 
+  // Geo requests never resolve to a silent empty list on failure: a network
+  // or server error rejects, so the form can tell the user and offer a retry
+  // (an empty select with only the placeholder is otherwise indistinguishable
+  // from "no data").
+  function geoRequest(query) {
+    return fetch(PLATFORM + "/api/geo?" + query, { cache: "no-store" })
+      .then(function (r) {
+        return r.json().catch(function () { return null; }).then(function (j) {
+          if (!r.ok || !j || j.success === false) {
+            throw new Error((j && j.message) || ("geo " + r.status));
+          }
+          return Array.isArray(j.data) ? j.data : [];
+        });
+      });
+  }
+
   function fetchCountries() {
-    if (geoCache.countries) return Promise.resolve(geoCache.countries);
-    return fetch(PLATFORM + "/api/geo?type=countries")
-      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-      .then(function (j) { geoCache.countries = (j && j.data) || []; return geoCache.countries; })
-      .catch(function () { return []; });
+    if (geoCache.countries && geoCache.countries.length) return Promise.resolve(geoCache.countries);
+    return geoRequest("type=countries").then(function (rows) {
+      geoCache.countries = rows;
+      return rows;
+    });
   }
 
   function fetchGeoRows(type, parentId) {
-    return fetch(PLATFORM + "/api/geo?type=" + type + "&parentId=" + encodeURIComponent(parentId))
-      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
-      .then(function (j) { return (j && j.data) || []; })
-      .catch(function () { return []; });
+    return geoRequest("type=" + type + "&parentId=" + encodeURIComponent(parentId));
   }
 
   function fillSelect(select, rows, placeholder, selectedCode) {
@@ -321,31 +334,82 @@
     var govSel = document.getElementById("akar-p-governorate");
     var citySel = document.getElementById("akar-p-city");
 
-    fetchCountries().then(function (rows) {
-      fillSelect(countrySel, rows, "اختر الدولة", existing.country);
-      if (existing.country) loadGovernorates(existing.country, existing.governorate);
+    function hideProfileErr() {
+      var err = document.getElementById("akar-profile-err");
+      if (err) err.style.display = "none";
+    }
+
+    function geoFailed(select, label) {
+      select.innerHTML = '<option value="">تعذّر تحميل ' + label + ' — اضغط لإعادة المحاولة</option>';
+      select.disabled = false;
+      showProfileErr("تعذّر تحميل قائمة " + label + " من المنصة. تحقق من الاتصال بالإنترنت ثم أعد المحاولة.");
+    }
+
+    function loadCountries() {
+      countrySel.innerHTML = '<option value="">جارٍ التحميل...</option>';
+      countrySel.disabled = true;
+      fetchCountries()
+        .then(function (rows) {
+          countrySel.disabled = false;
+          if (!rows.length) {
+            geoFailed(countrySel, "الدول");
+            return;
+          }
+          hideProfileErr();
+          fillSelect(countrySel, rows, "اختر الدولة", existing.country);
+          if (existing.country) loadGovernorates(existing.country, existing.governorate);
+        })
+        .catch(function () { geoFailed(countrySel, "الدول"); });
+    }
+    loadCountries();
+
+    // A select that failed to load reloads on the next open/click.
+    countrySel.addEventListener("mousedown", function () {
+      if (!(geoCache.countries && geoCache.countries.length)) loadCountries();
     });
 
     function loadGovernorates(countryCode, selectedGov) {
       var country = (geoCache.countries || []).filter(function (c) { return String(c.code).toUpperCase() === String(countryCode).toUpperCase(); })[0];
       if (!country) { govSel.disabled = true; return; }
-      govSel.disabled = false;
-      fetchGeoRows("governorates", country.id).then(function (rows) {
-        fillSelect(govSel, rows, "اختر المنطقة", selectedGov);
-        govSel._rows = rows;
-        if (selectedGov) {
-          var match = rows.filter(function (r) { return String(r.code || r.id).toUpperCase() === String(selectedGov).toUpperCase(); })[0];
-          if (match && existing.city) loadCities(match.id, existing.city);
-        }
-      });
+      govSel.disabled = true;
+      govSel.innerHTML = '<option value="">جارٍ التحميل...</option>';
+      fetchGeoRows("governorates", country.id)
+        .then(function (rows) {
+          govSel.disabled = false;
+          fillSelect(govSel, rows, "اختر المنطقة", selectedGov);
+          govSel._rows = rows;
+          if (selectedGov) {
+            var match = rows.filter(function (r) { return String(r.code || r.id).toUpperCase() === String(selectedGov).toUpperCase(); })[0];
+            if (match && existing.city) loadCities(match.id, existing.city);
+          }
+        })
+        .catch(function () {
+          govSel._rows = [];
+          geoFailed(govSel, "المناطق");
+          govSel._retry = function () { loadGovernorates(countryCode, selectedGov); };
+        });
     }
 
     function loadCities(governorateId, selectedCity) {
-      citySel.disabled = false;
-      fetchGeoRows("cities", governorateId).then(function (rows) {
-        fillSelect(citySel, rows, "اختر المدينة", selectedCity);
-      });
+      citySel.disabled = true;
+      citySel.innerHTML = '<option value="">جارٍ التحميل...</option>';
+      fetchGeoRows("cities", governorateId)
+        .then(function (rows) {
+          citySel.disabled = false;
+          fillSelect(citySel, rows, "اختر المدينة", selectedCity);
+        })
+        .catch(function () {
+          geoFailed(citySel, "المدن");
+          citySel._retry = function () { loadCities(governorateId, selectedCity); };
+        });
     }
+
+    govSel.addEventListener("mousedown", function () {
+      if (govSel._retry) { var f = govSel._retry; govSel._retry = null; f(); }
+    });
+    citySel.addEventListener("mousedown", function () {
+      if (citySel._retry) { var f = citySel._retry; citySel._retry = null; f(); }
+    });
 
     countrySel.addEventListener("change", function () {
       govSel.innerHTML = '<option value="">اختر الدولة أولًا</option>';
