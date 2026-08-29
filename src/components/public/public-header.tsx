@@ -89,34 +89,36 @@ export default function PublicHeader({
         )}
       </PageContainer>
 
-      {/* Row 2 — tool clusters + account actions */}
+      {/* Row 2 — tool clusters + account actions. Country/language pin to
+          this row's outer edges (start/end); everything else stays centered
+          between them, per the requested layout. */}
       <div className="border-t border-[color:var(--color-border)]/60">
-        <PageContainer size="wide" className="flex flex-wrap items-center justify-center gap-2 py-1.5">
-          <div className="header-tool-cluster">
-            <CountrySwitcher />
-            <LocationCluster locale={locale} />
-          </div>
-          <div className="header-tool-cluster">
-            <LanguageSwitcher labels={labels} />
-            <ThemeSwitcher labels={labels} />
-          </div>
-          {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
-          <div className="hidden items-center gap-2 md:flex">
-            {viewer.authenticated ? (
-              <>
-                <span className="max-w-[140px] truncate text-sm font-medium text-[color:var(--color-text-primary)]">
-                  {viewer.displayName || viewer.email}
-                </span>
-                <Button variant="outline" size="sm" onClick={onLogout}>
-                  {labels.logout}
+        <PageContainer size="wide" className="flex flex-wrap items-center gap-2 py-1.5">
+          <CountrySwitcher />
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
+            <div className="header-tool-cluster">
+              <LocationCluster locale={locale} />
+              <ThemeSwitcher labels={labels} />
+            </div>
+            {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
+            <div className="hidden items-center gap-2 md:flex">
+              {viewer.authenticated ? (
+                <>
+                  <span className="max-w-[140px] truncate text-sm font-medium text-[color:var(--color-text-primary)]">
+                    {viewer.displayName || viewer.email}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={onLogout}>
+                    {labels.logout}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="primary" size="sm" onClick={onLogin}>
+                  {labels.login}
                 </Button>
-              </>
-            ) : (
-              <Button variant="primary" size="sm" onClick={onLogin}>
-                {labels.login}
-              </Button>
-            )}
+              )}
+            </div>
           </div>
+          <LanguageSwitcher labels={labels} />
         </PageContainer>
       </div>
     </header>

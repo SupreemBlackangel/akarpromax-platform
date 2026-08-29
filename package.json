@@ -38,6 +38,7 @@
     "@types/proj4": "^2.5.6",
     "@types/react-leaflet": "^2.8.3",
     "bcryptjs": "^3.0.3",
+    "country-flag-icons": "^1.6.20",
     "docx": "^9.7.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "0.45.2",

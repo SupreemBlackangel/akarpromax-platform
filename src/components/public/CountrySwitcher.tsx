@@ -3,18 +3,13 @@
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { Globe, ChevronDown, Check } from "lucide-react";
 import { useGeo, type CountryConfig } from "@/src/contexts/GeoContext";
+import FlagIcon from "@/src/components/public/FlagIcon";
 
 const subscribeNoop = () => () => {};
 /** False during SSR/hydration, true after mount — keeps first client render
     identical to the server HTML (see React hydration contract). */
 function useMounted(): boolean {
   return useSyncExternalStore(subscribeNoop, () => true, () => false);
-}
-
-function flagEmoji(code: string): string {
-  const cc = code.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(cc)) return "";
-  return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
 export default function CountrySwitcher() {
@@ -69,7 +64,7 @@ export default function CountrySwitcher() {
         {!mounted || isGlobal || !countryCode ? (
           <Globe className="h-4 w-4 text-[var(--color-text-muted)]" />
         ) : (
-          <span aria-hidden="true">{flagEmoji(countryCode)}</span>
+          <FlagIcon code={countryCode} />
         )}
         {resolving ? (
           <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -118,7 +113,7 @@ export default function CountrySwitcher() {
                   onClick={() => handleSelect(c.code)}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-right text-sm transition-colors hover:bg-[var(--color-surface-muted)]"
                 >
-                  <span aria-hidden="true">{flagEmoji(c.code)}</span>
+                  <FlagIcon code={c.code} />
                   <span className="flex-1 font-semibold">{c.nameAr}</span>
                   <span className="text-xs text-[var(--color-text-muted)]">{c.code.toUpperCase()}</span>
                   {countryCode === c.code && !isGlobal && <Check className="h-4 w-4 text-primary" />}
