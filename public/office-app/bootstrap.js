@@ -493,17 +493,94 @@
       + ".akar-update-bar span{font-size:12.5px;opacity:.9}"
       + ".akar-update-bar button{border:0;border-radius:999px;padding:7px 16px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;background:#fff;color:#0e2f5c}"
       + ".akar-update-bar button:hover{background:#eaf2ff}"
-      + ".akar-update-bar .akar-update-x{background:transparent;color:#fff;font-size:16px;padding:4px 8px}";
+      + ".akar-update-bar .akar-update-x{background:transparent;color:#fff;font-size:16px;padding:4px 8px}"
+      // Mandatory update: full-screen gate — nothing behind it is reachable.
+      + ".akar-update-gate{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#081c38 0%,#0e2f5c 55%,#123c74 100%);direction:rtl;font-family:Tajawal,system-ui,sans-serif}"
+      + ".akar-update-card{width:min(460px,92vw);background:#fff;border-radius:22px;padding:36px 32px 30px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.45)}"
+      + ".akar-update-ico{width:88px;height:88px;margin:0 auto 18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 25%,#3b8bff,#0e2f5c);box-shadow:0 10px 26px rgba(26,109,255,.35);animation:akarUpPulse 2.2s ease-in-out infinite}"
+      + "@keyframes akarUpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}"
+      + ".akar-update-card h1{margin:0 0 6px;font-size:22px;font-weight:800;color:#0e2f5c}"
+      + ".akar-update-card .akar-up-msg{margin:0 0 14px;font-size:14px;color:#5a6b85;line-height:1.7}"
+      + ".akar-update-vers{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 16px}"
+      + ".akar-update-vers b{background:#eef4ff;color:#0e2f5c;border-radius:999px;padding:5px 14px;font-size:13px;font-weight:800}"
+      + ".akar-update-vers b.akar-up-new{background:#0e6b3a;color:#fff}"
+      + ".akar-update-vers svg{opacity:.5}"
+      + ".akar-update-notes{margin:0 0 20px;padding:12px 14px;background:#f5f8ff;border:1px solid #dfe9ff;border-radius:12px;font-size:12.5px;color:#41537a;line-height:1.8;text-align:right}"
+      + ".akar-update-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:0;border-radius:14px;padding:14px 20px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#1a6dff,#0e4bb8);box-shadow:0 8px 22px rgba(26,109,255,.35)}"
+      + ".akar-update-btn:hover{filter:brightness(1.08)}"
+      + ".akar-update-btn[disabled]{cursor:default;filter:grayscale(.25);opacity:.85}"
+      + ".akar-update-hint{margin:14px 0 0;font-size:11.5px;color:#8b98ad;line-height:1.7}";
     var s = document.createElement("style");
     s.id = "akar-update-styles";
     s.textContent = css;
     document.head.appendChild(s);
   }
 
-  function showUpdateBar(info) {
-    if (document.getElementById("akar-update-bar")) return;
+  var UPDATE_SVG = {
+    rocket: '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
+    arrowLeft: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#41537a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+    download: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    spinner: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.9s" repeatCount="indefinite"/></path></svg>'
+  };
+
+  function resolveSetupUrl(info) {
+    return info.setupUrl && /^https?:/i.test(info.setupUrl) ? info.setupUrl : (PLATFORM + (info.setupUrl || "/downloads/AkarProMaxOffice-Setup.exe"));
+  }
+
+  function triggerSetupDownload(setupUrl) {
+    try {
+      var a = document.createElement("a");
+      a.href = setupUrl;
+      a.download = "AkarProMaxOffice-Setup.exe";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      try { window.open(setupUrl, "_blank"); } catch (e2) {}
+    }
+  }
+
+  // Mandatory update: the app is not usable until the new version is
+  // installed. Full-screen gate, no close button, focus trapped behind it.
+  function showUpdateGate(info) {
+    if (document.getElementById("akar-update-gate")) return;
     injectUpdateStyles();
-    var setupUrl = info.setupUrl && /^https?:/i.test(info.setupUrl) ? info.setupUrl : (PLATFORM + (info.setupUrl || "/downloads/AkarProMaxOffice-Setup.exe"));
+    var bar = document.getElementById("akar-update-bar");
+    if (bar) bar.remove();
+    var setupUrl = resolveSetupUrl(info);
+    var gate = document.createElement("div");
+    gate.id = "akar-update-gate";
+    gate.className = "akar-update-gate";
+    gate.innerHTML =
+      '<div class="akar-update-card" role="alertdialog" aria-modal="true" aria-labelledby="akar-up-title">' +
+        '<div class="akar-update-ico">' + UPDATE_SVG.rocket + '</div>' +
+        '<h1 id="akar-up-title">يجب تحديث البرنامج</h1>' +
+        '<p class="akar-up-msg">تتوفر نسخة أحدث من تطبيق عقار بروماكس المكتبي.<br>لا يمكن متابعة استخدام البرنامج قبل تثبيت التحديث.</p>' +
+        '<div class="akar-update-vers">' +
+          '<b>نسختك ' + INSTALLED_VERSION + '</b>' + UPDATE_SVG.arrowLeft +
+          '<b class="akar-up-new">الجديدة ' + info.version + '</b>' +
+        '</div>' +
+        (info.notes ? '<div class="akar-update-notes">' + info.notes + '</div>' : '') +
+        '<button class="akar-update-btn" id="akar-update-now">' + UPDATE_SVG.download + '<span>تنزيل وتثبيت التحديث الآن</span></button>' +
+        '<p class="akar-update-hint">بعد اكتمال التنزيل شغّل ملف AkarProMaxOffice-Setup.exe،<br>وسيقوم بالترقية مباشرة ثم أعد فتح البرنامج.</p>' +
+      '</div>';
+    document.body.appendChild(gate);
+
+    document.getElementById("akar-update-now").addEventListener("click", function () {
+      triggerSetupDownload(setupUrl);
+      var btn = document.getElementById("akar-update-now");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = UPDATE_SVG.spinner + '<span>جارٍ التنزيل... شغّل ملف التثبيت بعد اكتماله</span>';
+      }
+    });
+  }
+
+  // Optional update: dismissible top bar; the app keeps working.
+  function showUpdateBar(info) {
+    if (document.getElementById("akar-update-bar") || document.getElementById("akar-update-gate")) return;
+    injectUpdateStyles();
+    var setupUrl = resolveSetupUrl(info);
     var bar = document.createElement("div");
     bar.id = "akar-update-bar";
     bar.className = "akar-update-bar";
@@ -511,22 +588,13 @@
       "<b>تحديث جديد متوفر (" + info.version + ")</b>" +
       "<span>" + (info.notes || "يوصى بالتحديث للحصول على آخر التحسينات.") + "</span>" +
       '<button id="akar-update-now">تنزيل وتثبيت التحديث</button>' +
-      (info.mandatory ? "" : '<button class="akar-update-x" id="akar-update-skip" title="لاحقًا">✕</button>');
+      '<button class="akar-update-x" id="akar-update-skip" title="لاحقًا">✕</button>';
     document.body.appendChild(bar);
 
     document.getElementById("akar-update-now").addEventListener("click", function () {
       // Trigger the installer download; the WebView hands it to the OS. The
       // user runs it and Inno Setup upgrades in place (same AppId).
-      try {
-        var a = document.createElement("a");
-        a.href = setupUrl;
-        a.download = "AkarProMaxOffice-Setup.exe";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } catch (e) {
-        try { window.open(setupUrl, "_blank"); } catch (e2) {}
-      }
+      triggerSetupDownload(setupUrl);
       var btn = document.getElementById("akar-update-now");
       if (btn) { btn.textContent = "يُنزّل... شغّل الملف بعد اكتماله"; btn.disabled = true; }
     });
@@ -539,26 +607,34 @@
   }
 
   function checkForUpdate() {
-    // cache-bust so every launch sees the latest manifest.
-    fetch(PLATFORM + "/office-app/version.json?t=" + Date.now(), { cache: "no-store" })
+    // cache-bust so every launch sees the latest manifest. Resolves true when
+    // a mandatory update gates the app (boot must not continue past it).
+    return fetch(PLATFORM + "/office-app/version.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (info) {
-        if (!info || !info.version) return;
-        if (cmpVersion(info.version, INSTALLED_VERSION) <= 0) return; // up to date
-        if (!info.mandatory && ls("get", "akar_update_skipped") === info.version) return;
+        if (!info || !info.version) return false;
+        if (cmpVersion(info.version, INSTALLED_VERSION) <= 0) return false; // up to date
+        if (info.mandatory) {
+          showUpdateGate(info);
+          return true;
+        }
+        if (ls("get", "akar_update_skipped") === info.version) return false;
         showUpdateBar(info);
+        return false;
       })
-      .catch(function () {});
+      .catch(function () { return false; });
   }
 
   function boot() {
-    checkForUpdate();
-    if (isLoggedIn()) {
-      mountChip();
-      ensureProfile();
-    } else {
-      showLogin();
-    }
+    checkForUpdate().then(function (gated) {
+      if (gated) return; // mandatory update: the gate replaces the app
+      if (isLoggedIn()) {
+        mountChip();
+        ensureProfile();
+      } else {
+        showLogin();
+      }
+    });
   }
 
   if (document.readyState === "loading") {
