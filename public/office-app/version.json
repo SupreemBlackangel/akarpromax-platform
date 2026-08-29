@@ -1,6 +1,6 @@
 {
-  "version": "2.0.1",
+  "version": "2.0.2",
   "setupUrl": "/downloads/AkarProMaxOffice-Setup.exe",
-  "mandatory": false,
-  "notes": "تحسينات الربط بالمنصة وتسجيل الدخول التلقائي."
+  "mandatory": true,
+  "notes": "إصلاح رفع العقار، إضافة بيانات المكتب، وقاعدة بيانات نظيفة لكل مكتب."
 }

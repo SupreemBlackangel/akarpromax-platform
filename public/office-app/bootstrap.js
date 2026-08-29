@@ -94,8 +94,20 @@
       + ".akar-auth-foot a{color:#1a6dff;font-weight:800;text-decoration:none}"
       + ".akar-acct-chip{position:fixed;bottom:16px;inset-inline-start:16px;z-index:2147482000;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f2;border-radius:999px;padding:6px 8px 6px 14px;box-shadow:0 6px 20px rgba(20,45,94,.14);font-family:Tajawal,system-ui,sans-serif;direction:rtl}"
       + ".akar-acct-chip small{font-size:12px;font-weight:800;color:#243b63;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
-      + ".akar-acct-chip button{border:0;background:#eef3fb;color:#c0392b;font-size:11px;font-weight:800;font-family:inherit;padding:5px 10px;border-radius:999px;cursor:pointer}"
-      + ".akar-acct-chip button:hover{background:#fdecec}";
+      + ".akar-acct-chip button{border:0;background:#eef3fb;color:#0e2f5c;font-size:11px;font-weight:800;font-family:inherit;padding:5px 10px;border-radius:999px;cursor:pointer}"
+      + ".akar-acct-chip button:hover{background:#e4ecfb}"
+      + ".akar-acct-chip button.akar-chip-logout{color:#c0392b}"
+      + ".akar-acct-chip button.akar-chip-logout:hover{background:#fdecec}"
+      + ".akar-profile-card{width:min(460px,92vw);max-height:88vh;overflow-y:auto}"
+      + ".akar-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}"
+      + ".akar-profile-grid .akar-auth-field.akar-full{grid-column:1/-1}"
+      + ".akar-auth-field select,.akar-auth-field textarea{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5deea;border-radius:11px;font-size:14px;font-family:inherit;outline:none;background:#fff}"
+      + ".akar-auth-field textarea{resize:vertical;min-height:56px}"
+      + ".akar-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}"
+      + ".akar-logo-preview{width:56px;height:56px;border-radius:14px;background:#eef3fb;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px dashed #c7d4e8}"
+      + ".akar-logo-preview img{width:100%;height:100%;object-fit:cover}"
+      + ".akar-logo-btn{border:1px solid #d5deea;background:#fff;color:#33507d;font-weight:700;font-size:12.5px;font-family:inherit;padding:8px 14px;border-radius:10px;cursor:pointer}"
+      + ".akar-logo-btn:hover{background:#f3f7fc}";
     var s = document.createElement("style");
     s.id = "akar-office-auth-styles";
     s.textContent = css;
@@ -155,8 +167,7 @@
             persistSession(res.j.token, res.j.user || null);
             wrap.remove();
             mountChip();
-            // Reload so the office UI picks up the new token everywhere.
-            setTimeout(function () { try { window.location.reload(); } catch (e) {} }, 150);
+            ensureProfile();
           } else {
             fail((res.j && res.j.message) || "تعذّر تسجيل الدخول. تحقق من البيانات والاتصال.");
           }
@@ -169,25 +180,244 @@
     setTimeout(function () { try { idEl.focus(); } catch (e) {} }, 60);
   }
 
-  // ---- account chip (logout) ---------------------------------------------
+  // ---- account chip (profile + logout) ------------------------------------
   function mountChip() {
     var existing = document.getElementById("akar-acct-chip");
     if (existing) existing.remove();
     if (!isLoggedIn()) return;
     injectStyles();
-    var profile = {};
-    try { profile = JSON.parse(ls("get", "akar_platform_profile") || "{}"); } catch (e) {}
-    var name = profile.displayName || profile.name || profile.email || "حساب المنصة";
+    var office = {};
+    try { office = JSON.parse(ls("get", OFFICE_PROFILE_CACHE_KEY) || "{}"); } catch (e) {}
+    var platformProfile = {};
+    try { platformProfile = JSON.parse(ls("get", "akar_platform_profile") || "{}"); } catch (e) {}
+    var name = office.name || platformProfile.displayName || platformProfile.name || platformProfile.email || "حساب المنصة";
     var chip = document.createElement("div");
     chip.id = "akar-acct-chip";
     chip.className = "akar-acct-chip";
-    chip.innerHTML = '<small title="' + name + '">🟢 ' + name + "</small><button>خروج</button>";
-    chip.querySelector("button").addEventListener("click", function () {
+    chip.innerHTML =
+      '<small title="' + name + '">🟢 ' + name + "</small>" +
+      '<button id="akar-chip-profile">بيانات المكتب</button>' +
+      '<button class="akar-chip-logout" id="akar-chip-logout">خروج</button>';
+    chip.querySelector("#akar-chip-profile").addEventListener("click", function () { showProfileForm(false); });
+    chip.querySelector("#akar-chip-logout").addEventListener("click", function () {
       clearSession();
+      ls("del", OFFICE_PROFILE_CACHE_KEY);
       chip.remove();
       showLogin();
     });
     document.body.appendChild(chip);
+  }
+
+  // ---- office profile (name/logo/contact/location) ------------------------
+  var OFFICE_PROFILE_CACHE_KEY = "akar_office_profile";
+  var geoCache = { countries: null };
+
+  function authedFetch(path, options) {
+    var token = ls("get", TOKEN_KEY) || "";
+    options = options || {};
+    var headers = options.headers || {};
+    headers["X-API-Key"] = token;
+    if (!options.body || typeof options.body !== "string" || options.method === "GET" || !options.method) {
+      // no content-type needed for GET
+    } else {
+      headers["Content-Type"] = "application/json";
+    }
+    options.headers = headers;
+    return fetch(PLATFORM + path, options);
+  }
+
+  function fetchProfile() {
+    return authedFetch("/api/program/profile", { method: "GET" })
+      .then(function (r) { return r.ok ? r.json() : { success: false }; })
+      .then(function (j) { return (j && j.success) ? j.profile : null; })
+      .catch(function () { return null; });
+  }
+
+  function fetchCountries() {
+    if (geoCache.countries) return Promise.resolve(geoCache.countries);
+    return fetch(PLATFORM + "/api/geo?type=countries")
+      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      .then(function (j) { geoCache.countries = (j && j.data) || []; return geoCache.countries; })
+      .catch(function () { return []; });
+  }
+
+  function fetchGeoRows(type, parentId) {
+    return fetch(PLATFORM + "/api/geo?type=" + type + "&parentId=" + encodeURIComponent(parentId))
+      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      .then(function (j) { return (j && j.data) || []; })
+      .catch(function () { return []; });
+  }
+
+  function fillSelect(select, rows, placeholder, selectedCode) {
+    select.innerHTML = "";
+    var opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = placeholder;
+    select.appendChild(opt0);
+    rows.forEach(function (row) {
+      var opt = document.createElement("option");
+      opt.value = row.code || row.id;
+      opt.textContent = row.nameAr || row.nameEn || row.code;
+      if (selectedCode && String(opt.value).toUpperCase() === String(selectedCode).toUpperCase()) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  function showProfileForm(isFirstRun, existing) {
+    if (document.getElementById("akar-profile-backdrop")) return;
+    injectStyles();
+    existing = existing || {};
+    var wrap = document.createElement("div");
+    wrap.id = "akar-profile-backdrop";
+    wrap.className = "akar-auth-backdrop";
+    wrap.innerHTML =
+      '<div class="akar-auth-card akar-profile-card" role="dialog" aria-label="بيانات المكتب">' +
+      '  <div class="akar-auth-logo"><img src="' + PLATFORM + '/icons/icon-192.png" alt="" onerror="this.style.display=\'none\'"/>' +
+      "    <div><b>بيانات المكتب</b><span>تُعرض مع كل عقار تنشره من التطبيق</span></div></div>" +
+      '  <div class="akar-auth-err" id="akar-profile-err"></div>' +
+      '  <div class="akar-logo-row">' +
+      '    <div class="akar-logo-preview" id="akar-logo-preview">' + (existing.logoData ? '<img src="' + existing.logoData + '"/>' : "🏢") + "</div>" +
+      '    <button type="button" class="akar-logo-btn" id="akar-logo-pick">اختر شعار المكتب</button>' +
+      '    <input type="file" id="akar-logo-file" accept="image/png,image/jpeg,image/webp" style="display:none"/>' +
+      "  </div>" +
+      '  <div class="akar-profile-grid">' +
+      '    <div class="akar-auth-field akar-full"><label>اسم المكتب *</label><input id="akar-p-name" type="text" value="' + (existing.name || "").replace(/"/g, "&quot;") + '"/></div>' +
+      '    <div class="akar-auth-field"><label>الهاتف</label><input id="akar-p-phone" type="tel" dir="ltr" value="' + (existing.phone || "") + '"/></div>' +
+      '    <div class="akar-auth-field"><label>واتساب</label><input id="akar-p-whatsapp" type="tel" dir="ltr" value="' + (existing.whatsapp || "") + '"/></div>' +
+      '    <div class="akar-auth-field"><label>البريد الإلكتروني</label><input id="akar-p-email" type="email" dir="ltr" value="' + (existing.email || "") + '"/></div>' +
+      '    <div class="akar-auth-field"><label>الموقع الإلكتروني</label><input id="akar-p-website" type="text" dir="ltr" value="' + (existing.website || "") + '"/></div>' +
+      '    <div class="akar-auth-field"><label>الدولة *</label><select id="akar-p-country"><option value="">جارٍ التحميل...</option></select></div>' +
+      '    <div class="akar-auth-field"><label>المنطقة *</label><select id="akar-p-governorate" disabled><option value="">اختر الدولة أولًا</option></select></div>' +
+      '    <div class="akar-auth-field akar-full"><label>المدينة *</label><select id="akar-p-city" disabled><option value="">اختر المنطقة أولًا</option></select></div>' +
+      '    <div class="akar-auth-field akar-full"><label>العنوان التفصيلي</label><textarea id="akar-p-address">' + (existing.address || "") + "</textarea></div>" +
+      "  </div>" +
+      '  <button class="akar-auth-btn" id="akar-p-save">حفظ بيانات المكتب</button>' +
+      (isFirstRun ? "" : '  <button class="akar-auth-btn" id="akar-p-close" style="background:transparent;color:#6a7d97;margin-top:8px">إغلاق</button>') +
+      "</div>";
+    document.body.appendChild(wrap);
+
+    var logoData = existing.logoData || "";
+    var fileInput = document.getElementById("akar-logo-file");
+    document.getElementById("akar-logo-pick").addEventListener("click", function () { fileInput.click(); });
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      if (file.size > 380000) { showProfileErr("الصورة كبيرة جدًا، اختر صورة أصغر من 380 كيلوبايت."); return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        logoData = String(reader.result || "");
+        document.getElementById("akar-logo-preview").innerHTML = '<img src="' + logoData + '"/>';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function showProfileErr(msg) {
+      var err = document.getElementById("akar-profile-err");
+      err.textContent = msg;
+      err.style.display = "block";
+    }
+
+    var countrySel = document.getElementById("akar-p-country");
+    var govSel = document.getElementById("akar-p-governorate");
+    var citySel = document.getElementById("akar-p-city");
+
+    fetchCountries().then(function (rows) {
+      fillSelect(countrySel, rows, "اختر الدولة", existing.country);
+      if (existing.country) loadGovernorates(existing.country, existing.governorate);
+    });
+
+    function loadGovernorates(countryCode, selectedGov) {
+      var country = (geoCache.countries || []).filter(function (c) { return String(c.code).toUpperCase() === String(countryCode).toUpperCase(); })[0];
+      if (!country) { govSel.disabled = true; return; }
+      govSel.disabled = false;
+      fetchGeoRows("governorates", country.id).then(function (rows) {
+        fillSelect(govSel, rows, "اختر المنطقة", selectedGov);
+        govSel._rows = rows;
+        if (selectedGov) {
+          var match = rows.filter(function (r) { return String(r.code || r.id).toUpperCase() === String(selectedGov).toUpperCase(); })[0];
+          if (match && existing.city) loadCities(match.id, existing.city);
+        }
+      });
+    }
+
+    function loadCities(governorateId, selectedCity) {
+      citySel.disabled = false;
+      fetchGeoRows("cities", governorateId).then(function (rows) {
+        fillSelect(citySel, rows, "اختر المدينة", selectedCity);
+      });
+    }
+
+    countrySel.addEventListener("change", function () {
+      govSel.innerHTML = '<option value="">اختر الدولة أولًا</option>';
+      govSel.disabled = true;
+      citySel.innerHTML = '<option value="">اختر المنطقة أولًا</option>';
+      citySel.disabled = true;
+      if (countrySel.value) loadGovernorates(countrySel.value, null);
+    });
+    govSel.addEventListener("change", function () {
+      citySel.innerHTML = '<option value="">اختر المنطقة أولًا</option>';
+      citySel.disabled = true;
+      var rows = govSel._rows || [];
+      var match = rows.filter(function (r) { return String(r.code || r.id) === govSel.value; })[0];
+      if (match) loadCities(match.id, null);
+    });
+
+    var saveBtn = document.getElementById("akar-p-save");
+    saveBtn.addEventListener("click", function () {
+      var name = (document.getElementById("akar-p-name").value || "").trim();
+      var country = countrySel.value;
+      var governorate = govSel.value;
+      var city = citySel.value;
+      if (!name) { showProfileErr("اسم المكتب مطلوب."); return; }
+      if (!country || !governorate || !city) { showProfileErr("الدولة والمنطقة والمدينة مطلوبة."); return; }
+      saveBtn.disabled = true;
+      saveBtn.textContent = "جارٍ الحفظ...";
+      var payload = {
+        name: name,
+        logoData: logoData,
+        phone: document.getElementById("akar-p-phone").value || "",
+        whatsapp: document.getElementById("akar-p-whatsapp").value || "",
+        email: document.getElementById("akar-p-email").value || "",
+        website: document.getElementById("akar-p-website").value || "",
+        country: country,
+        governorate: governorate,
+        city: city,
+        address: document.getElementById("akar-p-address").value || "",
+      };
+      authedFetch("/api/program/profile", { method: "POST", body: JSON.stringify(payload) })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (j) {
+          if (j && j.success) {
+            ls("set", OFFICE_PROFILE_CACHE_KEY, JSON.stringify(payload));
+            wrap.remove();
+            mountChip();
+          } else {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "حفظ بيانات المكتب";
+            showProfileErr((j && j.message) || "تعذّر الحفظ.");
+          }
+        })
+        .catch(function () {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "حفظ بيانات المكتب";
+          showProfileErr("تعذّر الاتصال بالمنصة.");
+        });
+    });
+
+    var closeBtn = document.getElementById("akar-p-close");
+    if (closeBtn) closeBtn.addEventListener("click", function () { wrap.remove(); });
+  }
+
+  // After login, ensure the office has a profile; first run is mandatory
+  // (no close button) since publishing needs the location on file.
+  function ensureProfile() {
+    fetchProfile().then(function (profile) {
+      if (profile && profile.name && profile.country && profile.governorate && profile.city) {
+        ls("set", OFFICE_PROFILE_CACHE_KEY, JSON.stringify(profile));
+        return;
+      }
+      showProfileForm(true, profile || {});
+    });
   }
 
   // ---- auto-update check --------------------------------------------------
@@ -259,8 +489,12 @@
 
   function boot() {
     checkForUpdate();
-    if (isLoggedIn()) mountChip();
-    else showLogin();
+    if (isLoggedIn()) {
+      mountChip();
+      ensureProfile();
+    } else {
+      showLogin();
+    }
   }
 
   if (document.readyState === "loading") {
