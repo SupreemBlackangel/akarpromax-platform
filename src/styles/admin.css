@@ -112,7 +112,9 @@ html[data-theme="dark"] .ads-wizard-steps button.active { background: #143b70; c
 .admin-analytics-list article b { color: var(--color-primary); font-size: 13px; }
 .admin-access-grid { display: grid; grid-template-columns: 1.4fr .6fr; align-items: start; gap: 17px; }
 .admin-access-list { display: grid; gap: 8px; }
-.admin-access-list article { display: grid; grid-template-columns: 36px 1fr auto auto; align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--color-border); border-radius: 8px; }
+/* icon | labels | count | status | actions — the actions column must exist or
+   the row's 5th child wraps into the 36px icon column and stacks vertically. */
+.admin-access-list article { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto auto; align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--color-border); border-radius: 8px; }
 .admin-access-list article > span { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary); font-size: 14px; font-weight: 900; }
 .admin-access-list article div { min-width: 0; display: flex; flex-direction: column; }
 .admin-access-list article strong { overflow: hidden; color: var(--color-text-primary); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
@@ -309,7 +311,7 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
   .admin-campaign-art { width: 75px; height: 55px; }
   .admin-campaign-art > img { width: 43px; height: 43px; }
   .advertiser-admin-list > article > div:not(.admin-advertiser-main):not(.admin-row-actions):not(.admin-campaign-art) { display: none; }
-  .admin-row-actions { grid-column: 3; grid-row: 1; flex-direction: column; }
+  .advertiser-admin-list .admin-row-actions { grid-column: 3; grid-row: 1; flex-direction: column; }
   .admin-form-grid { grid-template-columns: 1fr 1fr; }
   .admin-logo-dropzone { grid-template-columns: 58px 1fr auto; }
   .admin-logo-preview { width: 58px; height: 58px; }
@@ -333,8 +335,9 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
   .admin-dialog fieldset { align-items: flex-start; flex-direction: column; }
   .admin-analytics-list article { grid-template-columns: 1fr 1fr; }
   .admin-analytics-list article div { grid-column: span 2; }
-  .admin-access-list article { grid-template-columns: 34px 1fr auto; }
+  .admin-access-list article { grid-template-columns: 34px minmax(0, 1fr) auto; }
   .admin-access-list article b { display: none; }
+  .admin-access-list .admin-row-actions { grid-column: 1 / -1; flex-wrap: wrap; }
   .roles-descriptions { grid-template-columns: 1fr; }
   .admin-kpi-rows { grid-template-columns: 1fr; }
 }
