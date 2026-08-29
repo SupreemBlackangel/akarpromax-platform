@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    if (property.status !== 'approved' && property.userId !== session?.userId) {
+    if (property.status !== 'approved' && property.userId !== session?.userId && session?.role !== 'super_admin') {
       return NextResponse.json(
         { success: false, error: 'غير مصرح بعرض هذا العقار' },
         { status: 403 }
