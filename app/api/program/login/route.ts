@@ -6,7 +6,6 @@ import { getDb } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { signSessionPayload } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
-import { isAccountUsable } from "@/lib/auth/access-control";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { normalizeEmailIdentity } from "@/lib/auth/email-identity";
 import { clientIp, enforceRateLimit, normalizeEmail } from "@/lib/security/rate-limit";
@@ -38,6 +37,9 @@ const CORS_HEADERS: Record<string, string> = {
 };
 
 const DESKTOP_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+// Statuses a desktop login must never graduate to active.
+const BLOCKED_STATUSES = new Set(["disabled", "suspended", "deleted"]);
 
 type LoginBody = { identifier?: unknown; email?: unknown; phone?: unknown; password?: unknown };
 
@@ -100,8 +102,34 @@ export async function POST(request: Request) {
     return json({ success: false, message: "بيانات الدخول غير صحيحة" }, 401);
   }
 
-  if (!isAccountUsable(user.status, user.isActive)) {
-    return json({ success: false, message: "الحساب غير مفعّل أو موقوف" }, 403);
+  // Explicitly blocked accounts (disabled/suspended/deleted, or deactivated)
+  // are never let through, whatever the surface.
+  if (!user.isActive || BLOCKED_STATUSES.has(user.status)) {
+    return json({ success: false, message: "الحساب موقوف. تواصل مع الدعم." }, 403);
+  }
+
+  // Activation gate: email verification is the web activation path, but real
+  // email delivery may be unavailable, leaving legitimate registrants stuck
+  // at pending_verification forever. On the desktop the user has already
+  // proven account ownership with their password, so a first successful
+  // desktop login activates the account (status -> active, email marked
+  // verified). This never un-blocks a disabled/suspended account (guarded
+  // above); it only graduates a pending one.
+  if (user.status !== "active") {
+    try {
+      const { db: dbUpd, end: endUpd } = getDb();
+      try {
+        await dbUpd
+          .update(users)
+          .set({ status: "active", emailVerifiedAt: user.emailVerifiedAt ?? new Date() })
+          .where(eq(users.id, user.id));
+      } finally {
+        await endUpd();
+      }
+    } catch {
+      // If activation write fails, still allow the session — the credential
+      // check already passed and the account is not blocked.
+    }
   }
 
   const sessionRole = mapSessionRole(user.role);

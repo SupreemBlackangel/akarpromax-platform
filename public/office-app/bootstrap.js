@@ -22,6 +22,20 @@
   var PLATFORM = "https://akarpromax.com";
   var TOKEN_KEY = "user_token";
   var API_SETTINGS_KEY = "akar_website_api_settings";
+  // The installed version is declared by the shipped index.html
+  // (window.__AKAR_APP_VERSION__). Absent = treat as very old.
+  var INSTALLED_VERSION = (typeof window.__AKAR_APP_VERSION__ === "string" && window.__AKAR_APP_VERSION__) || "0.0.0";
+
+  // Compare dotted version strings: returns 1 if a>b, -1 if a<b, 0 if equal.
+  function cmpVersion(a, b) {
+    var pa = String(a).split(".").map(function (n) { return parseInt(n, 10) || 0; });
+    var pb = String(b).split(".").map(function (n) { return parseInt(n, 10) || 0; });
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var d = (pa[i] || 0) - (pb[i] || 0);
+      if (d) return d > 0 ? 1 : -1;
+    }
+    return 0;
+  }
 
   function ls(op, key, val) {
     try {
@@ -176,7 +190,75 @@
     document.body.appendChild(chip);
   }
 
+  // ---- auto-update check --------------------------------------------------
+  function injectUpdateStyles() {
+    if (document.getElementById("akar-update-styles")) return;
+    var css = ""
+      + ".akar-update-bar{position:fixed;top:0;inset-inline:0;z-index:2147483600;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;background:linear-gradient(90deg,#0e2f5c,#1a6dff);color:#fff;font-family:Tajawal,system-ui,sans-serif;direction:rtl;padding:10px 16px;box-shadow:0 4px 16px rgba(0,0,0,.25)}"
+      + ".akar-update-bar b{font-weight:800;font-size:14px}"
+      + ".akar-update-bar span{font-size:12.5px;opacity:.9}"
+      + ".akar-update-bar button{border:0;border-radius:999px;padding:7px 16px;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;background:#fff;color:#0e2f5c}"
+      + ".akar-update-bar button:hover{background:#eaf2ff}"
+      + ".akar-update-bar .akar-update-x{background:transparent;color:#fff;font-size:16px;padding:4px 8px}";
+    var s = document.createElement("style");
+    s.id = "akar-update-styles";
+    s.textContent = css;
+    document.head.appendChild(s);
+  }
+
+  function showUpdateBar(info) {
+    if (document.getElementById("akar-update-bar")) return;
+    injectUpdateStyles();
+    var setupUrl = info.setupUrl && /^https?:/i.test(info.setupUrl) ? info.setupUrl : (PLATFORM + (info.setupUrl || "/downloads/AkarProMaxOffice-Setup.exe"));
+    var bar = document.createElement("div");
+    bar.id = "akar-update-bar";
+    bar.className = "akar-update-bar";
+    bar.innerHTML =
+      "<b>تحديث جديد متوفر (" + info.version + ")</b>" +
+      "<span>" + (info.notes || "يوصى بالتحديث للحصول على آخر التحسينات.") + "</span>" +
+      '<button id="akar-update-now">تنزيل وتثبيت التحديث</button>' +
+      (info.mandatory ? "" : '<button class="akar-update-x" id="akar-update-skip" title="لاحقًا">✕</button>');
+    document.body.appendChild(bar);
+
+    document.getElementById("akar-update-now").addEventListener("click", function () {
+      // Trigger the installer download; the WebView hands it to the OS. The
+      // user runs it and Inno Setup upgrades in place (same AppId).
+      try {
+        var a = document.createElement("a");
+        a.href = setupUrl;
+        a.download = "AkarProMaxOffice-Setup.exe";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        try { window.open(setupUrl, "_blank"); } catch (e2) {}
+      }
+      var btn = document.getElementById("akar-update-now");
+      if (btn) { btn.textContent = "يُنزّل... شغّل الملف بعد اكتماله"; btn.disabled = true; }
+    });
+
+    var skip = document.getElementById("akar-update-skip");
+    if (skip) skip.addEventListener("click", function () {
+      try { ls("set", "akar_update_skipped", info.version); } catch (e) {}
+      bar.remove();
+    });
+  }
+
+  function checkForUpdate() {
+    // cache-bust so every launch sees the latest manifest.
+    fetch(PLATFORM + "/office-app/version.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (info) {
+        if (!info || !info.version) return;
+        if (cmpVersion(info.version, INSTALLED_VERSION) <= 0) return; // up to date
+        if (!info.mandatory && ls("get", "akar_update_skipped") === info.version) return;
+        showUpdateBar(info);
+      })
+      .catch(function () {});
+  }
+
   function boot() {
+    checkForUpdate();
     if (isLoggedIn()) mountChip();
     else showLogin();
   }
