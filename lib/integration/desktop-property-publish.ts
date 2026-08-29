@@ -149,11 +149,17 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   const propertyType = KNOWN_PROPERTY_TYPES.has(rawPropertyType) ? rawPropertyType : "apartment";
   const category = PROPERTY_TYPE_TO_CATEGORY[propertyType] ?? "residential";
 
+  // The canonical city column is matched against the geo registry's codes by
+  // every listing filter, so it must come from the office profile (whose
+  // country/governorate/city were picked from /api/geo). The desktop's own
+  // `city` is free-typed Arabic text — keeping it here would file the listing
+  // under a code that matches no scope, making it invisible on the platform.
   const office = await loadOfficeLocation(userId);
-  const city = text(body.city, 100) || office.city;
+  const city = office.city;
   if (!office.country || !office.governorate || !city) {
     return { status: 422, body: { ok: false, message: "أكمل بروفايل المكتب (الدولة والمنطقة والمدينة) قبل النشر" } };
   }
+  const address = text(body.city, 100);
 
   const images = await resolveImages(body.images);
   const videoUrl = text(body.videoUrl, 500);
@@ -167,7 +173,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         .update(properties)
         .set({
           titleAr, descriptionAr, dealType, category, propertyType,
-          country: office.country, governorate: office.governorate, city,
+          country: office.country, governorate: office.governorate, city, address,
           price: String(price), currency: text(body.currency, 8) || "SAR",
           area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
           latitude, longitude,
@@ -204,7 +210,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         titleAr, titleEn: "", descriptionAr, descriptionEn: "",
         dealType, category, propertyType,
         country: office.country, governorate: office.governorate, city, district: "",
-        latitude, longitude, address: "",
+        latitude, longitude, address,
         price: String(price), currency: text(body.currency, 8) || "SAR",
         area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
         status: "pending_review",
