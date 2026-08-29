@@ -11,6 +11,7 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
 import type { CategoryRow } from "@services-ui/ServiceCards";
+import { CURRENCY_REGISTRY } from "@/lib/market/currency-registry";
 
 const ServiceLocationPicker = dynamic(() => import("@services-ui/ServiceLocationPicker"), {
   ssr: false,
@@ -72,6 +73,7 @@ type DraftData = {
   shortAddress: string;
   budgetMin: string;
   budgetMax: string;
+  currency: string;
   urgency: string;
   answers: Record<string, string>;
   contactPhone: string;
@@ -100,6 +102,7 @@ const INITIAL_DRAFT: DraftData = {
   shortAddress: "",
   budgetMin: "",
   budgetMax: "",
+  currency: "",
   urgency: "normal",
   answers: {},
   contactPhone: "",
@@ -169,9 +172,12 @@ export default function NewServiceRequestPage() {
         district: countryChanged ? district : current.district || district,
         latitude: countryChanged ? (latitude == null ? "" : String(latitude)) : current.latitude || (latitude == null ? "" : String(latitude)),
         longitude: countryChanged ? (longitude == null ? "" : String(longitude)) : current.longitude || (longitude == null ? "" : String(longitude)),
+        // Suggested from the country, same as location — the requester can
+        // still change it (e.g. Syria/Lebanon commonly quote in USD).
+        currency: countryChanged ? (countryConfig?.currencyCode || current.currency) : current.currency || countryConfig?.currencyCode || "",
       };
     });
-  }, [city, country, district, isGlobal, latitude, longitude]);
+  }, [city, country, countryConfig, district, isGlobal, latitude, longitude]);
 
   const saveDraft = useCallback((step: WizardStep) => {
     const updated = { ...draft, step, updatedAt: Date.now() };
@@ -307,7 +313,7 @@ export default function NewServiceRequestPage() {
           description: draft.description.trim() || null,
           budgetMin: draft.budgetMin ? Number(draft.budgetMin) : null,
           budgetMax: draft.budgetMax ? Number(draft.budgetMax) : null,
-          currency: "OMR",
+          currency: draft.currency || null,
           urgency: draft.urgency,
           preferredPeriod: draft.preferredPeriod.trim() || null,
           preferredDate: draft.preferredDate || null,
@@ -552,12 +558,21 @@ export default function NewServiceRequestPage() {
           {currentStep === 6 && (
             <Grid columns={2} className="space-y-5">
               <div>
-                <label className={labelCls}>{t("services.budgetMin") ?? "الميزانية الدنيا (ر.ع)"}</label>
+                <label className={labelCls}>{t("services.budgetMin") ?? "الميزانية الدنيا"}</label>
                 <input type="number" min={0} value={draft.budgetMin} onChange={(e) => updateField("budgetMin", e.target.value)} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>{t("services.budgetMax") ?? "الميزانية القصوى (ر.ع)"}</label>
+                <label className={labelCls}>{t("services.budgetMax") ?? "الميزانية القصوى"}</label>
                 <input type="number" min={0} value={draft.budgetMax} onChange={(e) => updateField("budgetMax", e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>{t("services.currency") ?? "العملة"}</label>
+                <select value={draft.currency} onChange={(e) => updateField("currency", e.target.value)} className={inputCls}>
+                  <option value="" disabled>{t("services.currencySelect") ?? "اختر العملة"}</option>
+                  {CURRENCY_REGISTRY.map((c) => (
+                    <option key={c.code} value={c.code}>{`${c.nameAr} — ${c.code}`}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelCls}>{t("services.urgency") ?? "درجة الإلحاح"}</label>
@@ -613,7 +628,7 @@ export default function NewServiceRequestPage() {
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.cityId || "—"}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموقع</dt><dd className="font-semibold text-[var(--color-success)] dark:text-[var(--color-success)]">{draft.latitude && draft.longitude ? "محدد بدقة" : "غير محدد"}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموعد</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.preferredDate || "مرن"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{(draft.budgetMin ? `${draft.budgetMin} ر.ع` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ر.ع` : "—")}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{(draft.budgetMin ? `${draft.budgetMin} ${draft.currency}` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ${draft.currency}` : "—")}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
                 </dl>

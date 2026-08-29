@@ -200,10 +200,12 @@ export function PublicShellLayout({
       />
 
       <div className="flex min-h-[100dvh] flex-col">
-        {/* Floating overlay panel — fixed positioned, consumes no layout width. */}
+        {/* Floating panel — fixed positioned; when pinned open on desktop it
+            pushes/shrinks the content column via .public-shell-content below
+            instead of floating over it. */}
         {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="public-shell-content flex min-w-0 flex-1 flex-col">
           {/* Header + news ticker pin together as one sticky block. */}
           <div className="sticky top-0 z-[var(--layer-header)]">
           <PublicHeader

@@ -7,7 +7,6 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import SearchTrigger from "@/src/components/public/search-trigger";
 import CountrySwitcher from "@/src/components/public/CountrySwitcher";
 import ThemeSwitcher from "@/src/components/public/ThemeSwitcher";
-import CurrencyChip from "@/src/components/public/CurrencyChip";
 import LanguageSwitcher from "@/src/components/public/LanguageSwitcher";
 import LocationCluster from "@/src/components/public/LocationCluster";
 import type { Locale } from "@/src/types/site";
@@ -100,7 +99,6 @@ export default function PublicHeader({
           <div className="header-tool-cluster">
             <CountrySwitcher />
             <LocationCluster locale={locale} />
-            <CurrencyChip />
           </div>
           <div className="header-tool-cluster">
             <LanguageSwitcher labels={labels} />

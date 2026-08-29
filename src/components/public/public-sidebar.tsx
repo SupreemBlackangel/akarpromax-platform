@@ -67,8 +67,10 @@ export default function PublicSidebar({ labels, items, currentPath, footer, coll
       )}
     >
       {/* Edge handle — overhangs the panel on the viewport side so it stays
-          visible (and hoverable) while the panel is off-canvas. Click pins. */}
-      {onToggle && (
+          visible (and hoverable) while the panel is off-canvas. Click pins.
+          Hidden once pinned: the panel's own header button takes over, and
+          the handle would otherwise overhang into the shifted content. */}
+      {onToggle && !pinned && (
         <button
           type="button"
           onClick={onToggle}

@@ -1154,6 +1154,14 @@ html[data-theme="dark"] .ad-slot-empty {
 .public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(100%); }
 html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:not(.is-peek-open) { transform: translateX(-100%); }
 
+/* Pinning the sidebar open pushes the content column out of its way and
+   shrinks it slightly, instead of floating over it (desktop only — the
+   sidebar itself is hidden below md). */
+@media (min-width: 768px) {
+  .public-shell-content { transition: margin .3s ease-out, transform .3s ease-out; transform-origin: top center; }
+  .public-page-shell[data-sidebar-state="expanded"] .public-shell-content { margin-inline-start: min(272px, 86vw); transform: scale(0.985); }
+}
+
 /* ── V3-look hero: full-height cover media, vertically centered copy,
       gold accent line, pill eyebrow chip, white CTA. The generic ad-slot
       DOM (media/copy/eyebrow/title/accent/desc/cta) is restyled only. ── */

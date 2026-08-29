@@ -1,10 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, BadgeCheck, CalendarCheck2, ClipboardCheck, MapPin, Search,
+  ArrowLeft, BadgeCheck, CalendarCheck2, ClipboardCheck, Search,
   ShieldCheck, Sparkles, Star, Users, Wrench,
 } from "lucide-react";
 
@@ -66,7 +65,6 @@ const FALLBACK_SETTINGS: MarketSettings = {
 };
 
 export default function ServicesPage() {
-  const router = useRouter();
   const {
     locale, viewer, copy, dir, country, city, governorate, district,
     latitude, longitude, isGlobal, openLogin, handleLogout, AccountDialog,
@@ -78,8 +76,6 @@ export default function ServicesPage() {
   const [settings, setSettings] = useState<MarketSettings>(FALLBACK_SETTINGS);
   const [featuredAuctions, setFeaturedAuctions] = useState<FeaturedAuction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,14 +140,6 @@ export default function ServicesPage() {
   }, [activeGroup, serviceCategories, settings.featuredCategoryLimit]);
   const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
 
-  const search = (event: FormEvent) => {
-    event.preventDefault();
-    const params = new URLSearchParams();
-    if (query.trim()) params.set("q", query.trim());
-    if (location.trim()) params.set("location", location.trim());
-    router.push(`/services/catalog${params.size ? `?${params}` : ""}`);
-  };
-
   const hero = {
     kicker: isArabic ? settings.heroKickerAr : settings.heroKickerEn,
     title: isArabic ? settings.heroTitleAr : settings.heroTitleEn,
@@ -176,18 +164,6 @@ export default function ServicesPage() {
               </div>
               <h1 className="max-w-2xl text-3xl font-black leading-[1.25] !text-white sm:text-4xl md:text-[42px]">{hero.title}</h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-50/90 md:text-base">{hero.description}</p>
-
-              <form onSubmit={search} className="mt-7 grid gap-2 rounded-2xl bg-[var(--color-surface)] p-2 shadow-2xl sm:grid-cols-[1fr_0.7fr_auto]" role="search">
-                <label className="flex min-w-0 items-center gap-2 rounded-xl px-3 text-[var(--color-text-muted)]">
-                  <Search className="h-5 w-5 shrink-0 text-[var(--color-primary)]" />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isArabic ? "ما الخدمة التي تحتاجها؟" : "What service do you need?"} className="h-11 min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]" />
-                </label>
-                <label className="flex min-w-0 items-center gap-2 rounded-xl border-t border-[var(--color-border)] px-3 text-[var(--color-text-muted)] sm:border-s sm:border-t-0">
-                  <MapPin className="h-5 w-5 shrink-0 text-[var(--color-primary)]" />
-                  <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder={isArabic ? "الولاية أو المنطقة" : "City or district"} className="h-11 min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]" />
-                </label>
-                <button className="h-11 rounded-xl bg-[var(--color-primary)] px-6 text-sm font-black text-white transition hover:bg-[var(--color-primary-hover)]">{isArabic ? "ابحث" : "Search"}</button>
-              </form>
 
               <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-[var(--color-primary)]/80">
                 <span className="font-bold text-white">{isArabic ? "الأكثر طلبًا:" : "Popular:"}</span>

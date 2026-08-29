@@ -200,14 +200,43 @@ async function fetchCountries(): Promise<CountryConfig[]> {
   }
 }
 
-async function detectByIp(): Promise<string> {
+/**
+ * Desktop's own IP-based location is already accurate enough (governorate +
+ * city) and desktop GPS is frequently no better (Wi-Fi-positioned, or simply
+ * unavailable) — so only mobile, where GPS is fast and genuinely more
+ * precise, is worth an automatic location permission prompt. This mirrors
+ * how most mobile-first marketplaces (delivery, classifieds, real estate)
+ * split it: IP on desktop, device GPS on phones.
+ */
+function isMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const uaData = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+  if (uaData && typeof uaData.mobile === "boolean") return uaData.mobile;
+  return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent);
+}
+
+type IpLocation = { countryCode: string; city: string; governorate: string };
+
+const EMPTY_IP_LOCATION: IpLocation = { countryCode: "", city: "", governorate: "" };
+
+/**
+ * Fully silent, zero-intervention location signal: no permission prompt, no
+ * button — just the visitor's IP. Good enough for a default city/governorate;
+ * device GPS (which needs a user gesture) is reserved for search flows that
+ * want to ask for it explicitly.
+ */
+async function detectByIp(): Promise<IpLocation> {
   try {
     const response = await fetch("https://ipinfo.io/json", { cache: "no-store" });
-    if (!response.ok) return "";
+    if (!response.ok) return EMPTY_IP_LOCATION;
     const data = await response.json();
-    return normalizeGeoToken(data.country);
+    return {
+      countryCode: normalizeGeoToken(data.country),
+      city: String(data.city ?? "").trim(),
+      governorate: String(data.region ?? "").trim(),
+    };
   } catch {
-    return "";
+    return EMPTY_IP_LOCATION;
   }
 }
 
@@ -257,7 +286,12 @@ export function useGeo(): GeoState {
 }
 
 export function GeoProvider({ children }: { children: ReactNode }) {
-  const [location, setLocation] = useState<PlatformLocation>(resolveSync);
+  // localStorage/the URL aren't available during SSR, so resolveSync() would
+  // return a different value on the server than on the client's first render
+  // — a React hydration mismatch. The first render (both server and client)
+  // must use the same SSR-safe fallback; the real, storage-aware location is
+  // resolved right after mount instead (see the effect below).
+  const [location, setLocation] = useState<PlatformLocation>(() => resolvePlatformLocation({}));
   const [countries, setCountries] = useState<CountryConfig[]>([]);
   const [resolving, setResolving] = useState(true);
   const locationRef = useRef(location);
@@ -265,6 +299,12 @@ export function GeoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     locationRef.current = location;
   }, [location]);
+
+  useEffect(() => {
+    const resolved = resolveSync();
+    locationRef.current = resolved;
+    setLocation(resolved);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -284,16 +324,29 @@ export function GeoProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Country already known (timezone/language) but city/governorate still
+      // missing — fill those in silently from IP instead of leaving them
+      // blank forever (device GPS needs a user gesture, so it's not used here).
       if (current.countryCode && validCountry) {
+        if (!current.city && !current.governorate) {
+          const ip = await detectByIp();
+          if (!cancelled && (ip.city || ip.governorate) && (!ip.countryCode || ip.countryCode === current.countryCode)) {
+            const next = resolvePlatformLocation({ auto: { countryCode: current.countryCode, city: ip.city, governorate: ip.governorate } });
+            setLocation(next);
+            persistLocation(next);
+            setResolving(false);
+            return;
+          }
+        }
         persistLocation(current);
         setResolving(false);
         return;
       }
 
-      const ipCountry = await detectByIp();
+      const ip = await detectByIp();
       if (cancelled) return;
-      const next = ipCountry && (list.length === 0 || list.some((country) => country.code === ipCountry))
-        ? resolvePlatformLocation({ auto: { countryCode: ipCountry } })
+      const next = ip.countryCode && (list.length === 0 || list.some((country) => country.code === ip.countryCode))
+        ? resolvePlatformLocation({ auto: { countryCode: ip.countryCode, city: ip.city, governorate: ip.governorate } })
         : resolvePlatformLocation({});
       setLocation(next);
       persistLocation(next);
@@ -373,6 +426,49 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  // District/neighborhood precision has no IP-based equivalent — only device
+  // GPS can resolve it. Mobile-only (see isMobileDevice): this runs
+  // automatically on mount (no button, no click) as a silent background
+  // upgrade layered on top of the already-resolved IP-level governorate/
+  // city; the one thing it can't remove is the browser's own permission
+  // prompt, which no site can bypass. If it's denied or unavailable, the
+  // IP-level location already in place just stays — which is also all
+  // desktop ever uses, by design.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (!isMobileDevice()) return;
+    let cancelled = false;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) return;
+        const { latitude, longitude } = position.coords;
+        fetch(`/api/location?lat=${latitude}&lng=${longitude}`, { cache: "no-store" })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((data: { countryCode?: string; governorate?: string; city?: string; district?: string } | null) => {
+            if (cancelled || !data) return;
+            const current = locationRef.current;
+            if (current.source === "manual") return;
+            const countryCode = data.countryCode || current.countryCode;
+            if (!countryCode) return;
+            setDetectedLocation({
+              countryCode,
+              governorate: data.governorate || current.governorate,
+              city: data.city || current.city,
+              district: data.district || current.district,
+              latitude,
+              longitude,
+            });
+          })
+          .catch(() => undefined);
+      },
+      () => undefined,
+      { enableHighAccuracy: false, timeout: 8_000, maximumAge: 300_000 },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [setDetectedLocation]);
+
   const setGlobal = useCallback(() => {
     applyManual(resolvePlatformLocation({ manual: { isGlobal: true } }));
   }, [applyManual]);
@@ -392,14 +488,17 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore URL failures.
     }
-    if (!detectedCountry) {
-      void detectByIp().then((countryCode) => {
-        if (!countryCode || locationRef.current.source === "manual") return;
-        const detected = resolvePlatformLocation({ auto: { countryCode } });
-        setLocation(detected);
-        persistLocation(detected);
+    void detectByIp().then((ip) => {
+      if (locationRef.current.source === "manual") return;
+      if (!detectedCountry && !ip.countryCode) return;
+      const countryCode = detectedCountry || ip.countryCode;
+      const sameCountry = !detectedCountry || ip.countryCode === detectedCountry;
+      const detected = resolvePlatformLocation({
+        auto: { countryCode, city: sameCountry ? ip.city : "", governorate: sameCountry ? ip.governorate : "" },
       });
-    }
+      setLocation(detected);
+      persistLocation(detected);
+    });
   }, []);
 
   const countryConfig = useMemo(

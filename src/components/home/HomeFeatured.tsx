@@ -30,23 +30,6 @@ export default function HomeFeatured() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:py-16">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-primary">
-            <span className="h-0.5 w-5 rounded-full bg-primary" />
-            أحدث العروض
-          </span>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-[var(--color-text-primary)] sm:text-4xl">عقارات مميزة</h2>
-        </div>
-        <Link
-          href="/properties"
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-primary transition hover:text-primary-hover"
-        >
-          عرض الكل
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-        </Link>
-      </div>
-
       {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => (

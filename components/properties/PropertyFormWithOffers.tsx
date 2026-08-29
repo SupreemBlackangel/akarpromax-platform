@@ -6,6 +6,7 @@ import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { CardContent, CardHeader, CardTitle } from '@/src/components/ui/Card';
 import GeoAddressPicker from '@/components/properties/GeoAddressPicker';
+import { CURRENCY_REGISTRY } from '@/lib/market/currency-registry';
 
 interface OfferType {
   id: string;
@@ -76,7 +77,10 @@ const defaultOffer: Offer = {
   offerTypeId: '',
   marketingMethod: 'direct',
   price: 0,
-  currency: 'SAR',
+  // No platform default: the publisher prices the offer in whichever
+  // currency they choose (e.g. USD for Syria/Lebanon listings) — the
+  // currency never gets converted or reinterpreted downstream.
+  currency: '',
   negotiable: false,
   isActive: true,
 };
@@ -146,12 +150,6 @@ const propertyTypes: Record<string, Array<{ value: string; label: string }>> = {
   ],
 };
 
-const currencies = [
-  { value: 'SAR', label: 'ريال سعودي' },
-  { value: 'USD', label: 'دولار أمريكي' },
-  { value: 'EUR', label: 'يورو' },
-];
-
 function mapInitialData(initialData?: PropertyFormData): PropertyFormData {
   if (!initialData) return { ...defaultFormData, offers: [{ ...defaultOffer }] };
   const offers: Offer[] = (initialData.offers && initialData.offers.length > 0
@@ -163,7 +161,7 @@ function mapInitialData(initialData?: PropertyFormData): PropertyFormData {
     marketingMethod: o.marketingMethod === 'auction' ? 'auction' : 'direct',
     auctionType: o.auctionType as 'fixed' | 'open' | undefined,
     price: Number(o.price) || 0,
-    currency: o.currency || 'SAR',
+    currency: o.currency || '',
     negotiable: !!o.negotiable,
     isActive: o.isActive !== undefined ? !!o.isActive : true,
     details: o.details || {},
@@ -273,6 +271,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         const offer = formData.offers[i];
         if (!offer.offerTypeId) newErrors[`offer_${i}_type`] = 'نوع العرض مطلوب';
         if (!offer.price || offer.price <= 0) newErrors[`offer_${i}_price`] = 'السعر مطلوب';
+        if (!offer.currency) newErrors[`offer_${i}_currency`] = 'العملة مطلوبة';
       }
 
       if (Object.keys(newErrors).length > 0) {
@@ -306,7 +305,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         latitude: formData.latitude,
         longitude: formData.longitude,
         price: primaryOffer?.price || 0,
-        currency: primaryOffer?.currency || 'SAR',
+        currency: primaryOffer?.currency || '',
         area: Number(formData.area),
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
@@ -640,14 +639,17 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                     {errors[`offer_${index}_price`] && <p className="text-red-600 text-xs mt-1">{errors[`offer_${index}_price`]}</p>}
                   </div>
                   <div>
-                    <label className={labelClass}>العملة</label>
+                    <label className={labelClass}>العملة *</label>
                     <select
                       value={offer.currency}
                       onChange={(e) => updateOffer(index, 'currency', e.target.value)}
                       className={selectClass}
+                      required
                     >
-                      {currencies.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                      <option value="" disabled>اختر العملة</option>
+                      {CURRENCY_REGISTRY.map((c) => (<option key={c.code} value={c.code}>{`${c.nameAr} — ${c.code}`}</option>))}
                     </select>
+                    {errors[`offer_${index}_currency`] && <p className="text-red-600 text-xs mt-1">{errors[`offer_${index}_currency`]}</p>}
                   </div>
                   <div className="flex items-end">
                     {offer.marketingMethod === 'direct' && (
