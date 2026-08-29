@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import {
+  matchesGeoAlias,
   normalizeCoordinate,
   normalizeGeoToken,
   resolvePlatformLocation,
@@ -48,6 +49,9 @@ export type GeoState = PlatformLocation & {
   setDistrict: (value: string) => void;
   setCoordinates: (latitude: number | null, longitude: number | null) => void;
   setDetectedLocation: (value: PlatformLocationSignal) => boolean;
+  /** User-initiated device location: always applies (re-enables auto mode
+      even over a previous manual selection, unlike setDetectedLocation). */
+  applyDeviceLocation: (value: PlatformLocationSignal) => void;
   setGlobal: () => void;
   resetLocation: () => void;
 };
@@ -240,6 +244,99 @@ async function detectByIp(): Promise<IpLocation> {
   }
 }
 
+type GeoRegistryRow = {
+  id: string;
+  code?: string | null;
+  nameAr?: string | null;
+  nameEn?: string | null;
+  nameTr?: string | null;
+};
+
+async function fetchGeoRows(type: "governorates" | "cities" | "districts", parentId: string): Promise<GeoRegistryRow[]> {
+  try {
+    const query = new URLSearchParams({ type, parentId });
+    const response = await fetch(`/api/geo?${query.toString()}`, { cache: "no-store" });
+    if (!response.ok) return [];
+    const body = await response.json();
+    return Array.isArray(body.data) ? body.data : [];
+  } catch {
+    return [];
+  }
+}
+
+function rowValue(row: GeoRegistryRow): string {
+  return row.code?.trim() || row.id;
+}
+
+type NormalizedGeoNames = { governorate: string; city: string; district: string };
+
+/**
+ * External detection sources (ipinfo, Nominatim) return free-form names —
+ * "Mecca Region", "منطقة مكة" — that the platform's geo registry (and every
+ * API's resolveGeoSelection) does not recognize, which turns geo-filtered
+ * requests into 400s. This resolves raw names to canonical registry codes
+ * and DROPS anything unmatched, so the platform location is always either a
+ * valid registry value or empty (degrading gracefully to country-level
+ * filtering). When the governorate is unknown but the city name is, the city
+ * is searched across the country's governorates and the governorate is
+ * derived from the match.
+ */
+async function normalizeDetectedNames(
+  countryCode: string,
+  raw: { governorate?: string; city?: string; district?: string },
+): Promise<NormalizedGeoNames> {
+  const empty: NormalizedGeoNames = { governorate: "", city: "", district: "" };
+  const rawGovernorate = String(raw.governorate ?? "").trim();
+  const rawCity = String(raw.city ?? "").trim();
+  const rawDistrict = String(raw.district ?? "").trim();
+  if (!countryCode || (!rawGovernorate && !rawCity)) return empty;
+
+  const countries = await fetchCountries();
+  const country = countries.find((item) => item.code === countryCode);
+  if (!country?.id) return empty;
+
+  const governorates = await fetchGeoRows("governorates", country.id);
+  if (governorates.length === 0) return empty;
+
+  let governorateRow = rawGovernorate
+    ? governorates.find((row) => matchesGeoAlias(row, rawGovernorate)) ?? null
+    : null;
+  let cityRow: GeoRegistryRow | null = null;
+
+  if (governorateRow && rawCity) {
+    const cities = await fetchGeoRows("cities", governorateRow.id);
+    cityRow = cities.find((row) => matchesGeoAlias(row, rawCity)) ?? null;
+  }
+
+  // Governorate name unrecognized (or its city list missed) — locate the
+  // city across the country's governorates and derive the governorate.
+  if (!cityRow && rawCity) {
+    for (const candidate of governorates) {
+      if (governorateRow && candidate.id === governorateRow.id) continue;
+      const cities = await fetchGeoRows("cities", candidate.id);
+      const match = cities.find((row) => matchesGeoAlias(row, rawCity));
+      if (match) {
+        governorateRow = candidate;
+        cityRow = match;
+        break;
+      }
+    }
+  }
+
+  let districtValue = "";
+  if (cityRow && rawDistrict) {
+    const districts = await fetchGeoRows("districts", cityRow.id);
+    const match = districts.find((row) => matchesGeoAlias(row, rawDistrict));
+    if (match) districtValue = rowValue(match);
+  }
+
+  return {
+    governorate: governorateRow ? rowValue(governorateRow) : "",
+    city: cityRow ? rowValue(cityRow) : "",
+    district: districtValue,
+  };
+}
+
 function replaceLocationQuery(location: PlatformLocation): void {
   try {
     const url = new URL(window.location.href);
@@ -275,6 +372,7 @@ const DEFAULT_GEO: GeoState = {
   setDistrict: () => {},
   setCoordinates: () => {},
   setDetectedLocation: () => false,
+  applyDeviceLocation: () => {},
   setGlobal: () => {},
   resetLocation: () => {},
 };
@@ -324,30 +422,50 @@ export function GeoProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Country already known (timezone/language) but city/governorate still
-      // missing — fill those in silently from IP instead of leaving them
-      // blank forever (device GPS needs a user gesture, so it's not used here).
+      // Country already known (timezone/language/previous visit). Fill any
+      // missing city/governorate silently from IP, and re-normalize whatever
+      // is stored against the registry so raw detector names ("Mecca
+      // Region") never survive into API filters.
       if (current.countryCode && validCountry) {
-        if (!current.city && !current.governorate) {
+        let rawGovernorate = current.governorate;
+        let rawCity = current.city;
+        const rawDistrict = current.district;
+        if (!rawCity && !rawGovernorate) {
           const ip = await detectByIp();
-          if (!cancelled && (ip.city || ip.governorate) && (!ip.countryCode || ip.countryCode === current.countryCode)) {
-            const next = resolvePlatformLocation({ auto: { countryCode: current.countryCode, city: ip.city, governorate: ip.governorate } });
-            setLocation(next);
-            persistLocation(next);
-            setResolving(false);
-            return;
+          if (!cancelled && (!ip.countryCode || ip.countryCode === current.countryCode)) {
+            rawGovernorate = ip.governorate;
+            rawCity = ip.city;
           }
         }
-        persistLocation(current);
+        if (cancelled) return;
+        const names = await normalizeDetectedNames(current.countryCode, {
+          governorate: rawGovernorate,
+          city: rawCity,
+          district: rawDistrict,
+        });
+        if (cancelled) return;
+        const next = resolvePlatformLocation({ auto: {
+          countryCode: current.countryCode,
+          ...names,
+          latitude: current.latitude,
+          longitude: current.longitude,
+        } });
+        setLocation(next);
+        persistLocation(next);
         setResolving(false);
         return;
       }
 
       const ip = await detectByIp();
       if (cancelled) return;
-      const next = ip.countryCode && (list.length === 0 || list.some((country) => country.code === ip.countryCode))
-        ? resolvePlatformLocation({ auto: { countryCode: ip.countryCode, city: ip.city, governorate: ip.governorate } })
-        : resolvePlatformLocation({});
+      let next: PlatformLocation;
+      if (ip.countryCode && (list.length === 0 || list.some((country) => country.code === ip.countryCode))) {
+        const names = await normalizeDetectedNames(ip.countryCode, { governorate: ip.governorate, city: ip.city });
+        if (cancelled) return;
+        next = resolvePlatformLocation({ auto: { countryCode: ip.countryCode, ...names } });
+      } else {
+        next = resolvePlatformLocation({});
+      }
       setLocation(next);
       persistLocation(next);
       setResolving(false);
@@ -426,6 +544,27 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const applyDeviceLocation = useCallback((signal: PlatformLocationSignal) => {
+    void (async () => {
+      const countryCode = normalizeGeoToken(signal.countryCode);
+      // Reverse-geocoded names go through registry normalization so the
+      // stored location stays API-filterable.
+      const names = await normalizeDetectedNames(countryCode, {
+        governorate: String(signal.governorate ?? ""),
+        city: String(signal.city ?? ""),
+        district: String(signal.district ?? ""),
+      });
+      const next = resolvePlatformLocation({ auto: {
+        countryCode,
+        ...names,
+        latitude: signal.latitude,
+        longitude: signal.longitude,
+      } });
+      setLocation(next);
+      persistLocation(next);
+    })();
+  }, []);
+
   // District/neighborhood precision has no IP-based equivalent — only device
   // GPS can resolve it. Mobile-only (see isMobileDevice): this runs
   // automatically on mount (no button, no click) as a silent background
@@ -444,17 +583,23 @@ export function GeoProvider({ children }: { children: ReactNode }) {
         const { latitude, longitude } = position.coords;
         fetch(`/api/location?lat=${latitude}&lng=${longitude}`, { cache: "no-store" })
           .then((response) => (response.ok ? response.json() : null))
-          .then((data: { countryCode?: string; governorate?: string; city?: string; district?: string } | null) => {
+          .then(async (data: { countryCode?: string; governorate?: string; city?: string; district?: string } | null) => {
             if (cancelled || !data) return;
             const current = locationRef.current;
             if (current.source === "manual") return;
             const countryCode = data.countryCode || current.countryCode;
             if (!countryCode) return;
+            const names = await normalizeDetectedNames(countryCode, {
+              governorate: data.governorate,
+              city: data.city,
+              district: data.district,
+            });
+            if (cancelled) return;
             setDetectedLocation({
               countryCode,
-              governorate: data.governorate || current.governorate,
-              city: data.city || current.city,
-              district: data.district || current.district,
+              governorate: names.governorate || current.governorate,
+              city: names.city || current.city,
+              district: names.district || current.district,
               latitude,
               longitude,
             });
@@ -488,18 +633,19 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore URL failures.
     }
-    void detectByIp().then((ip) => {
+    void detectByIp().then(async (ip) => {
       if (locationRef.current.source === "manual") return;
       if (!detectedCountry && !ip.countryCode) return;
       const countryCode = detectedCountry || ip.countryCode;
       const sameCountry = !detectedCountry || ip.countryCode === detectedCountry;
-      const detected = resolvePlatformLocation({
-        auto: { countryCode, city: sameCountry ? ip.city : "", governorate: sameCountry ? ip.governorate : "" },
-      });
-      setLocation(detected);
-      persistLocation(detected);
+      const names = sameCountry
+        ? await normalizeDetectedNames(countryCode, { governorate: ip.governorate, city: ip.city })
+        : { governorate: "", city: "", district: "" };
+      // setDetectedLocation re-checks the manual guard, covering the window
+      // where the user picked a location while normalization was running.
+      setDetectedLocation({ countryCode, ...names });
     });
-  }, []);
+  }, [setDetectedLocation]);
 
   const countryConfig = useMemo(
     () => countries.find((country) => country.code === location.countryCode) ?? null,
@@ -517,6 +663,7 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     setDistrict: setDistrictValue,
     setCoordinates,
     setDetectedLocation,
+    applyDeviceLocation,
     setGlobal,
     resetLocation,
   }), [
@@ -530,6 +677,7 @@ export function GeoProvider({ children }: { children: ReactNode }) {
     setDistrictValue,
     setCoordinates,
     setDetectedLocation,
+    applyDeviceLocation,
     setGlobal,
     resetLocation,
   ]);

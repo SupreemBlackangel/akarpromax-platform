@@ -5,14 +5,24 @@ import Link from "next/link";
 import { ArrowLeft, Building2 } from "lucide-react";
 import LuxuryPropertyCard from "@/src/components/ui/LuxuryPropertyCard";
 import { normalizeApiProperty, type ApiPropertyRecord, type NormalizedProperty } from "@/lib/properties-api-normalize";
+import { useGeo } from "@/src/contexts/GeoContext";
 
 export default function HomeFeatured() {
+  const { countryCode, governorate, city, district, isGlobal } = useGeo();
   const [items, setItems] = useState<NormalizedProperty[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    fetch("/api/properties?limit=6", { cache: "no-store" })
+    // Scoped to the visitor's platform location (same params as /properties).
+    const params = new URLSearchParams({ limit: "6", scope: isGlobal ? "global" : "local" });
+    if (!isGlobal && countryCode) {
+      params.set("country", countryCode);
+      if (governorate) params.set("governorate", governorate);
+      if (city) params.set("city", city);
+      if (district) params.set("district", district);
+    }
+    fetch(`/api/properties?${params.toString()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d) => {
         if (active && d?.success && Array.isArray(d.data)) {
@@ -26,7 +36,7 @@ export default function HomeFeatured() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [countryCode, governorate, city, district, isGlobal]);
 
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:py-16">

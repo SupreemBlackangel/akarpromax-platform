@@ -33,6 +33,8 @@ export default function OfficesPage() {
       try {
         const params = new URLSearchParams();
         if (searchQuery.trim()) params.append("q", searchQuery.trim());
+        // Scoped to the visitor's platform country (empty when browsing globally).
+        if (country) params.append("country", country);
         const res = await fetch(`/api/offices?${params.toString()}`);
         const data = await res.json();
         if (mounted && data.success) setOffices(data.data);
@@ -46,7 +48,7 @@ export default function OfficesPage() {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [searchQuery]);
+  }, [searchQuery, country]);
 
   return (
     <PublicPageShell

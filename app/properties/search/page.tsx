@@ -45,7 +45,11 @@ function SearchPageInner() {
       if (offerTypeId) params.append('offerTypeId', offerTypeId);
       if (marketingMethod !== 'all') params.append('marketingMethod', marketingMethod);
       if (auctionType !== 'all') params.append('auctionType', auctionType);
+      // Platform location scopes the search by default; the manual city
+      // input in the filters panel overrides the detected city.
+      if (country) params.append('country', country);
       if (cityFilter) params.append('city', cityFilter);
+      else if (city) params.append('city', city);
       if (minPrice) params.append('minPrice', minPrice);
       if (maxPrice) params.append('maxPrice', maxPrice);
       params.append('page', String(page));
@@ -60,9 +64,12 @@ function SearchPageInner() {
     } finally {
       setLoading(false);
     }
-  }, [query, offerTypeId, marketingMethod, auctionType, cityFilter, minPrice, maxPrice]);
+  }, [query, offerTypeId, marketingMethod, auctionType, cityFilter, minPrice, maxPrice, country, city]);
 
-  useEffect(() => { (async () => { await performSearch(1); })(); }, []);
+  // Initial load, re-run when the platform location resolves or changes —
+  // other filters only apply on the explicit search action, as before.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void performSearch(1); }, [country, city]);
 
   const updateUrl = useCallback(() => {
     const params = new URLSearchParams();

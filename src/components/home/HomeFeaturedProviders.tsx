@@ -4,15 +4,25 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Users } from "lucide-react";
 import { ProviderCard, type ProviderRow } from "@/src/components/services/ServiceCards";
+import { useGeo } from "@/src/contexts/GeoContext";
 import type { Locale } from "@/src/types/site";
 
 export default function HomeFeaturedProviders({ locale }: { locale: Locale }) {
+  const { countryCode, governorate, city, district, isGlobal } = useGeo();
   const [items, setItems] = useState<ProviderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    fetch("/api/service-providers?status=approved&limit=6", { cache: "no-store" })
+    // Same geo params the services pages pass (names resolve via aliases).
+    const params = new URLSearchParams({ status: "approved", limit: "6", scope: isGlobal ? "global" : "local" });
+    if (!isGlobal && countryCode) {
+      params.set("country", countryCode.toUpperCase());
+      if (governorate) params.set("governorate", governorate);
+      if (city) params.set("cityId", city);
+      if (district) params.set("districtId", district);
+    }
+    fetch(`/api/service-providers?${params.toString()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d) => {
         const rows = d?.profiles ?? d?.providers ?? [];
@@ -25,7 +35,7 @@ export default function HomeFeaturedProviders({ locale }: { locale: Locale }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [countryCode, governorate, city, district, isGlobal]);
 
   if (!loading && items.length === 0) return null;
 

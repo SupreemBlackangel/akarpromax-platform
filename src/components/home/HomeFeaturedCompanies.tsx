@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Briefcase } from "lucide-react";
 import { CompanyCard } from "@/components/company/CompanyCard";
+import { useGeo } from "@/src/contexts/GeoContext";
 
 type CompanyRow = {
   id: string;
@@ -16,12 +17,17 @@ type CompanyRow = {
 };
 
 export default function HomeFeaturedCompanies() {
+  const { countryCode, isGlobal } = useGeo();
   const [items, setItems] = useState<CompanyRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    fetch("/api/companies?limit=6", { cache: "no-store" })
+    // Organizations are filtered at country level (the API's city param
+    // matches raw cityId values, not registry codes).
+    const params = new URLSearchParams({ limit: "6" });
+    if (!isGlobal && countryCode) params.set("country", countryCode);
+    fetch(`/api/companies?${params.toString()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d) => {
         if (active && d?.success && Array.isArray(d.data)) setItems(d.data);
@@ -33,7 +39,7 @@ export default function HomeFeaturedCompanies() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [countryCode, isGlobal]);
 
   if (!loading && items.length === 0) return null;
 
