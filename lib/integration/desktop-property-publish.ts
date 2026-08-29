@@ -1,4 +1,6 @@
 import { eq, sql } from "drizzle-orm";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { properties, propertyMedia } from "@/lib/db/schemas/properties-schema";
 import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
@@ -70,6 +72,49 @@ function num(value: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// The desktop app sends images picked via FileReader.readAsDataURL(), i.e.
+// base64 data URLs, not remote URLs — decode and store them locally, served
+// by nginx from PROPERTY_UPLOAD_DIR under /uploads/properties/.
+const UPLOAD_DIR = process.env.PROPERTY_UPLOAD_DIR || "/var/www/uploads/properties";
+const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
+const MAX_IMAGES = 20;
+const DATA_URL_RE = /^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/i;
+const EXT_BY_MIME: Record<string, string> = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
+
+function signatureMatches(bytes: Uint8Array, mime: string): boolean {
+  if (mime === "png") return bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  if (mime === "webp") return bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+  return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff; // jpeg/jpg
+}
+
+async function saveDataUrlImage(dataUrl: string): Promise<string | null> {
+  const match = DATA_URL_RE.exec(dataUrl);
+  if (!match) return null;
+  const mime = match[1].toLowerCase();
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) return null;
+  if (!signatureMatches(buffer, mime)) return null;
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  const fileName = `${crypto.randomUUID()}.${EXT_BY_MIME[mime]}`;
+  await writeFile(join(UPLOAD_DIR, fileName), buffer);
+  return `/uploads/properties/${fileName}`;
+}
+
+async function resolveImages(rawImages: unknown): Promise<string[]> {
+  if (!Array.isArray(rawImages)) return [];
+  const urls: string[] = [];
+  for (const v of rawImages.slice(0, MAX_IMAGES)) {
+    if (typeof v !== "string") continue;
+    if (/^https?:\/\//i.test(v)) {
+      urls.push(v);
+    } else if (v.startsWith("data:image/")) {
+      const saved = await saveDataUrlImage(v);
+      if (saved) urls.push(saved);
+    }
+  }
+  return urls;
+}
+
 async function loadOfficeLocation(userId: string): Promise<{ country: string; governorate: string; city: string }> {
   const { db, end } = getDb();
   try {
@@ -110,9 +155,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
     return { status: 422, body: { ok: false, message: "أكمل بروفايل المكتب (الدولة والمنطقة والمدينة) قبل النشر" } };
   }
 
-  const images = Array.isArray(body.images)
-    ? body.images.filter((v): v is string => typeof v === "string" && /^https?:\/\//i.test(v))
-    : [];
+  const images = await resolveImages(body.images);
   const videoUrl = text(body.videoUrl, 500);
   const latitude = Number.isFinite(Number(body.lat)) && Number(body.lat) !== 0 ? String(Number(body.lat)) : null;
   const longitude = Number.isFinite(Number(body.lng)) && Number(body.lng) !== 0 ? String(Number(body.lng)) : null;
@@ -132,6 +175,25 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         .where(eq(properties.id, existingId))
         .returning();
       if (!updated) return { status: 404, body: { ok: false, message: "العقار غير موجود" } };
+
+      if (images.length > 0 || videoUrl) {
+        await db.delete(propertyMedia).where(eq(propertyMedia.propertyId, updated.id));
+        if (images.length > 0) {
+          await db.insert(propertyMedia).values(
+            images.map((url, index) => ({
+              propertyId: updated.id,
+              url,
+              type: "image" as const,
+              order: index,
+              isFeatured: index === 0,
+              altText: "",
+            })),
+          );
+        }
+        if (videoUrl) {
+          await db.insert(propertyMedia).values([{ propertyId: updated.id, url: videoUrl, type: "video" as const, order: images.length, isFeatured: false, altText: "" }]);
+        }
+      }
       return { status: 200, body: { ok: true, id: updated.id, message: "تم التحديث بنجاح" } };
     }
 
