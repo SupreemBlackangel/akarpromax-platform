@@ -21,9 +21,9 @@ export default function HomePage() {
         currentPath="/"
         adLayout={{ mode: "standard", family: "home" }}
         officePromotion={{
-          cta: "جرب مكتب بروماكس",
-          description: "أدر عقارك وعروضك من مكتبك الاحترافي مع أدوات ذكية وربط مباشر بالمنصة.",
-          href: "/offices",
+          cta: "حمّل تطبيق AkarProMax Office",
+          description: "تطبيق سطح المكتب للمكاتب العقارية: أدر عقارك وعملاءك من جهازك، وارفع عقاراتك للمنصة واستقبل فرص منطقتك مباشرة.",
+          href: "/download",
         }}
         onLogin={() => openLogin("login")}
         onLogout={handleLogout}

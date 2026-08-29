@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Building2 } from "lucide-react";
+import { Search, Building2, MonitorDown } from "lucide-react";
 import { useServicesPage } from "@/src/components/services/useServicesPage";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import Button from "@/src/components/ui/Button";
@@ -62,6 +62,15 @@ export default function OfficesPage() {
         eyebrow: "المكاتب العقارية",
         title: "المكاتب العقارية",
         description: "ابحث عن أفضل المكاتب العقارية الموثوقة",
+        actions: (
+          <a
+            href="/download"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[var(--color-primary-hover)]"
+          >
+            <MonitorDown className="h-4 w-4" aria-hidden="true" />
+            تطبيق سطح المكتب
+          </a>
+        ),
       }}
       adLayout={{ mode: "standard", family: "offices" }}
       onLogin={() => openLogin("login")}
