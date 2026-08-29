@@ -9,7 +9,7 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@/src/components/services/useServicesPage";
 import { ContentContainer } from "@/src/components/layout/Containers";
 
-const DOWNLOAD_URL = "/downloads/AkarProMaxOffice-Setup.zip";
+const SETUP_URL = "/downloads/AkarProMaxOffice-Setup.exe";
 const DOTNET_URL = "https://dotnet.microsoft.com/download/dotnet/8.0";
 
 const FEATURES = [
@@ -57,21 +57,21 @@ export default function DownloadOfficeAppPage() {
               <div className="min-w-0 flex-1">
                 <h2 className="text-2xl font-black text-[var(--color-text-primary)]">AkarProMax Office</h2>
                 <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
-                  لنظام Windows 10 / 11 — الحجم 27 ميغابايت — مجاني لمكاتب المنصة
+                  لنظام Windows 10 / 11 — مثبّت واحد (18 ميغابايت) — مجاني لمكاتب المنصة
                 </p>
               </div>
               <a
-                href={DOWNLOAD_URL}
-                className="inline-flex shrink-0 items-center gap-2.5 rounded-2xl bg-[var(--color-primary)] px-7 py-4 text-base font-black text-white shadow-lg shadow-[var(--color-primary)]/25 transition hover:bg-[var(--color-primary-hover)]"
+                href={SETUP_URL}
+                className="inline-flex shrink-0 items-center justify-center gap-2.5 rounded-2xl bg-[var(--color-primary)] px-7 py-4 text-base font-black text-white shadow-lg shadow-[var(--color-primary)]/25 transition hover:bg-[var(--color-primary-hover)]"
               >
                 <Download className="h-5 w-5" aria-hidden="true" />
-                تحميل التطبيق
+                تحميل المثبّت (Setup)
               </a>
             </div>
             <ul className="mt-6 grid gap-2 border-t border-[var(--color-primary)]/15 pt-5 text-sm text-[var(--color-text-secondary)] sm:grid-cols-3">
-              <li>• يتطلب <a href={DOTNET_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-[var(--color-primary)] hover:underline">.NET 8 Desktop Runtime</a></li>
-              <li>• التنصيب: فك ضغط الملف وشغّل AkarApp.exe</li>
-              <li>• يعمل دون اتصال ويزامن عند توفره</li>
+              <li>• يتطلب <a href={DOTNET_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-[var(--color-primary)] hover:underline">.NET 8 Desktop Runtime</a> (يفحصه المثبّت)</li>
+              <li>• شغّل المثبّت واتبع الخطوات — يُنشئ اختصارات ويثبّت التطبيق</li>
+              <li>• يعمل دون اتصال ويزامن مع المنصة عند توفره</li>
             </ul>
           </section>
 
