@@ -237,7 +237,7 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
         aria-haspopup="dialog"
         aria-label={t("changeAria", locale)}
         title={t("changeAria", locale)}
-        className="flex max-w-[280px] items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-muted)]"
+        className="flex max-w-[280px] items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-muted)]"
       >
         <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
         <span className="truncate">{geo.resolving && !label ? t("resolving", locale) : label || t("popoverTitle", locale)}</span>
