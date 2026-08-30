@@ -115,68 +115,154 @@
   }
 
   // ---- login overlay ------------------------------------------------------
+  // Sign the office in with a platform session token, then hand off to the
+  // office-profile step. Shared by both the login and register paths.
+  function completeAuth(wrap, token, user) {
+    persistSession(token, user || null);
+    wrap.remove();
+    mountChip();
+    ensureProfile();
+  }
+
+  function programLogin(identifier, password) {
+    return fetch(PLATFORM + "/api/program/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier: identifier, password: password }),
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; });
+    });
+  }
+
   function showLogin() {
     if (document.getElementById("akar-auth-backdrop")) return;
     injectStyles();
+    var mode = "login"; // "login" | "register"
     var wrap = document.createElement("div");
     wrap.id = "akar-auth-backdrop";
     wrap.className = "akar-auth-backdrop";
     wrap.innerHTML =
-      '<div class="akar-auth-card" role="dialog" aria-label="تسجيل الدخول">' +
+      '<div class="akar-auth-card" role="dialog" aria-label="حساب المكتب">' +
       '  <div class="akar-auth-logo">' +
       '    <img src="' + PLATFORM + '/icons/icon-192.png" alt="" onerror="this.style.display=\'none\'"/>' +
       "    <div><b>عقار بروماكس</b><span>المكتب العقاري</span></div>" +
       "  </div>" +
-      '  <p class="akar-auth-h">تسجيل الدخول بحساب المنصة</p>' +
-      '  <p class="akar-auth-sub">استخدم بريد وكلمة مرور حسابك في عقار بروماكس لربط المكتب بالمنصة تلقائيًا: رفع العقارات، الأخبار، والفرص حسب منطقتك.</p>' +
+      '  <p class="akar-auth-h" id="akar-auth-title">تسجيل الدخول بحساب المنصة</p>' +
+      '  <p class="akar-auth-sub" id="akar-auth-sub">استخدم بريد وكلمة مرور حسابك في عقار بروماكس لربط المكتب بالمنصة تلقائيًا: رفع العقارات، الأخبار، والفرص حسب منطقتك.</p>' +
       '  <div class="akar-auth-err" id="akar-auth-err"></div>' +
-      '  <div class="akar-auth-field"><label>البريد الإلكتروني أو الهاتف</label><input id="akar-auth-id" type="text" autocomplete="username" dir="ltr"/></div>' +
+      '  <div class="akar-auth-field akar-reg-only" style="display:none"><label>اسم المكتب / المسؤول</label><input id="akar-auth-name" type="text" autocomplete="name"/></div>' +
+      '  <div class="akar-auth-field"><label id="akar-auth-idlabel">البريد الإلكتروني أو الهاتف</label><input id="akar-auth-id" type="text" autocomplete="username" dir="ltr"/></div>' +
+      '  <div class="akar-auth-field akar-reg-only" style="display:none"><label>رقم الهاتف (اختياري)</label><input id="akar-auth-phone" type="text" autocomplete="tel" dir="ltr"/></div>' +
       '  <div class="akar-auth-field"><label>كلمة المرور</label><input id="akar-auth-pw" type="password" autocomplete="current-password"/></div>' +
       '  <button class="akar-auth-btn" id="akar-auth-go">تسجيل الدخول</button>' +
-      '  <p class="akar-auth-foot">ليس لديك حساب؟ <a href="' + PLATFORM + '/register" target="_blank" rel="noopener">أنشئ حسابًا</a></p>' +
+      '  <p class="akar-auth-foot" id="akar-auth-foot">ليس لديك حساب؟ <a id="akar-auth-toggle" href="#">أنشئ حساب مكتب جديد</a></p>' +
       "</div>";
     document.body.appendChild(wrap);
 
+    var nameEl = document.getElementById("akar-auth-name");
     var idEl = document.getElementById("akar-auth-id");
+    var phoneEl = document.getElementById("akar-auth-phone");
     var pwEl = document.getElementById("akar-auth-pw");
     var btn = document.getElementById("akar-auth-go");
     var err = document.getElementById("akar-auth-err");
+    var titleEl = document.getElementById("akar-auth-title");
+    var subEl = document.getElementById("akar-auth-sub");
+    var idLabelEl = document.getElementById("akar-auth-idlabel");
+    var footEl = document.getElementById("akar-auth-foot");
+    var regOnly = wrap.querySelectorAll(".akar-reg-only");
+
+    function busyLabel() { return mode === "register" ? "جارٍ إنشاء الحساب..." : "جارٍ الدخول..."; }
+    function actionLabel() { return mode === "register" ? "إنشاء الحساب والدخول" : "تسجيل الدخول"; }
 
     function fail(msg) {
       err.textContent = msg;
       err.style.display = "block";
       btn.disabled = false;
-      btn.textContent = "تسجيل الدخول";
+      btn.textContent = actionLabel();
+    }
+
+    function applyMode() {
+      var reg = mode === "register";
+      for (var i = 0; i < regOnly.length; i++) regOnly[i].style.display = reg ? "" : "none";
+      titleEl.textContent = reg ? "إنشاء حساب مكتب جديد" : "تسجيل الدخول بحساب المنصة";
+      subEl.textContent = reg
+        ? "أنشئ حساب المكتب لأول مرة — بريد وكلمة مرور، ويُفعَّل مباشرة بلا انتظار بريد تفعيل."
+        : "استخدم بريد وكلمة مرور حسابك في عقار بروماكس لربط المكتب بالمنصة تلقائيًا: رفع العقارات، الأخبار، والفرص حسب منطقتك.";
+      idLabelEl.textContent = reg ? "البريد الإلكتروني" : "البريد الإلكتروني أو الهاتف";
+      btn.textContent = actionLabel();
+      footEl.innerHTML = reg
+        ? 'لديك حساب؟ <a id="akar-auth-toggle" href="#">سجّل الدخول</a>'
+        : 'ليس لديك حساب؟ <a id="akar-auth-toggle" href="#">أنشئ حساب مكتب جديد</a>';
+      wireToggle();
+      err.style.display = "none";
+    }
+
+    function wireToggle() {
+      var t = document.getElementById("akar-auth-toggle");
+      if (!t) return;
+      t.addEventListener("click", function (e) {
+        e.preventDefault();
+        mode = mode === "register" ? "login" : "register";
+        applyMode();
+        try { (mode === "register" ? nameEl : idEl).focus(); } catch (ee) {}
+      });
+    }
+
+    function doLogin(identifier, password) {
+      return programLogin(identifier, password).then(function (res) {
+        if (res.ok && res.j && res.j.success && res.j.token) {
+          completeAuth(wrap, res.j.token, res.j.user || null);
+          return true;
+        }
+        fail((res.j && res.j.message) || "تعذّر تسجيل الدخول. تحقق من البيانات والاتصال.");
+        return false;
+      });
     }
 
     function submit() {
-      var identifier = (idEl.value || "").trim();
       var password = pwEl.value || "";
-      if (!identifier || !password) { fail("أدخل البريد/الهاتف وكلمة المرور."); return; }
       btn.disabled = true;
-      btn.textContent = "جارٍ الدخول...";
+      btn.textContent = busyLabel();
       err.style.display = "none";
-      fetch(PLATFORM + "/api/program/login", {
+
+      if (mode === "login") {
+        var identifier = (idEl.value || "").trim();
+        if (!identifier || !password) { fail("أدخل البريد/الهاتف وكلمة المرور."); return; }
+        doLogin(identifier, password).catch(function () { fail("تعذّر الاتصال بالمنصة. تأكد من الإنترنت."); });
+        return;
+      }
+
+      // register mode
+      var name = (nameEl.value || "").trim();
+      var email = (idEl.value || "").trim();
+      var phone = (phoneEl.value || "").trim();
+      if (!name) { fail("أدخل اسم المكتب أو المسؤول."); return; }
+      if (!email || email.indexOf("@") < 0) { fail("أدخل بريدًا إلكترونيًا صحيحًا."); return; }
+      if (password.length < 8) { fail("كلمة المرور يجب ألا تقل عن 8 أحرف."); return; }
+
+      var payload = { email: email, password: password, name: name };
+      if (phone) payload.phone = phone;
+      fetch(PLATFORM + "/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: identifier, password: password }),
+        body: JSON.stringify(payload),
       })
-        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; }); })
         .then(function (res) {
-          if (res.ok && res.j && res.j.success && res.j.token) {
-            persistSession(res.j.token, res.j.user || null);
-            wrap.remove();
-            mountChip();
-            ensureProfile();
-          } else {
-            fail((res.j && res.j.message) || "تعذّر تسجيل الدخول. تحقق من البيانات والاتصال.");
+          // 200/201 = created; 409 = already exists — both proceed to login,
+          // where the account is auto-activated on first password sign-in.
+          if (res.status < 500) {
+            return doLogin(email, password);
           }
+          fail((res.j && (res.j.error || res.j.message)) || "تعذّر إنشاء الحساب. جرّب لاحقًا.");
+          return false;
         })
         .catch(function () { fail("تعذّر الاتصال بالمنصة. تأكد من الإنترنت."); });
     }
 
     btn.addEventListener("click", submit);
     pwEl.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+    wireToggle();
     setTimeout(function () { try { idEl.focus(); } catch (e) {} }, 60);
   }
 
