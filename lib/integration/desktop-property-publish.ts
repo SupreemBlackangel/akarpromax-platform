@@ -14,7 +14,7 @@ import { getRuntimeEnv } from "@/lib/config/runtime-env";
 
 export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key, X-Source",
   "Access-Control-Max-Age": "86400",
 };
