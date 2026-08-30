@@ -84,22 +84,6 @@ import {
 
 type Props = { locale: Locale };
 
-type Surveyor = {
-  id: string;
-  name: string;
-  isVerified?: boolean;
-  reputationLevel?: string;
-  ratingAvg?: number;
-  jobsCompleted?: number;
-  distanceKm?: number;
-};
-
-type SavedLand = {
-  id: string;
-  ownerId: string;
-  title: string;
-  status: string;
-};
 type Stage = "idle" | "ready" | "reading" | "ocr" | "resolving" | "done" | "error";
 /** The user's manual override of the detected coordinate system. */
 type CrsMode = "auto" | "wgs84" | "utm";
@@ -367,60 +351,6 @@ const STATUS_COPY: Record<string, { ar: string; en: string; tr: string }> = {
   },
 };
 
-const DOCUMENT_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  TITLE_DEED: { ar: "صك ملكية", en: "Title deed", tr: "Tapu" },
-  SURVEY_PLAN: { ar: "كروكي / مخطط مساحي", en: "Survey plan", tr: "Ölçüm planı" },
-  PARCEL_PLAN: { ar: "مخطط قطعة", en: "Parcel plan", tr: "Parsel planı" },
-  CADASTRAL_DOCUMENT: { ar: "وثيقة مساحية", en: "Cadastral document", tr: "Kadastro belgesi" },
-  MUNICIPAL_DOCUMENT: { ar: "وثيقة بلدية", en: "Municipal document", tr: "Belediye belgesi" },
-  PROPERTY_DOCUMENT: { ar: "وثيقة عقارية", en: "Property document", tr: "Emlak belgesi" },
-  ADDRESS_DOCUMENT: { ar: "وثيقة عنوان", en: "Address document", tr: "Adres belgesi" },
-  UNKNOWN_LAND_DOCUMENT: { ar: "وثيقة أرض", en: "Land document", tr: "Arazi belgesi" },
-};
-
-const STRATEGY_PATH_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  EXPLICIT_WGS84: { ar: "إحداثيات WGS84 صريحة", en: "Explicit WGS84 coordinates", tr: "Açık WGS84 koordinatları" },
-  EXPLICIT_UTM: { ar: "إحداثيات UTM بنطاق مكتوب", en: "UTM coordinates with an explicit zone", tr: "Açık zonlu UTM koordinatları" },
-  USER_SELECTED_UTM_ZONE: { ar: "إحداثيات UTM بنطاق حدده المستخدم", en: "UTM coordinates with a user-selected zone", tr: "Kullanıcının seçtiği zonlu UTM koordinatları" },
-  INFERRED_UTM_ZONE: { ar: "إحداثيات UTM مع استنتاج النطاق", en: "UTM coordinates with an inferred zone", tr: "Çıkarılan zonlu UTM koordinatları" },
-  UTM_ZONE_SELECTION_REQUIRED: { ar: "جدول UTM ينتظر اختيار النطاق ونصف الكرة", en: "UTM table awaiting zone and hemisphere", tr: "UTM tablosu zon ve yarımküre seçimi bekliyor" },
-  COORDINATES_CRS_REVIEW: { ar: "إحداثيات تحتاج تأكيد النظام", en: "Coordinates requiring CRS confirmation", tr: "Koordinat sistemi doğrulanmalı" },
-  CADASTRAL_LOOKUP_REQUIRED: { ar: "بحث عقاري رسمي برقم القطعة والمخطط", en: "Official cadastral lookup by parcel and plan", tr: "Parsel ve planla resmi kadastro sorgusu" },
-  ADDRESS_APPROXIMATION: { ar: "تحديد تقريبي من العنوان", en: "Approximate location from address", tr: "Adresten yaklaşık konum" },
-  UNRESOLVED: { ar: "لا توجد أدلة مكانية كافية", en: "Insufficient spatial evidence", tr: "Yetersiz mekânsal kanıt" },
-  INVALID_DOCUMENT: { ar: "الملف غير صالح للتحليل المكاني", en: "File is not valid for spatial analysis", tr: "Dosya mekânsal analiz için uygun değil" },
-};
-
-const CONFIDENCE_DIMENSION_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  document: { ar: "فهم المستند", en: "Document understanding", tr: "Belge anlama" },
-  extraction: { ar: "قراءة النص", en: "Text extraction", tr: "Metin okuma" },
-  crs: { ar: "نظام الإحداثيات", en: "Coordinate system", tr: "Koordinat sistemi" },
-  location: { ar: "الموقع المطلق", en: "Absolute location", tr: "Mutlak konum" },
-  boundary: { ar: "حدود القطعة", en: "Parcel boundary", tr: "Parsel sınırı" },
-};
-
-const EVIDENCE_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  DOCUMENT_CLASSIFICATION: { ar: "نوع الوثيقة", en: "Document type", tr: "Belge türü" },
-  TEXT_EXTRACTION: { ar: "النص المقروء", en: "Extracted text", tr: "Okunan metin" },
-  COORDINATE_TABLE: { ar: "جدول الإحداثيات", en: "Coordinate table", tr: "Koordinat tablosu" },
-  COORDINATE_REFERENCE_SYSTEM: { ar: "مرجع الإحداثيات", en: "Coordinate reference", tr: "Koordinat referansı" },
-  REGISTERED_AREA: { ar: "المساحة المسجلة", en: "Registered area", tr: "Kayıtlı alan" },
-  SURVEY_SIDE_LENGTHS: { ar: "أطوال الأضلاع", en: "Survey side lengths", tr: "Kenar uzunlukları" },
-  PARCEL_IDENTIFIERS: { ar: "أرقام القطعة والمخطط", en: "Parcel and plan IDs", tr: "Parsel ve plan numaraları" },
-  ADDRESS: { ar: "العنوان", en: "Address", tr: "Adres" },
-  OCR_CORRECTIONS: { ar: "تصحيح أرقام OCR", en: "OCR digit correction", tr: "OCR rakam düzeltme" },
-};
-
-const VALIDATION_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  COORDINATE_COUNT: { ar: "عدد نقاط الحدود", en: "Boundary point count", tr: "Sınır noktası sayısı" },
-  COUNTRY_BOUNDS: { ar: "وقوع الموقع داخل دولة الوثيقة", en: "Location inside document country", tr: "Konumun belge ülkesinde olması" },
-  POLYGON_GEOMETRY: { ar: "صلاحية مضلع القطعة", en: "Parcel polygon validity", tr: "Parsel poligonu geçerliliği" },
-  SOURCE_POINT_ORDER: { ar: "ترتيب النقاط كما في المصدر", en: "Source point order", tr: "Kaynak nokta sırası" },
-  SURVEY_CLOSURE: { ar: "إغلاق تسلسل الحدود", en: "Boundary sequence closure", tr: "Sınır dizisi kapanışı" },
-  SIDE_LENGTHS: { ar: "مطابقة أطوال الأضلاع", en: "Side-length agreement", tr: "Kenar uzunluğu uyumu" },
-  REGISTERED_AREA_MATCH: { ar: "مطابقة المساحة المسجلة", en: "Registered-area agreement", tr: "Kayıtlı alan uyumu" },
-};
-
 const DOCUMENT_KIND_COPY: Record<string, { ar: string; en: string; tr: string }> = {
   PROPERTY_DEED: { ar: "وثيقة ملكية", en: "Property deed", tr: "Tapu belgesi" },
   SURVEY_REPORT: { ar: "تقرير مساحي", en: "Survey report", tr: "Ölçüm raporu" },
@@ -449,19 +379,6 @@ const SEQUENCE_EVIDENCE_COPY: Record<string, { ar: string; en: string; tr: strin
   },
 };
 
-const PARCEL_VALIDATION_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  COORDINATE_VALIDITY: { ar: "صلاحية القيم", en: "Coordinate validity", tr: "Koordinat geçerliliği" },
-  DUPLICATE_VERTICES: { ar: "النقاط المكررة", en: "Duplicate corners", tr: "Yinelenen köşeler" },
-  POINT_COUNT: { ar: "عدد النقاط", en: "Corner count", tr: "Köşe sayısı" },
-  SEGMENT_INTERSECTION: { ar: "تقاطع الأضلاع", en: "Edge intersections", tr: "Kenar kesişimleri" },
-  POSITIVE_AREA: { ar: "المساحة موجبة", en: "Positive area", tr: "Pozitif alan" },
-  BOUNDARY_CLOSURE: { ar: "إغلاق الحدود", en: "Boundary closure", tr: "Sınır kapanışı" },
-  CRS_CONSISTENCY: { ar: "توحّد نظام الإحداثيات", en: "CRS consistency", tr: "CRS tutarlılığı" },
-  GEOGRAPHIC_SANITY: { ar: "الموقع ضمن دولة الوثيقة", en: "Location inside document country", tr: "Konum belge ülkesinde" },
-  SIDE_LENGTH_AGREEMENT: { ar: "مطابقة أطوال الأضلاع", en: "Side-length agreement", tr: "Kenar uzunluğu uyumu" },
-  STATED_AREA_AGREEMENT: { ar: "مطابقة المساحة المسجلة", en: "Registered-area agreement", tr: "Kayıtlı alan uyumu" },
-};
-
 function areaVerdictCopy(verdict: string, locale: Locale): string {
   const copy: Record<string, { ar: string; en: string; tr: string }> = {
     MATCH: { ar: "متطابقة تقريبًا", en: "Effectively identical", tr: "Neredeyse aynı" },
@@ -486,63 +403,6 @@ function confidenceLevelCopy(level: string, locale: Locale): string {
     UNRESOLVED: { ar: "غير محسومة", en: "Unresolved", tr: "Çözümlenmedi" },
   };
   return copy[level]?.[locale] ?? level;
-}
-
-function reviewReasonCopy(reason: string, locale: Locale): string {
-  const copy: Record<string, { ar: string; en: string; tr: string }> = {
-    UTM_ZONE_INFERRED: { ar: "نطاق UTM مستنتج من دولة الوثيقة وليس مكتوبًا فيها.", en: "The UTM zone was inferred from the document country rather than printed in it.", tr: "UTM zonu belgede yazılı değil, belge ülkesinden çıkarıldı." },
-    UTM_ZONE_REQUIRED: { ar: "جدول الإحداثيات لا يذكر نطاق UTM أو نصف الكرة؛ اخترهما قبل التحويل والرسم.", en: "The coordinate table does not state the UTM zone or hemisphere; select both before conversion and mapping.", tr: "Koordinat tablosunda UTM zonu veya yarımküre yok; dönüştürme ve haritalamadan önce ikisini seçin." },
-    CRS_NOT_CONFIRMED: { ar: "نظام الإحداثيات غير مؤكد في المستند.", en: "The coordinate system is not confirmed in the document.", tr: "Koordinat sistemi belgede doğrulanmadı." },
-    ADDRESS_IS_APPROXIMATE: { ar: "العنوان يعطي موقعًا تقريبيًا ولا يثبت حدود القطعة.", en: "An address gives an approximate location and does not prove the parcel boundary.", tr: "Adres yaklaşık konum verir, parsel sınırını kanıtlamaz." },
-    OFFICIAL_CADASTRAL_LOOKUP_REQUIRED: { ar: "يلزم الرجوع إلى السجل العقاري الرسمي لربط أرقام القطعة بالموقع.", en: "An official cadastral lookup is required to link parcel IDs to a location.", tr: "Parsel numaralarını konuma bağlamak için resmi kadastro sorgusu gerekir." },
-    OCR_DIGITS_CORRECTED: { ar: "صُححت أرقام OCR حسابيًا؛ يجب إبقاء النص الأصلي ظاهرًا للمراجعة.", en: "OCR digits were corrected mathematically; the source text should remain visible for review.", tr: "OCR rakamları matematiksel olarak düzeltildi; kaynak metin inceleme için görünür kalmalı." },
-    VALIDATION_FAILED: { ar: "فشل فحص هندسي واحد على الأقل.", en: "At least one geometric validation failed.", tr: "En az bir geometrik doğrulama başarısız oldu." },
-    VALIDATION_WARNING: { ar: "يوجد فحص هندسي يحتاج مراجعة.", en: "A geometric check needs review.", tr: "Bir geometrik kontrol incelenmeli." },
-  };
-  return copy[reason]?.[locale] ?? reason;
-}
-
-function validationStatusCopy(status: string, locale: Locale): string {
-  const copy: Record<string, { ar: string; en: string; tr: string }> = {
-    PASS: { ar: "مطابق", en: "Passed", tr: "Geçti" },
-    WARNING: { ar: "مراجعة", en: "Review", tr: "İncele" },
-    FAIL: { ar: "غير مطابق", en: "Failed", tr: "Başarısız" },
-  };
-  return copy[status]?.[locale] ?? status;
-}
-
-function evidenceStatusCopy(status: string, locale: Locale): string {
-  const copy: Record<string, { ar: string; en: string; tr: string }> = {
-    FOUND: { ar: "موجود", en: "Found", tr: "Bulundu" },
-    INFERRED: { ar: "مستنتج", en: "Inferred", tr: "Çıkarıldı" },
-    CORRECTED: { ar: "صُحح", en: "Corrected", tr: "Düzeltildi" },
-    MISSING: { ar: "غير موجود", en: "Missing", tr: "Eksik" },
-  };
-  return copy[status]?.[locale] ?? status;
-}
-
-function validationDetail(
-  validation: NonNullable<ResolveResponse["strategy"]>["validations"][number],
-  locale: Locale,
-): string {
-  const numberLocale = locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US";
-  const format = (value: number, digits = 2) => value.toLocaleString(numberLocale, { maximumFractionDigits: digits });
-  if (validation.code === "COORDINATE_COUNT" && validation.measured !== undefined) {
-    return locale === "ar"
-      ? `${format(validation.measured, 0)} نقاط`
-      : `${format(validation.measured, 0)} points`;
-  }
-  if (validation.code === "SIDE_LENGTHS" && validation.deviation !== undefined) {
-    return locale === "ar"
-      ? `أقصى فرق ${format(validation.deviation)} م`
-      : `Max difference ${format(validation.deviation)} m`;
-  }
-  if (validation.code === "REGISTERED_AREA_MATCH" && validation.deviation !== undefined) {
-    return locale === "ar"
-      ? `فرق ${format(validation.deviation)}% · محسوبة ${format(validation.measured ?? 0)} م² / مسجلة ${format(validation.expected ?? 0)} م²`
-      : `${format(validation.deviation)}% difference · ${format(validation.measured ?? 0)} m² / ${format(validation.expected ?? 0)} m²`;
-  }
-  return "";
 }
 
 /** Any of the 60 UTM zones may be chosen, in either hemisphere. */
@@ -1041,10 +901,6 @@ export function FindMyLand({ locale }: Props) {
   // of evidence tied to its page instead of collapsing the document to one.
   const [documentPages, setDocumentPages] = useState<string[]>([]);
   const [copiedTarget, setCopiedTarget] = useState<"wgs" | "utm" | "all" | "share" | "export" | null>(null);
-  const [savedLand, setSavedLand] = useState<SavedLand | null>(null);
-  const [surveyors, setSurveyors] = useState<Surveyor[] | null>(null);
-  const [surveyorLoading, setSurveyorLoading] = useState(false);
-  const [quoteSentId, setQuoteSentId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
   const [utmZoneInput, setUtmZoneInput] = useState("");
   const [utmHemisphereInput, setUtmHemisphereInput] = useState<"N" | "S">("N");
@@ -1052,8 +908,6 @@ export function FindMyLand({ locale }: Props) {
   // The tool opens in focus mode: a survey map and a coordinate table need the
   // full content width, and the page rails can be brought back with one click.
   const [focusMode, setFocusMode] = useState(true);
-  // Stamped when an analysis completes, so the result carries its own date.
-  const [analysedAt, setAnalysedAt] = useState("");
 
   /** Coordinate table view: original document values or projected UTM. */
   const [coordinateView, setCoordinateView] = useState<"wgs84" | "utm">("wgs84");
@@ -1094,14 +948,10 @@ export function FindMyLand({ locale }: Props) {
     setErrorCode("");
     setAnalysis(null);
     setCopiedTarget(null);
-    setSavedLand(null);
-    setSurveyors(null);
-    setQuoteSentId(null);
     setActionError("");
     setUtmZoneInput("");
     setUtmHemisphereInput("N");
     setCrsMode("auto");
-    setAnalysedAt("");
     setDocumentPages([]);
     setManualDraft(null);
     setManualHistory([]);
@@ -1347,7 +1197,6 @@ export function FindMyLand({ locale }: Props) {
         positionedItems: positionedItems.length ? compactPositionedItems(positionedItems) : undefined,
       });
       setDocumentPages(capturedPages);
-      setAnalysedAt(new Date().toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-GB"));
       setProgress(100);
       setStage("done");
     } catch (error) {
@@ -1361,7 +1210,7 @@ export function FindMyLand({ locale }: Props) {
     } finally {
       window.clearTimeout(timeoutId);
     }
-  }, [crsMode, file, locale, utmHemisphereInput, utmZoneInput]);
+  }, [crsMode, file, utmHemisphereInput, utmZoneInput]);
 
   /**
    * Re-runs the analysis with the user's coordinate-system correction or the
@@ -1770,30 +1619,9 @@ export function FindMyLand({ locale }: Props) {
     };
   }, [analysis, automaticGeometryPoints, focusMode, hasValidPolygon, points, stage, t, showManualGeometryPanel, manualPreviewPoints, manualStatus, manualDraft, sourcePointsData]);
 
-  const details = useMemo(() => {
-    if (!analysis) return [];
-    const extracted = analysis.details;
-    const result = analysis.result;
-    const rows = [
-      [t("رقم الصك / الوثيقة", "Document number", "Belge numarası"), extracted.documentNumber || result.evidence?.sourceReferences?.[0]],
-      [t("رقم المخطط", "Plan number", "Plan numarası"), extracted.planNumber || result.parcelIdentifiers?.planId],
-      [t("رقم القطعة", "Parcel number", "Parsel numarası"), extracted.parcelNumber || result.parcelIdentifiers?.parcelId || result.parcelIdentifiers?.plotId],
-      [t("اسم المالك", "Owner", "Malik"), extracted.owner],
-      [t("المساحة المسجلة", "Registered area", "Kayıtlı alan"), extracted.area ? `${extracted.area} م²` : undefined],
-      [t("الأبعاد", "Dimensions", "Boyutlar"), extracted.dimensions],
-      [t("المدينة", "City", "Şehir"), extracted.city || result.evidence?.city],
-      [t("الحي", "District", "Mahalle"), extracted.district || result.evidence?.district],
-      [t("نوع الأرض", "Land type", "Arazi türü"), extracted.landType],
-      [t("التنظيم", "Zoning", "İmar"), extracted.zoning],
-    ] as Array<[string, string | undefined]>;
-    return rows.filter((row): row is [string, string] => Boolean(row[1]));
-  }, [analysis, t]);
-
   const statusCopy = analysis
     ? STATUS_COPY[analysis.result.status]?.[locale] ?? analysis.result.status
     : "";
-  const documentCategory = analysis?.result.document?.category ?? "UNKNOWN_LAND_DOCUMENT";
-  const documentLabel = DOCUMENT_COPY[documentCategory]?.[locale] ?? documentCategory;
   const strategy = analysis?.result.strategy;
   const crsSelectionRequired = analysis?.result.crsSelection?.required === true;
   const groupSelectionRequired = analysis?.result.coordinateGroupSelectionRequired === true;
@@ -1809,22 +1637,6 @@ export function FindMyLand({ locale }: Props) {
     : resultVerdict === "review"
       ? t("تحتاج الإحداثيات إلى مراجعة", "Coordinates need review", "Koordinatlar incelenmeli")
       : t("تعذر استخراج إحداثيات صالحة", "No valid coordinates could be extracted", "Geçerli koordinatlar çıkarılamadı");
-  const strategyPathLabel = strategy
-    ? STRATEGY_PATH_COPY[strategy.path]?.[locale] ?? strategy.path
-    : "";
-  const confidenceDimensions = strategy
-    ? (Object.entries(strategy.confidence) as Array<[
-        keyof typeof strategy.confidence,
-        (typeof strategy.confidence)[keyof typeof strategy.confidence],
-      ]>)
-    : [];
-  const visibleEvidence = strategy?.evidence.filter((item) =>
-    item.status !== "MISSING"
-    || item.code === "COORDINATE_TABLE"
-    || item.code === "COORDINATE_REFERENCE_SYSTEM"
-    || item.code === "PARCEL_IDENTIFIERS",
-  ) ?? [];
-  const visibleValidations = strategy?.validations.filter((item) => item.status !== "NOT_APPLICABLE") ?? [];
   const googleMapsUrl = coordinateRows.length > 0 && analysis?.result.center
     ? `https://www.google.com/maps/search/?api=1&query=${analysis.result.center.lat},${analysis.result.center.lon}`
     : "";
@@ -1936,22 +1748,14 @@ export function FindMyLand({ locale }: Props) {
   const copySummary = useCallback(async () => {
     if (!analysis) return;
     const lines = [
-      t("نتيجة تحليل الأرض", "Land analysis result", "Arazi analiz sonucu"),
-      `${t("نوع الوثيقة", "Document", "Belge")}: ${documentLabel}`,
-      ...(strategy ? [
-        `${t("مسار التحليل", "Analysis path", "Analiz yolu")}: ${strategyPathLabel}`,
-        `${t("دقة الموقع", "Location confidence", "Konum güveni")}: ${strategy.confidence.location.score}%`,
-        `${t("دقة الحدود", "Boundary confidence", "Sınır güveni")}: ${strategy.confidence.boundary.score}%`,
-      ] : []),
-      ...details.map(([label, value]) => `${label}: ${value}`),
-      "",
+      t("موقع الأرض", "Land location", "Arazi konumu"),
       wgsClipboardText,
       ...(utmRows.length ? ["", utmClipboardText] : []),
       "",
       googleMapsUrl,
     ].filter(Boolean);
     await copyText(lines.join("\n"), "all");
-  }, [analysis, copyText, details, documentLabel, googleMapsUrl, strategy, strategyPathLabel, t, utmClipboardText, utmRows.length, wgsClipboardText]);
+  }, [analysis, copyText, googleMapsUrl, t, utmClipboardText, utmRows.length, wgsClipboardText]);
 
   const shareToMessenger = useCallback(async () => {
     if (!googleMapsUrl) return;
@@ -1970,78 +1774,6 @@ export function FindMyLand({ locale }: Props) {
     await copyText(locationShareText, "share");
     window.open("https://www.messenger.com/", "_blank", "noopener,noreferrer");
   }, [copyText, googleMapsUrl, locationShareText, t]);
-
-  const handleSaveLand = useCallback(async () => {
-    if (!analysis?.result.center) return;
-    setActionError("");
-    try {
-      const ownerId = localStorage.getItem("ap_owner_id") || "guest";
-      const res = await fetch("/api/land", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerId,
-          title: analysis.result.parcelIdentifiers?.planId
-            ? t("أرضي — صك", "My Land — Deed", "Arazim — Tapu")
-            : t("أرضي — موقع محدد", "My Land — Located", "Arazim — Konum"),
-          location: {
-            point: analysis.result.center,
-            geometry: analysis.result.geometry,
-            label: analysis.result.resolvedAddress,
-          },
-          reference: analysis.result.parcelIdentifiers,
-          source: analysis.result.status === "RESOLVED_GEOCODED" ? "geocoding" : "coordinates",
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as SavedLand;
-      if (!data.id) throw new Error("save failed");
-      setSavedLand(data);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "save failed");
-    }
-  }, [analysis, t]);
-
-  const handleDiscoverSurveyors = useCallback(async () => {
-    if (!analysis?.result.center) return;
-    setSurveyorLoading(true);
-    setActionError("");
-    try {
-      const params = new URLSearchParams({
-        lat: analysis.result.center.lat.toFixed(6),
-        lon: analysis.result.center.lon.toFixed(6),
-        role: "surveyor",
-      });
-      const res = await fetch(`/api/land/discover-surveyors?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { candidates?: Surveyor[] };
-      setSurveyors(data.candidates ?? []);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "surveyor discovery failed");
-    } finally {
-      setSurveyorLoading(false);
-    }
-  }, [analysis]);
-
-  const handleRequestQuote = useCallback(
-    async (surveyorId: string) => {
-      if (!savedLand) return;
-      setActionError("");
-      try {
-        const requesterId = localStorage.getItem("ap_owner_id") || "guest";
-        const res = await fetch(`/api/land/${savedLand.id}/surveyors/quote`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ surveyorId, requesterId, service: "boundary_survey" }),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        setQuoteSentId(surveyorId);
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "quote request failed");
-      }
-    },
-    [savedLand],
-  );
 
   const errorMessage = errorCode === "FILE_TYPE"
     ? t("الملفات المدعومة: PDF وPNG وJPG وJFIF وWEBP فقط.", "Supported files: PDF, PNG, JPG, JFIF, and WEBP.", "Desteklenen dosyalar: PDF, PNG, JPG, JFIF ve WEBP.")
@@ -2781,322 +2513,6 @@ export function FindMyLand({ locale }: Props) {
               </section>
             )}
 
-            {/* --- Document data --- */}
-            {details.length > 0 && (
-              <details className="fml-advanced">
-                <summary>{t("بيانات الوثيقة", "Document data", "Belge verileri")}</summary>
-                <div className="fml-advanced-body">
-                  <dl className="fml-details">
-                    {details.map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              </details>
-            )}
-
-            {/* --- Source evidence inspector, for the surveyor --- */}
-            {analysis.result.parcel && (
-              <details className="fml-advanced" data-evidence-inspector>
-                <summary>{t("تفاصيل الاستخراج", "Extraction details", "Çıkarma ayrıntıları")}</summary>
-                <div className="fml-advanced-body">
-                  <p className="fml-hint">
-                    {t(
-                      "مصدر كل نقطة كما ورد في المستند، ونتائج الفحص الهندسي. هذا القسم للمساح أو المهندس عند مراجعة النتيجة.",
-                      "Where each corner came from in the document, and every geometric check. This section is for a surveyor reviewing the result.",
-                      "Her köşenin belgedeki kaynağı ve tüm geometrik kontroller. Bu bölüm sonucu inceleyen haritacı içindir.",
-                    )}
-                  </p>
-
-                  <div className="fml-table-wrap">
-                    <table className="fml-evidence-table" dir="ltr">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>{t("رقم المستند", "Doc no.", "Belge no")}</th>
-                          <th>{t("الصفحة", "Page", "Sayfa")}</th>
-                          <th>{t("الصف", "Row", "Satır")}</th>
-                          <th>CRS</th>
-                          <th>{t("القيم الأصلية", "Original values", "Özgün değerler")}</th>
-                          <th>{t("النص المصدر", "Source text", "Kaynak metin")}</th>
-                          <th>{t("الثقة", "Confidence", "Güven")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analysis.result.parcel.vertices.map((vertex) => (
-                          <tr key={vertex.index}>
-                            <td className="fml-cell-label">{vertex.label}</td>
-                            <td>{vertex.pointNumber ?? "—"}</td>
-                            <td>{vertex.page ?? "—"}</td>
-                            <td>{vertex.rowIndex ?? "—"}</td>
-                            <td>
-                              {vertex.crs === "utm" && vertex.original.zone
-                                ? `UTM ${vertex.original.zone}${vertex.original.hemisphere ?? ""}`
-                                : "WGS84"}
-                            </td>
-                            <td>
-                              {vertex.original.easting !== undefined && vertex.original.northing !== undefined
-                                ? `E ${vertex.original.easting.toFixed(2)} · N ${vertex.original.northing.toFixed(2)}`
-                                : `${vertex.point.lat.toFixed(6)}, ${vertex.point.lon.toFixed(6)}`}
-                            </td>
-                            <td className="fml-evidence-source" title={vertex.sourceText}>{vertex.sourceText}</td>
-                            <td>{Math.round(vertex.confidence * 100)}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {analysis.result.parcel.boundary.segments.length > 0 && (
-                    <>
-                      <h4>{t("الأضلاع والمسافات", "Edges and distances", "Kenarlar ve mesafeler")}</h4>
-                      <div className="fml-table-wrap">
-                        <table className="fml-evidence-table" dir="ltr">
-                          <thead>
-                            <tr>
-                              <th>{t("الضلع", "Edge", "Kenar")}</th>
-                              <th>{t("المحسوبة", "Calculated", "Hesaplanan")}</th>
-                              <th>{t("في المستند", "In document", "Belgede")}</th>
-                              <th>{t("الفرق", "Difference", "Fark")}</th>
-                              <th>{t("الاتجاه", "Bearing", "Yön")}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {analysis.result.parcel.boundary.segments.map((segment, index) => (
-                              <tr key={`${segment.fromLabel}-${segment.toLabel}-${index}`}>
-                                <td className="fml-cell-label">{segment.fromLabel} → {segment.toLabel}</td>
-                                <td>{segment.lengthMeters.toFixed(2)} m</td>
-                                <td>{segment.documentLengthMeters !== undefined ? `${segment.documentLengthMeters.toFixed(2)} m` : "—"}</td>
-                                <td
-                                  className={
-                                    segment.deviationMeters === undefined
-                                      ? undefined
-                                      : segment.deviationMeters <= 0.25
-                                        ? "fml-segment-deviation--ok"
-                                        : "fml-segment-deviation--off"
-                                  }
-                                >
-                                  {segment.deviationMeters !== undefined ? `${segment.deviationMeters.toFixed(3)} m` : "—"}
-                                </td>
-                                <td>{segment.bearingDegrees.toFixed(1)}°</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-
-                  <h4>{t("فحوص القطعة", "Parcel checks", "Parsel kontrolleri")}</h4>
-                  <div className="fml-check-list">
-                    {analysis.result.parcel.boundary.validations
-                      .filter((item) => item.status !== "NOT_APPLICABLE")
-                      .map((item) => (
-                        <div key={item.code} className="fml-check-row">
-                          <span>
-                            {PARCEL_VALIDATION_COPY[item.code]?.[locale] ?? item.code}
-                            {item.detail ? <em>{item.detail}</em> : null}
-                          </span>
-                          <span className={`fml-status fml-status--${item.status.toLowerCase()}`}>
-                            {validationStatusCopy(item.status, locale)}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-
-                  {(analysis.result.documentIntelligence?.surveyTables?.length ?? 0) > 0 && (
-                    <>
-                      <h4>{t("الجداول المكتشفة", "Tables found", "Bulunan tablolar")}</h4>
-                      <div className="fml-check-list">
-                        {analysis.result.documentIntelligence?.surveyTables?.map((table) => (
-                          <div key={table.id} className="fml-check-row">
-                            <span>
-                              {table.heading}
-                              <em>
-                                {table.rowCount} {t("صفوف", "rows", "satır")}
-                                {table.zone ? ` · UTM ${table.zone}${table.hemisphere ?? ""}` : ""}
-                                {table.closed ? ` · ${t("مغلق", "closed", "kapalı")}` : ""}
-                              </em>
-                            </span>
-                            <span className="fml-status fml-status--found">{table.score}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </details>
-            )}
-
-            {/* --- Technical analysis --- */}
-            {strategy && (
-              <details className="fml-advanced" data-analysis-strategy>
-                <summary>
-                  {t("تفاصيل التحليل والتحقق", "Analysis and verification details", "Analiz ve doğrulama ayrıntıları")}
-                  <span className={`fml-chip ${strategy.requiresReview ? "fml-chip--warn" : "fml-chip--ok"}`}>
-                    {strategy.requiresReview
-                      ? t("تحتاج مراجعة", "Needs review", "İnceleme gerekir")
-                      : t("اجتازت الفحوص", "Checks passed", "Kontroller geçti")}
-                  </span>
-                </summary>
-                <div className="fml-advanced-body">
-                  <p className="fml-hint">{strategyPathLabel}</p>
-
-                  <div className="fml-confidence-grid">
-                    {confidenceDimensions.map(([key, dimension]) => (
-                      <div key={key} className="fml-confidence">
-                        <div className="fml-confidence-head">
-                          <span>{CONFIDENCE_DIMENSION_COPY[key]?.[locale] ?? key}</span>
-                          <span className="fml-confidence-score">{dimension.score}%</span>
-                        </div>
-                        <div className="fml-confidence-track">
-                          <div
-                            className={`fml-confidence-fill fml-confidence-fill--${dimension.score >= 80 ? "high" : dimension.score >= 60 ? "mid" : dimension.score >= 30 ? "low" : "none"}`}
-                            style={{ width: `${dimension.score}%` }}
-                          />
-                        </div>
-                        <p className="fml-confidence-level">{confidenceLevelCopy(dimension.level, locale)}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {strategy.reviewReasons.length > 0 && (
-                    <ul className="fml-notes">
-                      {strategy.reviewReasons.map((reason) => <li key={reason}>{reviewReasonCopy(reason, locale)}</li>)}
-                    </ul>
-                  )}
-
-                  <div className="fml-check-columns">
-                    <div>
-                      <h4>{t("الأدلة المقروءة", "Evidence read", "Okunan kanıtlar")}</h4>
-                      <div className="fml-check-list">
-                        {visibleEvidence.map((item) => (
-                          <div key={item.code} className="fml-check-row">
-                            <span>
-                              {EVIDENCE_COPY[item.code]?.[locale] ?? item.code}
-                              {item.count !== undefined && item.count > 0 ? ` (${item.count})` : ""}
-                            </span>
-                            <span className={`fml-status fml-status--${item.status.toLowerCase()}`}>
-                              {evidenceStatusCopy(item.status, locale)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4>{t("الفحوص الهندسية", "Geometric checks", "Geometrik kontroller")}</h4>
-                      <div className="fml-check-list">
-                        {visibleValidations.length > 0 ? visibleValidations.map((item) => {
-                          const detail = validationDetail(item, locale);
-                          return (
-                            <div key={item.code} className="fml-check-row">
-                              <span>
-                                {VALIDATION_COPY[item.code]?.[locale] ?? item.code}
-                                {detail ? <em>{detail}</em> : null}
-                              </span>
-                              <span className={`fml-status fml-status--${item.status.toLowerCase()}`}>
-                                {validationStatusCopy(item.status, locale)}
-                              </span>
-                            </div>
-                          );
-                        }) : (
-                          <p className="fml-hint">
-                            {t("لا توجد إحداثيات تكفي لإجراء فحوص هندسية.", "There are not enough coordinates for geometric checks.", "Geometrik kontroller için yeterli koordinat yok.")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            )}
-
-            {/* --- Land services --- */}
-            {coordinateRows.length > 0 && analysis.result.center && (
-              <details className="fml-advanced">
-                <summary>{t("خدمات الأرض والمساحين", "Land services and surveyors", "Arazi hizmetleri ve haritacılar")}</summary>
-                <div className="fml-advanced-body">
-                  {!savedLand ? (
-                    <>
-                      <p className="fml-hint">
-                        {t("احفظ موقع الأرض لطلب عروض أسعار من المساحين المعتمدين القريبين (دليل AMRS).", "Save the land location to request quotes from nearby verified surveyors (AMRS directory).", "Arazi konumunu kaydederek yakındaki onaylı haritacılardan (AMRS rehberi) teklif isteyin.")}
-                      </p>
-                      <button type="button" onClick={handleSaveLand} className="fml-primary-btn">
-                        <UploadCloud size={16} />
-                        {t("حفظ الأرض", "Save land", "Araziyi kaydet")}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="fml-saved">
-                        <CheckCircle2 size={15} />
-                        {t("تم الحفظ", "Saved", "Kaydedildi")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleDiscoverSurveyors}
-                        disabled={surveyorLoading}
-                        className="fml-primary-btn"
-                      >
-                        <ScanLine size={16} />
-                        {surveyorLoading
-                          ? t("جارٍ البحث في دليل المساحين (AMRS)...", "Searching AMRS surveyor directory...", "AMRS haritacı rehberi aranıyor...")
-                          : t("العثور على مسّاحين قريبين (AMRS)", "Find nearby surveyors (AMRS)", "Yakın haritacıları bul (AMRS)")}
-                      </button>
-                      {surveyors !== null && (
-                        <div className="fml-surveyors">
-                          {surveyors.length === 0 && (
-                            <p className="fml-hint">
-                              {t("لا يوجد مسّاحون في الدليل حالياً", "No surveyors in the directory right now", "Rehberde şu an haritacı yok")}
-                            </p>
-                          )}
-                          {surveyors.map((surveyor) => (
-                            <div key={surveyor.id} className="fml-surveyor">
-                              <div className="fml-surveyor-meta">
-                                <span className="fml-surveyor-name">
-                                  {surveyor.name}
-                                  {surveyor.isVerified && <span className="fml-surveyor-verified">✓</span>}
-                                </span>
-                                <span className="fml-surveyor-stats">
-                                  {surveyor.ratingAvg != null && <span>★ {surveyor.ratingAvg.toFixed(1)}</span>}
-                                  {surveyor.reputationLevel && <span> · {surveyor.reputationLevel}</span>}
-                                  {surveyor.distanceKm != null && <span> · {surveyor.distanceKm.toFixed(1)} km</span>}
-                                  {surveyor.jobsCompleted != null && <span> · {surveyor.jobsCompleted} {t("مهمة", "jobs", "iş")}</span>}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRequestQuote(surveyor.id)}
-                                disabled={quoteSentId === surveyor.id}
-                                className="fml-action"
-                              >
-                                {quoteSentId === surveyor.id
-                                  ? t("تم إرسال الطلب ✓", "Sent ✓", "Gönderildi ✓")
-                                  : t("طلب عرض سعر", "Request quote", "Teklif iste")}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </details>
-            )}
-
-            {/* --- Raw text --- */}
-            <details className="fml-advanced">
-              <summary>{t("النص الأصلي المستخرج", "Extracted source text", "Çıkarılan kaynak metin")}</summary>
-              <pre className="fml-raw-text" dir="auto">{analysis.extractedText}</pre>
-            </details>
-
-            <p className="fml-footnote">
-              {t("تحليل آلي للمراجعة — لا يحل محل الوثيقة الرسمية.", "Automated analysis for review — it does not replace the official document.", "İnceleme için otomatik analiz — resmi belgenin yerine geçmez.")}
-              {analysedAt ? <span> · {analysedAt}</span> : null}
-            </p>
           </div>
         )}
       </div>
