@@ -42,6 +42,7 @@ export default function PropertiesPage() {
   const [search, setSearch] = useState("");
   const [listingType, setListingType] = useState<"all" | "sale" | "rent">("all");
   const [propertyType, setPropertyType] = useState("all");
+  const [customType, setCustomType] = useState("");
   const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -109,14 +110,23 @@ export default function PropertiesPage() {
     return items.filter((item) => {
       const matchesListingType = listingType === "all" || item.listingType === listingType;
       if (!matchesListingType) return false;
-      const matchesPropertyType = propertyType === "all" || item.propertyType === propertyType;
+      const customTerm = customType.trim().toLowerCase();
+      const matchesPropertyType =
+        propertyType === "all" ||
+        (propertyType === "other"
+          ? customTerm === "" ||
+            item.propertyType.toLowerCase().includes(customTerm) ||
+            [pick(locale, item, "title"), pick(locale, item, "description")]
+              .filter(Boolean)
+              .some((value) => value.toLowerCase().includes(customTerm))
+          : item.propertyType === propertyType);
       if (!matchesPropertyType) return false;
       if (!term) return true;
       return [pick(locale, item, "title"), pick(locale, item, "description"), pick(locale, item, "area")]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term));
     });
-  }, [items, listingType, propertyType, locale, search]);
+  }, [items, listingType, propertyType, customType, locale, search]);
 
   return (
     <PublicPageShell
@@ -129,15 +139,6 @@ export default function PropertiesPage() {
       adLayout={{ mode: "standard", family: "properties" }}
       onLogin={() => openLogin("login")}
       onLogout={handleLogout}
-      pageHeader={{
-        eyebrow: locale === "ar" ? "العقارات" : locale === "tr" ? "Gayrimenkuller" : "Properties",
-        title: locale === "ar" ? "اكتشف العقارات" : locale === "tr" ? "Gayrimenkulleri Kesfedin" : "Discover Properties",
-        description: locale === "ar"
-          ? "ابحث بالموقع أولاً: الدولة، المحافظة، المدينة. ثم حدد نوع العقار ونوع العرض."
-          : locale === "tr"
-            ? "Önce konuma göre arayın: ülke, ilçe, şehir. Sonra mülk türü ve teklif türünü seçin."
-            : "Search by location first: country, governorate, city. Then select property type and listing type.",
-      }}
     >
       <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 space-y-4">
@@ -152,9 +153,6 @@ export default function PropertiesPage() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                {locale === "ar" ? "نوع العرض:" : locale === "tr" ? "Teklif türü:" : "Listing:"}
-              </span>
               {LISTING_TYPES.map((lt) => (
                 <button
                   key={lt.id}
@@ -165,9 +163,6 @@ export default function PropertiesPage() {
                   {lt[locale]}
                 </button>
               ))}
-              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-                {locale === "ar" ? "نوع العقار:" : locale === "tr" ? "Mülk türü:" : "Property:"}
-              </span>
               {propertyTypes.map((pt) => (
                 <button
                   key={pt.id}
@@ -178,6 +173,23 @@ export default function PropertiesPage() {
                   {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setPropertyType("other")}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === "other" ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
+              >
+                {locale === "ar" ? "أخرى" : locale === "tr" ? "Diğer" : "Other"}
+              </button>
+              {propertyType === "other" && (
+                <input
+                  type="text"
+                  value={customType}
+                  onChange={(event) => setCustomType(event.target.value)}
+                  placeholder={locale === "ar" ? "اكتب نوع العقار..." : locale === "tr" ? "Mülk türünü yazın..." : "Type property type..."}
+                  className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                  aria-label={locale === "ar" ? "نوع عقار آخر" : locale === "tr" ? "Diğer mülk türü" : "Other property type"}
+                />
+              )}
             </div>
           </div>
         </div>
