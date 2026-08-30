@@ -45,6 +45,31 @@
     } catch (e) { return null; }
   }
 
+  // The shipped portal bundle seeds demo properties ("prop-NNN") into
+  // localStorage on first load. This office tool must start empty: real
+  // listings live on the platform and are published up from here. Strip the
+  // seeded rows, keeping anything the office actually added (whose ids are not
+  // the "prop-<number>" demo shape). Writing back a non-empty-string value —
+  // "[]" when nothing real remains — also satisfies the bundle's own
+  // `getItem(key) || seed` guard, so the demo set never comes back.
+  function purgeDemoProperties() {
+    var KEY = "akar_properties";
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      if (raw === null) { window.localStorage.setItem(KEY, "[]"); return false; }
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return false;
+      var real = arr.filter(function (p) {
+        return !(p && typeof p.id === "string" && /^prop-\d+$/.test(p.id));
+      });
+      if (real.length !== arr.length) {
+        window.localStorage.setItem(KEY, JSON.stringify(real));
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function persistSession(token, profile) {
     ls("set", TOKEN_KEY, token);
     var settings = {
@@ -712,6 +737,19 @@
   }
 
   function boot() {
+    // Clear seeded demo listings before anything renders. If rows were removed
+    // and the bundle has already painted them this session, reload once so the
+    // portal re-reads the now-clean store (guarded so it never loops).
+    var purged = purgeDemoProperties();
+    if (purged) {
+      try {
+        if (!window.sessionStorage.getItem("akar_demo_purged")) {
+          window.sessionStorage.setItem("akar_demo_purged", "1");
+          window.location.reload();
+          return;
+        }
+      } catch (e) {}
+    }
     checkForUpdate().then(function (gated) {
       if (gated) return; // mandatory update: the gate replaces the app
       if (isLoggedIn()) {
