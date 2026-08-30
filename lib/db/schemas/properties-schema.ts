@@ -32,6 +32,9 @@ export const properties = pgTable('properties', {
   direction: text('direction'),
   referenceNumber: text('reference_number'),
   advertisingLicense: text('advertising_license'),
+  // Office-CRM fields carried through from the desktop app's own record.
+  ownerName: text('owner_name'),
+  agentName: text('agent_name'),
   status: text('status').default('draft'),
   isFeatured: boolean('is_featured').default(false),
   isVerified: boolean('is_verified').default(false),

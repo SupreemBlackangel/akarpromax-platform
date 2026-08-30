@@ -61,6 +61,8 @@ export type DesktopPropertyBody = {
   videoUrl?: unknown;
   lat?: unknown;
   lng?: unknown;
+  ownerName?: unknown;
+  agentName?: unknown;
 };
 
 function text(value: unknown, max: number): string {
@@ -161,6 +163,8 @@ export async function listDesktopProperties(userId: string): Promise<{ total: nu
         bathrooms: properties.bathrooms,
         price: properties.price,
         currency: properties.currency,
+        ownerName: properties.ownerName,
+        agentName: properties.agentName,
         createdAt: properties.createdAt,
       })
       .from(properties)
@@ -202,6 +206,8 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   }
   const address = text(body.city, 100);
 
+  const ownerName = text(body.ownerName, 200) || null;
+  const agentName = text(body.agentName, 200) || null;
   const images = await resolveImages(body.images);
   const videoUrl = text(body.videoUrl, 500);
   const latitude = Number.isFinite(Number(body.lat)) && Number(body.lat) !== 0 ? String(Number(body.lat)) : null;
@@ -217,7 +223,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
           country: office.country, governorate: office.governorate, city, address,
           price: String(price), currency: text(body.currency, 8) || "SAR",
           area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
-          latitude, longitude,
+          latitude, longitude, ownerName, agentName,
         })
         .where(eq(properties.id, existingId))
         .returning();
@@ -254,6 +260,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         latitude, longitude, address,
         price: String(price), currency: text(body.currency, 8) || "SAR",
         area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
+        ownerName, agentName,
         status: "pending_review",
       })
       .returning();
