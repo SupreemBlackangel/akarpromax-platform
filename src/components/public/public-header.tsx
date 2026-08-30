@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import { isNavItemActive, type PublicNavItem } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
@@ -94,18 +94,28 @@ export default function PublicHeader({
           between them, per the requested layout. */}
       <div className="border-t border-[color:var(--color-border)]/60">
         <PageContainer size="wide" className="flex flex-wrap items-center gap-2 py-1.5">
-          <CountrySwitcher />
-          <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
-            <div className="header-tool-cluster">
-              <LocationCluster locale={locale} />
-              <ThemeSwitcher labels={labels} />
-            </div>
+          {/* Right (RTL start): the geo + appearance controls, grouped and
+              each carrying its own icon — country → location → theme. */}
+          <div className="header-tool-cluster">
+            <CountrySwitcher />
+            <LocationCluster locale={locale} />
+            <ThemeSwitcher labels={labels} />
+          </div>
+
+          {/* Center: search fills the gap between the two clusters. */}
+          <div className="flex flex-1 items-center justify-center gap-2">
             {searchHref && <SearchTrigger href={searchHref} label={labels.searchAria} />}
+          </div>
+
+          {/* Left (RTL end): the account sits at the far edge with a person
+              icon, next to the language switcher. */}
+          <div className="flex items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
               {viewer.authenticated ? (
                 <>
-                  <span className="max-w-[140px] truncate text-sm font-medium text-[color:var(--color-text-primary)]">
-                    {viewer.displayName || viewer.email}
+                  <span className="inline-flex max-w-[160px] items-center gap-1.5 truncate rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[color:var(--color-text-primary)]">
+                    <User className="h-4 w-4 shrink-0 text-[color:var(--color-primary)]" aria-hidden="true" />
+                    <span className="truncate">{viewer.displayName || viewer.email}</span>
                   </span>
                   <Button variant="outline" size="sm" onClick={onLogout}>
                     {labels.logout}
@@ -117,8 +127,8 @@ export default function PublicHeader({
                 </Button>
               )}
             </div>
+            <LanguageSwitcher labels={labels} />
           </div>
-          <LanguageSwitcher labels={labels} />
         </PageContainer>
       </div>
     </header>
