@@ -5,16 +5,23 @@ import { buildContext } from '@/lib/ads/context';
 import { matchAds } from '@/lib/ads/engine';
 import type { AdMatchResult } from '@/lib/ads/types';
 import { getSession } from '@/lib/auth/session';
+import { STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS } from '@/src/config/standard-public-ad-registry';
 
-const STANDARD_LEGACY_PLACEMENTS: Record<string, string> = {
-  hero: 'HERO',
-  left_01: 'LEFT_01',
-  left_02: 'LEFT_02',
-  right_01: 'RIGHT_01',
-  right_02: 'RIGHT_02',
-  bottom_01: 'BOTTOM_01',
-  bottom_02: 'BOTTOM_02',
-  bottom_03: 'BOTTOM_03',
+// The legacy sidebar/hero/bottom components send a family key ("office-detail")
+// plus a short slot name ("left_01"). The live engine keys ads on the canonical
+// "<family-prefix>_<slot-suffix>" placement (e.g. web_office_detail_side_left_01),
+// so map the short slot to its canonical suffix rather than upper-casing it —
+// the previous "LEFT_01" form matched no registered placement, leaving these
+// slots permanently empty.
+const LEGACY_SLOT_SUFFIX: Record<string, string> = {
+  hero: 'hero',
+  left_01: 'side_left_01',
+  left_02: 'side_left_02',
+  right_01: 'side_right_01',
+  right_02: 'side_right_02',
+  bottom_01: 'bottom_01',
+  bottom_02: 'bottom_02',
+  bottom_03: 'bottom_03',
 };
 
 function canonicalLegacyPath(page: string): string {
@@ -22,8 +29,11 @@ function canonicalLegacyPath(page: string): string {
   return page.startsWith('/') ? page : `/${page}`;
 }
 
-function canonicalLegacyPlacement(placement: string): string {
-  return STANDARD_LEGACY_PLACEMENTS[placement.toLowerCase()] ?? placement;
+function canonicalLegacyPlacement(page: string, placement: string): string {
+  const suffix = LEGACY_SLOT_SUFFIX[placement.toLowerCase()];
+  const family = STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS[page as keyof typeof STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS];
+  if (suffix && family) return `${family.prefix}_${suffix}`;
+  return placement;
 }
 
 export function toLegacyAdvertisingResult(ad: AdMatchResult, language: string) {
@@ -75,7 +85,7 @@ export async function GET(request: NextRequest) {
     };
     const canonicalContext = buildContext({
       path: canonicalLegacyPath(page),
-      placement: canonicalLegacyPlacement(placement),
+      placement: canonicalLegacyPlacement(page, placement),
       language,
       countryCode: context.country,
       regionId: context.governorate,

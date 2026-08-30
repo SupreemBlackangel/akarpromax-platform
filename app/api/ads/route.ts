@@ -268,6 +268,9 @@ export async function GET(request: NextRequest) {
     const rows = await db.prepare(
       `${adSelect}
        WHERE a.status = 'active'
+         AND a.approval_status = 'approved'
+         AND a.is_active = 1
+         AND a.deleted_at IS NULL
          AND (a.start_at IS NULL OR datetime(a.start_at) <= datetime('now'))
          AND (a.end_at IS NULL OR datetime(a.end_at) >= datetime('now'))
        GROUP BY a.id

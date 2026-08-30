@@ -1,41 +1,23 @@
-import { pgTable, text, integer, decimal, timestamp, boolean, jsonb, uuid, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, jsonb, uuid } from 'drizzle-orm/pg-core';
 import { users } from '../schema';
 import { properties } from './properties-schema';
 
-export const adCampaigns = pgTable('ad_campaigns', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  type: text('type').notNull(),
-  status: text('status').default('draft'),
-  priority: integer('priority').default(5),
-  startDate: timestamp('start_date'),
-  endDate: timestamp('end_date'),
-  maxViews: integer('max_views'),
-  maxClicks: integer('max_clicks'),
-  targeting: jsonb('targeting').default({}),
-  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-export const adCreatives = pgTable('ad_creatives', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  campaignId: uuid('campaign_id').references(() => adCampaigns.id, { onDelete: 'cascade' }),
-  language: text('language').default('ar'),
-  title: text('title'),
-  description: text('description'),
-  cta: text('cta'),
-  url: text('url'),
-  imageUrl: text('image_url'),
-  imageAlt: text('image_alt'),
-  videoUrl: text('video_url'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+/**
+ * Ad *campaigns* and *creatives* are owned entirely by the raw-SQL system
+ * (lib/ad-schema.ts, text ids), served by lib/ads/engine.ts. They were once
+ * also declared here as drizzle pgTables with uuid ids — a second, incompatible
+ * definition of the same physical `ad_campaigns` / `ad_creatives` tables. That
+ * duplicate has been removed so drizzle never reconciles the same table name to
+ * a conflicting shape. This file now owns only the tables that are genuinely
+ * drizzle-managed: analytics events, the news ticker, and featured properties.
+ */
 
 export const adAnalytics = pgTable('ad_analytics', {
   id: uuid('id').primaryKey().defaultRandom(),
-  campaignId: uuid('campaign_id').references(() => adCampaigns.id, { onDelete: 'cascade' }),
-  creativeId: uuid('creative_id').references(() => adCreatives.id, { onDelete: 'set null' }),
+  // Campaign/creative ids come from the raw-SQL system, so these are plain
+  // columns, not foreign keys into a drizzle-owned table.
+  campaignId: uuid('campaign_id'),
+  creativeId: uuid('creative_id'),
   eventType: text('event_type').notNull(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   sessionId: text('session_id'),

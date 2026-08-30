@@ -48,6 +48,8 @@ export async function listOfficeAds(input: OfficeAdFilter): Promise<OfficeAd[]> 
        FROM ad_campaigns
        WHERE status = 'active'
          AND is_active = 1
+         AND approval_status = 'approved'
+         AND deleted_at IS NULL
          AND (is_global = 1 OR lower(countries) LIKE ?1)
          AND (start_at IS NULL OR date(start_at) <= date('now'))
          AND (end_at IS NULL OR date(end_at) >= date('now'))

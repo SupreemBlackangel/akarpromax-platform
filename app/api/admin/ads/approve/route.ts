@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
     )
-    .bind(approvalStatus, identity.email, shouldActivate ? 1 : 1, shouldActivate ? 1 : 0, id)
+    .bind(approvalStatus, identity.email, approvalStatus === "approved" ? 1 : 0, shouldActivate ? 1 : 0, id)
     .run();
   try {
     await db.prepare(
