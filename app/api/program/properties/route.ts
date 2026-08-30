@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateDesktop, publishDesktopProperty, CORS_HEADERS, type DesktopPropertyBody } from "@/lib/integration/desktop-property-publish";
+import { authenticateDesktop, publishDesktopProperty, listDesktopProperties, CORS_HEADERS, type DesktopPropertyBody } from "@/lib/integration/desktop-property-publish";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,19 @@ function json(body: unknown, status: number) {
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
+/** The office's own published properties — powers the portal's connection
+ *  test and listing sync. CORS-enabled so the desktop WebView can call it. */
+export async function GET(request: Request) {
+  const identity = await authenticateDesktop(request);
+  if (!identity) return json({ ok: false, message: "غير مصرح، سجّل الدخول من التطبيق", total: 0, properties: [] }, 401);
+  try {
+    const result = await listDesktopProperties(identity.userId);
+    return json(result, 200);
+  } catch {
+    return json({ ok: false, message: "تعذّر جلب العقارات", total: 0, properties: [] }, 500);
+  }
 }
 
 export async function POST(request: Request) {

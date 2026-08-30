@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { properties, propertyMedia } from "@/lib/db/schemas/properties-schema";
@@ -127,6 +127,38 @@ async function loadOfficeLocation(userId: string): Promise<{ country: string; go
     };
   } catch {
     return { country: "", governorate: "", city: "" };
+  } finally {
+    await end();
+  }
+}
+
+/**
+ * The office's own published properties, for the desktop portal's
+ * "test connection" and pull-listing features. Scoped to the signed-in office
+ * (userId) so a desktop client only ever sees what it published.
+ */
+export async function listDesktopProperties(userId: string): Promise<{ total: number; properties: Array<Record<string, unknown>> }> {
+  const { db, end } = getDb();
+  try {
+    const rows = await db
+      .select({
+        id: properties.id,
+        title: properties.titleAr,
+        status: properties.status,
+        dealType: properties.dealType,
+        category: properties.category,
+        city: properties.city,
+        governorate: properties.governorate,
+        country: properties.country,
+        price: properties.price,
+        currency: properties.currency,
+        createdAt: properties.createdAt,
+      })
+      .from(properties)
+      .where(eq(properties.userId, userId))
+      .orderBy(desc(properties.createdAt))
+      .limit(500);
+    return { total: rows.length, properties: rows };
   } finally {
     await end();
   }
