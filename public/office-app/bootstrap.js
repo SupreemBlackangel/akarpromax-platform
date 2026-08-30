@@ -369,6 +369,84 @@
       .catch(function () { return null; });
   }
 
+  // ---- pull the office's published properties down for display ------------
+  // The portal only ever showed local rows; a property published from here
+  // then "vanished" because nothing read it back. Map each platform property
+  // into the portal's own property shape and merge it into akar_properties so
+  // it appears in the Properties list, tagged so a later sync can refresh it
+  // without touching rows the office is still drafting locally.
+  var DEAL_LIFECYCLE = { sale: "active_market", rent: "active_market" };
+  var CATEGORY_AR = { residential: "سكني", commercial: "تجاري", industrial: "صناعي", land: "أرض", agricultural: "زراعي" };
+  var TYPE_AR = {
+    apartment: "شقة", villa: "فيلا", townhouse: "تاون هاوس", duplex: "دوبلكس", penthouse: "بنتهاوس", building: "عمارة",
+    shop: "محل", office: "مكتب", hotel: "فندق", resort: "منتجع", restaurant: "مطعم",
+    warehouse: "مستودع", factory: "مصنع", land: "أرض", ranch: "مزرعة", farm: "مزرعة"
+  };
+
+  function mapPlatformProperty(p) {
+    var lat = p.latitude != null ? Number(p.latitude) : null;
+    var lng = p.longitude != null ? Number(p.longitude) : null;
+    var price = Number(p.price) || 0;
+    return {
+      id: "site-" + p.id,
+      remoteId: p.id,
+      __fromPlatform: true,
+      displayName: p.title || "عقار",
+      title: p.title || "عقار",
+      description: p.description || "",
+      category: CATEGORY_AR[p.category] || p.category || "",
+      subCategory: TYPE_AR[p.propertyType] || p.propertyType || "",
+      type: p.propertyType || "apartment",
+      status: "active",
+      lifecycle: DEAL_LIFECYCLE[p.dealType] || "active_market",
+      offer: {
+        type: p.dealType === "rent" ? "rent" : "sale",
+        paymentMethod: "cash",
+        cashPrice: price,
+        cashCurrency: p.currency || "SAR"
+      },
+      price: price,
+      askingPrice: price,
+      currency: p.currency || "SAR",
+      area: { value: Number(p.area) || 0, unit: "م²" },
+      totalArea: Number(p.area) || 0,
+      rooms: p.bedrooms || 0,
+      bathrooms: p.bathrooms || 0,
+      city: p.city || "",
+      district: p.district || "",
+      neighborhood: p.district || "",
+      address: p.address || "",
+      coordinatesLegacy: (lat != null && lng != null) ? { lat: lat, lng: lng } : null,
+      mapUrl: (lat != null && lng != null) ? ("https://maps.google.com/?q=" + lat + "," + lng) : "",
+      trueOwnerName: "",
+      mandatedAgentName: "",
+      ownerType: "individual",
+      media: [], photos: [], videos: [], documents: [], attachments: [],
+      boundaries: {}, coordinates: [], financialRecords: [], sections: [],
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.createdAt || new Date().toISOString()
+    };
+  }
+
+  // Returns a Promise<boolean> — true when the displayed set of platform rows
+  // changed (so the caller can refresh the view).
+  function syncPlatformProperties() {
+    return authedFetch("/api/program/properties", { method: "GET" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.properties)) return false;
+        var mapped = data.properties.map(mapPlatformProperty);
+        var existing = readArr("akar_properties");
+        var localOnly = existing.filter(function (p) { return !(p && p.__fromPlatform); });
+        var prevRemote = existing.filter(function (p) { return p && p.__fromPlatform; })
+          .map(function (p) { return p.remoteId; }).sort().join(",");
+        var nextRemote = mapped.map(function (p) { return p.remoteId; }).sort().join(",");
+        writeArr("akar_properties", localOnly.concat(mapped));
+        return prevRemote !== nextRemote;
+      })
+      .catch(function () { return false; });
+  }
+
   // Geo requests never resolve to a silent empty list on failure: a network
   // or server error rejects, so the form can tell the user and offer a retry
   // (an empty select with only the placeholder is otherwise indistinguishable
@@ -780,6 +858,17 @@
       if (isLoggedIn()) {
         mountChip();
         ensureProfile();
+        // Pull the office's published properties down so they show in the
+        // portal. One guarded reload lets the list re-read them this session.
+        syncPlatformProperties().then(function (changed) {
+          if (!changed) return;
+          try {
+            if (!window.sessionStorage.getItem("akar_props_synced")) {
+              window.sessionStorage.setItem("akar_props_synced", "1");
+              window.location.reload();
+            }
+          } catch (e) {}
+        });
       } else {
         showLogin();
       }
