@@ -153,40 +153,40 @@ export default function PropertiesPage() {
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {LISTING_TYPES.map((lt) => (
-                <button
-                  key={lt.id}
-                  type="button"
-                  onClick={() => setListingType(lt.id as typeof listingType)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${listingType === lt.id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
-                >
-                  {lt[locale]}
-                </button>
-              ))}
-              {propertyTypes.map((pt) => (
-                <button
-                  key={pt.id}
-                  type="button"
-                  onClick={() => setPropertyType(pt.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === pt.id ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
-                >
-                  {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setPropertyType("other")}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${propertyType === "other" ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"}`}
+              <select
+                value={listingType}
+                onChange={(event) => setListingType(event.target.value as typeof listingType)}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                aria-label={locale === "ar" ? "نوع العرض" : locale === "tr" ? "Teklif türü" : "Listing type"}
               >
-                {locale === "ar" ? "أخرى" : locale === "tr" ? "Diğer" : "Other"}
-              </button>
+                {LISTING_TYPES.map((lt) => (
+                  <option key={lt.id} value={lt.id}>
+                    {lt[locale]}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={propertyType}
+                onChange={(event) => setPropertyType(event.target.value)}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                aria-label={locale === "ar" ? "نوع العقار" : locale === "tr" ? "Mülk türü" : "Property type"}
+              >
+                {propertyTypes.map((pt) => (
+                  <option key={pt.id} value={pt.id}>
+                    {locale === "ar" ? pt.label_ar : locale === "tr" ? pt.label_tr : pt.label_en}
+                  </option>
+                ))}
+                <option value="other">
+                  {locale === "ar" ? "أخرى" : locale === "tr" ? "Diğer" : "Other"}
+                </option>
+              </select>
               {propertyType === "other" && (
                 <input
                   type="text"
                   value={customType}
                   onChange={(event) => setCustomType(event.target.value)}
                   placeholder={locale === "ar" ? "اكتب نوع العقار..." : locale === "tr" ? "Mülk türünü yazın..." : "Type property type..."}
-                  className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                  className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
                   aria-label={locale === "ar" ? "نوع عقار آخر" : locale === "tr" ? "Diğer mülk türü" : "Other property type"}
                 />
               )}
