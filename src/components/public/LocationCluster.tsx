@@ -214,15 +214,10 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
 
   if (geo.isGlobal) return null;
 
-  // Full detail, most-general to most-specific — governorate, city, district
-  // — each shown once resolved to its registry name (or the raw auto-detected
-  // text as a fallback before that lookup completes).
-  const parts = [
-    governorate ? optionName(governorate, locale) : geo.governorate,
-    city ? optionName(city, locale) : geo.city,
-    district ? optionName(district, locale) : geo.district,
-  ].filter((part): part is string => Boolean(part && part.trim()));
-  const label = parts.join("، ");
+  // The chip shows only the region (governorate) — the most useful single
+  // level beside the country. City/district are still refined inside the
+  // popover; they just don't crowd the button label.
+  const label = (governorate ? optionName(governorate, locale) : geo.governorate)?.trim() ?? "";
 
   const selectClass =
     "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm font-semibold text-[var(--color-text-primary)] outline-none transition-colors focus:border-[var(--color-primary)] disabled:opacity-45";
