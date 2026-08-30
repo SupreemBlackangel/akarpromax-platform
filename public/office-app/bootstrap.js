@@ -52,22 +52,47 @@
   // the "prop-<number>" demo shape). Writing back a non-empty-string value —
   // "[]" when nothing real remains — also satisfies the bundle's own
   // `getItem(key) || seed` guard, so the demo set never comes back.
-  function purgeDemoProperties() {
-    var KEY = "akar_properties";
+  function readArr(key) {
+    try { var v = JSON.parse(window.localStorage.getItem(key) || "[]"); return Array.isArray(v) ? v : []; }
+    catch (e) { return []; }
+  }
+  function writeArr(key, val) {
+    try { window.localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  // Remove the bundle's seeded demo rows (properties "prop-N", clients "cNNN")
+  // and the client-linked side stores, keeping anything the office actually
+  // added. Returns true if it changed anything. From v2.0.4 the bundle's own
+  // seeds are no-ops, so a cleared store stays cleared.
+  function purgeDemoData() {
+    var changed = false;
+    // properties — the seed guard is `getItem||seed`, so a "[]" write also
+    // stops it re-seeding even on the pre-2.0.4 bundle.
     try {
-      var raw = window.localStorage.getItem(KEY);
-      if (raw === null) { window.localStorage.setItem(KEY, "[]"); return false; }
-      var arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return false;
-      var real = arr.filter(function (p) {
-        return !(p && typeof p.id === "string" && /^prop-\d+$/.test(p.id));
-      });
-      if (real.length !== arr.length) {
-        window.localStorage.setItem(KEY, JSON.stringify(real));
-        return true;
+      var praw = window.localStorage.getItem("akar_properties");
+      if (praw === null) { window.localStorage.setItem("akar_properties", "[]"); }
+      else {
+        var props = readArr("akar_properties");
+        var realProps = props.filter(function (p) { return !(p && typeof p.id === "string" && /^prop-\d+$/.test(p.id)); });
+        if (realProps.length !== props.length) { writeArr("akar_properties", realProps); changed = true; }
       }
     } catch (e) {}
-    return false;
+    // clients + dependent records
+    try {
+      var clients = readArr("akar_v2_clients");
+      var demo = {};
+      clients.forEach(function (c) { if (c && typeof c.id === "string" && /^c\d+$/.test(c.id)) demo[c.id] = 1; });
+      if (Object.keys(demo).length) {
+        changed = true;
+        writeArr("akar_v2_clients", clients.filter(function (c) { return !demo[c.id]; }));
+        ["akar_v2_phones", "akar_v2_addresses", "akar_v2_group_members", "akar_v2_poa", "akar_v2_timeline"].forEach(function (k) {
+          var rows = readArr(k);
+          var kept = rows.filter(function (r) { return !(r && demo[r.clientId]); });
+          if (kept.length !== rows.length) writeArr(k, kept);
+        });
+      }
+    } catch (e) {}
+    return changed;
   }
 
   function persistSession(token, profile) {
@@ -740,7 +765,7 @@
     // Clear seeded demo listings before anything renders. If rows were removed
     // and the bundle has already painted them this session, reload once so the
     // portal re-reads the now-clean store (guarded so it never loops).
-    var purged = purgeDemoProperties();
+    var purged = purgeDemoData();
     if (purged) {
       try {
         if (!window.sessionStorage.getItem("akar_demo_purged")) {
