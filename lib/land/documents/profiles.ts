@@ -131,6 +131,13 @@ const OMAN_FAMILIES: readonly DocumentFamily[] = [
       "سند ملكية",
       "سند الملكية",
       "شهادة ملكية",
+      // Omani owners commonly call the ownership document a "صك"; recognise it
+      // so an Omani deed is not misread as an untyped document, and — paired
+      // with the Omani terminology below — is not pulled toward Saudi Arabia
+      // (whose profile also carries "صك") purely on that one word.
+      "صك",
+      "الصك",
+      "صك ملكية",
       "وزارة الإسكان",
       "وزارة الاسكان",
       "ministry of housing",
@@ -188,7 +195,7 @@ export const OMAN_PROFILE: CountryDocumentProfile = {
     "muscat", "seeb", "bawshar", "salalah", "sohar", "nizwa", "sur", "buraimi", "ibri", "duqm",
     "محافظة مسقط", "محافظة ظفار", "شمال الباطنة", "جنوب الباطنة", "الداخلية", "الشرقية",
   ],
-  terminology: ["رقم القسيمة", "القسيمة", "ولاية", "محافظة", "سند ملكية", "المخطط"],
+  terminology: ["رقم القسيمة", "القسيمة", "ولاية", "محافظة", "سند ملكية", "صك", "المخطط"],
   documentFamilies: [...OMAN_FAMILIES, ...UNIVERSAL_DOCUMENT_FAMILIES],
   coordinateLabels: [...UNIVERSAL_COORDINATE_LABELS, "الشرقي", "الشمالي"],
   boundaryLabels: [...UNIVERSAL_BOUNDARY_LABELS, "الحدود والأطوال"],

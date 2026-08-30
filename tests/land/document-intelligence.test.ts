@@ -159,6 +159,13 @@ describe("Country detection", () => {
     assert.ok(detection.level === "HIGH" || detection.level === "MEDIUM");
   });
 
+  it("keeps an Omani deed that uses the word صك as Oman, not Saudi", () => {
+    const detection = detectDocumentCountry({
+      text: "سلطنة عمان - وزارة الإسكان - محافظة ظفار - ولاية صلالة - صك ملكية - رقم القسيمة 88",
+    });
+    assert.equal(detection.countryCode, "OM");
+  });
+
   it("returns UNKNOWN rather than guessing a country", () => {
     const detection = detectDocumentCountry({
       text: "LAND SURVEY REPORT\nP1 24.713600 N 46.675300 E\nP2 24.713900 N 46.675300 E",
@@ -216,6 +223,24 @@ describe("Document type detection", () => {
       OMAN_PROFILE,
     );
     assert.equal(detection.kind, "PROPERTY_DEED");
+  });
+
+  it("identifies an Omani deed that calls itself a صك", () => {
+    const detection = detectDocumentType(
+      "سلطنة عمان - صك ملكية - وزارة الإسكان - محافظة مسقط - رقم القسيمة 45",
+      OMAN_PROFILE,
+    );
+    assert.equal(detection.kind, "PROPERTY_DEED");
+    assert.ok(detection.matchedKeywords.length > 0);
+  });
+
+  it("identifies a Saudi municipal survey decision (قرار مساحي)", () => {
+    const detection = detectDocumentType(
+      "أمانة منطقة الرياض - القرار المساحي - الرفع المساحي - رقم القطعة 1173 - رقم المخطط 2410",
+      SAUDI_PROFILE,
+    );
+    assert.equal(detection.kind, "SURVEY_REPORT");
+    assert.ok(detection.matchedKeywords.length > 0);
   });
 
   it("identifies a survey report", () => {
