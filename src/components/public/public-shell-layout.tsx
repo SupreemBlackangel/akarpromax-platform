@@ -292,6 +292,8 @@ export function PublicShellLayout({
         </div>
       </div>
 
+      <a className="floating-chat" href="/messages" aria-label={labels.chatAria}>⌁</a>
+
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 
       <ToastRegion labels={labels} />
