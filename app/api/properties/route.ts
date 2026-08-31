@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { properties, propertyMedia } from '@/lib/db/schemas/properties-schema';
-import { propertyOffers } from '@/lib/db/schemas/offer-types-schema';
+import { propertyOffers, propertyOfferTypes } from '@/lib/db/schemas/offer-types-schema';
 import { eq, and, inArray, like, sql, or } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
 import { createPropertySchema, propertySearchSchema } from '@/lib/validators/property-validators';
@@ -142,9 +142,33 @@ export async function GET(request: NextRequest) {
 
     const total = totalResult[0]?.count || 0;
 
+    // Attach the active offer-type codes of each property so public filters
+    // can distinguish the full offer taxonomy (TAQBEEL, INVESTMENT, ...) —
+    // dealType alone only carries sale/rent.
+    const offerCodesByProperty = new Map<string, string[]>();
+    const resultIds = results.map((row) => row.id);
+    if (resultIds.length > 0) {
+      try {
+        const offerRows = await db
+          .select({ propertyId: propertyOffers.propertyId, code: propertyOfferTypes.code })
+          .from(propertyOffers)
+          .innerJoin(propertyOfferTypes, eq(propertyOffers.offerTypeId, propertyOfferTypes.id))
+          .where(and(inArray(propertyOffers.propertyId, resultIds), eq(propertyOffers.status, 'active')));
+        for (const row of offerRows) {
+          const list = offerCodesByProperty.get(row.propertyId) ?? [];
+          if (!list.includes(row.code)) list.push(row.code);
+          offerCodesByProperty.set(row.propertyId, list);
+        }
+      } catch (offerError) {
+        // Offer codes are an enrichment — a missing offers table must not take
+        // the whole marketplace feed down.
+        console.error('[Properties GET] offer codes lookup failed:', offerError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: results,
+      data: results.map((row) => ({ ...row, offerCodes: offerCodesByProperty.get(row.id) ?? [] })),
       pagination: {
         page: validated.page,
         limit: validated.limit,

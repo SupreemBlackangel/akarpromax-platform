@@ -26,9 +26,33 @@ export type CardProperty = {
   listingType?: string;
   isFeatured?: boolean;
   isAuction?: boolean;
+  offerCodes?: string[];
 };
 
 const LISTING_BADGES: Record<string, string> = { sale: "للبيع", rent: "للإيجار" };
+
+// Arabic labels of the offer-type codes (property_offer_types seed).
+const OFFER_BADGES: Record<string, string> = {
+  SALE: "للبيع",
+  RENT: "للإيجار",
+  TAQBEEL: "تقبيل",
+  FARAGH: "فروغ",
+  INVESTMENT: "استثمار",
+  ASSIGNMENT: "تنازل",
+  USUFRUCT: "حق انتفاع",
+  LEASE_TO_OWN: "إيجار منتهي بالتملك",
+  EXCHANGE: "مقايضة",
+  PARTNERSHIP: "شراكة",
+  SHARE_SALE: "بيع حصة",
+};
+
+function listingBadgeText(property: CardProperty): string | null {
+  const special = (property.offerCodes ?? []).find((code) => code !== "SALE" && code !== "RENT" && OFFER_BADGES[code]);
+  if (special) return OFFER_BADGES[special];
+  const first = (property.offerCodes ?? []).find((code) => OFFER_BADGES[code]);
+  if (first) return OFFER_BADGES[first];
+  return property.listingType ? LISTING_BADGES[property.listingType] ?? null : null;
+}
 
 export default function LuxuryPropertyCard({ property, className = "" }: { property: CardProperty; className?: string }) {
   const { toggleFavorite, isFavorite } = useFavorites(property.id);
@@ -60,9 +84,9 @@ export default function LuxuryPropertyCard({ property, className = "" }: { prope
               مزاد
             </span>
           ) : (
-            property.listingType && LISTING_BADGES[property.listingType] && (
+            listingBadgeText(property) && (
               <span className="rounded-full bg-[var(--color-overlay)] backdrop-blur-md px-3 py-1 text-xs font-semibold text-white border border-white/20">
-                {LISTING_BADGES[property.listingType]}
+                {listingBadgeText(property)}
               </span>
             )
           )}

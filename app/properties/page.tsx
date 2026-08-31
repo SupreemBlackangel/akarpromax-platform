@@ -22,13 +22,22 @@ const FALLBACK_PROPERTY_TYPES = [
 
 type TaxonomyType = { id: string; slug: string; label_en: string; label_ar: string; label_tr: string; category_slug: string };
 
-// Filter ids ARE the database dealType values — the API stores 'sale' | 'rent'
-// and normalizeApiProperty passes dealType through as listingType verbatim.
-const LISTING_TYPES = [
-  { id: "all", ar: "الكل", en: "All", tr: "Tümü" },
-  { id: "sale", ar: "للبيع", en: "For sale", tr: "Satılık" },
-  { id: "rent", ar: "للإيجار", en: "For rent", tr: "Kiralık" },
-  { id: "auction", ar: "مزاد", en: "Auction", tr: "Açık artırma" },
+// Offer types come from the property_offer_types table (all eleven marketing
+// codes); this list is the offline fallback and mirrors propertyOfferTypesSeed.
+type OfferTypeOption = { code: string; nameAr: string; nameEn: string; nameTr?: string | null };
+
+const FALLBACK_OFFER_TYPES: OfferTypeOption[] = [
+  { code: "SALE", nameAr: "بيع", nameEn: "Sale", nameTr: "Satış" },
+  { code: "RENT", nameAr: "إيجار", nameEn: "Rent", nameTr: "Kiralama" },
+  { code: "TAQBEEL", nameAr: "تقبيل", nameEn: "Taqbeel", nameTr: "Devir bedeli" },
+  { code: "FARAGH", nameAr: "فروغ", nameEn: "Faragh", nameTr: "Faragh" },
+  { code: "INVESTMENT", nameAr: "استثمار", nameEn: "Investment", nameTr: "Yatırım" },
+  { code: "ASSIGNMENT", nameAr: "تنازل", nameEn: "Assignment", nameTr: "Devir" },
+  { code: "USUFRUCT", nameAr: "حق انتفاع", nameEn: "Usufruct", nameTr: "İntifa hakkı" },
+  { code: "LEASE_TO_OWN", nameAr: "إيجار منتهي بالتملك", nameEn: "Lease to Own", nameTr: "Kirala–sahip ol" },
+  { code: "EXCHANGE", nameAr: "مقايضة", nameEn: "Exchange", nameTr: "Takas" },
+  { code: "PARTNERSHIP", nameAr: "شراكة", nameEn: "Partnership", nameTr: "Ortaklık" },
+  { code: "SHARE_SALE", nameAr: "بيع حصة", nameEn: "Share Sale", nameTr: "Hisse satışı" },
 ];
 
 function pick(locale: "ar" | "en" | "tr", property: PublicProperty, key: "title" | "description" | "area") {
@@ -41,10 +50,27 @@ export default function PropertiesPage() {
   const city = geoCity;
   const [items, setItems] = useState<NormalizedProperty[]>([]);
   const [search, setSearch] = useState("");
-  const [listingType, setListingType] = useState<"all" | "sale" | "rent" | "auction">("all");
+  const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [customType, setCustomType] = useState("");
   const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
+  const [offerTypes, setOfferTypes] = useState<OfferTypeOption[]>(FALLBACK_OFFER_TYPES);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(`/api/properties/offer-types`, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) return;
+        const data = (await response.json()) as { data?: Array<{ code?: string; nameAr?: string; nameEn?: string; nameTr?: string | null }> };
+        const rows = (Array.isArray(data.data) ? data.data : [])
+          .filter((row) => row.code && row.nameAr)
+          .map((row) => ({ code: String(row.code), nameAr: String(row.nameAr), nameEn: String(row.nameEn ?? row.nameAr), nameTr: row.nameTr ?? null }));
+        if (rows.length > 0 && !controller.signal.aborted) setOfferTypes(rows);
+      } catch { /* use fallback */ }
+    })();
+    return () => controller.abort();
+  }, []);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -109,9 +135,16 @@ export default function PropertiesPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return items.filter((item) => {
+      // Offer filter values are offer-type CODES (SALE, TAQBEEL, ...) plus the
+      // special "auction" entry. Legacy rows without offer rows still match
+      // SALE/RENT via their dealType.
       const matchesListingType =
         listingType === "all" ||
-        (listingType === "auction" ? item.isAuction : item.listingType === listingType);
+        (listingType === "auction"
+          ? item.isAuction
+          : item.offerCodes.includes(listingType) ||
+            (listingType === "SALE" && item.listingType === "sale") ||
+            (listingType === "RENT" && item.listingType === "rent"));
       if (!matchesListingType) return false;
       const customTerm = customType.trim().toLowerCase();
       const matchesPropertyType =
@@ -158,15 +191,17 @@ export default function PropertiesPage() {
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={listingType}
-                onChange={(event) => setListingType(event.target.value as typeof listingType)}
+                onChange={(event) => setListingType(event.target.value)}
                 className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
                 aria-label={locale === "ar" ? "نوع العرض" : locale === "tr" ? "Teklif türü" : "Listing type"}
               >
-                {LISTING_TYPES.map((lt) => (
-                  <option key={lt.id} value={lt.id}>
-                    {lt[locale]}
+                <option value="all">{locale === "ar" ? "الكل" : locale === "tr" ? "Tümü" : "All"}</option>
+                {offerTypes.map((offerType) => (
+                  <option key={offerType.code} value={offerType.code}>
+                    {locale === "ar" ? offerType.nameAr : locale === "tr" ? offerType.nameTr || offerType.nameEn : offerType.nameEn}
                   </option>
                 ))}
+                <option value="auction">{locale === "ar" ? "مزاد" : locale === "tr" ? "Açık artırma" : "Auction"}</option>
               </select>
               <select
                 value={propertyType}
