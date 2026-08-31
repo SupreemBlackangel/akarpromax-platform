@@ -7,6 +7,7 @@ import { Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 import Button from '@/src/components/ui/Button';
 import Card, { CardContent } from '@/src/components/ui/Card';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 
 interface PropertyOption {
   id: string;
@@ -97,7 +98,8 @@ export default function NewAuctionPage() {
   };
 
   return (
-    <div className="min-h-screen" dir="rtl">
+    <DashboardPageShell currentPath="/dashboard/auctions/new" chromeOnly title={{ ar: 'مزاد جديد', en: 'New auction', tr: 'Yeni müzayede' }}>
+    <div className="min-h-screen">
       {/* Gradient Header */}
       <div
         className="text-white px-6 pt-8 pb-12"
@@ -318,5 +320,6 @@ export default function NewAuctionPage() {
         </Card>
       </div>
     </div>
+    </DashboardPageShell>
   );
 }

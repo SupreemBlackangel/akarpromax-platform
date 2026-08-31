@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 import { PropertyFormWithOffers } from '@/components/properties/PropertyFormWithOffers';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 
 type StepDef = {
   id: string;
@@ -121,7 +122,8 @@ export default function NewPropertyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface-muted)]" dir="rtl">
+    <DashboardPageShell currentPath="/dashboard/properties/new" chromeOnly title={{ ar: 'إضافة عقار جديد', en: 'Add a property', tr: 'Mülk ekle' }}>
+    <div className="min-h-screen bg-[var(--color-surface-muted)]">
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[var(--color-surface)]/20">
         <div
@@ -343,5 +345,6 @@ export default function NewPropertyPage() {
         }
       `}</style>
     </div>
+    </DashboardPageShell>
   );
 }

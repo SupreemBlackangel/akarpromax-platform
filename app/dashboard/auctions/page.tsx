@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Clock, Users, Gavel } from 'lucide-react';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 
 interface AuctionRow {
   id: string;
@@ -44,27 +45,20 @@ export default function AuctionsDashboardPage() {
   const pending = rows.filter((r) => r.auctionStatus === 'pending_seller_terms').length;
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      {/* Gradient Header */}
-      <div
-        className="text-white px-6 pt-8 pb-12"
-        style={{ background: 'var(--brand-gradient)' }}
-      >
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black mb-2">مزاداتي</h1>
-            <p className="text-white/80 text-sm">إدارة المزادات التي تملكها أو أنشأتها بصفتك جهة منظمة</p>
-          </div>
-          <Link
-            href="/dashboard/auctions/new"
-            className="bg-[var(--color-surface)] text-[--brand-navy] px-6 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition flex items-center gap-2"
-          >
-            <Gavel className="w-4 h-4" /> مزاد جديد
-          </Link>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-6 -mt-6 pb-12 space-y-6">
+    <DashboardPageShell
+      currentPath="/dashboard/auctions"
+      title={{ ar: 'مزاداتي', en: 'My auctions', tr: 'Müzayedelerim' }}
+      description={{ ar: 'إدارة المزادات التي تملكها أو أنشأتها بصفتك جهة منظمة', en: 'Manage the auctions you own or organize', tr: 'Sahip olduğunuz veya düzenlediğiniz müzayedeler' }}
+      actions={
+        <Link
+          href="/dashboard/auctions/new"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]"
+        >
+          <Gavel className="h-4 w-4" /> مزاد جديد
+        </Link>
+      }
+    >
+      <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
@@ -141,6 +135,6 @@ export default function AuctionsDashboardPage() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardPageShell>
   );
 }

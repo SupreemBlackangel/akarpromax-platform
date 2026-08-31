@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, Trash2, Eye } from 'lucide-react';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 import type { propertyFavorites } from '@/lib/db/schemas/properties-schema';
 
 type FavoriteRow = typeof propertyFavorites.$inferSelect & {
@@ -36,8 +37,11 @@ export default function FavoritesPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">المفضلة</h1>
+    <DashboardPageShell
+      currentPath="/dashboard/properties/favorites"
+      title={{ ar: 'المفضلة', en: 'Favorites', tr: 'Favoriler' }}
+      description={{ ar: 'العقارات التي حفظتها للرجوع إليها', en: 'Listings you saved for later', tr: 'Sonrası için kaydettiğiniz ilanlar' }}
+    >
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => <div key={i} className="h-48 bg-gray-200 animate-pulse rounded" />)}
@@ -64,6 +68,6 @@ export default function FavoritesPage() {
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

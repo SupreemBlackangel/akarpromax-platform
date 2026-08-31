@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Eye, XCircle } from 'lucide-react';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 import type { propertyRequests } from '@/lib/db/schemas/properties-schema';
 
 type PropertyRequestRow = typeof propertyRequests.$inferSelect;
@@ -38,14 +39,16 @@ export default function PropertyRequestsPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">طلبات البحث عن عقارات</h1>
-        <button onClick={() => router.push('/dashboard/properties/property-requests/new')} className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-hover)]">
-          <Plus className="w-4 h-4 inline ml-1" /> طلب جديد
+    <DashboardPageShell
+      currentPath="/dashboard/properties/property-requests"
+      title={{ ar: 'طلبات البحث عن عقارات', en: 'Property requests', tr: 'Mülk talepleri' }}
+      description={{ ar: 'اطلب عقاراً بمواصفاتك وتابع حالة طلباتك', en: 'Request a property and track your requests', tr: 'Mülk talep edin ve takip edin' }}
+      actions={
+        <button onClick={() => router.push('/dashboard/properties/property-requests/new')} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--color-primary-hover)]">
+          <Plus className="h-4 w-4" /> طلب جديد
         </button>
-      </div>
-
+      }
+    >
       {loading ? (
         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-gray-200 animate-pulse rounded" />)}</div>
       ) : requests.length === 0 ? (
@@ -80,6 +83,6 @@ export default function PropertyRequestsPage() {
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

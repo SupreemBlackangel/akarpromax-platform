@@ -1,6 +1,7 @@
 ﻿'use client';
 import { useState, useEffect } from 'react';
 import { Trash2, Bell, BellOff } from 'lucide-react';
+import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 import type { savedSearches } from '@/lib/db/schemas/properties-schema';
 
 type SavedSearchRow = typeof savedSearches.$inferSelect;
@@ -44,14 +45,16 @@ export default function SavedSearchesPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">البحث المحفوظ</h1>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-hover)]">
+    <DashboardPageShell
+      currentPath="/dashboard/properties/saved-searches"
+      title={{ ar: 'بحوثي المحفوظة', en: 'Saved searches', tr: 'Kayıtlı aramalar' }}
+      description={{ ar: 'احفظ معايير بحثك واستقبل تنبيهات بالجديد', en: 'Save your search criteria and get alerts', tr: 'Arama kriterlerinizi kaydedin, uyarı alın' }}
+      actions={
+        <button onClick={() => setShowForm(!showForm)} className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--color-primary-hover)]">
           + حفظ بحث جديد
         </button>
-      </div>
-
+      }
+    >
       {showForm && (
         <div className="bg-[var(--color-surface)] rounded-lg shadow p-4 mb-6">
           <input type="text" placeholder="اسم البحث" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 border rounded mb-3" />
@@ -71,7 +74,7 @@ export default function SavedSearchesPage() {
             <input type="number" placeholder="الحد الأدنى" value={filters.minPrice} onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })} className="p-2 border rounded" />
             <input type="number" placeholder="الحد الأعلى" value={filters.maxPrice} onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })} className="p-2 border rounded" />
           </div>
-          <button onClick={saveSearch} className="mt-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">حفظ</button>
+          <button onClick={saveSearch} className="mt-3 rounded-xl bg-[var(--color-success)] px-4 py-2 text-sm font-bold text-white hover:opacity-90">حفظ</button>
         </div>
       )}
 
@@ -95,6 +98,6 @@ export default function SavedSearchesPage() {
           ))}
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

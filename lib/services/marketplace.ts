@@ -181,7 +181,7 @@ export async function setProviderStatus(providerId: string, status: ProviderStat
       type: "PROVIDER_APPROVED",
       title: "تم اعتماد ملفك كمزود خدمة",
       body: "يمكنك الآن استقبال الطلبات المطابقة وتقديم العروض.",
-      link: "/dashboard/services/profile",
+      link: "/dashboard/services/provider-profile",
       entityType: "service_provider_profiles",
       entityId: providerId,
     });
@@ -191,7 +191,7 @@ export async function setProviderStatus(providerId: string, status: ProviderStat
       type: status === PROVIDER_STATUS.REJECTED ? "PROVIDER_REJECTED" : "PROVIDER_SUSPENDED",
       title: status === PROVIDER_STATUS.REJECTED ? "لم يتم اعتماد ملفك" : "تم تعليق حسابك",
       body: note ?? "",
-      link: "/dashboard/services/profile",
+      link: "/dashboard/services/provider-profile",
       entityType: "service_provider_profiles",
       entityId: providerId,
     });

@@ -29,7 +29,7 @@ export default function CustomerDisputesPage() {
   useEffect(() => {
     if (!viewer.authenticated) return;
     const controller = new AbortController();
-    apiFetch<{ disputes: DisputeRow[] }>("/api/service-disputes?mine=1")
+    apiFetch<{ disputes: DisputeRow[] }>("/api/services/disputes?mine=1")
       .then((data) => {
         if (!controller.signal.aborted) {
           setDisputes(data.disputes ?? []);
@@ -49,7 +49,7 @@ export default function CustomerDisputesPage() {
     if (!reason) return;
     const description = window.prompt(t("services.disputeDescription") ?? "وصف إضافي (اختياري)") || "";
     try {
-      await apiFetch("/api/service-disputes", {
+      await apiFetch("/api/services/disputes", {
         method: "POST",
         body: JSON.stringify({ orderId, reason, description }),
       });

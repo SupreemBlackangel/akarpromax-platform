@@ -99,7 +99,7 @@ export async function runMatching(requestId: string): Promise<number> {
           crypto.randomUUID(), provider.user_id,
           "طلب جديد يناسب خدماتك",
           "وجدنا طلباً جديداً مطابقاً لخدماتك — يمكنك تقديم عرض.",
-          `/dashboard/services/requests/${requestId}`,
+          `/service-requests/${requestId}`,
           requestId, now,
         ),
     );

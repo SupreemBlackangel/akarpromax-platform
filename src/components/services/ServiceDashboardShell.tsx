@@ -60,7 +60,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
       >
         🔔
         {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)]0 px-1 text-[10px] font-black text-white">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)] px-1 text-[10px] font-black text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -175,7 +175,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
       <span>{item.icon}</span>
       <span>{t(item.labelKey)}</span>
       {badgeValue > 0 && (
-        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-error-soft)]0 rounded-full">
+        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-error-soft)] rounded-full">
           {badgeValue > 99 ? "99+" : badgeValue}
         </span>
       )}

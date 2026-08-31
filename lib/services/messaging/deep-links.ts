@@ -5,7 +5,7 @@ export function getDeepLink(context: string, contextId: string | null): string |
     case 'property':
       return `/properties/${contextId}`;
     case 'property_request':
-      return `/dashboard/property-requests/${contextId}`;
+      return `/dashboard/properties/property-requests`;
     case 'service':
       return `/service-requests/${contextId}`;
     case 'service_request':
