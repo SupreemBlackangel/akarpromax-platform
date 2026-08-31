@@ -27,6 +27,30 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
 
     const body = await request.json();
+
+    if (body.recipientId && body.recipientId === session.userId) {
+      return NextResponse.json({ success: false, error: 'لا يمكنك مراسلة نفسك' }, { status: 400 });
+    }
+
+    // Contextual conversations (e.g. a property enquiry) are deduplicated: the
+    // same visitor asking about the same listing reopens the existing thread
+    // instead of creating a new one on every click.
+    if (body.recipientId && body.contextId && body.context) {
+      const existing = await db.select({ id: messageThreads.id })
+        .from(messageThreads)
+        .innerJoin(messageParticipants, eq(messageParticipants.threadId, messageThreads.id))
+        .where(and(
+          eq(messageThreads.context, body.context),
+          eq(messageThreads.contextId, body.contextId),
+          eq(messageParticipants.userId, session.userId),
+        ))
+        .limit(1);
+      if (existing[0]) {
+        const [thread] = await db.select().from(messageThreads).where(eq(messageThreads.id, existing[0].id)).limit(1);
+        return NextResponse.json({ success: true, data: thread, existing: true });
+      }
+    }
+
     const [thread] = await db.insert(messageThreads).values({
       title: body.title,
       context: body.context || 'general',

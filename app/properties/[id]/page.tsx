@@ -4,14 +4,13 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { MapPin, Bed, Bath, Car, Maximize, ArrowRight, Heart } from "lucide-react";
+import { MapPin, Bed, Bath, Car, Maximize, ArrowRight, Heart, MessageCircle } from "lucide-react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { translations } from "@/src/data/translations";
 import { useGeo } from "@/src/contexts/GeoContext";
 import type { PublicProperty } from "@/lib/properties-format";
 import { normalizeApiProperty, type ApiPropertyRecord, type NormalizedProperty } from "@/lib/properties-api-normalize";
 import PageContainer from "@/src/components/layout/PageContainer";
-import StartThreadButton from "@/src/components/services/StartThreadButton";
 import { useServicesPage } from "@/src/components/services/useServicesPage";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -58,6 +57,8 @@ export default function PropertyPage({ params }: Props) {
   const [deviceType, setDeviceType] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const { viewer, openLogin, handleLogout, AccountDialog } = useServicesPage();
   const [property, setProperty] = useState<NormalizedProperty | null>(null);
+  const [advertiserId, setAdvertiserId] = useState<string | null>(null);
+  const [contactBusy, setContactBusy] = useState(false);
   const [similar, setSimilar] = useState<PublicProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -83,6 +84,7 @@ export default function PropertyPage({ params }: Props) {
         if (controller.signal.aborted) return;
         if (detailData?.data) {
           setProperty(normalizeApiProperty(detailData.data as ApiPropertyRecord));
+          setAdvertiserId(typeof detailData.data.userId === "string" ? detailData.data.userId : null);
           setActiveImage(0);
         }
         const similarData = similarRes.ok ? await similarRes.json() : null;
@@ -257,14 +259,44 @@ export default function PropertyPage({ params }: Props) {
                       )}
                     </div>
 
-                    <StartThreadButton
-                      threadType="property"
-                      threadId={property.id}
-                      title={property.title[locale]}
-                      contextLink={`/properties/${property.slug || property.id}`}
-                      label={t.ask}
-                      className="mt-5 w-full rounded-xl bg-[color:var(--color-primary)] px-5 py-3 text-sm font-black text-white transition hover:bg-[color:var(--color-primary-hover)] disabled:opacity-50"
-                    />
+                    <button
+                      type="button"
+                      disabled={contactBusy || !advertiserId}
+                      onClick={async () => {
+                        if (!viewer.authenticated) {
+                          openLogin("login");
+                          return;
+                        }
+                        if (!advertiserId || !property) return;
+                        setContactBusy(true);
+                        try {
+                          const response = await fetch("/api/messages", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              title: property.title[locale],
+                              context: "property",
+                              contextId: property.id,
+                              recipientId: advertiserId,
+                            }),
+                          });
+                          const data = await response.json().catch(() => null);
+                          if (response.ok && data?.success && data.data?.id) {
+                            window.dispatchEvent(new CustomEvent("akar:chat:open", {
+                              detail: { threadId: data.data.id, title: property.title[locale] },
+                            }));
+                          }
+                        } finally {
+                          setContactBusy(false);
+                        }
+                      }}
+                      className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-3 text-sm font-black text-white transition hover:bg-[color:var(--color-primary-hover)] disabled:opacity-50"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {contactBusy
+                        ? (locale === "ar" ? "جارٍ الفتح..." : locale === "tr" ? "Açılıyor..." : "Opening...")
+                        : (locale === "ar" ? "تواصل مع المعلن" : locale === "tr" ? "İlan sahibiyle iletişim" : "Contact the advertiser")}
+                    </button>
 
                     <button
                       type="button"

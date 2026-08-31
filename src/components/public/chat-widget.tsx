@@ -51,12 +51,21 @@ export default function ChatWidget({ locale, authenticated, onRequireLogin, hide
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // The rail footer button (and anything else) can open the panel via this event.
+  // The rail footer button (and e.g. "contact the advertiser" buttons) open the
+  // panel via this event; a detail of {threadId, title} lands straight in that
+  // conversation.
   useEffect(() => {
-    const openHandler = () => setOpen(true);
+    const openHandler = (event: Event) => {
+      const detail = (event as CustomEvent<{ threadId?: string; title?: string }>).detail;
+      if (detail?.threadId) {
+        setActiveThread({ id: detail.threadId, title: detail.title || TEXT[locale]?.thread || "محادثة" });
+        setMessages([]);
+      }
+      setOpen(true);
+    };
     window.addEventListener("akar:chat:open", openHandler);
     return () => window.removeEventListener("akar:chat:open", openHandler);
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     if (!open || !authenticated) return;
