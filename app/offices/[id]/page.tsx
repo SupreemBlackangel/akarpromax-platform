@@ -5,17 +5,50 @@ import { Star, MapPin, Building, Users, CheckCircle, MessageCircle, Home } from 
 import { AdSidebar } from '@/components/advertising/placements/AdSidebar';
 import { AdBottom } from '@/components/advertising/placements/AdBottom';
 import { NewsTicker } from '@/components/advertising/placements/NewsTicker';
+import ChatWidget from '@/src/components/public/chat-widget';
+import { useServicesPage } from '@/src/components/services/useServicesPage';
 import type { organizations, organizationBranches } from '@/lib/db/schema';
 
 type Organization = typeof organizations.$inferSelect;
 type OrganizationBranch = typeof organizationBranches.$inferSelect;
-type OfficeDetail = Organization & { branches: OrganizationBranch[]; membersCount: number };
+type OfficeDetail = Organization & { branches: OrganizationBranch[]; membersCount: number; ownerUserId?: string | null };
 
 export default function OfficeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { viewer, openLogin, AccountDialog } = useServicesPage();
   const [office, setOffice] = useState<OfficeDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [contactBusy, setContactBusy] = useState(false);
+
+  const contactOffice = async () => {
+    if (!office?.ownerUserId || contactBusy) return;
+    if (!viewer.authenticated) {
+      openLogin('login');
+      return;
+    }
+    setContactBusy(true);
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: office.nameAr || office.nameEn || 'مكتب عقاري',
+          context: 'office',
+          contextId: office.id,
+          recipientId: office.ownerUserId,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.success && data.data?.id) {
+        window.dispatchEvent(new CustomEvent('akar:chat:open', {
+          detail: { threadId: data.data.id, title: office.nameAr || office.nameEn || 'مكتب عقاري' },
+        }));
+      }
+    } finally {
+      setContactBusy(false);
+    }
+  };
 
   useEffect(() => {
     fetch(`/api/offices/${id}`)
@@ -49,7 +82,13 @@ export default function OfficeDetailPage({ params }: { params: Promise<{ id: str
               </div>
               <div className="p-6">
                 <div className="flex flex-wrap gap-4 border-b pb-4">
-                  <button className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] flex items-center gap-2"><MessageCircle className="w-4 h-4" />مراسلة</button>
+                  <button
+                    onClick={contactOffice}
+                    disabled={contactBusy || !office.ownerUserId}
+                    className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)] flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <MessageCircle className="w-4 h-4" />{contactBusy ? 'جارٍ الفتح...' : 'راسل المكتب'}
+                  </button>
                   <button className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"><Home className="w-4 h-4" />تصفح العقارات</button>
                 </div>
                 <div className="flex flex-wrap gap-6 mt-4 text-sm text-gray-600">
@@ -64,6 +103,8 @@ export default function OfficeDetailPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="grid grid-cols-3 gap-4 mt-6"><AdBottom page="office-detail" placement="bottom_01" country="السعودية" governorate="الرياض" city="الرياض" /><AdBottom page="office-detail" placement="bottom_02" /><AdBottom page="office-detail" placement="bottom_03" /></div>
       </div>
+      <ChatWidget locale="ar" authenticated={viewer.authenticated} onRequireLogin={() => openLogin('login')} />
+      {AccountDialog}
     </div>
   );
 }

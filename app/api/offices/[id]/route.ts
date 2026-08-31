@@ -25,12 +25,15 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       .where(and(eq(organizationBranches.organizationId, id), eq(organizationBranches.status, "active")));
 
     const activeMembers = await db
-      .select({ id: organizationMembers.id })
+      .select({ id: organizationMembers.id, userId: organizationMembers.userId, role: organizationMembers.role })
       .from(organizationMembers)
       .where(and(eq(organizationMembers.organizationId, id), eq(organizationMembers.status, "active")));
 
+    // The office owner's user id lets visitors open a direct chat thread.
+    const ownerUserId = activeMembers.find((member) => member.role === "owner")?.userId ?? null;
+
     return NextResponse.json(
-      { success: true, data: { ...office, branches, membersCount: activeMembers.length } },
+      { success: true, data: { ...office, branches, membersCount: activeMembers.length, ownerUserId } },
       { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } },
     );
   } finally {

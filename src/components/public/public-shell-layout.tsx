@@ -2,7 +2,7 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { LayoutDashboard, MessageCircle } from "lucide-react";
+import { LayoutDashboard, MessageCircle, MonitorDown } from "lucide-react";
 import ChatWidget from "@/src/components/public/chat-widget";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
@@ -131,14 +131,22 @@ export function PublicShellLayout({
   // These pages stay reachable from the footer; the side rail keeps only the
   // main browsing destinations.
   const sidebarNavItems = navItems.filter((item) => item.key !== "advertise" && item.key !== "about" && item.key !== "contact");
-  const sidebarExtraItems = isPlatformAdmin
-    ? [{
-        key: "admin-dashboard",
-        label: locale === "ar" ? "لوحة التحكم" : locale === "tr" ? "Yönetim Paneli" : "Admin Panel",
-        href: "/admin",
-        icon: LayoutDashboard,
-      }]
-    : undefined;
+  const sidebarExtraItems = [
+    {
+      key: "office-app-download",
+      label: locale === "ar" ? "البرنامج المكتبي" : locale === "tr" ? "Ofis Programı" : "Office App",
+      href: "/download",
+      icon: MonitorDown,
+    },
+    ...(isPlatformAdmin
+      ? [{
+          key: "admin-dashboard",
+          label: locale === "ar" ? "لوحة التحكم" : locale === "tr" ? "Yönetim Paneli" : "Admin Panel",
+          href: "/admin",
+          icon: LayoutDashboard,
+        }]
+      : []),
+  ];
   // The chat entry lives as a full-width rectangle in the rail footer; the
   // floating bubble stays only for mobile and sidebar-less pages.
   const sidebarChatButton = (

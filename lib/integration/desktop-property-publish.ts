@@ -1,4 +1,4 @@
-import { eq, sql, desc } from "drizzle-orm";
+import { and, eq, ne, sql, desc } from "drizzle-orm";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { properties, propertyMedia } from "@/lib/db/schemas/properties-schema";
@@ -15,7 +15,7 @@ import { getRuntimeEnv } from "@/lib/config/runtime-env";
 
 export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key, X-Source",
   "Access-Control-Max-Age": "86400",
 };
@@ -205,6 +205,22 @@ export async function listDesktopProperties(userId: string): Promise<{ total: nu
 
 export type PublishResult = { status: number; body: { ok: boolean; message: string; id?: string } };
 
+/** Archive (soft-delete) one of the office's own published properties. */
+export async function deleteDesktopProperty(userId: string, propertyId: string): Promise<PublishResult> {
+  const { db, end } = getDb();
+  try {
+    const [archived] = await db
+      .update(properties)
+      .set({ status: "archived" })
+      .where(and(eq(properties.id, propertyId), eq(properties.userId, userId)))
+      .returning({ id: properties.id });
+    if (!archived) return { status: 404, body: { ok: false, message: "العقار غير موجود" } };
+    return { status: 200, body: { ok: true, id: archived.id, message: "تم حذف العقار من المنصة" } };
+  } finally {
+    await end();
+  }
+}
+
 export async function publishDesktopProperty(userId: string, body: DesktopPropertyBody, existingId: string | null): Promise<PublishResult> {
   const titleAr = text(body.titleAr, 200) || text(body.title, 200);
   const descriptionAr = text(body.descriptionAr, 5000) || text(body.description, 5000);
@@ -267,6 +283,24 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   };
 
   try {
+    // Sync-as-update: a publish without an explicit id still updates the
+    // office's existing listing of the same title (any non-archived status)
+    // instead of creating a duplicate — re-syncing from the desktop app is
+    // an update, never a second copy.
+    if (!existingId) {
+      const [duplicate] = await db
+        .select({ id: properties.id })
+        .from(properties)
+        .where(and(
+          eq(properties.userId, userId),
+          eq(properties.titleAr, titleAr),
+          ne(properties.status, "archived"),
+        ))
+        .orderBy(desc(properties.createdAt))
+        .limit(1);
+      if (duplicate) existingId = duplicate.id;
+    }
+
     if (existingId) {
       const [updated] = await db
         .update(properties)
@@ -277,7 +311,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
           area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
           latitude, longitude, ownerName, agentName,
         })
-        .where(eq(properties.id, existingId))
+        .where(and(eq(properties.id, existingId), eq(properties.userId, userId)))
         .returning();
       if (!updated) return { status: 404, body: { ok: false, message: "العقار غير موجود" } };
       await syncPropertyOffer(updated.id);

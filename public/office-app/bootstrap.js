@@ -157,7 +157,22 @@
       + ".akar-logo-preview{width:56px;height:56px;border-radius:14px;background:#eef3fb;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px dashed #c7d4e8}"
       + ".akar-logo-preview img{width:100%;height:100%;object-fit:cover}"
       + ".akar-logo-btn{border:1px solid #d5deea;background:#fff;color:#33507d;font-weight:700;font-size:12.5px;font-family:inherit;padding:8px 14px;border-radius:10px;cursor:pointer}"
-      + ".akar-logo-btn:hover{background:#f3f7fc}";
+      + ".akar-logo-btn:hover{background:#f3f7fc}"
+      + ".akar-mgr-card{width:min(560px,94vw);max-height:90vh;overflow-y:auto}"
+      + ".akar-mgr-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #eef2f8}"
+      + ".akar-mgr-row .akar-mgr-info{flex:1;min-width:0}"
+      + ".akar-mgr-row b{display:block;font-size:13.5px;color:#122d5e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + ".akar-mgr-row small{font-size:11px;color:#6a7d97;font-weight:700}"
+      + ".akar-mgr-status{font-size:10.5px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap}"
+      + ".akar-mgr-status.ok{background:#e7f6ec;color:#0e6b3a}"
+      + ".akar-mgr-status.wait{background:#fff4e0;color:#9a6b00}"
+      + ".akar-mgr-status.off{background:#f2f4f8;color:#6a7d97}"
+      + ".akar-mgr-btn{border:0;border-radius:9px;font-family:inherit;font-weight:800;font-size:11.5px;padding:6px 11px;cursor:pointer}"
+      + ".akar-mgr-btn.edit{background:#eef3fb;color:#0e2f5c}"
+      + ".akar-mgr-btn.edit:hover{background:#e0eafb}"
+      + ".akar-mgr-btn.del{background:#fdecec;color:#c0392b}"
+      + ".akar-mgr-btn.del:hover{background:#fbdddd}"
+      + ".akar-mgr-empty{text-align:center;color:#6a7d97;font-size:13px;font-weight:700;padding:26px 0}";
     var s = document.createElement("style");
     s.id = "akar-office-auth-styles";
     s.textContent = css;
@@ -316,6 +331,169 @@
     setTimeout(function () { try { idEl.focus(); } catch (e) {} }, 60);
   }
 
+  // ---- published-properties manager (edit / delete on the platform) --------
+  var MGR_OFFER_TYPES = [
+    ["SALE", "بيع"], ["RENT", "إيجار"], ["TAQBEEL", "تقبيل"], ["FARAGH", "فروغ"],
+    ["INVESTMENT", "استثمار"], ["ASSIGNMENT", "تنازل"], ["USUFRUCT", "حق انتفاع"],
+    ["LEASE_TO_OWN", "إيجار منتهي بالتملك"], ["EXCHANGE", "مقايضة"],
+    ["PARTNERSHIP", "شراكة"], ["SHARE_SALE", "بيع حصة"]
+  ];
+  var MGR_PROPERTY_TYPES = [
+    ["apartment", "شقة"], ["villa", "فيلا"], ["townhouse", "تاون هاوس"], ["duplex", "دوبلكس"],
+    ["penthouse", "بنتهاوس"], ["building", "عمارة"], ["shop", "محل"], ["office", "مكتب"],
+    ["hotel", "فندق"], ["resort", "منتجع"], ["restaurant", "مطعم"], ["warehouse", "مستودع"],
+    ["factory", "مصنع"], ["land", "أرض"], ["ranch", "مزرعة"], ["farm", "مزرعة إنتاجية"]
+  ];
+  var MGR_STATUS = {
+    approved: ["منشور", "ok"], pending_review: ["قيد المراجعة", "wait"],
+    draft: ["مسودة", "off"], rejected: ["مرفوض", "off"], archived: ["محذوف", "off"],
+    sold: ["مباع", "off"], rented: ["مؤجر", "off"]
+  };
+
+  function mgrSelectHtml(id, pairs, selected) {
+    var html = '<select id="' + id + '">';
+    pairs.forEach(function (p) {
+      html += '<option value="' + p[0] + '"' + (String(selected) === p[0] ? " selected" : "") + ">" + p[1] + "</option>";
+    });
+    return html + "</select>";
+  }
+
+  function showPropertyManager() {
+    if (document.getElementById("akar-mgr-backdrop")) return;
+    injectStyles();
+    var wrap = document.createElement("div");
+    wrap.id = "akar-mgr-backdrop";
+    wrap.className = "akar-auth-backdrop";
+    wrap.innerHTML =
+      '<div class="akar-auth-card akar-mgr-card" role="dialog" aria-label="عقاراتي المنشورة">' +
+      '  <div class="akar-auth-logo"><img src="' + PLATFORM + '/icons/icon-192.png" alt="" onerror="this.style.display=\'none\'"/>' +
+      "    <div><b>عقاراتي المنشورة على المنصة</b><span>تعديل أو حذف مباشرةً — التعديل يحدّث الإعلان نفسه ولا ينشئ نسخة جديدة</span></div></div>" +
+      '  <div class="akar-auth-err" id="akar-mgr-err"></div>' +
+      '  <div id="akar-mgr-list"><p class="akar-mgr-empty">جارٍ التحميل...</p></div>' +
+      '  <button class="akar-auth-btn" id="akar-mgr-close" style="background:transparent;color:#6a7d97;margin-top:10px">إغلاق</button>' +
+      "</div>";
+    document.body.appendChild(wrap);
+    document.getElementById("akar-mgr-close").addEventListener("click", function () { wrap.remove(); });
+
+    function mgrErr(msg) {
+      var el = document.getElementById("akar-mgr-err");
+      if (el) { el.textContent = msg; el.style.display = msg ? "block" : "none"; }
+    }
+
+    function refreshPortal() {
+      // Re-pull the platform rows into the portal store so the app list matches.
+      syncPlatformProperties().then(function () {
+        try { window.sessionStorage.removeItem("akar_props_synced"); } catch (e) {}
+      });
+    }
+
+    function loadList() {
+      mgrErr("");
+      var list = document.getElementById("akar-mgr-list");
+      list.innerHTML = '<p class="akar-mgr-empty">جارٍ التحميل...</p>';
+      authedFetch("/api/program/properties", { method: "GET" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var rows = (data && Array.isArray(data.properties)) ? data.properties : [];
+          rows = rows.filter(function (p) { return p.status !== "archived"; });
+          if (!rows.length) {
+            list.innerHTML = '<p class="akar-mgr-empty">لا توجد عقارات منشورة بعد.</p>';
+            return;
+          }
+          list.innerHTML = "";
+          rows.forEach(function (p) {
+            var st = MGR_STATUS[p.status] || [p.status || "-", "off"];
+            var row = document.createElement("div");
+            row.className = "akar-mgr-row";
+            row.innerHTML =
+              '<div class="akar-mgr-info"><b></b><small>' + (Number(p.price) || 0).toLocaleString("ar") + " " + (p.currency || "SAR") + "</small></div>" +
+              '<span class="akar-mgr-status ' + st[1] + '">' + st[0] + "</span>" +
+              '<button class="akar-mgr-btn edit">تعديل</button>' +
+              '<button class="akar-mgr-btn del">حذف</button>';
+            row.querySelector("b").textContent = p.title || "عقار";
+            row.querySelector(".edit").addEventListener("click", function () { showEditForm(p); });
+            row.querySelector(".del").addEventListener("click", function () {
+              if (!window.confirm('حذف «' + (p.title || "العقار") + '» من المنصة نهائيًا؟')) return;
+              authedFetch("/api/program/properties/" + encodeURIComponent(p.id), { method: "DELETE" })
+                .then(function (r) { return r.json().catch(function () { return {}; }); })
+                .then(function (j) {
+                  if (j && j.ok) { loadList(); refreshPortal(); }
+                  else mgrErr((j && j.message) || "تعذّر الحذف.");
+                })
+                .catch(function () { mgrErr("تعذّر الاتصال بالمنصة."); });
+            });
+            list.appendChild(row);
+          });
+        })
+        .catch(function () { mgrErr("تعذّر تحميل القائمة."); });
+    }
+
+    function showEditForm(p) {
+      var list = document.getElementById("akar-mgr-list");
+      list.innerHTML =
+        '<div class="akar-profile-grid">' +
+        '  <div class="akar-auth-field akar-full"><label>عنوان العقار *</label><input id="akar-e-title" type="text"/></div>' +
+        '  <div class="akar-auth-field akar-full"><label>الوصف *</label><textarea id="akar-e-desc" rows="3"></textarea></div>' +
+        '  <div class="akar-auth-field"><label>نوع العرض</label>' + mgrSelectHtml("akar-e-offer", MGR_OFFER_TYPES, (p.dealType === "rent" ? "RENT" : "SALE")) + "</div>" +
+        '  <div class="akar-auth-field"><label>نوع العقار</label>' + mgrSelectHtml("akar-e-ptype", MGR_PROPERTY_TYPES, p.propertyType || "apartment") + "</div>" +
+        '  <div class="akar-auth-field"><label>السعر *</label><input id="akar-e-price" type="number" dir="ltr"/></div>' +
+        '  <div class="akar-auth-field"><label>العملة</label><input id="akar-e-currency" type="text" dir="ltr"/></div>' +
+        '  <div class="akar-auth-field"><label>المساحة (م²) *</label><input id="akar-e-area" type="number" dir="ltr"/></div>' +
+        '  <div class="akar-auth-field"><label>الغرف</label><input id="akar-e-beds" type="number" dir="ltr"/></div>' +
+        '  <div class="akar-auth-field"><label>الحمامات</label><input id="akar-e-baths" type="number" dir="ltr"/></div>' +
+        '  <div class="akar-auth-field"><label>اسم المالك</label><input id="akar-e-owner" type="text"/></div>' +
+        "</div>" +
+        '<button class="akar-auth-btn" id="akar-e-save">حفظ التعديلات</button>' +
+        '<button class="akar-auth-btn" id="akar-e-back" style="background:transparent;color:#6a7d97;margin-top:8px">رجوع للقائمة</button>';
+      document.getElementById("akar-e-title").value = p.title || "";
+      document.getElementById("akar-e-desc").value = p.description || "";
+      document.getElementById("akar-e-price").value = Number(p.price) || "";
+      document.getElementById("akar-e-currency").value = p.currency || "SAR";
+      document.getElementById("akar-e-area").value = Number(p.area) || "";
+      document.getElementById("akar-e-beds").value = p.bedrooms || 0;
+      document.getElementById("akar-e-baths").value = p.bathrooms || 0;
+      document.getElementById("akar-e-owner").value = p.ownerName || "";
+      document.getElementById("akar-e-back").addEventListener("click", loadList);
+      var saveBtn = document.getElementById("akar-e-save");
+      saveBtn.addEventListener("click", function () {
+        var payload = {
+          titleAr: (document.getElementById("akar-e-title").value || "").trim(),
+          descriptionAr: (document.getElementById("akar-e-desc").value || "").trim(),
+          offerType: document.getElementById("akar-e-offer").value,
+          category: document.getElementById("akar-e-ptype").value,
+          price: Number(document.getElementById("akar-e-price").value) || 0,
+          currency: (document.getElementById("akar-e-currency").value || "SAR").trim(),
+          area: Number(document.getElementById("akar-e-area").value) || 0,
+          bedrooms: Number(document.getElementById("akar-e-beds").value) || 0,
+          bathrooms: Number(document.getElementById("akar-e-baths").value) || 0,
+          ownerName: (document.getElementById("akar-e-owner").value || "").trim()
+        };
+        if (!payload.titleAr || !payload.descriptionAr || payload.price <= 0 || payload.area <= 0) {
+          mgrErr("العنوان والوصف والسعر والمساحة مطلوبة.");
+          return;
+        }
+        mgrErr("");
+        saveBtn.disabled = true;
+        saveBtn.textContent = "جارٍ الحفظ...";
+        authedFetch("/api/program/properties/" + encodeURIComponent(p.id), { method: "PUT", body: JSON.stringify(payload) })
+          .then(function (r) { return r.json().catch(function () { return {}; }); })
+          .then(function (j) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "حفظ التعديلات";
+            if (j && j.ok) { loadList(); refreshPortal(); }
+            else mgrErr((j && j.message) || "تعذّر حفظ التعديلات.");
+          })
+          .catch(function () {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "حفظ التعديلات";
+            mgrErr("تعذّر الاتصال بالمنصة.");
+          });
+      });
+    }
+
+    loadList();
+  }
+
   // ---- account chip (profile + logout) ------------------------------------
   function mountChip() {
     var existing = document.getElementById("akar-acct-chip");
@@ -332,8 +510,10 @@
     chip.className = "akar-acct-chip";
     chip.innerHTML =
       '<small title="' + name + '">🟢 ' + name + "</small>" +
+      '<button id="akar-chip-props">عقاراتي المنشورة</button>' +
       '<button id="akar-chip-profile">بيانات المكتب</button>' +
       '<button class="akar-chip-logout" id="akar-chip-logout">خروج</button>';
+    chip.querySelector("#akar-chip-props").addEventListener("click", function () { showPropertyManager(); });
     chip.querySelector("#akar-chip-profile").addEventListener("click", function () { showProfileForm(false); });
     chip.querySelector("#akar-chip-logout").addEventListener("click", function () {
       clearSession();
