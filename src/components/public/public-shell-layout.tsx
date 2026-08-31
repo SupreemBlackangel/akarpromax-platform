@@ -2,8 +2,8 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { LayoutDashboard, MessageCircle } from "lucide-react";
+import ChatWidget from "@/src/components/public/chat-widget";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
 import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD, type PublicAdSlotConfig } from "@/src/config/ad-placements";
@@ -142,14 +142,15 @@ export function PublicShellLayout({
   // The chat entry lives as a full-width rectangle in the rail footer; the
   // floating bubble stays only for mobile and sidebar-less pages.
   const sidebarChatButton = (
-    <Link
-      href="/messages"
+    <button
+      type="button"
       aria-label={labels.chatAria}
+      onClick={() => window.dispatchEvent(new CustomEvent("akar:chat:open"))}
       className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
     >
       <MessageCircle aria-hidden="true" className="size-5 shrink-0" />
       {locale === "ar" ? "الدردشة" : locale === "tr" ? "Sohbet" : "Chat"}
-    </Link>
+    </button>
   );
   const sidebarFooter = viewer.authenticated ? (
     <div className="flex flex-col gap-[var(--space-3)]">
@@ -304,7 +305,7 @@ export function PublicShellLayout({
         </div>
       </div>
 
-      <Link className={showPublicSidebar ? "floating-chat floating-chat--rail" : "floating-chat"} href="/messages" aria-label={labels.chatAria}>⌁</Link>
+      <ChatWidget locale={locale} authenticated={viewer.authenticated} onRequireLogin={onLogin} hideLauncherOnRail={showPublicSidebar} />
 
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 
