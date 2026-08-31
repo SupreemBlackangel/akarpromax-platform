@@ -233,7 +233,7 @@ export function createSmtpTransportFromEnv(env: NodeJS.ProcessEnv = process.env)
   if (!host) {
     throw new EmailDeliveryError("config", "SMTP_HOST is required when EMAIL_TRANSPORT=smtp or SMTP_HOST is set");
   }
-  const from = env.MAIL_FROM_ADDRESS?.trim() || env.SMTP_FROM?.trim() || "no-reply@akarpromax.om";
+  const from = env.MAIL_FROM_ADDRESS?.trim() || env.SMTP_FROM?.trim() || "no-reply@akarpromax.com";
   const fromName = env.MAIL_FROM_NAME?.trim() || env.SMTP_FROM_NAME?.trim() || "AkarProMax";
   return new SmtpEmailTransport({
     host,
@@ -262,7 +262,7 @@ export function createEmailService(overrides: Partial<EmailServiceConfig> = {}):
   return new EmailService({
     transport: overrides.transport ?? resolveTransport(),
     defaultLocale: overrides.defaultLocale ?? "ar",
-    defaultBrand: overrides.defaultBrand ?? { title: "AkarProMax", url: "https://akarpromax.om" },
+    defaultBrand: overrides.defaultBrand ?? { title: "AkarProMax", url: "https://akarpromax.com" },
     resetUrl: overrides.resetUrl,
   });
 }

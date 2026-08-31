@@ -22,7 +22,7 @@ export type EmailKind =
   | "email_change_confirm";
 
 const BRAND = "AkarProMax";
-const BRAND_URL = "https://akarpromax.om";
+const BRAND_URL = "https://akarpromax.com";
 
 const T = {
   ar: {
@@ -36,7 +36,7 @@ const T = {
     },
     welcome: {
       subject: "مرحباً بك في أكار برو ماكس — حسابك جاهز!",
-      preheader: "تم تفعيل حسابك ويمكنك الآن الوثول إلى لوحة التحكم.",
+      preheader: "تم تفعيل حسابك ويمكنك الآن تسجيل الدخول.",
     },
     reset: {
       subject: "استعادة كلمة المرور — أكار برو ماكس",
@@ -199,9 +199,9 @@ export function renderEmail(
     const html = htmlDocument(
       locale,
       t.welcome.preheader,
-      `<h1>${label.title}</h1><p>${greeting(locale, vars.recipientName)}</p><p>${label.body}</p><a href="${base.brandUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">${label.cta}</a>`,
+      `<h1>${label.title}</h1><p>${greeting(locale, vars.recipientName)}</p><p>${label.body}</p><a href="${base.brandUrl}/login" style="display:inline-block;background:#1f6feb;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">${label.cta}</a>`,
     );
-    const txt = `${label.title}\n\n${greeting(locale, vars.recipientName)}\n${label.body}\n\n${base.brandUrl}`;
+    const txt = `${label.title}\n\n${greeting(locale, vars.recipientName)}\n${label.body}\n\n${base.brandUrl}/login`;
     return { subject, html, text: txt };
   }
 
@@ -254,7 +254,7 @@ function tKeys(locale: Locale, key: string): { title: string; body: string; cta:
       otp_title: { title: "رمز التحقق", body: "", cta: "", expiry: () => "" },
       otp_body: { title: "", body: "استخدم الرمز أدناه لتأكيد عمليقتك. لا تشاركه مع أحد.", cta: "", expiry: () => "" },
       otp_expiry: { title: "", body: "ينتهاء الصلاحية خلال {seconds} ثوانٍ", cta: "", expiry: () => "" },
-      welcome: { title: "مرحباً بك!", body: "تم تفعيل حسابك بنجاح. يمكنك الآن الوثول إلى لوحة التحكم.", cta: "الذهاب إلى لوحة التحكم", expiry: () => "" },
+      welcome: { title: "مرحباً بك!", body: "تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول والبدء.", cta: "تسجيل الدخول", expiry: () => "" },
       reset: { title: "استعادة كلمة المرور", body: "لقد طلبت استعادة كلمة المرور. اضغط الزر أدناه لتعيين كلمة مرور جديدة.", cta: "استعادة كلمة المرور", expiry: (n) => `ينتهي هذا الرابط بعد ${n} دقيقة.` },
       password_changed: { title: "تم تغيير كلمة المرور", body: "تم تحديث كلمة مرور حسابك بنجاح. إذا لم تقم بذلك، يرجى التواصل معنا فوراً.", cta: "", expiry: () => "" },
       email_changed: { title: "تم تغيير البريد الإلكتروني", body: "تم تحديث بريدك الإلكتروني على حسابك بنجاح.", cta: "", expiry: () => "" },
