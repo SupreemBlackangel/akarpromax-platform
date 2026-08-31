@@ -77,10 +77,11 @@ export function PropertyForm({ initialData, propertyId, onSuccess }: PropertyFor
     media: initialData?.media || [],
   });
 
+  // 'both' was removed: the API's dealType enum is sale|rent only, and a
+  // property offered for both is modelled as two offers (SALE + RENT).
   const dealTypes = [
     { value: 'sale', label: 'للبيع' },
     { value: 'rent', label: 'للإيجار' },
-    { value: 'both', label: 'بيع وإيجار' },
   ];
 
   const categories = [

@@ -2,6 +2,7 @@ import { eq, sql, desc } from "drizzle-orm";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { properties, propertyMedia } from "@/lib/db/schemas/properties-schema";
+import { propertyOffers, propertyOfferTypes } from "@/lib/db/schemas/offer-types-schema";
 import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
@@ -42,7 +43,31 @@ const PROPERTY_TYPE_TO_CATEGORY: Record<string, string> = {
   farm: "agricultural",
 };
 const KNOWN_PROPERTY_TYPES = new Set(Object.keys(PROPERTY_TYPE_TO_CATEGORY));
-const KNOWN_DEAL_TYPES = new Set(["sale", "rent"]);
+
+// The desktop's `type` accepts the full offer-type taxonomy (property_offer_types
+// codes, case-insensitive) as well as the legacy sale/rent values. The canonical
+// dealType column stays sale|rent for compatibility with every existing filter;
+// the real offer type is recorded as a property_offers row.
+const OFFER_CODE_TO_DEAL_TYPE: Record<string, "sale" | "rent"> = {
+  SALE: "sale",
+  RENT: "rent",
+  TAQBEEL: "sale",
+  FARAGH: "sale",
+  INVESTMENT: "sale",
+  ASSIGNMENT: "sale",
+  USUFRUCT: "rent",
+  LEASE_TO_OWN: "rent",
+  EXCHANGE: "sale",
+  PARTNERSHIP: "sale",
+  SHARE_SALE: "sale",
+};
+
+function resolveOfferCode(raw: string): string {
+  const upper = raw.trim().toUpperCase();
+  if (upper === "SALE" || upper === "SELL") return "SALE";
+  if (upper === "RENT" || upper === "LEASE") return "RENT";
+  return OFFER_CODE_TO_DEAL_TYPE[upper] ? upper : "SALE";
+}
 
 export type DesktopPropertyBody = {
   title?: unknown;
@@ -51,7 +76,8 @@ export type DesktopPropertyBody = {
   descriptionAr?: unknown;
   price?: unknown;
   currency?: unknown;
-  type?: unknown; // deal type: sale/rent
+  type?: unknown; // offer type: sale/rent or any property_offer_types code (TAQBEEL, INVESTMENT, ...)
+  offerType?: unknown; // explicit offer-type code; takes precedence over `type`
   category?: unknown; // actually property type: apartment/villa/...
   city?: unknown;
   area?: unknown;
@@ -188,8 +214,8 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
     return { status: 400, body: { ok: false, message: "العنوان والوصف والسعر والمساحة مطلوبة" } };
   }
 
-  const rawDealType = text(body.type, 20).toLowerCase();
-  const dealType = KNOWN_DEAL_TYPES.has(rawDealType) ? rawDealType : "sale";
+  const offerCode = resolveOfferCode(text(body.offerType, 30) || text(body.type, 30));
+  const dealType = OFFER_CODE_TO_DEAL_TYPE[offerCode];
   const rawPropertyType = text(body.category, 30).toLowerCase();
   const propertyType = KNOWN_PROPERTY_TYPES.has(rawPropertyType) ? rawPropertyType : "apartment";
   const category = PROPERTY_TYPE_TO_CATEGORY[propertyType] ?? "residential";
@@ -214,6 +240,32 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   const longitude = Number.isFinite(Number(body.lng)) && Number(body.lng) !== 0 ? String(Number(body.lng)) : null;
 
   const { db, end } = getDb();
+
+  // Record the true offer type as a property_offers row so the public
+  // marketplace filter and card badges reflect it. Non-fatal: a publish must
+  // not fail because the offers tables are missing or unseeded.
+  const syncPropertyOffer = async (propertyId: string) => {
+    try {
+      const [typeRow] = await db
+        .select({ id: propertyOfferTypes.id })
+        .from(propertyOfferTypes)
+        .where(eq(propertyOfferTypes.code, offerCode))
+        .limit(1);
+      if (!typeRow) return;
+      await db.delete(propertyOffers).where(eq(propertyOffers.propertyId, propertyId));
+      await db.insert(propertyOffers).values({
+        propertyId,
+        offerTypeId: typeRow.id,
+        marketingMethod: "direct",
+        status: "active",
+        price: String(price),
+        currency: text(body.currency, 8) || "SAR",
+      });
+    } catch (offerError) {
+      console.error("[desktop publish] offer sync failed:", offerError);
+    }
+  };
+
   try {
     if (existingId) {
       const [updated] = await db
@@ -228,6 +280,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         .where(eq(properties.id, existingId))
         .returning();
       if (!updated) return { status: 404, body: { ok: false, message: "العقار غير موجود" } };
+      await syncPropertyOffer(updated.id);
 
       if (images.length > 0 || videoUrl) {
         await db.delete(propertyMedia).where(eq(propertyMedia.propertyId, updated.id));
@@ -265,6 +318,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
       })
       .returning();
     if (!created) return { status: 500, body: { ok: false, message: "تعذّر إنشاء العقار" } };
+    await syncPropertyOffer(created.id);
 
     if (images.length > 0) {
       await db.insert(propertyMedia).values(

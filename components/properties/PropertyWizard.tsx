@@ -182,7 +182,6 @@ export function PropertyWizard({ onSuccess, propertyId, initialData }: PropertyW
                   <option value="">اختر</option>
                   <option value="sale">للبيع</option>
                   <option value="rent">للإيجار</option>
-                  <option value="both">بيع وإيجار</option>
                 </select>
               </div>
               <div>

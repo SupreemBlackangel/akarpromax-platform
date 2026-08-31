@@ -19,7 +19,6 @@ const dealTypeOptions = [
   { value: '', label: 'نوع الصفقة' },
   { value: 'sale', label: 'للبيع' },
   { value: 'rent', label: 'للإيجار' },
-  { value: 'both', label: 'بيع/إيجار' },
 ];
 
 export function PropertyFilters({ onFilterChange }: PropertyFiltersProps) {
