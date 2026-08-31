@@ -35,13 +35,19 @@ function cleanAnswers(value: unknown): Array<{ key: string; label?: string | nul
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams;
   const mine = q.get("mine") === "1";
+  // Supervisor listing: ?all=1 with SERVICE_REQUESTS_MANAGE_ALL sees every
+  // request in any status (contact details included, like `mine`).
+  let allRequests = q.get("all") === "1";
   let customerUserId: string | undefined;
-  if (mine) {
+  if (mine || allRequests) {
     const identity = await getSessionIdentity();
     if (!identity.authenticated || !identity.email) {
       return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
     }
-    customerUserId = identity.email;
+    if (allRequests && !hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL)) {
+      allRequests = false;
+    }
+    if (mine) customerUserId = identity.email;
   }
   const requestedStatus = q.get("status");
   const publicStatus = requestedStatus === "receiving_offers" ? "receiving_offers" : "published";
@@ -72,19 +78,19 @@ export async function GET(request: NextRequest) {
     districtId: geo.district?.code ?? geo.district?.id,
     districtAliases: geo.aliases.district,
     categoryId: q.get("categoryId") ?? undefined,
-    status: mine ? requestedStatus ?? undefined : publicStatus,
+    status: mine || allRequests ? requestedStatus ?? undefined : publicStatus,
     customerUserId,
     urgency: q.get("urgency") ?? undefined,
     limit: q.get("limit") ? Math.max(1, Math.min(100, Number(q.get("limit")) || 50)) : 50,
   });
-  const safeRequests = mine ? requests : requests.map((request) => {
+  const safeRequests = mine || allRequests ? requests : requests.map((request) => {
     const safe = { ...request };
     for (const key of ["customer_user_id", "latitude", "longitude", "contact_phone", "contact_email", "contact_preference", "access_notes"]) {
       delete safe[key];
     }
     return safe;
   });
-  return NextResponse.json({ requests: safeRequests }, { headers: { "Cache-Control": mine ? "no-store" : "public, max-age=30, stale-while-revalidate=90" } });
+  return NextResponse.json({ requests: safeRequests }, { headers: { "Cache-Control": mine || allRequests ? "no-store" : "public, max-age=30, stale-while-revalidate=90" } });
 }
 
 export async function POST(request: NextRequest) {

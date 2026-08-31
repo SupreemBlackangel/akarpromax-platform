@@ -303,6 +303,18 @@ export async function DELETE(request: NextRequest) {
   if (!existing || !canManageTargets(identity, parseList(existing.countries))) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
+  const hard = request.nextUrl.searchParams.get("hard") === "1";
+  if (hard) {
+    // Permanent removal: the campaign, its creatives and its tracking rows are
+    // gone for good. Archive (the default) stays the reversible path.
+    await db.prepare("DELETE FROM ad_creatives WHERE campaign_id = ?1").bind(id).run();
+    for (const table of ["ad_impressions", "ad_clicks", "ad_conversions", "ad_daily_statistics"]) {
+      try { await db.prepare(`DELETE FROM ${table} WHERE campaign_id = ?1`).bind(id).run(); } catch { /* table optional */ }
+    }
+    await db.prepare("DELETE FROM ad_campaigns WHERE id = ?1").bind(id).run();
+    await writeAudit(db, identity.email, "ad.deleted", id, { hard: true });
+    return NextResponse.json({ ok: true, hard: true });
+  }
   await db
     .prepare("UPDATE ad_campaigns SET status = 'archived', deleted_at = CURRENT_TIMESTAMP, is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?1")
     .bind(id)

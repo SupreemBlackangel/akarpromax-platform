@@ -74,6 +74,9 @@ export const providerSidebarConfig: SidebarConfig = {
 export const serviceSupervisorSidebarConfig: SidebarConfig = {
   items: [
     { key: "overview", labelKey: "services.dashboard", href: "/dashboard/services/supervisor", icon: "📊", requiredPermission: PERMISSIONS.SERVICE_REPORTS_MANAGE },
+    { key: "all-requests", labelKey: "services.allRequests", href: "/dashboard/services/supervisor/requests", icon: "📋", requiredPermission: PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL },
+    { key: "providers", labelKey: "services.allProviders", href: "/dashboard/services/supervisor/providers", icon: "👥", requiredPermission: PERMISSIONS.SERVICE_PROVIDERS_REVIEW },
+    { key: "verification-queue", labelKey: "services.verificationQueue", href: "/dashboard/services/supervisor/verification", icon: "📄", requiredPermission: PERMISSIONS.SERVICE_PROVIDERS_REVIEW },
     { key: "reviews", labelKey: "services.moderateReviews", href: "/dashboard/services/reviews", icon: "⭐", requiredPermission: PERMISSIONS.SERVICES_REVIEW_MODERATE },
     { key: "disputes", labelKey: "services.disputes", href: "/dashboard/services/disputes", icon: "⚖", requiredPermission: PERMISSIONS.SERVICES_DISPUTE_RESOLVE },
     { key: "notifications", labelKey: "services.notifications", href: "/dashboard/services/notifications", icon: "🔔", requiredPermission: PERMISSIONS.SERVICE_NOTIFICATIONS_VIEW },

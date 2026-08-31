@@ -654,6 +654,22 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     }
   }
 
+  async function deleteCampaignForever(id: string, name: string) {
+    if (!window.confirm(`حذف حملة «${name}» نهائيًا؟ سيُحذف الإعلان وصوره وإحصاءاته ولا يمكن التراجع.`)) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/admin/ads?id=${encodeURIComponent(id)}&hard=1`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "تعذر حذف الحملة");
+      await loadCampaigns();
+      setMessage("تم حذف الحملة نهائيًا.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر حذف الحملة");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function setApproval(id: string, approved: boolean) {
     setBusy(true);
     try {
@@ -833,7 +849,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
                   <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
                   <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
-                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}</div>
+                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}{canEdit && <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>}</div>
                 </article>)}
                 {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والمواضع والاستهداف والموازنة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
               </div>
