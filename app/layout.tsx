@@ -1,6 +1,6 @@
 import Script from "next/script";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Cairo, Inter } from "next/font/google";
 import SkipLink from "@/src/components/ui/SkipLink";
 import { GeoProvider } from "@/src/contexts/GeoContext";
@@ -49,16 +49,47 @@ const structuredData = JSON.stringify({
   ],
 });
 
+type SiteLocale = "ar" | "en" | "tr";
+
+async function readLocaleCookie(): Promise<SiteLocale> {
+  const store = await cookies();
+  const value = store.get("akarpromax-locale")?.value;
+  return value === "en" || value === "tr" ? value : "ar";
+}
+
+const META_COPY: Record<SiteLocale, { title: string; description: string; ogTitle: string; ogDescription: string }> = {
+  ar: {
+    title: "عقار بروماكس | منصة العقار والخدمات الذكية",
+    description: "اكتشف العقارات والمكاتب والخدمات المهنية عبر منصة عقار بروماكس.",
+    ogTitle: "عقار بروماكس | قرارك العقاري يبدأ بوضوح",
+    ogDescription: "منصة عقارية تجمع العقارات والمكاتب والخدمات في تجربة واحدة موثوقة.",
+  },
+  en: {
+    title: "AkarProMax | Smart Real-Estate & Services Platform",
+    description: "Discover properties, offices and professional services on AkarProMax.",
+    ogTitle: "AkarProMax | Your property decision starts with clarity",
+    ogDescription: "One trusted platform for properties, offices and professional services.",
+  },
+  tr: {
+    title: "AkarProMax | Akıllı Emlak ve Hizmet Platformu",
+    description: "AkarProMax'te gayrimenkulleri, ofisleri ve profesyonel hizmetleri keşfedin.",
+    ogTitle: "AkarProMax | Emlak kararınız netlikle başlar",
+    ogDescription: "Gayrimenkul, ofis ve hizmetleri tek güvenilir platformda buluşturur.",
+  },
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host") ?? "akarpromax.com";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
   const metadataBase = new URL(`${protocol}://${host}`);
+  const locale = await readLocaleCookie();
+  const copy = META_COPY[locale];
 
   return {
     metadataBase,
-    title: "عقار بروماكس | منصة العقار والخدمات الذكية",
-    description: "اكتشف العقارات والمكاتب والخدمات المهنية عبر منصة عقار بروماكس.",
+    title: copy.title,
+    description: copy.description,
     icons: {
       icon: [
         { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
@@ -69,28 +100,32 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     manifest: "/manifest.json",
     openGraph: {
-      title: "عقار بروماكس | قرارك العقاري يبدأ بوضوح",
-      description: "منصة عقارية تجمع العقارات والمكاتب والخدمات في تجربة واحدة موثوقة.",
-      locale: "ar",
+      title: copy.ogTitle,
+      description: copy.ogDescription,
+      locale,
       type: "website",
       images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "عقار بروماكس" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "عقار بروماكس | منصة العقار والخدمات الذكية",
-      description: "اكتشف العقارات والمكاتب والخدمات المهنية بثقة.",
+      title: copy.title,
+      description: copy.description,
       images: ["/og.jpg"],
     },
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The language cookie makes the FIRST server render match the visitor's
+  // choice — no more Arabic flash for en/tr visitors, and crawlers see the
+  // right lang/dir.
+  const locale = await readLocaleCookie();
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${cairo.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <Script
           id="theme-boot"

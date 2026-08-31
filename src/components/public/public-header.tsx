@@ -56,7 +56,8 @@ export default function PublicHeader({
           )}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-[11px_11px_2px_11px] bg-[color:var(--color-primary)] font-black text-white shadow-[inset_0_-4px_0_rgba(0,0,0,.14)]" aria-hidden="true">A</span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+            <img src="/brand/logo.svg" alt="" aria-hidden="true" className="size-9 shrink-0" width={36} height={36} />
             <span className="flex min-w-0 flex-col leading-tight">
               <strong className="truncate text-[15px] font-black text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
               <small className="hidden truncate text-[10px] font-bold text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AkarProMax">
+  <defs>
+    <linearGradient id="akar-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B214C"/>
+      <stop offset="1" stop-color="#1769FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#akar-bg)"/>
+  <!-- The mark: an "A" that reads as a rooftop over a doorway -->
+  <path d="M32 13 L52 47 H44.5 L32 24.5 L19.5 47 H12 Z" fill="#FFFFFF"/>
+  <path d="M27 47 L32 38.5 L37 47 Z" fill="#D8AF55"/>
+  <rect x="12" y="50" width="40" height="3.5" rx="1.75" fill="#D8AF55"/>
+</svg>

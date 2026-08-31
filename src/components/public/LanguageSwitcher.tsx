@@ -8,12 +8,28 @@ import { languageOptions } from "@/src/data/translations";
 const STORAGE_KEY = "akarpromax-locale";
 export const LOCALE_CHANGE_EVENT = "akarpromax-locale-change";
 
+function readCookieLocale(): Locale | null {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)akarpromax-locale=(ar|en|tr)(?:;|$)/);
+    return (match?.[1] as Locale) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCookieLocale(locale: Locale): void {
+  try {
+    document.cookie = `${STORAGE_KEY}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch { /* cookie unavailable */ }
+}
+
 function readStoredLocale(): Locale {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved === "ar" || saved === "en" || saved === "tr" ? saved : "ar";
+    if (saved === "ar" || saved === "en" || saved === "tr") return saved;
+    return readCookieLocale() ?? "ar";
   } catch {
-    return "ar";
+    return readCookieLocale() ?? "ar";
   }
 }
 
@@ -40,8 +56,11 @@ export default function LanguageSwitcher({ labels }: { labels: Translation }) {
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      // Storage unavailable — the event still switches for this session.
+      // Storage unavailable — the cookie + event still switch the language.
     }
+    // The cookie is what the SERVER reads: the next full page load renders in
+    // this language from the first byte (no Arabic flash, correct SEO lang).
+    writeCookieLocale(next);
     window.dispatchEvent(new CustomEvent(LOCALE_CHANGE_EVENT, { detail: next }));
     setOpen(false);
   }, []);

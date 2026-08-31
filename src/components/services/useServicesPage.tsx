@@ -33,7 +33,9 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
   const [locale, setLocale] = useState<Locale>(options.locale ?? (() => {
     if (typeof window === "undefined") return "ar";
     const stored = window.localStorage.getItem("akarpromax-locale");
-    return stored === "en" || stored === "tr" ? stored : "ar";
+    if (stored === "en" || stored === "tr") return stored;
+    const cookie = document.cookie.match(/(?:^|;\s*)akarpromax-locale=(ar|en|tr)(?:;|$)/)?.[1];
+    return cookie === "en" || cookie === "tr" ? cookie : "ar";
   }));
   const [viewer, setViewer] = useState<ViewerContext>(GUEST_VIEWER);
   const [flat, setFlat] = useState<Flat>({});
@@ -48,6 +50,9 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;
     window.localStorage.setItem("akarpromax-locale", locale);
+    try {
+      document.cookie = `akarpromax-locale=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch { /* cookie unavailable */ }
   }, [dir, locale]);
 
   // The header LanguageSwitcher dispatches this event so every page using
