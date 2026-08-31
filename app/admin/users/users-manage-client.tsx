@@ -24,11 +24,19 @@ const STATUS_LABELS: Record<string, [string, string]> = {
   deleted: ["محذوف", "bg-gray-200 text-gray-500"],
 };
 
+// Mirrors the platform role catalog (src/constants/roles.ts).
 const ROLE_LABELS: Record<string, string> = {
   user: "مستخدم",
-  super_admin: "مدير عام",
+  service_provider: "مزود خدمات",
+  service_supervisor: "مشرف خدمات",
+  analyst: "محلل التقارير",
+  content_editor: "محرر المعلنين",
+  ads_reviewer: "مراجع الإعلانات",
+  ad_manager: "مدير الإعلانات",
   country_manager: "مدير دولة",
-  ad_manager: "مدير إعلانات",
+  sponsor_manager: "مدير المعلنين",
+  sponsor_admin: "مدير المعلنين التنفيذي",
+  super_admin: "المدير العام",
 };
 
 export default function UsersManageClient() {
@@ -42,6 +50,7 @@ export default function UsersManageClient() {
   const [detail, setDetail] = useState<{ user: AdminUserRow; editing: boolean } | null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editRole, setEditRole] = useState("user");
 
   const load = useCallback(async (searchQ: string, searchStatus: string) => {
     setLoading(true);
@@ -93,6 +102,7 @@ export default function UsersManageClient() {
     setDetail({ user, editing });
     setEditName(user.name || "");
     setEditPhone(user.phone || "");
+    setEditRole(user.role || "user");
     setNotice(null);
   };
 
@@ -103,7 +113,7 @@ export default function UsersManageClient() {
       const response = await fetch(`/api/admin/users/${encodeURIComponent(detail.user.id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, phone: editPhone }),
+        body: JSON.stringify({ name: editName, phone: editPhone, role: editRole }),
       });
       const data = await response.json().catch(() => null);
       if (response.ok && data?.success && data.data) {
@@ -298,7 +308,15 @@ export default function UsersManageClient() {
                   الهاتف
                   <input value={editPhone} onChange={(event) => setEditPhone(event.target.value)} dir="ltr" className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
-                <p className="text-[11px] text-[var(--color-text-muted)]">البريد الإلكتروني لا يُعدَّل من هنا حفاظًا على سلامة التحقق.</p>
+                <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+                  الدور (رفع/خفض المستوى)
+                  <select value={editRole} onChange={(event) => setEditRole(event.target.value)} className="mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-bold outline-none focus:border-[var(--color-primary)]">
+                    {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-[11px] text-[var(--color-text-muted)]">البريد الإلكتروني لا يُعدَّل من هنا حفاظًا على سلامة التحقق. منح «المدير العام» أو سحبه يتطلب مديرًا عامًا.</p>
                 <div className="flex gap-2 pt-2">
                   <button type="button" disabled={busyId === detail.user.id} onClick={() => void saveEdit()} className="flex-1 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-black text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
                     {busyId === detail.user.id ? "جارٍ الحفظ..." : "حفظ التعديلات"}

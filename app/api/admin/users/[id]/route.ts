@@ -11,6 +11,14 @@ export const dynamic = 'force-dynamic';
 
 type AdminUserAction = 'verify' | 'activate' | 'suspend' | 'block' | 'unblock';
 
+// DB role values the panel may assign, per the platform role catalog
+// (src/constants/roles.ts). 'user' maps to the viewer capability set.
+const ASSIGNABLE_ROLES = new Set([
+  'user', 'service_provider', 'service_supervisor', 'analyst', 'content_editor',
+  'ads_reviewer', 'ad_manager', 'country_manager', 'sponsor_manager', 'sponsor_admin',
+  'super_admin',
+]);
+
 const ACTIONS: Record<AdminUserAction, Partial<typeof users.$inferInsert>> = {
   // Manual activation: mark the email verified and open the account.
   verify: { emailVerifiedAt: new Date(), status: 'active', isActive: true },
@@ -30,7 +38,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ success: false, error: 'لا تملك صلاحية إدارة المستخدمين' }, { status: 403 });
   }
 
-  const body = (await request.json().catch(() => null)) as { action?: string; name?: string; phone?: string } | null;
+  const body = (await request.json().catch(() => null)) as { action?: string; name?: string; phone?: string; role?: string } | null;
   if (!body) return NextResponse.json({ success: false, error: 'بيانات غير صالحة' }, { status: 400 });
 
   const [target] = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -52,6 +60,21 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   if (action) Object.assign(patch, ACTIONS[action]);
   if (typeof body.name === 'string' && body.name.trim()) patch.name = body.name.trim().slice(0, 190);
   if (typeof body.phone === 'string') patch.phone = body.phone.trim().slice(0, 20) || null;
+
+  // Role promotion/demotion: only catalog roles; super_admin may only be
+  // granted or revoked by a super_admin, and never on one's own account.
+  if (typeof body.role === 'string' && body.role !== target.role) {
+    if (!ASSIGNABLE_ROLES.has(body.role)) {
+      return NextResponse.json({ success: false, error: 'دور غير معروف' }, { status: 400 });
+    }
+    if (target.id === session.userId) {
+      return NextResponse.json({ success: false, error: 'لا يمكنك تغيير دورك الخاص' }, { status: 400 });
+    }
+    if ((body.role === 'super_admin' || target.role === 'super_admin') && session.role !== 'super_admin') {
+      return NextResponse.json({ success: false, error: 'منح أو سحب دور المدير العام يتطلب مديرًا عامًا' }, { status: 403 });
+    }
+    patch.role = body.role;
+  }
 
   const [updated] = await db.update(users).set(patch).where(eq(users.id, id)).returning({
     id: users.id, name: users.name, email: users.email, phone: users.phone,
