@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
-import { CategoryCard, ProviderCard, RequestCard, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
-import { apiFetch } from "@services-client";
+import { ProviderCard, RequestCard, ServiceCategoryIcon, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
+import { apiFetch, nameFor } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 
@@ -15,6 +15,7 @@ export default function ServicesHubPage() {
     isGlobal, openLogin, handleLogout, AccountDialog, copy,
   } = useServicesPage();
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -58,6 +59,22 @@ export default function ServicesHubPage() {
     });
     return () => { active = false; };
   }, [locale, country, city, governorate, district, isGlobal]);
+
+  // Groups are the top-level rows (no parent); professions are their children.
+  const groups = useMemo(
+    () => categories
+      .filter((category) => !category.parent_id)
+      .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)),
+    [categories],
+  );
+  const selectedGroupId = activeGroup ?? groups[0]?.id ?? null;
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
+  const professions = useMemo(
+    () => categories
+      .filter((category) => category.parent_id === selectedGroupId)
+      .sort((a, b) => Number(b.is_featured ?? 0) - Number(a.is_featured ?? 0) || Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)),
+    [categories, selectedGroupId],
+  );
 
   const heroKicker = locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmet Pazarı" : "Services Market";
   const heroTitle = locale === "ar" ? "اختر خدمة أو اطلبها بسهولة" : locale === "tr" ? "Bir hizmet seçin veya kolayca talep edin" : "Choose a service or request one easily";
@@ -109,25 +126,98 @@ export default function ServicesHubPage() {
         </section>
 
         <section className="mt-10">
-          <div className="flex items-end justify-between gap-4 mb-4">
-            <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{categoriesLabel}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{browseByCategoryLabel}</h2>
-            </div>
-            <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {viewAllLabel} ←
-            </Link>
+          <div className="text-center mb-8">
+            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wider">{categoriesLabel}</p>
+            <h2 className="mt-1 text-2xl md:text-3xl font-black text-gray-900 dark:text-white">{browseByCategoryLabel}</h2>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              {locale === "ar" ? "اختر نوع الخدمة لعرض المهن المتاحة فيه" : locale === "tr" ? "Mevcut meslekleri görmek için bir hizmet türü seçin" : "Pick a service type to see its professions"}
+            </p>
           </div>
-          <Grid columns={3}>
-            {dataLoading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-40 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-                ))
-              : categories.filter((category) => Boolean(category.parent_id)).slice(0, 6).map((category) => <CategoryCard key={category.id} category={category} locale={locale} />)}
-            {!dataLoading && categories.length === 0 && (
-              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
-            )}
-          </Grid>
+
+          {dataLoading ? (
+            <div className="flex flex-wrap justify-center gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-24 w-24 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+              ))}
+            </div>
+          ) : groups.length === 0 ? (
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
+          ) : (
+            <>
+              {/* أيقونات أنواع الخدمات */}
+              <div className="flex gap-3 md:gap-4 overflow-x-auto pb-3 md:flex-wrap md:justify-center md:overflow-visible">
+                {groups.map((group) => {
+                  const active = group.id === selectedGroupId;
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => setActiveGroup(group.id)}
+                      aria-pressed={active}
+                      className="group flex w-24 shrink-0 flex-col items-center gap-2 focus:outline-none"
+                    >
+                      <span
+                        className={`grid h-16 w-16 place-items-center rounded-2xl border transition-all duration-200 ${
+                          active
+                            ? "border-transparent bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/30 scale-105"
+                            : "border-gray-200 bg-white text-blue-600 shadow-sm group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:text-blue-400"
+                        }`}
+                      >
+                        <ServiceCategoryIcon name={typeof group.icon === "string" ? group.icon : null} className="h-7 w-7" />
+                      </span>
+                      <span className={`text-center text-[11px] font-bold leading-4 ${active ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-300"}`}>
+                        {nameFor(locale, group.name_ar, group.name_en, group.name_tr, group.code)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* مهن النوع المختار */}
+              <div className="mt-6 rounded-3xl border border-gray-100 bg-gradient-to-b from-gray-50 to-white p-5 md:p-7 dark:border-gray-800 dark:from-gray-900 dark:to-gray-950">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white shadow shadow-blue-600/25">
+                      <ServiceCategoryIcon name={typeof selectedGroup?.icon === "string" ? selectedGroup.icon : null} className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                        {selectedGroup ? nameFor(locale, selectedGroup.name_ar, selectedGroup.name_en, selectedGroup.name_tr, selectedGroup.code) : ""}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {locale === "ar" ? `${professions.length} مهنة متاحة` : locale === "tr" ? `${professions.length} meslek mevcut` : `${professions.length} professions available`}
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/services/catalog" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                    {viewAllLabel} ←
+                  </Link>
+                </div>
+
+                {professions.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{emptyLabel}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {professions.map((profession) => (
+                      <Link
+                        key={profession.id}
+                        href={`/services/catalog/${profession.code}`}
+                        className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-700"
+                      >
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+                          <ServiceCategoryIcon name={typeof profession.icon === "string" && profession.icon ? profession.icon : (typeof selectedGroup?.icon === "string" ? selectedGroup.icon : null)} className="h-[18px] w-[18px]" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-bold text-gray-800 group-hover:text-blue-700 dark:text-gray-200 dark:group-hover:text-blue-300">
+                          {nameFor(locale, profession.name_ar, profession.name_en, profession.name_tr, profession.code)}
+                        </span>
+                        <span className="text-gray-300 transition group-hover:text-blue-500 dark:text-gray-600" aria-hidden="true">←</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </section>
 
         <section className="mt-10">
