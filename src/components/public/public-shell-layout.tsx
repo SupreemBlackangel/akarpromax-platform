@@ -128,6 +128,9 @@ export function PublicShellLayout({
   const isPlatformAdmin =
     viewer.authenticated &&
     (viewer.permissions.includes("*") || viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW));
+  // These pages stay reachable from the footer; the side rail keeps only the
+  // main browsing destinations.
+  const sidebarNavItems = navItems.filter((item) => item.key !== "advertise" && item.key !== "about" && item.key !== "contact");
   const sidebarExtraItems = isPlatformAdmin
     ? [{
         key: "admin-dashboard",
@@ -196,7 +199,7 @@ export function PublicShellLayout({
         {/* Floating panel — fixed positioned; when pinned open on desktop it
             pushes/shrinks the content column via .public-shell-content below
             instead of floating over it. */}
-        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} extraItems={sidebarExtraItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
+        {showPublicSidebar && <PublicSidebar labels={labels} items={sidebarNavItems} extraItems={sidebarExtraItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
         <div className="public-shell-content flex min-w-0 flex-1 flex-col">
           {/* Header + news ticker pin together as one sticky block. */}
