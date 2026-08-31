@@ -53,6 +53,8 @@ export default function PropertiesPage() {
   const [listingType, setListingType] = useState("all");
   const [propertyType, setPropertyType] = useState("all");
   const [customType, setCustomType] = useState("");
+  const [adv, setAdv] = useState({ minPrice: "", maxPrice: "", minArea: "", maxArea: "", bedrooms: "" });
+  const [advApplied, setAdvApplied] = useState(adv);
   const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
   const [offerTypes, setOfferTypes] = useState<OfferTypeOption[]>(FALLBACK_OFFER_TYPES);
 
@@ -105,6 +107,9 @@ export default function PropertiesPage() {
       setLoadError(false);
       try {
         const params = new URLSearchParams({ limit: "50", scope: isGlobal ? "global" : "local" });
+        for (const [key, value] of Object.entries(advApplied)) {
+          if (value !== "" && Number(value) >= 0) params.set(key, value);
+        }
         if (!isGlobal) {
           params.set("country", country);
           if (governorate) params.set("governorate", governorate);
@@ -130,7 +135,7 @@ export default function PropertiesPage() {
       }
     })();
     return () => controller.abort();
-  }, [country, governorate, city, district, isGlobal]);
+  }, [country, governorate, city, district, isGlobal, advApplied]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -229,6 +234,45 @@ export default function PropertiesPage() {
                 />
               )}
             </div>
+          </div>
+
+          {/* فلاتر متقدمة: تُطبَّق على الخادم */}
+          <div className="flex flex-wrap items-end gap-2">
+            {([
+              ["minPrice", locale === "ar" ? "السعر من" : locale === "tr" ? "Fiyat (min)" : "Min price"],
+              ["maxPrice", locale === "ar" ? "السعر إلى" : locale === "tr" ? "Fiyat (max)" : "Max price"],
+              ["minArea", locale === "ar" ? "المساحة من" : locale === "tr" ? "Alan (min)" : "Min area"],
+              ["maxArea", locale === "ar" ? "المساحة إلى" : locale === "tr" ? "Alan (max)" : "Max area"],
+              ["bedrooms", locale === "ar" ? "الغرف" : locale === "tr" ? "Oda" : "Beds"],
+            ] as Array<[keyof typeof adv, string]>).map(([key, label]) => (
+              <label key={key} className="flex flex-col gap-1 text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                {label}
+                <input
+                  type="number"
+                  min={0}
+                  value={adv[key]}
+                  onChange={(event) => setAdv((current) => ({ ...current, [key]: event.target.value }))}
+                  onKeyDown={(event) => { if (event.key === "Enter") setAdvApplied({ ...adv }); }}
+                  className="w-24 rounded-xl border border-gray-300 bg-white px-2.5 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                />
+              </label>
+            ))}
+            <button
+              type="button"
+              onClick={() => setAdvApplied({ ...adv })}
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+            >
+              {locale === "ar" ? "تطبيق" : locale === "tr" ? "Uygula" : "Apply"}
+            </button>
+            {Object.values(advApplied).some((value) => value !== "") && (
+              <button
+                type="button"
+                onClick={() => { const empty = { minPrice: "", maxPrice: "", minArea: "", maxArea: "", bedrooms: "" }; setAdv(empty); setAdvApplied(empty); }}
+                className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                {locale === "ar" ? "مسح" : locale === "tr" ? "Temizle" : "Clear"}
+              </button>
+            )}
           </div>
         </div>
 

@@ -9,13 +9,54 @@ import { AD_PLACEMENTS, visibleAdminPlacements } from "@/src/constants/advertisi
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const identity = await getSponsorIdentity();
   if (!hasSponsorPermission(identity, PERMISSIONS.ADS_ANALYTICS)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const db = await getRuntimeDb();
   const today = statDate(new Date());
+
+  // Per-campaign performance: ?id=<campaignId>&days=N returns that campaign's
+  // totals plus its daily series for the requested window.
+  const url = new URL(request.url);
+  const campaignId = url.searchParams.get("id");
+  if (campaignId) {
+    const days = Math.max(7, Math.min(90, Number(url.searchParams.get("days")) || 30));
+    const since = new Date(Date.now() - days * 86_400_000);
+    const sinceKey = statDate(since);
+    const [campaign, daily] = await Promise.all([
+      db.prepare(
+        `SELECT id, internal_name, advertiser_name, status, approval_status,
+                total_impressions, total_clicks, total_conversions, created_at
+         FROM ad_campaigns WHERE id = ?1 LIMIT 1`,
+      ).bind(campaignId).first<Record<string, string | number>>(),
+      db.prepare(
+        `SELECT stat_date, impressions, clicks, conversions
+         FROM ad_daily_statistics
+         WHERE campaign_id = ?1 AND stat_date >= ?2
+         ORDER BY stat_date ASC`,
+      ).bind(campaignId, sinceKey).all<Record<string, string | number>>(),
+    ]);
+    if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    return NextResponse.json({
+      campaign: {
+        id: campaign.id,
+        internalName: campaign.internal_name,
+        advertiserName: campaign.advertiser_name,
+        totalImpressions: Number(campaign.total_impressions),
+        totalClicks: Number(campaign.total_clicks),
+        totalConversions: Number(campaign.total_conversions),
+      },
+      daily: daily.results.map((row) => ({
+        date: String(row.stat_date),
+        impressions: Number(row.impressions),
+        clicks: Number(row.clicks),
+        conversions: Number(row.conversions),
+      })),
+      days,
+    });
+  }
 
   const [campaigns, daily, placements, classSplit, healthAds] = await Promise.all([
     db.prepare(

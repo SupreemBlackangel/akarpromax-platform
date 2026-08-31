@@ -55,16 +55,18 @@ function visibleTo(identity: { role: string; countryCode: string | null }, count
   return Boolean(country && countries.includes(country));
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const identity = await getSponsorIdentity();
   if (!hasSponsorPermission(identity, PERMISSIONS.ADS_VIEW)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  // ?view=archived lists the soft-deleted campaigns for review/restore.
+  const archived = request.nextUrl.searchParams.get("view") === "archived";
   const db = await getRuntimeDb();
   const rows = await db
     .prepare(
       `${ADMIN_CAMPAIGN_SELECT}
-       WHERE a.deleted_at IS NULL
+       WHERE a.deleted_at IS ${archived ? "NOT NULL" : "NULL"}
        ORDER BY CASE a.status WHEN 'active' THEN 0 WHEN 'pending' THEN 0 WHEN 'draft' THEN 1 WHEN 'paused' THEN 2 ELSE 3 END,
                 a.priority ASC, a.updated_at DESC
        LIMIT 300`,

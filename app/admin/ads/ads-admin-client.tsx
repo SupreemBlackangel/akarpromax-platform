@@ -477,7 +477,10 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   });
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics">("campaigns");
+  const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics" | "archived">("campaigns");
+  const [archivedCampaigns, setArchivedCampaigns] = useState<Campaign[]>([]);
+  const [perf, setPerf] = useState<{ name: string; totals: { impressions: number; clicks: number; conversions: number }; daily: Array<{ date: string; impressions: number; clicks: number; conversions: number }> } | null>(null);
+  const [perfLoading, setPerfLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [previewLocale, setPreviewLocale] = useState<"ar" | "en" | "tr">("ar");
@@ -503,6 +506,54 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     if (!response.ok) throw new Error(data.error || "تعذر تحميل الحملات");
     if (data.identity) setIdentity(data.identity);
     setCampaigns(data.campaigns ?? []);
+  }
+
+  async function loadArchived() {
+    const response = await fetch("/api/admin/ads?view=archived", { cache: "no-store" });
+    const data = await response.json() as { campaigns?: Campaign[]; error?: string };
+    if (!response.ok) throw new Error(data.error || "تعذر تحميل الأرشيف");
+    setArchivedCampaigns(data.campaigns ?? []);
+  }
+
+  async function restoreCampaign(id: string, name: string) {
+    if (!window.confirm(`استرجاع حملة «${name}» من الأرشيف كمسودة؟`)) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/ads/restore", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }),
+      });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "تعذر الاسترجاع");
+      await Promise.all([loadArchived(), loadCampaigns()]);
+      setMessage("تم استرجاع الحملة كمسودة (غير نشطة).");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر الاسترجاع");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openPerformance(campaign: Campaign) {
+    setPerfLoading(true);
+    setPerf({ name: campaign.internalName, totals: { impressions: campaign.totalImpressions, clicks: campaign.totalClicks, conversions: campaign.totalConversions }, daily: [] });
+    try {
+      const response = await fetch(`/api/admin/ads/stats?id=${encodeURIComponent(campaign.id)}&days=30`, { cache: "no-store" });
+      const data = await response.json() as { campaign?: { totalImpressions: number; totalClicks: number; totalConversions: number }; daily?: Array<{ date: string; impressions: number; clicks: number; conversions: number }>; error?: string };
+      if (!response.ok) throw new Error(data.error || "تعذر تحميل الأداء");
+      setPerf({
+        name: campaign.internalName,
+        totals: {
+          impressions: data.campaign?.totalImpressions ?? campaign.totalImpressions,
+          clicks: data.campaign?.totalClicks ?? campaign.totalClicks,
+          conversions: data.campaign?.totalConversions ?? campaign.totalConversions,
+        },
+        daily: data.daily ?? [],
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تعذر تحميل الأداء");
+    } finally {
+      setPerfLoading(false);
+    }
   }
 
   async function loadAssets() {
@@ -818,6 +869,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             <button className={activeView === "campaigns" ? "active" : ""} type="button" onClick={() => setActiveView("campaigns")}><span aria-hidden="true">▣</span>الحملات</button>
             <button className={activeView === "media" ? "active" : ""} type="button" onClick={() => setActiveView("media")}><span aria-hidden="true">▧</span>مكتبة الوسائط</button>
             {canAnalytics && <button className={activeView === "analytics" ? "active" : ""} type="button" onClick={() => setActiveView("analytics")}><span aria-hidden="true">↗</span>التحليلات</button>}
+            {canEdit && <button className={activeView === "archived" ? "active" : ""} type="button" onClick={() => { setActiveView("archived"); void loadArchived().catch(() => setMessage("تعذر تحميل الأرشيف")); }}><span aria-hidden="true">▤</span>الأرشيف</button>}
           </nav>
           {message && <div className="ads-admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
 
@@ -849,7 +901,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
                   <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
                   <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
-                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}{canEdit && <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>}</div>
+                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canAnalytics && <button type="button" onClick={() => void openPerformance(campaign)}>الأداء</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}{canEdit && <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>}</div>
                 </article>)}
                 {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والمواضع والاستهداف والموازنة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
               </div>
@@ -862,6 +914,20 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               )}
             </>
           )}
+        </section>}
+
+        {activeView === "archived" && <section className="ads-panel">
+          <div className="ads-campaign-list">
+            {archivedCampaigns.map((campaign) => <article key={campaign.id}>
+              <div className="ads-campaign-thumb">{campaign.mediaType === "video" ? <video src={campaign.mediaUrl} poster={campaign.posterUrl || undefined} muted preload="metadata" /> : <img src={campaign.mediaUrl} alt="" />}<span>مؤرشفة</span></div>
+              <div className="ads-campaign-main"><strong>{campaign.internalName}</strong><small>{campaign.advertiserName}</small><small>{campaign.totalImpressions.toLocaleString("ar")} ظهور • {campaign.totalClicks.toLocaleString("ar")} نقرة</small></div>
+              <div className="ads-row-actions">
+                <button type="button" onClick={() => void restoreCampaign(campaign.id, campaign.internalName)}>استرجاع</button>
+                <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>
+              </div>
+            </article>)}
+            {!archivedCampaigns.length && <div className="ads-empty"><span>▤</span><strong>الأرشيف فارغ</strong><p>الحملات المؤرشفة تظهر هنا ويمكن استرجاعها كمسودة أو حذفها نهائيًا.</p></div>}
+          </div>
         </section>}
 
         {activeView === "media" && <section className="ads-panel">
@@ -1017,6 +1083,52 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           <footer className="ads-wizard-actions"><button type="button" onClick={() => wizardStep === 1 ? setEditing(false) : setWizardStep((step) => step - 1)}>{wizardStep === 1 ? "إلغاء" : "السابق"}</button>{wizardStep < 7 ? <button className="primary" type="button" onClick={() => setWizardStep((step) => step + 1)}>التالي</button> : <button className="primary" type="submit" disabled={busy || uploading}>{busy ? "جارٍ الحفظ..." : form.id ? "حفظ التعديلات" : "إنشاء الحملة"}</button>}</footer>
         </form>
       </div>
+      )}
+      {perf && (
+        <div className="account-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setPerf(null); }}>
+          <div className="account-dialog" role="dialog" aria-modal="true" aria-label="أداء الحملة" style={{ width: "min(560px, 96vw)" }}>
+            <button className="account-close" type="button" aria-label="إغلاق" onClick={() => setPerf(null)}>×</button>
+            <div className="account-panel">
+              <p className="account-kicker">أداء الحملة — آخر 30 يومًا</p>
+              <h3 style={{ margin: 0 }}>{perf.name}</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, margin: "12px 0" }}>
+                {[["الظهور", perf.totals.impressions], ["النقرات", perf.totals.clicks], ["التحويلات", perf.totals.conversions]].map(([label, value]) => (
+                  <div key={String(label)} style={{ background: "var(--color-primary-soft)", borderRadius: 12, padding: "10px 12px", textAlign: "center" }}>
+                    <b style={{ display: "block", fontSize: 20, color: "var(--color-primary)", fontVariantNumeric: "tabular-nums" }}>{Number(value).toLocaleString("ar")}</b>
+                    <small style={{ color: "var(--color-text-muted)", fontWeight: 700 }}>{String(label)}</small>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: "var(--color-primary-soft)", borderRadius: 12, padding: "8px 12px", marginBottom: 12, fontSize: 12, fontWeight: 800, color: "var(--color-primary)" }}>
+                CTR: {perf.totals.impressions > 0 ? ((perf.totals.clicks / perf.totals.impressions) * 100).toFixed(2) : "0.00"}%
+              </div>
+              {perfLoading ? (
+                <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "24px 0" }}>جارٍ التحميل...</p>
+              ) : perf.daily.length === 0 ? (
+                <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "24px 0" }}>لا توجد بيانات يومية بعد — تظهر مع أول ظهور للإعلان.</p>
+              ) : (() => {
+                const max = Math.max(1, ...perf.daily.map((d) => d.impressions));
+                return (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 120, direction: "ltr" }}>
+                      {perf.daily.map((d) => (
+                        <div key={d.date} title={`${d.date} — ظهور ${d.impressions} • نقرات ${d.clicks}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 2, height: "100%" }}>
+                          <div style={{ height: `${Math.max(3, Math.round((d.clicks / max) * 100))}%`, background: "var(--accent)", borderRadius: 3 }} />
+                          <div style={{ height: `${Math.max(4, Math.round((d.impressions / max) * 100))}%`, background: "var(--color-primary)", borderRadius: 3, opacity: 0.85 }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 14, marginTop: 10, fontSize: 11, fontWeight: 800 }}>
+                      <span style={{ color: "var(--color-primary)" }}>■ الظهور</span>
+                      <span style={{ color: "var(--accent)" }}>■ النقرات</span>
+                      <span style={{ color: "var(--color-text-muted)", marginInlineStart: "auto" }}>{perf.daily[0]?.date} ← {perf.daily[perf.daily.length - 1]?.date}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
