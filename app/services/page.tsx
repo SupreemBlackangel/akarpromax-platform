@@ -23,9 +23,6 @@ export default function ServicesHubPage() {
 
   useEffect(() => {
     let active = true;
-    const countryParams = new URLSearchParams();
-    if (!isGlobal && country) countryParams.set("country", country.toUpperCase());
-    const countrySuffix = countryParams.size ? `?${countryParams.toString()}` : "";
     const providerParams = new URLSearchParams({ limit: "6", scope: isGlobal ? "global" : "local" });
     const requestParams = new URLSearchParams({ status: "published", limit: "6", scope: isGlobal ? "global" : "local" });
     if (!isGlobal) {
@@ -44,7 +41,9 @@ export default function ServicesHubPage() {
       }
     }
     Promise.allSettled([
-      apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${countrySuffix}`),
+      // The professions directory is global — country scoping only filters
+      // providers and requests, never the taxonomy itself.
+      apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories`),
       apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?${providerParams.toString()}`),
       apiFetch<{ requests: RequestRow[] }>(`/api/service-requests?${requestParams.toString()}`),
     ]).then(([categoryResult, providerResult, requestResult]) => {
