@@ -67,3 +67,41 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
   return NextResponse.json({ success: true, data: updated });
 }
+
+/** Soft-delete: the account is marked deleted and locked out; no rows are dropped. */
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
+  }
+  if (!canAccessAdminArea({ authenticated: true, role: session.role, permissions: session.permissions })) {
+    return NextResponse.json({ success: false, error: 'لا تملك صلاحية إدارة المستخدمين' }, { status: 403 });
+  }
+  if (id === session.userId) {
+    return NextResponse.json({ success: false, error: 'لا يمكنك حذف حسابك الخاص' }, { status: 400 });
+  }
+
+  const [target] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+  if (!target) return NextResponse.json({ success: false, error: 'المستخدم غير موجود' }, { status: 404 });
+  if (target.role === 'super_admin' && session.role !== 'super_admin') {
+    return NextResponse.json({ success: false, error: 'لا يمكن حذف حساب مدير أعلى' }, { status: 403 });
+  }
+
+  const [deleted] = await db.update(users)
+    .set({ status: 'deleted', isActive: false, updatedAt: new Date() })
+    .where(eq(users.id, id))
+    .returning({
+      id: users.id, name: users.name, email: users.email, phone: users.phone,
+      role: users.role, status: users.status, isActive: users.isActive,
+      emailVerifiedAt: users.emailVerifiedAt,
+    });
+
+  void recordAuditEvent({
+    eventType: 'ADMIN_USER_UPDATED',
+    userId: session.userId,
+    detail: { requestId: createRequestId(), targetUserId: id, action: 'delete' },
+  });
+
+  return NextResponse.json({ success: true, data: deleted });
+}
