@@ -2,6 +2,8 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
 import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD, type PublicAdSlotConfig } from "@/src/config/ad-placements";
@@ -126,27 +128,18 @@ export function PublicShellLayout({
   const isPlatformAdmin =
     viewer.authenticated &&
     (viewer.permissions.includes("*") || viewer.permissions.includes(PERMISSIONS.ADMIN_DASHBOARD_VIEW));
+  const sidebarExtraItems = isPlatformAdmin
+    ? [{
+        key: "admin-dashboard",
+        label: locale === "ar" ? "لوحة التحكم" : locale === "tr" ? "Yönetim Paneli" : "Admin Panel",
+        href: "/admin",
+        icon: LayoutDashboard,
+      }]
+    : undefined;
   const sidebarFooter = viewer.authenticated ? (
-    <div className="flex flex-col gap-[var(--space-3)]">
-      <div className="min-w-0">
-        <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
-        <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
-      </div>
-      {isPlatformAdmin && (
-        <a
-          href="/admin"
-          className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-center text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
-        >
-          {locale === "ar" ? "لوحة التحكم" : locale === "tr" ? "Yönetim Paneli" : "Admin Panel"}
-        </a>
-      )}
-      <button
-        type="button"
-        onClick={onLogout}
-        className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
-      >
-        {labels.logout}
-      </button>
+    <div className="min-w-0">
+      <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
+      <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
     </div>
   ) : (
     <div className="flex flex-col gap-[var(--space-3)]">
@@ -203,7 +196,7 @@ export function PublicShellLayout({
         {/* Floating panel — fixed positioned; when pinned open on desktop it
             pushes/shrinks the content column via .public-shell-content below
             instead of floating over it. */}
-        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
+        {showPublicSidebar && <PublicSidebar labels={labels} items={navItems} extraItems={sidebarExtraItems} currentPath={currentPath} footer={sidebarFooter} collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />}
 
         <div className="public-shell-content flex min-w-0 flex-1 flex-col">
           {/* Header + news ticker pin together as one sticky block. */}
@@ -292,7 +285,7 @@ export function PublicShellLayout({
         </div>
       </div>
 
-      <a className="floating-chat" href="/messages" aria-label={labels.chatAria}>⌁</a>
+      <Link className="floating-chat" href="/messages" aria-label={labels.chatAria}>⌁</Link>
 
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 

@@ -25,7 +25,10 @@ export type CardProperty = {
   propertyType?: string;
   listingType?: string;
   isFeatured?: boolean;
+  isAuction?: boolean;
 };
+
+const LISTING_BADGES: Record<string, string> = { sale: "للبيع", rent: "للإيجار" };
 
 export default function LuxuryPropertyCard({ property, className = "" }: { property: CardProperty; className?: string }) {
   const { toggleFavorite, isFavorite } = useFavorites(property.id);
@@ -51,11 +54,24 @@ export default function LuxuryPropertyCard({ property, className = "" }: { prope
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
         
-        {property.isFeatured && (
-          <span className="absolute top-3 right-3 rounded-full bg-[var(--color-overlay)] backdrop-blur-md px-3 py-1 text-xs font-semibold text-[var(--color-primary)] border border-[var(--color-primary)]/20">
-            VIP متميز
-          </span>
-        )}
+        <div className="absolute top-3 right-3 flex flex-wrap items-center gap-1.5">
+          {property.isAuction ? (
+            <span className="rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white shadow">
+              مزاد
+            </span>
+          ) : (
+            property.listingType && LISTING_BADGES[property.listingType] && (
+              <span className="rounded-full bg-[var(--color-overlay)] backdrop-blur-md px-3 py-1 text-xs font-semibold text-white border border-white/20">
+                {LISTING_BADGES[property.listingType]}
+              </span>
+            )
+          )}
+          {property.isFeatured && (
+            <span className="rounded-full bg-[var(--color-overlay)] backdrop-blur-md px-3 py-1 text-xs font-semibold text-[var(--color-primary)] border border-[var(--color-primary)]/20">
+              VIP متميز
+            </span>
+          )}
+        </div>
 
         {/* السعر فوق الصورة */}
         <div className="absolute bottom-3 right-3 text-white">

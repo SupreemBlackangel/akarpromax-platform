@@ -53,16 +53,33 @@ export async function POST(request: NextRequest) {
   // Multi-country targeting: `countryCodes` (array, max 23) is preferred; the
   // legacy single `countryCode` field is still accepted as a fallback so older
   // callers (e.g. /advertise) keep working unchanged.
+  const allCountries = body.allCountries === true;
   const rawCodes = Array.isArray(body.countryCodes)
     ? body.countryCodes
     : [body.countryCode];
-  const countryCodes = [...new Set(
+  const countryCodes = allCountries ? [] : [...new Set(
     rawCodes
       .map((code) => clean(code, 8).toLowerCase())
       .filter((code) => /^[a-z]{2}$/.test(code)),
   )].slice(0, 23);
-  if (!countryCodes.length) {
+  if (!allCountries && !countryCodes.length) {
     return NextResponse.json({ error: "A valid country code is required" }, { status: 400 });
+  }
+
+  // Optional schedule requested by the advertiser: a start date, and an end
+  // condition that is either a date or a click cap (both stored on the pending
+  // campaign so the reviewer sees and can adjust them).
+  const parseDay = (value: unknown): string | null => {
+    const candidate = clean(value, 32);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null;
+    return Number.isNaN(Date.parse(candidate)) ? null : candidate;
+  };
+  const startAt = parseDay(body.startAt);
+  const endAt = parseDay(body.endAt);
+  const maxClicksRaw = Number(body.maxClicks);
+  const maxClicks = Number.isInteger(maxClicksRaw) && maxClicksRaw > 0 && maxClicksRaw <= 100_000_000 ? maxClicksRaw : 0;
+  if (startAt && endAt && endAt < startAt) {
+    return NextResponse.json({ error: "End date must be after the start date" }, { status: 400 });
   }
 
   const advertiserName = clean(body.advertiserName, 140);
@@ -170,8 +187,8 @@ export async function POST(request: NextRequest) {
       JSON.stringify(["desktop"]),
       100,
       100,
-      null,
-      null,
+      startAt ? `${startAt}T00:00:00.000Z` : null,
+      endAt ? `${endAt}T23:59:59.000Z` : null,
       JSON.stringify([family || "home"]),
       JSON.stringify([family || "home"]),
       JSON.stringify([placement]),
@@ -180,7 +197,7 @@ export async function POST(request: NextRequest) {
       null,
       null,
       null,
-      0,
+      allCountries ? 1 : 0,
       0,
       0,
       0,
@@ -201,7 +218,7 @@ export async function POST(request: NextRequest) {
       0,
       0,
       0,
-      0,
+      maxClicks,
       0,
       0,
       "pending",

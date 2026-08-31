@@ -597,6 +597,19 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm((current) => ({ ...current, creatives: current.creatives.filter((_, creativeIndex) => creativeIndex !== index) }));
   }
 
+  // Explicit ordering: position in this list IS the stored creative position
+  // (the server derives `position` from the array index), so moving a row
+  // up/down decides which image is first/second/third in the rotation.
+  function moveCreative(index: number, delta: -1 | 1) {
+    setForm((current) => {
+      const target = index + delta;
+      if (target < 0 || target >= current.creatives.length) return current;
+      const next = [...current.creatives];
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...current, creatives: next };
+    });
+  }
+
   const allowedPlacements = useMemo(() => {
     const scopes = form.sectionScopes.length ? form.sectionScopes : Object.keys(sectionLabels);
     const channels = new Set(form.channels.length ? form.channels : ["website"]);
@@ -887,6 +900,9 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <legend>وسائط إضافية (دوران) — {form.creatives.length} / {creativeLimit}</legend>
               {form.creatives.map((creative, index) => (
                 <div className="ads-creative-row" key={index}>
+                  <span style={{ fontWeight: 800, alignSelf: "center" }}>#{index + 1}</span>
+                  <button type="button" disabled={index === 0} title="تقديم الصورة" onClick={() => moveCreative(index, -1)}>▲</button>
+                  <button type="button" disabled={index === form.creatives.length - 1} title="تأخير الصورة" onClick={() => moveCreative(index, 1)}>▼</button>
                   <label>الرابط<input dir="ltr" value={creative.mediaUrl} placeholder="https://cdn.example.com/creative.jpg" onChange={(event) => updateCreative(index, "mediaUrl", event.target.value)} /></label>
                   <label>المدة (ثوانٍ)<input type="number" min={3} max={15} value={creative.durationSeconds} onChange={(event) => updateCreative(index, "durationSeconds", event.target.value)} /></label>
                   <label>نسخة الهاتف<input dir="ltr" value={creative.mobileMediaUrl} onChange={(event) => updateCreative(index, "mobileMediaUrl", event.target.value)} /></label>
@@ -894,7 +910,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <button type="button" onClick={() => removeCreative(index)}>إزالة</button>
                 </div>
               ))}
-              <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (حد أقصى 5 وسائط).</small></div>
+              <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>ترتيب القائمة هو ترتيب العرض (#1 يظهر أولاً) — استخدم ▲▼ لتغيير موضع الصورة. تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (حد أقصى 5 وسائط).</small></div>
             </fieldset>
           </section>
 

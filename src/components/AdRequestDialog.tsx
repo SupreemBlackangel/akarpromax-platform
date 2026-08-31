@@ -39,6 +39,16 @@ type Labels = {
   steps: readonly [string, string, string];
   spot: string;
   countries: string;
+  allCountries: string;
+  scheduleTitle: string;
+  startDate: string;
+  endMode: string;
+  endModeNone: string;
+  endModeDate: string;
+  endModeClicks: string;
+  endDate: string;
+  maxClicks: string;
+  errorSchedule: string;
   countriesHint: string;
   countriesLoading: string;
   countriesError: string;
@@ -88,6 +98,16 @@ const LABELS: Record<Locale, Labels> = {
     steps: ["الدول المستهدفة", "بيانات التواصل", "التصميم والمراجعة"],
     spot: "الموضع المطلوب",
     countries: "دول عرض الإعلان",
+    allCountries: "جميع الدول",
+    scheduleTitle: "جدولة الإعلان",
+    startDate: "تاريخ بداية العرض (اختياري)",
+    endMode: "طريقة انتهاء الإعلان",
+    endModeNone: "بدون حد (حتى إيقافه)",
+    endModeDate: "ينتهي بتاريخ",
+    endModeClicks: "ينتهي بعدد النقرات",
+    endDate: "تاريخ النهاية",
+    maxClicks: "أقصى عدد نقرات",
+    errorSchedule: "أكمل بيانات الجدولة: التاريخ أو عدد النقرات",
     countriesHint: "يمكنك اختيار دولة واحدة أو عدة دول لعرض الإعلان",
     countriesLoading: "جارٍ تحميل قائمة الدول...",
     countriesError: "تعذر تحميل قائمة الدول، حاول مرة أخرى",
@@ -135,6 +155,16 @@ const LABELS: Record<Locale, Labels> = {
     steps: ["Target countries", "Contact details", "Creative & review"],
     spot: "Requested spot",
     countries: "Campaign countries",
+    allCountries: "All countries",
+    scheduleTitle: "Ad schedule",
+    startDate: "Start date (optional)",
+    endMode: "How the ad ends",
+    endModeNone: "No limit (until stopped)",
+    endModeDate: "Ends on a date",
+    endModeClicks: "Ends after N clicks",
+    endDate: "End date",
+    maxClicks: "Maximum clicks",
+    errorSchedule: "Complete the schedule: pick a date or a click limit",
     countriesHint: "Select one or multiple countries for this ad",
     countriesLoading: "Loading countries...",
     countriesError: "Could not load the country list, please try again",
@@ -182,6 +212,16 @@ const LABELS: Record<Locale, Labels> = {
     steps: ["Hedef ülkeler", "İletişim bilgileri", "Görsel ve inceleme"],
     spot: "Talep edilen alan",
     countries: "Reklam ülkeleri",
+    allCountries: "Tüm ülkeler",
+    scheduleTitle: "Reklam takvimi",
+    startDate: "Başlangıç tarihi (isteğe bağlı)",
+    endMode: "Reklam nasıl biter",
+    endModeNone: "Sınırsız (durdurulana kadar)",
+    endModeDate: "Belirli bir tarihte biter",
+    endModeClicks: "Tıklama sayısıyla biter",
+    endDate: "Bitiş tarihi",
+    maxClicks: "Maksimum tıklama",
+    errorSchedule: "Takvimi tamamlayın: tarih veya tıklama sınırı seçin",
     countriesHint: "Reklam için bir veya birden fazla ülke seçebilirsiniz",
     countriesLoading: "Ülkeler yükleniyor...",
     countriesError: "Ülke listesi yüklenemedi, lütfen tekrar deneyin",
@@ -245,6 +285,11 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
   const [countryList, setCountryList] = useState<CountryOption[]>([]);
   const [countriesStatus, setCountriesStatus] = useState<"loading" | "ready" | "error">("loading");
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [allCountries, setAllCountries] = useState(false);
+  const [startAt, setStartAt] = useState("");
+  const [endMode, setEndMode] = useState<"none" | "date" | "clicks">("none");
+  const [endAt, setEndAt] = useState("");
+  const [maxClicks, setMaxClicks] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -266,6 +311,11 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
   const reset = useCallback(() => {
     setStep(0);
     setSelectedCodes(initialCode ? [initialCode] : []);
+    setAllCountries(false);
+    setStartAt("");
+    setEndMode("none");
+    setEndAt("");
+    setMaxClicks("");
     setName("");
     setEmail("");
     setPhone("");
@@ -370,7 +420,11 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
   const phoneInvalid = Boolean(phone.trim()) && !PHONE_RE.test(phone.trim());
   const urlInvalid = !URL_RE.test(targetUrl.trim());
   const descriptionInvalid = !descriptionAr.trim();
-  const detailsValid = !nameInvalid && !emailInvalid && !phoneInvalid && !urlInvalid && !descriptionInvalid;
+  const maxClicksNumber = Number.parseInt(maxClicks, 10);
+  const scheduleInvalid =
+    (endMode === "date" && !endAt) ||
+    (endMode === "clicks" && (!Number.isFinite(maxClicksNumber) || maxClicksNumber < 1));
+  const detailsValid = !nameInvalid && !emailInvalid && !phoneInvalid && !urlInvalid && !descriptionInvalid && !scheduleInvalid;
 
   const readJson = async <T,>(response: Response): Promise<T & { error?: string }> => {
     const text = await response.text();
@@ -382,7 +436,7 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
   };
 
   const submit = async () => {
-    if (!detailsValid || !selectedCodes.length || !file) {
+    if (!detailsValid || (!allCountries && !selectedCodes.length) || !file) {
       setError(!file ? labels.errorImage : labels.errorRequired);
       return;
     }
@@ -401,6 +455,10 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
         body: JSON.stringify({
           placement,
           countryCodes: selectedCodes,
+          allCountries,
+          startAt: startAt || undefined,
+          endAt: endMode === "date" ? endAt || undefined : undefined,
+          maxClicks: endMode === "clicks" && Number.isFinite(maxClicksNumber) ? maxClicksNumber : undefined,
           canonical,
           family,
           city,
@@ -426,7 +484,7 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
   };
 
   const advance = () => {
-    if (step === 0 && !selectedCodes.length) {
+    if (step === 0 && !allCountries && !selectedCodes.length) {
       setError(labels.errorCountry);
       return;
     }
@@ -473,16 +531,26 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
                 <div className="ad-spot-summary">
                   <span>{labels.spot}: <strong>{placementName}</strong></span>
                   <div className="ad-selected-countries">
-                    {selectedCountries.map((option) => (
-                      <strong key={option.code}><span aria-hidden="true">{flagEmoji(option.code)}</span> {countryName(option, locale)}</strong>
-                    ))}
+                    {allCountries
+                      ? <strong>🌍 {labels.allCountries}</strong>
+                      : selectedCountries.map((option) => (
+                          <strong key={option.code}><span aria-hidden="true">{flagEmoji(option.code)}</span> {countryName(option, locale)}</strong>
+                        ))}
                   </div>
                 </div>
                 <p className="account-location-hint">{labels.countriesHint}</p>
-                <span className="ad-section-label">{labels.countries} <b className="selection-count">{selectedCodes.length}</b></span>
-                {countriesStatus === "loading" && <p className="account-location-hint">{labels.countriesLoading}</p>}
-                {countriesStatus === "error" && <p className="ad-request-error" role="alert">{labels.countriesError}</p>}
-                {countriesStatus === "ready" && (
+                <label className="account-field" style={{ flexDirection: "row", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={allCountries}
+                    onChange={(event) => { setAllCountries(event.target.checked); setError(""); }}
+                  />
+                  <strong>{labels.allCountries}</strong>
+                </label>
+                {!allCountries && <span className="ad-section-label">{labels.countries} <b className="selection-count">{selectedCodes.length}</b></span>}
+                {!allCountries && countriesStatus === "loading" && <p className="account-location-hint">{labels.countriesLoading}</p>}
+                {!allCountries && countriesStatus === "error" && <p className="ad-request-error" role="alert">{labels.countriesError}</p>}
+                {!allCountries && countriesStatus === "ready" && (
                   <div className="country-picker" role="listbox" aria-multiselectable="true" aria-label={labels.countries}>
                     {countryList.map((option) => {
                       const selected = selectedCodes.includes(option.code);
@@ -533,6 +601,39 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
                   </div>
                 </div>
                 <div className="ad-description-head">
+                  <strong>{labels.scheduleTitle}</strong>
+                </div>
+                <div className="account-grid">
+                  <div className="account-field">
+                    <label htmlFor="ad-req-start">{labels.startDate}</label>
+                    <input id="ad-req-start" type="date" dir="ltr" value={startAt} onChange={(event) => { setStartAt(event.target.value); setError(""); }} />
+                  </div>
+                  <div className="account-field">
+                    <label htmlFor="ad-req-endmode">{labels.endMode}</label>
+                    <select id="ad-req-endmode" value={endMode} onChange={(event) => { setEndMode(event.target.value as typeof endMode); setError(""); }}>
+                      <option value="none">{labels.endModeNone}</option>
+                      <option value="date">{labels.endModeDate}</option>
+                      <option value="clicks">{labels.endModeClicks}</option>
+                    </select>
+                  </div>
+                </div>
+                {endMode !== "none" && (
+                  <div className="account-grid">
+                    {endMode === "date" ? (
+                      <div className="account-field">
+                        <label htmlFor="ad-req-end">{labels.endDate}</label>
+                        <input id="ad-req-end" type="date" dir="ltr" aria-invalid={showFieldErrors && scheduleInvalid} value={endAt} onChange={(event) => { setEndAt(event.target.value); setError(""); }} />
+                      </div>
+                    ) : (
+                      <div className="account-field">
+                        <label htmlFor="ad-req-clicks">{labels.maxClicks}</label>
+                        <input id="ad-req-clicks" type="number" min={1} max={100000000} dir="ltr" aria-invalid={showFieldErrors && scheduleInvalid} value={maxClicks} onChange={(event) => { setMaxClicks(event.target.value); setError(""); }} />
+                      </div>
+                    )}
+                    {showFieldErrors && scheduleInvalid && <small className="field-error">{labels.errorSchedule}</small>}
+                  </div>
+                )}
+                <div className="ad-description-head">
                   <strong>{labels.descriptionsTitle}</strong>
                   <small className="field-hint">{labels.optionalHint}</small>
                 </div>
@@ -573,11 +674,20 @@ export default function AdRequestDialog({ locale, open, placement, countryCode, 
                 <div className="ad-review-card">
                   <span className="ad-section-label">{labels.review}</span>
                   <div className="ad-selected-countries">
-                    {selectedCountries.map((option) => (
-                      <strong key={option.code}><span aria-hidden="true">{flagEmoji(option.code)}</span> {countryName(option, locale)}</strong>
-                    ))}
+                    {allCountries
+                      ? <strong>🌍 {labels.allCountries}</strong>
+                      : selectedCountries.map((option) => (
+                          <strong key={option.code}><span aria-hidden="true">{flagEmoji(option.code)}</span> {countryName(option, locale)}</strong>
+                        ))}
                   </div>
                   <span>{placementName}</span>
+                  {(startAt || endMode !== "none") && (
+                    <span>
+                      {startAt ? `${labels.startDate.replace(" (اختياري)", "")}: ${startAt}` : ""}
+                      {endMode === "date" && endAt ? ` — ${labels.endDate}: ${endAt}` : ""}
+                      {endMode === "clicks" && maxClicks ? ` — ${labels.maxClicks}: ${maxClicks}` : ""}
+                    </span>
+                  )}
                   <span>{name}</span>
                   <p className="ad-review-description">{(locale === "en" ? descriptionEn : locale === "tr" ? descriptionTr : descriptionAr) || descriptionAr}</p>
                   <div className="ad-review-languages">

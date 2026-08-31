@@ -9,7 +9,7 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import SearchInput from "@/src/components/ui/SearchInput";
 import type { PublicProperty } from "@/lib/properties-format";
-import { normalizeApiProperty, type ApiPropertyRecord } from "@/lib/properties-api-normalize";
+import { normalizeApiProperty, type ApiPropertyRecord, type NormalizedProperty } from "@/lib/properties-api-normalize";
 import LuxuryPropertyCard from "@/src/components/ui/LuxuryPropertyCard";
 
 const FALLBACK_PROPERTY_TYPES = [
@@ -28,6 +28,7 @@ const LISTING_TYPES = [
   { id: "all", ar: "الكل", en: "All", tr: "Tümü" },
   { id: "sale", ar: "للبيع", en: "For sale", tr: "Satılık" },
   { id: "rent", ar: "للإيجار", en: "For rent", tr: "Kiralık" },
+  { id: "auction", ar: "مزاد", en: "Auction", tr: "Açık artırma" },
 ];
 
 function pick(locale: "ar" | "en" | "tr", property: PublicProperty, key: "title" | "description" | "area") {
@@ -38,9 +39,9 @@ export default function PropertiesPage() {
   const { locale, viewer, dir, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
   const { countryCode: country, governorate, city: geoCity, district, isGlobal } = useGeo();
   const city = geoCity;
-  const [items, setItems] = useState<PublicProperty[]>([]);
+  const [items, setItems] = useState<NormalizedProperty[]>([]);
   const [search, setSearch] = useState("");
-  const [listingType, setListingType] = useState<"all" | "sale" | "rent">("all");
+  const [listingType, setListingType] = useState<"all" | "sale" | "rent" | "auction">("all");
   const [propertyType, setPropertyType] = useState("all");
   const [customType, setCustomType] = useState("");
   const [dbTypes, setDbTypes] = useState<TaxonomyType[]>([]);
@@ -108,7 +109,9 @@ export default function PropertiesPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return items.filter((item) => {
-      const matchesListingType = listingType === "all" || item.listingType === listingType;
+      const matchesListingType =
+        listingType === "all" ||
+        (listingType === "auction" ? item.isAuction : item.listingType === listingType);
       if (!matchesListingType) return false;
       const customTerm = customType.trim().toLowerCase();
       const matchesPropertyType =

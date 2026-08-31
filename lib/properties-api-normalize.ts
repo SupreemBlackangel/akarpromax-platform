@@ -29,6 +29,7 @@ export type ApiPropertyRecord = {
   direction?: string | null;
   isFeatured?: boolean | number | null;
   isVerified?: boolean | number | null;
+  isAuction?: boolean | number | null;
   status?: string | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
@@ -44,6 +45,7 @@ export type NormalizedMedia = { url: string; type: 'image' | 'video' };
 
 export type NormalizedProperty = PublicProperty & {
   isVerified: boolean;
+  isAuction: boolean;
   location: string;
   beds: number;
   baths: number;
@@ -126,6 +128,7 @@ export function normalizeApiProperty(raw: ApiPropertyRecord): NormalizedProperty
     imageUrl: firstMediaUrl(raw.media),
     isFeatured: toBool(raw.isFeatured),
     isVerified: toBool(raw.isVerified),
+    isAuction: toBool(raw.isAuction),
     location,
     beds: Math.round(toNumber(raw.bedrooms)),
     baths: Math.round(toNumber(raw.bathrooms)),

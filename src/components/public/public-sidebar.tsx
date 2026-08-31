@@ -1,15 +1,24 @@
 "use client";
 
 import { useCallback, useRef, useState, type ReactNode } from "react";
-import { Pin, PinOff } from "lucide-react";
+import { Pin, PinOff, type LucideIcon } from "lucide-react";
 import type { Translation } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
 import { isNavItemActive } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
 
+export type PublicSidebarExtraItem = {
+  key: string;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+};
+
 type PublicSidebarProps = {
   labels: Translation;
   items: PublicNavItem[];
+  /** Viewer-specific entries (e.g. admin dashboard) appended to the nav in the same style. */
+  extraItems?: PublicSidebarExtraItem[];
   currentPath: string;
   footer?: ReactNode;
   /** True = unpinned (auto-hide). The prop name is kept for the shell contract. */
@@ -28,7 +37,7 @@ const HOVER_CLOSE_DELAY_MS = 350;
  * the panel itself; pinning (edge handle click or the pin button) keeps it
  * open. Mobile navigation stays in mobile-navigation.tsx.
  */
-export default function PublicSidebar({ labels, items, currentPath, footer, collapsed = false, onToggle, className = "" }: PublicSidebarProps) {
+export default function PublicSidebar({ labels, items, extraItems, currentPath, footer, collapsed = false, onToggle, className = "" }: PublicSidebarProps) {
   const isRtl = labels.metaTitle?.includes("عقار") ?? true;
   const [hovering, setHovering] = useState(false);
   const closeTimer = useRef<number | null>(null);
@@ -138,6 +147,28 @@ export default function PublicSidebar({ labels, items, currentPath, footer, coll
                 >
                   <Icon aria-hidden="true" className="size-5 shrink-0 text-[color:var(--color-primary)]" />
                   <span className="truncate">{label}</span>
+                </a>
+              );
+            })}
+            {extraItems?.map((item) => {
+              const Icon = item.icon;
+              const active = currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  title={item.label}
+                  aria-label={item.label}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "inline-flex min-h-[42px] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
+                    active
+                      ? "bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary-hover)] font-semibold"
+                      : "text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)]",
+                  )}
+                >
+                  <Icon aria-hidden="true" className="size-5 shrink-0 text-[color:var(--color-primary)]" />
+                  <span className="truncate">{item.label}</span>
                 </a>
               );
             })}
