@@ -40,6 +40,15 @@ if (existsSync(staticSrc)) {
   console.log(`[prepare-standalone] copied ${DIST_DIR}/static/ -> ${staticDest}`);
 }
 
+// nodemailer is loaded via a dynamic import() so Next's file tracing misses
+// it — copy it into the standalone tree or SMTP email silently has no driver.
+const nodemailerSrc = join(ROOT, "node_modules", "nodemailer");
+const nodemailerDest = join(STANDALONE_DIR, "node_modules", "nodemailer");
+if (existsSync(nodemailerSrc) && !existsSync(nodemailerDest)) {
+  cpSync(nodemailerSrc, nodemailerDest, { recursive: true });
+  console.log(`[prepare-standalone] copied nodemailer -> ${nodemailerDest}`);
+}
+
 let removedSecrets = 0;
 for (const entry of readdirSync(STANDALONE_DIR)) {
   if (entry === ".env" || entry.startsWith(".env.")) {

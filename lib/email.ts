@@ -93,6 +93,8 @@ export type SmtpEmailTransportOptions = {
   host: string;
   port: number;
   secure: boolean;
+  /** Skip STARTTLS entirely — for a localhost relay whose self-signed cert fails the handshake. */
+  ignoreTls?: boolean;
   from: string;
   fromName?: string;
   replyTo?: string;
@@ -116,6 +118,7 @@ export class SmtpEmailTransport implements EmailTransport {
   private host: string;
   private port: number;
   private secure: boolean;
+  private ignoreTls: boolean;
   private user?: string;
   private pass?: string;
   private fromName?: string;
@@ -129,6 +132,7 @@ export class SmtpEmailTransport implements EmailTransport {
     this.host = opts.host;
     this.port = opts.port;
     this.secure = opts.secure;
+    this.ignoreTls = opts.ignoreTls ?? false;
     this.user = opts.user;
     this.pass = opts.pass;
     this.fromName = opts.fromName;
@@ -153,6 +157,7 @@ export class SmtpEmailTransport implements EmailTransport {
       host: this.host,
       port: this.port,
       secure: this.secure,
+      ignoreTLS: this.ignoreTls,
       connectionTimeout: this.connectionTimeoutMs,
       greetingTimeout: this.greetingTimeoutMs,
       socketTimeout: this.connectionTimeoutMs,
@@ -234,6 +239,7 @@ export function createSmtpTransportFromEnv(env: NodeJS.ProcessEnv = process.env)
     host,
     port: Number(env.SMTP_PORT ?? 587),
     secure: String(env.SMTP_SECURE ?? "false").toLowerCase() === "true",
+    ignoreTls: String(env.SMTP_IGNORE_TLS ?? "false").toLowerCase() === "true",
     from,
     fromName,
     replyTo: env.MAIL_REPLY_TO?.trim() || undefined,
