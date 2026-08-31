@@ -100,6 +100,14 @@ const LABELS: Record<Locale, {
   loginUnavailable: string;
   alreadyRegistered: string;
   welcome: string;
+  resendActivation: string;
+  resendSending: string;
+  resendSuccess: string;
+  resendFailed: string;
+  resendRateLimited: string;
+  notReceived: string;
+  resendWait: string;
+  goToLogin: string;
 }> = {
   ar: {
     aria: "نافذة الحساب",
@@ -152,6 +160,14 @@ const LABELS: Record<Locale, {
     rateLimited: "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
     loginUnavailable: "تعذر تسجيل الدخول حالياً. حاول مرة أخرى.",
     alreadyRegistered: "هذا البريد أو الهاتف مسجل مسبقًا",
+    resendActivation: "إعادة إرسال رابط التفعيل",
+    resendSending: "جارٍ الإرسال...",
+    resendSuccess: "تم إرسال رابط التفعيل ✓ تفقد بريدك (وصندوق الرسائل غير المرغوبة)",
+    resendFailed: "تعذر الإرسال، حاول مرة أخرى بعد قليل",
+    resendRateLimited: "محاولات كثيرة — انتظر قليلاً ثم أعد المحاولة",
+    notReceived: "لم يصلك البريد؟",
+    resendWait: "يمكنك الإعادة بعد",
+    goToLogin: "تسجيل الدخول بهذا الحساب",
     welcome: "أهلًا بك",
   },
   en: {
@@ -205,6 +221,14 @@ const LABELS: Record<Locale, {
     rateLimited: "Too many attempts. Please wait and try again.",
     loginUnavailable: "Sign-in is temporarily unavailable. Please try again.",
     alreadyRegistered: "This email or phone is already registered",
+    resendActivation: "Resend activation link",
+    resendSending: "Sending...",
+    resendSuccess: "Activation link sent ✓ Check your inbox (and spam folder)",
+    resendFailed: "Could not send, try again shortly",
+    resendRateLimited: "Too many attempts — wait a moment and retry",
+    notReceived: "Didn't get the email?",
+    resendWait: "You can resend in",
+    goToLogin: "Sign in with this account",
     welcome: "Welcome",
   },
   tr: {
@@ -258,6 +282,14 @@ const LABELS: Record<Locale, {
     rateLimited: "Çok fazla deneme. Lütfen bekleyip tekrar deneyin.",
     loginUnavailable: "Giriş şu anda kullanılamıyor. Lütfen tekrar deneyin.",
     alreadyRegistered: "Bu e-posta veya telefon zaten kayıtlı",
+    resendActivation: "Aktivasyon bağlantısını yeniden gönder",
+    resendSending: "Gönderiliyor...",
+    resendSuccess: "Aktivasyon bağlantısı gönderildi ✓ Gelen kutunuzu kontrol edin",
+    resendFailed: "Gönderilemedi, birazdan tekrar deneyin",
+    resendRateLimited: "Çok fazla deneme — biraz bekleyip tekrar deneyin",
+    notReceived: "E-posta gelmedi mi?",
+    resendWait: "Şu süre sonra yeniden gönderebilirsiniz:",
+    goToLogin: "Bu hesapla giriş yap",
     welcome: "Hoş geldin",
   },
 };
@@ -318,6 +350,40 @@ export default function AccountDialog({
   const [locationDetected, setLocationDetected] = useState(false);
   const [error, setError] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "failed" | "limited">("idle");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = window.setInterval(() => setResendCooldown((current) => Math.max(0, current - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResendActivation = async () => {
+    const target = email.trim();
+    if (!target || resendState === "sending" || resendCooldown > 0) return;
+    setResendState("sending");
+    try {
+      const response = await fetch("/api/auth/verify-email/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: target, locale }),
+      });
+      if (response.status === 429) {
+        setResendState("limited");
+        setResendCooldown(30);
+        return;
+      }
+      if (!response.ok) {
+        setResendState("failed");
+        return;
+      }
+      setResendState("sent");
+      setResendCooldown(60);
+    } catch {
+      setResendState("failed");
+    }
+  };
 
   const rootRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -337,6 +403,8 @@ export default function AccountDialog({
         setLocationError("");
         setLocationDetected(false);
         setVerificationSent(false);
+        setResendState("idle");
+        setResendCooldown(0);
       }
   }
 
@@ -569,8 +637,28 @@ export default function AccountDialog({
 
         {verificationSent ? (
           <div className="account-verify-notice">
+            <span className="account-verify-icon" aria-hidden="true">✉</span>
             <p className="account-kicker">{labels.verificationSent}</p>
+            <h3 className="account-verify-title">{email.trim()}</h3>
             <p className="account-subline">{labels.verificationSentBody}</p>
+            <div className="account-error-actions account-verify-resend">
+              <span className="account-resend-hint">{labels.notReceived}</span>
+              <button
+                type="button"
+                className="account-mini-btn"
+                disabled={resendState === "sending" || resendCooldown > 0}
+                onClick={() => void handleResendActivation()}
+              >
+                {resendState === "sending"
+                  ? labels.resendSending
+                  : resendCooldown > 0
+                    ? `${labels.resendWait} ${resendCooldown}s`
+                    : `✉ ${labels.resendActivation}`}
+              </button>
+              {resendState === "sent" && <p className="account-resend-note ok" role="status">{labels.resendSuccess}</p>}
+              {resendState === "failed" && <p className="account-resend-note bad" role="alert">{labels.resendFailed}</p>}
+              {resendState === "limited" && <p className="account-resend-note bad" role="alert">{labels.resendRateLimited}</p>}
+            </div>
             <button className="account-submit account-submit-wide" type="button" onClick={onClose}>
               {labels.close}
             </button>
@@ -807,6 +895,28 @@ export default function AccountDialog({
                   </div>
                 </div>
                 {error && <p id={`${dialogId}-error`} className="account-error" role="alert">{error}</p>}
+                {error === labels.alreadyRegistered && (
+                  <div className="account-error-actions">
+                    <button
+                      type="button"
+                      className="account-mini-btn"
+                      disabled={resendState === "sending" || resendCooldown > 0}
+                      onClick={() => void handleResendActivation()}
+                    >
+                      {resendState === "sending"
+                        ? labels.resendSending
+                        : resendCooldown > 0
+                          ? `${labels.resendWait} ${resendCooldown}s`
+                          : `✉ ${labels.resendActivation}`}
+                    </button>
+                    <button type="button" className="account-mini-btn ghost" onClick={() => switchMode("login")}>
+                      {labels.goToLogin}
+                    </button>
+                    {resendState === "sent" && <p className="account-resend-note ok" role="status">{labels.resendSuccess}</p>}
+                    {resendState === "failed" && <p className="account-resend-note bad" role="alert">{labels.resendFailed}</p>}
+                    {resendState === "limited" && <p className="account-resend-note bad" role="alert">{labels.resendRateLimited}</p>}
+                  </div>
+                )}
                 <div className="account-actions">
                   <button className="account-cancel" type="button" onClick={() => setRegisterStep(0)}>
                     {labels.back}
