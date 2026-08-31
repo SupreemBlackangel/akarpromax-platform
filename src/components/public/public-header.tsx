@@ -1,4 +1,4 @@
-import { Menu, User } from "lucide-react";
+import { Menu, MonitorDown, User } from "lucide-react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import { isNavItemActive, type PublicNavItem } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
@@ -85,6 +85,15 @@ export default function PublicHeader({
                 </a>
               );
             })}
+            {/* Office-app download — pinned to the nav's far inline-end (the
+                user's far left in RTL). */}
+            <a
+              href="/download"
+              className="ms-auto inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary-soft)] px-3.5 py-1.5 text-sm font-bold text-[color:var(--color-primary)] transition-colors hover:bg-[color:var(--color-primary)] hover:text-white"
+            >
+              <MonitorDown aria-hidden="true" className="size-4 shrink-0" />
+              {locale === "ar" ? "التطبيق المكتبي" : locale === "tr" ? "Ofis Uygulaması" : "Office App"}
+            </a>
           </nav>
         )}
       </PageContainer>
