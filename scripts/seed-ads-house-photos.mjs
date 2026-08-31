@@ -11,16 +11,20 @@ if (!url) {
   process.exit(1);
 }
 
+// The professional real-estate photos the v1 package displayed on its pages
+// (Pexels, hotlinked exactly as v1 did). The hero uses a higher-resolution
+// rendition of the same photo.
 const PHOTOS = [
-  "/ads/house/arab-blue.webp",
-  "/ads/house/oman-gold.webp",
-  "/ads/house/saudi-emerald.webp",
-  "/ads/house/turkiye-crimson.webp",
+  "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?w=1200",
+  "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?w=1200",
+  "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?w=1200",
+  "https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?w=800",
 ];
+const HERO_PHOTO = "https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?w=1600";
 
 const FILLS = [
   {
-    id: "house-fill-hero", placement: "HERO", photo: PHOTOS[0], targetUrl: "/properties",
+    id: "house-fill-hero", placement: "HERO", photo: HERO_PHOTO, targetUrl: "/properties",
     titleAr: "اكتشف العقارات الفاخرة", titleEn: "Discover Premium Properties", titleTr: "Premium Gayrimenkulleri Keşfedin",
     descAr: "تصفح آلاف العقارات المميزة للبيع والإيجار على عقار بروماكس", descEn: "Browse thousands of premium listings for sale and rent on AkarProMax", descTr: "AkarProMax'te binlerce premium ilanı keşfedin",
     ctaAr: "تصفح الآن", ctaEn: "Browse now", ctaTr: "Şimdi göz at",
