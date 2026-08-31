@@ -3,7 +3,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, MessageCircle } from "lucide-react";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
 import { PUBLIC_BOTTOM_AD, PUBLIC_TOP_AD, type PublicAdSlotConfig } from "@/src/config/ad-placements";
@@ -139,10 +139,25 @@ export function PublicShellLayout({
         icon: LayoutDashboard,
       }]
     : undefined;
+  // The chat entry lives as a full-width rectangle in the rail footer; the
+  // floating bubble stays only for mobile and sidebar-less pages.
+  const sidebarChatButton = (
+    <Link
+      href="/messages"
+      aria-label={labels.chatAria}
+      className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+    >
+      <MessageCircle aria-hidden="true" className="size-5 shrink-0" />
+      {locale === "ar" ? "الدردشة" : locale === "tr" ? "Sohbet" : "Chat"}
+    </Link>
+  );
   const sidebarFooter = viewer.authenticated ? (
-    <div className="min-w-0">
-      <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
-      <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
+    <div className="flex flex-col gap-[var(--space-3)]">
+      <div className="min-w-0">
+        <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
+        <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
+      </div>
+      {sidebarChatButton}
     </div>
   ) : (
     <div className="flex flex-col gap-[var(--space-3)]">
@@ -153,6 +168,7 @@ export function PublicShellLayout({
       >
         {labels.login}
       </button>
+      {sidebarChatButton}
     </div>
   );
 
@@ -288,7 +304,7 @@ export function PublicShellLayout({
         </div>
       </div>
 
-      <Link className="floating-chat" href="/messages" aria-label={labels.chatAria}>⌁</Link>
+      <Link className={showPublicSidebar ? "floating-chat floating-chat--rail" : "floating-chat"} href="/messages" aria-label={labels.chatAria}>⌁</Link>
 
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 
