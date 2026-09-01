@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getSessionIdentity } from "@/lib/sponsor-auth";
-import { getProviderProfileByUserId, addProviderDocument, listProviderDocuments } from "@services/marketplace";
+import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { PERMISSIONS } from "@/src/constants/permissions";
+import { getProviderProfileByUserId, addProviderDocument, listProviderDocuments, verifyProviderDocument } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +15,39 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
+  // Sensitive files: only the owning provider or a reviewer may list them.
+  const identity = await getSessionIdentity();
+  if (!identity.authenticated || !identity.email) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
+  }
+  const isReviewer = hasSponsorPermission(identity, PERMISSIONS.SERVICE_PROVIDERS_REVIEW);
+  if (!isReviewer) {
+    const ownProfile = await getProviderProfileByUserId(identity.email);
+    if (!ownProfile || String(ownProfile.id) !== id) {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
+    }
+  }
   const documents = await listProviderDocuments(id);
   return NextResponse.json({ documents }, { headers: { "Cache-Control": "no-store" } });
+}
+
+/** Reviewer marks a document verified/unverified. */
+export async function PATCH(request: NextRequest, { params }: Params) {
+  await params;
+  const identity = await getSessionIdentity();
+  if (!identity.authenticated || !identity.email) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
+  }
+  if (!hasSponsorPermission(identity, PERMISSIONS.SERVICE_PROVIDERS_REVIEW)) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
+  }
+  const body = (await request.json().catch(() => null)) as { documentId?: string; verified?: boolean } | null;
+  const documentId = typeof body?.documentId === "string" ? body.documentId.trim() : "";
+  if (!documentId || typeof body?.verified !== "boolean") {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
+  }
+  await verifyProviderDocument(documentId, body.verified, { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null });
+  return NextResponse.json({ ok: true });
 }
 
 export async function POST(request: NextRequest, { params }: Params) {

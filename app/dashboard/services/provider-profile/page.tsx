@@ -45,6 +45,40 @@ export default function ProviderProfilePage() {
     return value && value !== key ? value : undefined;
   };
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [docs, setDocs] = useState<Array<Record<string, unknown>>>([]);
+  const [docType, setDocType] = useState("commercial_register");
+  const [docUploading, setDocUploading] = useState(false);
+  const [docMessage, setDocMessage] = useState("");
+
+  const loadDocs = async (providerId: string) => {
+    try {
+      const data = await apiFetch<{ documents: Array<Record<string, unknown>> }>(`/api/service-providers/${encodeURIComponent(providerId)}/documents`);
+      setDocs(data.documents ?? []);
+    } catch { /* keep empty */ }
+  };
+
+  const uploadDoc = async (file: File | null | undefined) => {
+    if (!file || !profile?.id) return;
+    setDocUploading(true);
+    setDocMessage("");
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const uploadResponse = await fetch("/api/service-providers/documents/upload", { method: "POST", body });
+      const uploaded = await uploadResponse.json().catch(() => null);
+      if (!uploadResponse.ok || !uploaded?.url) throw new Error(uploaded?.error || "تعذر رفع الملف");
+      await apiFetch(`/api/service-providers/${encodeURIComponent(String(profile.id))}/documents`, {
+        method: "POST",
+        body: JSON.stringify({ type: docType, fileName: file.name, fileUrl: uploaded.url, fileSize: uploaded.size, mimeType: uploaded.mimeType }),
+      });
+      await loadDocs(String(profile.id));
+      setDocMessage("تم رفع المستند — سيراجعه فريق الإشراف.");
+    } catch (error) {
+      setDocMessage(error instanceof Error ? error.message : "تعذر رفع المستند");
+    } finally {
+      setDocUploading(false);
+    }
+  };
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [myCategories, setMyCategories] = useState<Array<Record<string, unknown>>>([]);
   const [, setPortfolio] = useState<Array<Record<string, unknown>>>([]);
@@ -103,6 +137,7 @@ export default function ProviderProfilePage() {
         setMyCategories(me.categories ?? []);
         const p = me.profile;
         setProfile(p);
+        if (p?.id) void loadDocs(String(p.id));
         if (p) {
           setCountryCode(p.country_code ?? country);
           setDisplayNameAr(p.display_name_ar ?? "");
@@ -413,6 +448,42 @@ export default function ProviderProfilePage() {
               <button onClick={() => void addCategory()} disabled={busy || !newCategoryId || Boolean(newCatInstantPrice && !newCatCurrency)} className="mt-3 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-sm font-bold transition">
                 {t("services.addCategory") ?? "إضافة تصنيف"}
               </button>
+            </div>
+
+            <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-1">مستندات التحقق</h3>
+              <p className="text-xs text-gray-500 mb-3">ارفع سجلك التجاري أو هويتك (PDF أو صورة) — التوثيق يرفع ثقة العملاء ويُسرّع اعتماد ملفك.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <select value={docType} onChange={(e) => setDocType(e.target.value)} className={inputCls} style={{ maxWidth: 220 }}>
+                  <option value="commercial_register">سجل تجاري</option>
+                  <option value="national_id">هوية وطنية</option>
+                  <option value="license">رخصة مزاولة</option>
+                  <option value="other">مستند آخر</option>
+                </select>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]">
+                  {docUploading ? "جارٍ الرفع..." : "اختر ملفًا وارفعه"}
+                  <input type="file" hidden accept="application/pdf,image/png,image/jpeg,image/webp" disabled={docUploading} onChange={(e) => { void uploadDoc(e.target.files?.[0]); e.currentTarget.value = ""; }} />
+                </label>
+              </div>
+              {docMessage && <p className="mt-2 text-xs font-bold text-[var(--color-primary)]">{docMessage}</p>}
+              {docs.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {docs.map((doc) => (
+                    <li key={String(doc.id)} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 dark:border-gray-800 px-3 py-2 text-sm">
+                      <span className="min-w-0 truncate font-bold text-gray-700 dark:text-gray-200">
+                        {String(doc.file_name)}
+                        <small className="ms-2 text-gray-400">{{ commercial_register: "سجل تجاري", national_id: "هوية", license: "رخصة", other: "مستند" }[String(doc.type)] ?? String(doc.type)}</small>
+                      </span>
+                      <span className="flex items-center gap-2">
+                        {Number(doc.verified) === 1
+                          ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">موثّق ✓</span>
+                          : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">بانتظار المراجعة</span>}
+                        <a href={String(doc.file_url)} target="_blank" rel="noreferrer" className="text-xs font-black text-[var(--color-primary)] hover:underline">فتح</a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">

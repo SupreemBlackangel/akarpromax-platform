@@ -32,6 +32,34 @@ function SupervisorProvidersContent() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [docsFor, setDocsFor] = useState<{ id: string; name: string } | null>(null);
+  const [docs, setDocs] = useState<Array<Record<string, unknown>>>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+
+  const openDocs = async (provider: ProviderRow) => {
+    const name = nameFor(locale, provider.display_name_ar as string, provider.display_name_en as string, null, (provider.business_name as string) || provider.id);
+    setDocsFor({ id: provider.id, name });
+    setDocsLoading(true);
+    try {
+      const data = await apiFetch<{ documents: Array<Record<string, unknown>> }>(`/api/service-providers/${encodeURIComponent(provider.id)}/documents`);
+      setDocs(data.documents ?? []);
+    } catch {
+      setDocs([]);
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  const setDocVerified = async (documentId: string, verified: boolean) => {
+    if (!docsFor) return;
+    try {
+      await apiFetch(`/api/service-providers/${encodeURIComponent(docsFor.id)}/documents`, {
+        method: "PATCH",
+        body: JSON.stringify({ documentId, verified }),
+      });
+      setDocs((current) => current.map((doc) => (String(doc.id) === documentId ? { ...doc, verified: verified ? 1 : 0 } : doc)));
+    } catch { /* keep state */ }
+  };
 
   const load = useCallback((current: string) => {
     setLoading(true);
@@ -114,6 +142,7 @@ function SupervisorProvidersContent() {
                           {row.status === "approved" && (
                             <button onClick={() => void setProviderStatus(row.id, "suspended")} disabled={busy} className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-700 disabled:opacity-50">{isArabic ? "إيقاف" : "Suspend"}</button>
                           )}
+                          <button onClick={() => void openDocs(row)} disabled={busy} className="rounded-lg bg-[var(--color-primary-soft)] px-3 py-1.5 text-xs font-black text-[var(--color-primary)] disabled:opacity-50">{isArabic ? "المستندات" : "Documents"}</button>
                         </div>
                       </td>
                     </tr>
@@ -124,6 +153,46 @@ function SupervisorProvidersContent() {
           )}
         </ServiceDashboardShell>
       </div>
+
+      {docsFor && (
+        <div className="account-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDocsFor(null); }}>
+          <div className="account-dialog" role="dialog" aria-modal="true" aria-label={isArabic ? "مستندات التحقق" : "Verification documents"} style={{ width: "min(560px, 96vw)" }}>
+            <button className="account-close" type="button" aria-label="×" onClick={() => setDocsFor(null)}>×</button>
+            <div className="account-panel">
+              <p className="account-kicker">{isArabic ? "مستندات التحقق" : "Verification documents"}</p>
+              <h3 style={{ margin: 0 }}>{docsFor.name}</h3>
+              {docsLoading ? (
+                <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "24px 0" }}>...</p>
+              ) : docs.length === 0 ? (
+                <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "24px 0" }}>{isArabic ? "لم يرفع هذا المزود أي مستندات بعد." : "No documents uploaded yet."}</p>
+              ) : (
+                <ul style={{ listStyle: "none", margin: "12px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {docs.map((doc) => (
+                    <li key={String(doc.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 12px" }}>
+                      <span style={{ minWidth: 0 }}>
+                        <b style={{ display: "block", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>{String(doc.file_name)}</b>
+                        <small style={{ color: "var(--color-text-muted)", fontWeight: 700 }}>
+                          {({ commercial_register: isArabic ? "سجل تجاري" : "Commercial register", national_id: isArabic ? "هوية" : "ID", license: isArabic ? "رخصة" : "License", other: isArabic ? "مستند" : "Document" } as Record<string, string>)[String(doc.type)] ?? String(doc.type)}
+                          {" • "}
+                          {Number(doc.verified) === 1 ? (isArabic ? "موثّق ✓" : "Verified ✓") : (isArabic ? "غير موثّق" : "Unverified")}
+                        </small>
+                      </span>
+                      <span style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <a href={String(doc.file_url)} target="_blank" rel="noreferrer" className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-xs font-black text-[var(--color-primary)]">{isArabic ? "فتح" : "Open"}</a>
+                        {Number(doc.verified) === 1 ? (
+                          <button type="button" onClick={() => void setDocVerified(String(doc.id), false)} className="rounded-lg bg-amber-100 px-2.5 py-1.5 text-xs font-black text-amber-700">{isArabic ? "إلغاء التوثيق" : "Unverify"}</button>
+                        ) : (
+                          <button type="button" onClick={() => void setDocVerified(String(doc.id), true)} className="rounded-lg bg-[var(--color-success)] px-2.5 py-1.5 text-xs font-black text-white">{isArabic ? "توثيق" : "Verify"}</button>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {AccountDialog}
     </PublicPageShell>
   );

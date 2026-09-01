@@ -479,7 +479,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics" | "archived">("campaigns");
   const [archivedCampaigns, setArchivedCampaigns] = useState<Campaign[]>([]);
-  const [perf, setPerf] = useState<{ name: string; totals: { impressions: number; clicks: number; conversions: number }; daily: Array<{ date: string; impressions: number; clicks: number; conversions: number }> } | null>(null);
+  const [perf, setPerf] = useState<{ name: string; totals: { impressions: number; clicks: number; conversions: number }; daily: Array<{ date: string; impressions: number; clicks: number; conversions: number }>; pricing?: { model: string; currency: string; cpc: number; monthlyRate: number; estimatedCost: number } } | null>(null);
   const [perfLoading, setPerfLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -538,7 +538,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setPerf({ name: campaign.internalName, totals: { impressions: campaign.totalImpressions, clicks: campaign.totalClicks, conversions: campaign.totalConversions }, daily: [] });
     try {
       const response = await fetch(`/api/admin/ads/stats?id=${encodeURIComponent(campaign.id)}&days=30`, { cache: "no-store" });
-      const data = await response.json() as { campaign?: { totalImpressions: number; totalClicks: number; totalConversions: number }; daily?: Array<{ date: string; impressions: number; clicks: number; conversions: number }>; error?: string };
+      const data = await response.json() as { campaign?: { totalImpressions: number; totalClicks: number; totalConversions: number }; daily?: Array<{ date: string; impressions: number; clicks: number; conversions: number }>; pricing?: { model: string; currency: string; cpc: number; monthlyRate: number; estimatedCost: number }; error?: string };
       if (!response.ok) throw new Error(data.error || "تعذر تحميل الأداء");
       setPerf({
         name: campaign.internalName,
@@ -548,6 +548,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
           conversions: data.campaign?.totalConversions ?? campaign.totalConversions,
         },
         daily: data.daily ?? [],
+        pricing: data.pricing,
       });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر تحميل الأداء");
@@ -1099,8 +1100,16 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   </div>
                 ))}
               </div>
-              <div style={{ background: "var(--color-primary-soft)", borderRadius: 12, padding: "8px 12px", marginBottom: 12, fontSize: 12, fontWeight: 800, color: "var(--color-primary)" }}>
-                CTR: {perf.totals.impressions > 0 ? ((perf.totals.clicks / perf.totals.impressions) * 100).toFixed(2) : "0.00"}%
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                <span style={{ background: "var(--color-primary-soft)", borderRadius: 12, padding: "8px 12px", fontSize: 12, fontWeight: 800, color: "var(--color-primary)" }}>
+                  CTR: {perf.totals.impressions > 0 ? ((perf.totals.clicks / perf.totals.impressions) * 100).toFixed(2) : "0.00"}%
+                </span>
+                {perf.pricing && (perf.pricing.estimatedCost > 0 || perf.pricing.cpc > 0 || perf.pricing.monthlyRate > 0) && (
+                  <span style={{ background: "var(--color-success-soft)", borderRadius: 12, padding: "8px 12px", fontSize: 12, fontWeight: 800, color: "var(--color-success)" }}>
+                    التكلفة التقديرية: {perf.pricing.estimatedCost.toLocaleString("ar")} {perf.pricing.currency}
+                    {perf.pricing.model === "cpc" ? ` (${perf.pricing.cpc} × نقرة)` : " (شهري ثابت)"}
+                  </span>
+                )}
               </div>
               {perfLoading ? (
                 <p style={{ textAlign: "center", color: "var(--color-text-muted)", padding: "24px 0" }}>جارٍ التحميل...</p>

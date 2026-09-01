@@ -6,6 +6,7 @@ import { statDate } from "@/lib/ads/geo";
 import { loadActiveAds, computeInventoryHealth } from "@/lib/ads/engine";
 import { buildContext } from "@/lib/ads/context";
 import { AD_PLACEMENTS, visibleAdminPlacements } from "@/src/constants/advertising";
+import { getPlatformSettings } from "@/lib/platform-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +26,9 @@ export async function GET(request: Request) {
     const days = Math.max(7, Math.min(90, Number(url.searchParams.get("days")) || 30));
     const since = new Date(Date.now() - days * 86_400_000);
     const sinceKey = statDate(since);
-    const [campaign, daily] = await Promise.all([
+    const [campaign, daily, pricingSettings] = await Promise.all([
       db.prepare(
-        `SELECT id, internal_name, advertiser_name, status, approval_status,
+        `SELECT id, internal_name, advertiser_name, status, approval_status, pricing_model, placements,
                 total_impressions, total_clicks, total_conversions, created_at
          FROM ad_campaigns WHERE id = ?1 LIMIT 1`,
       ).bind(campaignId).first<Record<string, string | number>>(),
@@ -37,9 +38,23 @@ export async function GET(request: Request) {
          WHERE campaign_id = ?1 AND stat_date >= ?2
          ORDER BY stat_date ASC`,
       ).bind(campaignId, sinceKey).all<Record<string, string | number>>(),
+      getPlatformSettings(),
     ]);
     if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+
+    // Estimated cost from the admin-set pricing: CPC campaigns bill clicks;
+    // everything else bills the fixed monthly price of its first placement.
+    let placements: string[] = [];
+    try { placements = JSON.parse(String(campaign.placements || "[]")); } catch { placements = []; }
+    const pricing = pricingSettings.adPricing;
+    const model = String(campaign.pricing_model || "fixed");
+    const firstPlacement = placements[0] ?? "";
+    const monthlyRate = pricing.monthly[firstPlacement] ?? 0;
+    const clicks = Number(campaign.total_clicks);
+    const estimatedCost = model === "cpc" ? clicks * pricing.cpc : monthlyRate;
+
     return NextResponse.json({
+      pricing: { model, currency: pricing.currency, cpc: pricing.cpc, monthlyRate, estimatedCost },
       campaign: {
         id: campaign.id,
         internalName: campaign.internal_name,
