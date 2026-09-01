@@ -24,9 +24,24 @@ export interface OAuthConfig {
 
 // ─── Provider Configs ──────────────────────────────────────────────────────
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3010";
+/**
+ * Public origin the provider redirects back to. Resolved per call (not at
+ * module load) and preferring APP_PUBLIC_URL — the canonical server-side origin
+ * the rest of the app uses. NEXT_PUBLIC_* is inlined at build time, so it is an
+ * unreliable source for a value the deployed server must control; it stays as a
+ * fallback for local setups that only define it.
+ */
+function baseUrl(): string {
+  const raw =
+    process.env.APP_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+    process.env.APP_URL?.trim() ||
+    "http://localhost:3010";
+  return raw.replace(/\/+$/, "");
+}
 
 export function getOAuthConfig(provider: OAuthProvider): OAuthConfig {
+  const BASE_URL = baseUrl();
   if (provider === "google") {
     return {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
