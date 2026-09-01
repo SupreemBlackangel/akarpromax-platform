@@ -53,8 +53,8 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 ];
 
 export const FOOTER_CONTACT = {
-  email: "info@akarpromax.om",
-  mailto: "mailto:info@akarpromax.om",
+  email: "info@akarpromax.com",
+  mailto: "mailto:info@akarpromax.com",
   locationLabelKey: "contactLocation",
 } as const;
 

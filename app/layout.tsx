@@ -35,7 +35,7 @@ const structuredData = JSON.stringify({
       alternateName: "AkarProMax",
       url: "https://akarpromax.com",
       logo: "https://akarpromax.com/apple-touch-icon.png",
-      email: "info@akarpromax.om",
+      email: "info@akarpromax.com",
       address: { "@type": "PostalAddress", addressLocality: "نزوى", addressCountry: "OM" },
     },
     {

@@ -58,7 +58,7 @@ const labels = {
   usefulTitle: "Useful",
   footerLegalTitle: "Legal",
   contactTitle: "Contact",
-  contactEmail: "info@akarpromax.om",
+  contactEmail: "info@akarpromax.com",
   contactLocation: "Muscat, Oman",
   footerDescription: "Desc",
   footerRights: "Rights",

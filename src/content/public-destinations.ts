@@ -131,7 +131,7 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
           "Mevcut reklam ve ticari talepler icin dogrudan is ortakligi iletisimini kullanin. Bu surumde acik odeme veya faturalama akisi yoktur.",
         ),
         cards: [
-          { title: text("شراكات الإعلان", "Advertising Partnerships", "Reklam Ortakliklari"), description: text("راسل فريق الشراكات مباشرة.", "Contact the partnerships team directly.", "Ortaklik ekibiyle dogrudan iletisime gecin."), href: "mailto:partners@akarpromax.om?subject=AkarProMax%20Advertising%20Inquiry", linkLabel: text("راسلنا الآن", "Email us now", "Simdi e-posta gonder") },
+          { title: text("شراكات الإعلان", "Advertising Partnerships", "Reklam Ortakliklari"), description: text("راسل فريق الشراكات مباشرة.", "Contact the partnerships team directly.", "Ortaklik ekibiyle dogrudan iletisime gecin."), href: "mailto:partners@akarpromax.com?subject=AkarProMax%20Advertising%20Inquiry", linkLabel: text("راسلنا الآن", "Email us now", "Simdi e-posta gonder") },
         ],
       },
     ],
@@ -181,13 +181,13 @@ export const PUBLIC_DESTINATIONS: Record<PublicDestinationKey, PublicDestination
       {
         title: text("القناة العامة", "General Contact", "Genel Iletisim"),
         description: text(
-          "البريد العام الحالي للمنصة هو info@akarpromax.om، ويمكن استخدامه للأسئلة العامة والتواصل الأولي.",
-          "The current general platform mailbox is info@akarpromax.om and can be used for general enquiries and initial contact.",
-          "Platformun mevcut genel e-posta kutusu info@akarpromax.om adresidir ve genel sorular icin kullanilabilir.",
+          "البريد العام الحالي للمنصة هو info@akarpromax.com، ويمكن استخدامه للأسئلة العامة والتواصل الأولي.",
+          "The current general platform mailbox is info@akarpromax.com and can be used for general enquiries and initial contact.",
+          "Platformun mevcut genel e-posta kutusu info@akarpromax.com adresidir ve genel sorular icin kullanilabilir.",
         ),
         cards: [
-          { title: text("البريد العام", "General Email", "Genel E-posta"), description: text("تواصل عام مع فريق عقار بروماكس.", "General contact with the AkarProMax team.", "AkarProMax ekibiyle genel iletisim."), href: "mailto:info@akarpromax.om", linkLabel: text("إرسال بريد", "Send email", "E-posta gonder") },
-          { title: text("شراكات الإعلان", "Advertising Partnerships", "Reklam Ortakliklari"), description: text("للاستفسارات التجارية والإعلانية.", "For commercial and advertising enquiries.", "Ticari ve reklam talepleri icin."), href: "mailto:partners@akarpromax.om?subject=AkarProMax%20Partnership%20Inquiry", linkLabel: text("تواصل مع الشراكات", "Contact partnerships", "Ortakliklarla iletisim") },
+          { title: text("البريد العام", "General Email", "Genel E-posta"), description: text("تواصل عام مع فريق عقار بروماكس.", "General contact with the AkarProMax team.", "AkarProMax ekibiyle genel iletisim."), href: "mailto:info@akarpromax.com", linkLabel: text("إرسال بريد", "Send email", "E-posta gonder") },
+          { title: text("شراكات الإعلان", "Advertising Partnerships", "Reklam Ortakliklari"), description: text("للاستفسارات التجارية والإعلانية.", "For commercial and advertising enquiries.", "Ticari ve reklam talepleri icin."), href: "mailto:partners@akarpromax.com?subject=AkarProMax%20Partnership%20Inquiry", linkLabel: text("تواصل مع الشراكات", "Contact partnerships", "Ortakliklarla iletisim") },
         ],
       },
     ],
