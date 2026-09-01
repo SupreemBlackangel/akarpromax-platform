@@ -13,6 +13,7 @@ import { normalizeApiProperty, type ApiPropertyRecord, type NormalizedProperty }
 import PageContainer from "@/src/components/layout/PageContainer";
 import { useServicesPage } from "@/src/components/services/useServicesPage";
 import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "@/src/components/ui/Toast";
 
 const PropertyDetailMap = dynamic(() => import("@/components/properties/PropertyDetailMap"), {
   ssr: false,
@@ -58,6 +59,7 @@ export default function PropertyPage({ params }: Props) {
   const { viewer, openLogin, handleLogout, AccountDialog } = useServicesPage();
   const [property, setProperty] = useState<NormalizedProperty | null>(null);
   const [advertiserId, setAdvertiserId] = useState<string | null>(null);
+  const [isOwnProperty, setIsOwnProperty] = useState(false);
   const [contactBusy, setContactBusy] = useState(false);
   const [auction, setAuction] = useState<{ currentPrice: number; endDate: string | null; status: string | null; type: string | null; bidCount: number } | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -94,6 +96,7 @@ export default function PropertyPage({ params }: Props) {
         if (detailData?.data) {
           setProperty(normalizeApiProperty(detailData.data as ApiPropertyRecord));
           setAdvertiserId(typeof detailData.data.userId === "string" ? detailData.data.userId : null);
+          setIsOwnProperty(Boolean(detailData.data.isOwner));
           const raw = detailData.data as Record<string, unknown>;
           if (raw.isAuction) {
             setAuction({
@@ -343,6 +346,11 @@ export default function PropertyPage({ params }: Props) {
                       )}
                     </div>
 
+                    {isOwnProperty ? (
+                      <p className="mt-5 rounded-xl border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3 text-center text-xs font-bold text-[color:var(--color-text-muted)]">
+                        {locale === "ar" ? "هذا إعلانك — تصل رسائل المهتمين إلى صندوق الدردشة لديك." : locale === "tr" ? "Bu sizin ilanınız — ilgilenenlerin mesajları sohbet kutunuza gelir." : "This is your listing — enquiries arrive in your chat inbox."}
+                      </p>
+                    ) : (
                     <button
                       type="button"
                       disabled={contactBusy || !advertiserId}
@@ -354,6 +362,13 @@ export default function PropertyPage({ params }: Props) {
                         if (!advertiserId || !property) return;
                         setContactBusy(true);
                         try {
+                          // A real opening message so the advertiser receives an
+                          // actual enquiry (not an empty thread) and the visitor
+                          // sees the conversation already started.
+                          const opener =
+                            locale === "ar" ? `مرحباً، أنا مهتم بهذا العقار: ${property.title.ar}. هل ما زال متاحاً؟`
+                            : locale === "tr" ? `Merhaba, bu mülkle ilgileniyorum: ${property.title.tr}. Hâlâ müsait mi?`
+                            : `Hello, I'm interested in this property: ${property.title.en}. Is it still available?`;
                           const response = await fetch("/api/messages", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -362,6 +377,7 @@ export default function PropertyPage({ params }: Props) {
                               context: "property",
                               contextId: property.id,
                               recipientId: advertiserId,
+                              content: opener,
                             }),
                           });
                           const data = await response.json().catch(() => null);
@@ -369,7 +385,16 @@ export default function PropertyPage({ params }: Props) {
                             window.dispatchEvent(new CustomEvent("akar:chat:open", {
                               detail: { threadId: data.data.id, title: property.title[locale] },
                             }));
+                          } else {
+                            // End the silent failure: tell the user why (e.g. it
+                            // is their own listing, or they must sign in).
+                            toast.error(
+                              data?.error ||
+                                (locale === "ar" ? "تعذّر بدء المحادثة" : locale === "tr" ? "Sohbet başlatılamadı" : "Could not start the conversation"),
+                            );
                           }
+                        } catch {
+                          toast.error(locale === "ar" ? "تعذّر بدء المحادثة" : locale === "tr" ? "Sohbet başlatılamadı" : "Could not start the conversation");
                         } finally {
                           setContactBusy(false);
                         }
@@ -381,6 +406,7 @@ export default function PropertyPage({ params }: Props) {
                         ? (locale === "ar" ? "جارٍ الفتح..." : locale === "tr" ? "Açılıyor..." : "Opening...")
                         : (locale === "ar" ? "تواصل مع المعلن" : locale === "tr" ? "İlan sahibiyle iletişim" : "Contact the advertiser")}
                     </button>
+                    )}
 
                     <button
                       type="button"

@@ -90,6 +90,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         media,
         offers,
         isFavorite,
+        // Lets the detail page hide "contact the advertiser" on your own listing
+        // (self-messaging is rejected by /api/messages).
+        isOwner: property.userId === session?.userId,
       },
     });
   } catch (error) {
