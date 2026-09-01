@@ -17,7 +17,7 @@ import PublicSidebar from "@/src/components/public/public-sidebar";
 import MobileNavigation from "@/src/components/public/mobile-navigation";
 import OfficeAppPromotion from "@/src/components/public/office-app-promotion";
 import CookieNotice from "@/src/components/public/cookie-notice";
-import ToastRegion from "@/src/components/public/toast-region";
+import ToastViewport from "@/src/components/ui/Toast";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import StandardPublicAdLayout from "@/src/components/ads/standard-public-ad-layout";
 import { shouldShowHeaderPublicNavigation, shouldUsePublicSidebar, type PublicNavItem, type BreadcrumbItem } from "@/src/config/public-navigation";
@@ -317,7 +317,7 @@ export function PublicShellLayout({
 
       <CookieNotice labels={labels} visible={cookieNoticeVisible} onAccept={onCookieAccept} onReject={onCookieReject} onManage={onCookieManage} />
 
-      <ToastRegion labels={labels} />
+      <ToastViewport ariaLabel={labels.toastAria} />
 
       {adRequestSlot && (
         <AdRequestDialog

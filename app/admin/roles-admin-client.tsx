@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserCog, Search, Check, X } from "lucide-react";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { ROLE_CATALOG, ROLE_ORDER, roleNameEn } from "@/src/constants/roles";
+import { toast } from "@/src/components/ui/Toast";
 
 type Tab = "matrix" | "users" | "moderators";
 
@@ -224,9 +225,9 @@ export default function RolesAdminClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل تحديث الدور");
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
-      setUsersMessage("تم تحديث الدور بنجاح.");
+      toast.success("تم تحديث الدور بنجاح.");
     } catch (err) {
-      setUsersMessage(err instanceof Error ? err.message : "حدث خطأ");
+      toast.error(err instanceof Error ? err.message : "حدث خطأ");
     } finally {
       setUsersBusy(false);
     }
@@ -255,7 +256,7 @@ export default function RolesAdminClient() {
       if (!res.ok) throw new Error(data.error || "فشل تحديث الدور");
       setUsers((prev) => prev.map((u) => (u.id === applyUserId ? { ...u, role: applyRole } : u)));
       const target = users.find((u) => u.id === applyUserId);
-      setUsersMessage(`تم تعيين دور «${ROLE_CATALOG[applyRole as keyof typeof ROLE_CATALOG]?.nameAr ?? applyRole}» للمستخدم ${target?.displayName || target?.email || ""}.`);
+      toast.success(`تم تعيين دور «${ROLE_CATALOG[applyRole as keyof typeof ROLE_CATALOG]?.nameAr ?? applyRole}» للمستخدم ${target?.displayName || target?.email || ""}.`);
       setApplyOpen(false);
     } catch (err) {
       setApplyError(err instanceof Error ? err.message : "حدث خطأ");
