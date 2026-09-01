@@ -9,6 +9,33 @@ import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
 import { GeoService } from '@/lib/services/geo/geo.service';
 import { resolveGeoSelection } from '@/lib/services/geo/selection';
 
+// Fields safe to expose on the PUBLIC feed. Everything else (owner/admin user
+// ids, moderation fields, internal auction bid mechanics, winner/organizer ids,
+// contract urls) is withheld — only the property's own owner sees the full row
+// via ?mine=1.
+const PUBLIC_PROPERTY_FIELDS = [
+  "id", "titleAr", "titleEn", "descriptionAr", "descriptionEn",
+  "dealType", "category", "propertyType",
+  "country", "governorate", "city", "district", "latitude", "longitude", "address",
+  "price", "currency", "area", "bedrooms", "bathrooms", "floor", "totalFloors",
+  "yearBuilt", "facade", "direction", "referenceNumber", "advertisingLicense",
+  "ownerName", "agentName", "officeId",
+  "status", "isFeatured", "isVerified", "views",
+  // Auction — public-facing bidding surface only (no internal bid mechanics/ids)
+  "isAuction", "auctionType", "auctionStatus", "auctionStartPrice",
+  "auctionCurrentPrice", "auctionStartDate", "auctionEndDate", "auctionBidCount",
+  "createdAt", "updatedAt",
+] as const;
+
+function toPublicProperty(row: Record<string, unknown>, offerCodes: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of PUBLIC_PROPERTY_FIELDS) {
+    if (key in row) out[key] = row[key];
+  }
+  out.offerCodes = offerCodes;
+  return out;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -166,9 +193,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Owners viewing their own listings (?mine=1) get the full row; the public
+    // feed gets a safe projection so internal ids/moderation/auction mechanics
+    // never leak.
+    const data = results.map((row) => {
+      const offerCodes = offerCodesByProperty.get(row.id) ?? [];
+      return mine ? { ...row, offerCodes } : toPublicProperty(row as Record<string, unknown>, offerCodes);
+    });
+
     return NextResponse.json({
       success: true,
-      data: results.map((row) => ({ ...row, offerCodes: offerCodesByProperty.get(row.id) ?? [] })),
+      data,
       pagination: {
         page: validated.page,
         limit: validated.limit,

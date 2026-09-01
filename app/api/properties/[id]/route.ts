@@ -67,10 +67,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .from(propertyOffers)
       .where(eq(propertyOffers.propertyId, id));
 
+    // The owner (or an admin) sees the full record; everyone else gets it with
+    // the moderation + internal auction mechanics stripped. userId is kept — the
+    // detail page needs it as the "contact advertiser" messaging recipient.
+    const isOwnerOrAdmin = property.userId === session?.userId || session?.role === 'super_admin';
+    const INTERNAL_FIELDS = [
+      'approvedBy', 'approvedAt', 'rejectedReason',
+      'auctionMinBid', 'auctionMaxBid', 'auctionBidIncrement',
+      'auctionOrganizerOrganizationId', 'auctionCreatedByUserId',
+      'auctionWinnerId', 'auctionWinningPrice',
+      'auctionContractUrl', 'auctionContractAccepted',
+    ] as const;
+    const propertyData: Record<string, unknown> = { ...property };
+    if (!isOwnerOrAdmin) {
+      for (const field of INTERNAL_FIELDS) delete propertyData[field];
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        ...property,
+        ...propertyData,
         media,
         offers,
         isFavorite,
