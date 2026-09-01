@@ -6,6 +6,7 @@ import { propertyOffers, propertyOfferTypes } from "@/lib/db/schemas/offer-types
 import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { storePropertyImage } from "@/lib/properties/image-processing";
 
 /**
  * Shared logic for the desktop property-publish bridge
@@ -122,10 +123,8 @@ async function saveDataUrlImage(dataUrl: string): Promise<string | null> {
   const buffer = Buffer.from(match[2], "base64");
   if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) return null;
   if (!signatureMatches(buffer, mime)) return null;
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  const fileName = `${crypto.randomUUID()}.${EXT_BY_MIME[mime]}`;
-  await writeFile(join(UPLOAD_DIR, fileName), buffer);
-  return `/uploads/properties/${fileName}`;
+  // Unified pipeline: WebP-optimized, resized, stored under PROPERTY_UPLOAD_DIR.
+  return storePropertyImage(buffer, mime);
 }
 
 async function resolveImages(rawImages: unknown): Promise<string[]> {

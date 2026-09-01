@@ -1,7 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Save, MapPin, Home, Ruler, Bed, Bath, Tag, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, MapPin, Home, Ruler, Bed, Bath, Tag, Image as ImageIcon, Upload } from 'lucide-react';
 import Button from '@/src/components/ui/Button';
 import Card from '@/src/components/ui/Card';
 import { CardContent, CardHeader, CardTitle } from '@/src/components/ui/Card';
@@ -204,6 +204,7 @@ function mapInitialData(initialData?: PropertyFormData): PropertyFormData {
 
 export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onValidationError }: PropertyFormWithOffersProps) {
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [offerTypes, setOfferTypes] = useState<OfferType[]>([]);
@@ -249,6 +250,29 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
       setFormData(prev => ({ ...prev, propertyType: '' }));
     }
   }, []);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const uploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingImage(true);
+    try {
+      const uploaded: Array<{ url: string; type: 'image' }> = [];
+      for (const file of Array.from(files).slice(0, 10)) {
+        const body = new FormData();
+        body.append('file', file);
+        const response = await fetch('/api/properties/upload-image', { method: 'POST', body });
+        const data = await response.json().catch(() => null);
+        if (response.ok && data?.success && data.url) uploaded.push({ url: data.url, type: 'image' });
+      }
+      if (uploaded.length) {
+        handleChange('media', [...formData.media.filter((m) => m.url), ...uploaded]);
+      }
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -740,6 +764,17 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
           >
             <Plus className="w-4 h-4" /> إضافة وسيط
           </Button>
+          <input ref={uploadInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { void uploadImages(e.target.files); e.currentTarget.value = ''; }} />
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={uploadingImage}
+            onClick={() => uploadInputRef.current?.click()}
+            className="text-sm px-4 py-2 rounded-lg font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition flex items-center gap-1.5 disabled:opacity-60"
+          >
+            <Upload className="w-4 h-4" /> {uploadingImage ? 'جارٍ الرفع...' : 'رفع صور من جهازك'}
+          </Button>
+          <p className="text-[11px] text-gray-400">تُحوَّل الصور تلقائيًا إلى WebP بمقاس موحد لسرعة التصفح.</p>
         </CardContent>
       </Card>
 

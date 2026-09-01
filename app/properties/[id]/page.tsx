@@ -4,7 +4,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { MapPin, Bed, Bath, Car, Maximize, ArrowRight, Heart, MessageCircle } from "lucide-react";
+import { MapPin, Bed, Bath, Car, Maximize, ArrowRight, Heart, MessageCircle, Gavel, Timer } from "lucide-react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { translations } from "@/src/data/translations";
 import { useGeo } from "@/src/contexts/GeoContext";
@@ -59,6 +59,15 @@ export default function PropertyPage({ params }: Props) {
   const [property, setProperty] = useState<NormalizedProperty | null>(null);
   const [advertiserId, setAdvertiserId] = useState<string | null>(null);
   const [contactBusy, setContactBusy] = useState(false);
+  const [auction, setAuction] = useState<{ currentPrice: number; endDate: string | null; status: string | null; type: string | null; bidCount: number } | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  // Live countdown tick while an auction panel is visible.
+  useEffect(() => {
+    if (!auction?.endDate) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [auction?.endDate]);
   const [similar, setSimilar] = useState<PublicProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -85,6 +94,18 @@ export default function PropertyPage({ params }: Props) {
         if (detailData?.data) {
           setProperty(normalizeApiProperty(detailData.data as ApiPropertyRecord));
           setAdvertiserId(typeof detailData.data.userId === "string" ? detailData.data.userId : null);
+          const raw = detailData.data as Record<string, unknown>;
+          if (raw.isAuction) {
+            setAuction({
+              currentPrice: Number(raw.auctionCurrentPrice ?? raw.auctionStartPrice ?? 0),
+              endDate: raw.auctionEndDate ? String(raw.auctionEndDate) : null,
+              status: typeof raw.auctionStatus === "string" ? raw.auctionStatus : null,
+              type: typeof raw.auctionType === "string" ? raw.auctionType : null,
+              bidCount: Number(raw.auctionBidCount ?? 0),
+            });
+          } else {
+            setAuction(null);
+          }
           setActiveImage(0);
         }
         const similarData = similarRes.ok ? await similarRes.json() : null;
@@ -216,6 +237,69 @@ export default function PropertyPage({ params }: Props) {
 
               <aside className="lg:sticky lg:top-6 lg:self-start">
                 <div className="flex flex-col gap-5">
+                  {auction && (
+                    <div className="overflow-hidden rounded-3xl border border-amber-300/60 bg-gradient-to-br from-amber-50 via-white to-amber-100/60 p-6 shadow-sm dark:border-amber-600/40 dark:from-amber-950/40 dark:via-transparent dark:to-amber-900/20">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-black text-white shadow">
+                          <Gavel className="h-3.5 w-3.5" />
+                          {auction.status === "active"
+                            ? (locale === "ar" ? "مزاد جارٍ الآن" : locale === "tr" ? "Müzayede devam ediyor" : "Live auction")
+                            : (locale === "ar" ? "عقار بنظام المزاد" : locale === "tr" ? "Müzayedeli mülk" : "Auction listing")}
+                        </span>
+                        <span className="text-[10px] font-black text-amber-700 dark:text-amber-300">
+                          {auction.type === "fixed"
+                            ? (locale === "ar" ? "مزاد مغلق" : locale === "tr" ? "Kapalı" : "Closed")
+                            : (locale === "ar" ? "مزاد مفتوح" : locale === "tr" ? "Açık" : "Open")}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80">
+                        {locale === "ar" ? "السعر الحالي" : locale === "tr" ? "Güncel fiyat" : "Current price"}
+                      </p>
+                      <p className="mt-0.5 flex items-baseline gap-2">
+                        <strong className="text-3xl font-black text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>
+                          {auction.currentPrice.toLocaleString(locale === "ar" ? "ar" : "en")}
+                        </strong>
+                        <span className="text-sm font-extrabold text-[color:var(--color-text-muted)]">{property.currency}</span>
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-[color:var(--color-text-muted)]">
+                        {auction.bidCount} {locale === "ar" ? "مزايدة" : locale === "tr" ? "teklif" : "bids"}
+                      </p>
+                      {auction.endDate && (() => {
+                        const remaining = new Date(auction.endDate).getTime() - now;
+                        if (remaining <= 0) {
+                          return <p className="mt-3 rounded-xl bg-amber-100 px-3 py-2 text-center text-xs font-black text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{locale === "ar" ? "انتهى وقت المزاد" : locale === "tr" ? "Müzayede sona erdi" : "Auction ended"}</p>;
+                        }
+                        const d = Math.floor(remaining / 86_400_000);
+                        const h = Math.floor((remaining % 86_400_000) / 3_600_000);
+                        const m = Math.floor((remaining % 3_600_000) / 60_000);
+                        const sec = Math.floor((remaining % 60_000) / 1000);
+                        const cell = (value: number, label: string) => (
+                          <div className="rounded-xl bg-white/80 px-2 py-1.5 text-center shadow-sm dark:bg-black/20">
+                            <b className="block text-lg font-black text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>{String(value).padStart(2, "0")}</b>
+                            <small className="text-[9px] font-black text-[color:var(--color-text-muted)]">{label}</small>
+                          </div>
+                        );
+                        return (
+                          <div className="mt-3">
+                            <p className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80"><Timer className="h-3 w-3" /> {locale === "ar" ? "الوقت المتبقي" : locale === "tr" ? "Kalan süre" : "Time left"}</p>
+                            <div className="grid grid-cols-4 gap-1.5" dir="ltr">
+                              {cell(d, locale === "ar" ? "يوم" : locale === "tr" ? "gün" : "days")}
+                              {cell(h, locale === "ar" ? "ساعة" : locale === "tr" ? "saat" : "hrs")}
+                              {cell(m, locale === "ar" ? "دقيقة" : locale === "tr" ? "dk" : "min")}
+                              {cell(sec, locale === "ar" ? "ثانية" : locale === "tr" ? "sn" : "sec")}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      <Link
+                        href={`/auctions/${property.id}`}
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-600"
+                      >
+                        <Gavel className="h-4 w-4" />
+                        {locale === "ar" ? "ادخل المزاد وزايد الآن" : locale === "tr" ? "Müzayedeye katıl" : "Enter the auction"}
+                      </Link>
+                    </div>
+                  )}
                   <div className="rounded-3xl border border-[color:var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
                     <div className="flex items-baseline gap-2">
                       <strong className="text-3xl font-black text-[color:var(--color-primary)]">{localePrice}</strong>
