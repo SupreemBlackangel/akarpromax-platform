@@ -64,6 +64,41 @@ export async function getProviderProfileById(providerId: string): Promise<Record
   );
 }
 
+/* ---------- Provider bookmarks (favorites) ---------- */
+
+/** Providers the user has bookmarked, newest first, as full provider rows. */
+export async function listBookmarkedProviders(userId: string): Promise<Array<Record<string, unknown>>> {
+  const db = await getServicesDb();
+  const rows = await db
+    .prepare(
+      `SELECT p.* FROM service_bookmarks b
+       JOIN service_provider_profiles p ON p.id = b.listing_id
+       WHERE b.user_id = ?1
+       ORDER BY b.created_at DESC`,
+    )
+    .bind(userId)
+    .all<Record<string, unknown>>();
+  return rows.results ?? [];
+}
+
+export async function addProviderBookmark(userId: string, providerId: string): Promise<void> {
+  const db = await getServicesDb();
+  await db
+    .prepare(
+      "INSERT OR IGNORE INTO service_bookmarks (id, user_id, listing_id, created_at) VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)",
+    )
+    .bind(crypto.randomUUID(), userId, providerId)
+    .run();
+}
+
+export async function removeProviderBookmark(userId: string, providerId: string): Promise<void> {
+  const db = await getServicesDb();
+  await db
+    .prepare("DELETE FROM service_bookmarks WHERE user_id = ?1 AND (listing_id = ?2 OR id = ?2)")
+    .bind(userId, providerId)
+    .run();
+}
+
 export type ProviderProfileInput = {
   user_id: string;
   displayNameAr?: string | null;

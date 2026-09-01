@@ -500,6 +500,31 @@ export async function openDispute(input: {
   return id;
 }
 
+/** Disputes on orders where `userId` is the customer or the provider. */
+export async function listDisputesForUser(
+  userId: string,
+  opts?: { status?: string; limit?: number },
+): Promise<Array<Record<string, unknown>>> {
+  const db = await getServicesDb();
+  const limit = Math.max(1, Math.min(100, opts?.limit ?? 50));
+  const params: unknown[] = [userId, userId];
+  let sql =
+    `SELECT d.*, o.request_id AS order_request_id, o.customer_user_id, o.provider_user_id
+     FROM service_disputes d
+     JOIN service_orders o ON o.id = d.order_id
+     WHERE (o.customer_user_id = ?1 OR o.provider_user_id = ?2)`;
+  if (opts?.status) {
+    params.push(opts.status);
+    sql += ` AND d.status = ?${params.length}`;
+  }
+  sql += ` ORDER BY d.opened_at DESC LIMIT ${limit}`;
+  const rows = await db.prepare(sql).bind(...params).all<Record<string, unknown>>();
+  return (rows.results ?? []).map((row) => ({
+    ...row,
+    order: row.order_request_id ? { id: row.order_request_id } : null,
+  }));
+}
+
 export async function resolveDispute(disputeId: string, resolutionNote: string, actor?: ActorContext): Promise<void> {
   const db = await getServicesDb();
   const dispute = await db.prepare("SELECT * FROM service_disputes WHERE id = ?1").bind(disputeId).first<Record<string, unknown>>();

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { translations } from "@/src/data/translations";
 import type { Locale, ViewerContext } from "@/src/types/site";
 import { useGeo } from "@/src/contexts/GeoContext";
+import { SERVICE_I18N } from "@services-ui/serviceI18n";
 
 const AccountDialog = dynamic(() => import("@/src/components/AccountDialog"), {
   ssr: false,
@@ -104,7 +105,12 @@ export function useServicesPage(options: UseServicesPageOptions = {}) {
   const t = useCallback(
     (key: string): string => {
       const value = flat[key] ?? translations[locale][key as keyof typeof translations["ar"]];
-      return typeof value === "string" ? value : key;
+      if (typeof value === "string" && value.length > 0) return value;
+      // Last-resort bundled fallback so services.* labels never leak raw keys
+      // when the live i18n store lacks that namespace.
+      const bundled = SERVICE_I18N[key];
+      if (bundled) return bundled[locale] ?? bundled.ar;
+      return key;
     },
     [flat, locale],
   );
