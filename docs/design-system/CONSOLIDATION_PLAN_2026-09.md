@@ -27,15 +27,31 @@ canonical standards; the work is migration onto them, not redesign.
 - Roles page: new header "apply role to user" modal built on `.modal-*` +
   tokens + lucide.
 
-## Remaining phases (do in order; one build-swap each)
+## Completed since (later batches)
+
+- **Phase 4** — `ui/Table.tsx` (Table/THead/TBody/Row/HeadCell/Cell/EmptyRow) and
+  `ui/Toast.tsx` (module-level store + `toast.*` + `<ToastViewport/>`, mounted in
+  the public shell and admin layout; the sr-only `toast-region.tsx` stub deleted).
+- **Phase 6 (partial)** — `ServiceCards.tsx` off the gray palette; property
+  filters unified on `--color-border-focus` (they had a blue-vs-emerald split);
+  the add-property wizard + `PropertyFormWithOffers` fully tokenized.
+- **Phase 7** — 144 hardcoded values across 23 drifted shades inside the 151
+  `html[data-theme="dark"]` rules replaced with dark tokens. tokens.css is now
+  the single source of dark values. (The rules remain as structure; deleting the
+  redundant ones is the optional follow-up.)
+- **Phase 8 (icons)** — `ui/Icon.tsx` named registry over lucide; 15 admin
+  glyphs + 55 sidebar emoji migrated; `icon: IconName` makes an unmapped name a
+  build error.
+- Plus: global `<select>` chevron unification (RTL-aware, `appearance:none`).
+
+## Remaining
 
 | # | Action | Risk |
 |---|--------|------|
-| 4 | Build missing primitives: `ui/Table`, real Toast provider (wire into `toast-region.tsx`), exported token-based `ui/Input` | LOW (additive) |
-| 5b | Full rewrite of companies/audit/auction-organizers admin pages onto ui/Button+Table+Input+Badge | MEDIUM |
-| 6 | Tokenize public/services bodies: `app/services/page.tsx`, properties filters (blue vs emerald focus split), `ServiceCards.tsx` gray palette, `tools.css` + its dark block, LandSearchPage strings | MEDIUM |
-| 7 | Collapse the ~150 per-selector `html[data-theme="dark"]` overrides in globals.css by tokenizing the ~276 light hex values, section by section | MED-HIGH |
-| 8 | `ui/Icon.tsx` wrapper + migrate emoji/glyph icons (~45 files) to lucide; unify the 5 dashboard shells; `<EmptyState>` primitive; hand-rolled tab bars → `ui/Tabs`; physical→logical RTL props | LOW × volume |
+| 5b | Full rewrite of companies/audit/auction-organizers admin pages onto ui/Button+Table+Input+Badge (they are tokenized but still hand-rolled markup) | MEDIUM |
+| 6b | Remaining public bodies: `app/services/page.tsx` hero/chips, `tools.css` + its dark block, LandSearchPage hardcoded strings | MEDIUM |
+| 7b | Delete the now-redundant `html[data-theme="dark"]` rules whose light counterpart consumes the same token | MEDIUM |
+| 8b | Unify the 5 dashboard shells; `<EmptyState>` primitive; hand-rolled tab bars → `ui/Tabs`; physical→logical RTL props; remaining emoji in page bodies | LOW × volume |
 
 Key facts for later sessions: `.modal-*` classes in globals.css are LIVE (used
 by roles modal + AccountDialog) — do not delete with the shared/ cleanup. The
