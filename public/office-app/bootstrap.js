@@ -148,6 +148,19 @@
       + ".akar-acct-chip button:hover{background:#e4ecfb}"
       + ".akar-acct-chip button.akar-chip-logout{color:#c0392b}"
       + ".akar-acct-chip button.akar-chip-logout:hover{background:#fdecec}"
+      + ".akar-chip-badge{display:inline-grid;place-items:center;min-width:16px;height:16px;margin-inline-start:5px;padding:0 4px;border-radius:999px;background:#e11d48;color:#fff;font-size:9px;font-weight:800;vertical-align:middle}"
+      + ".akar-msg-threads{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}"
+      + ".akar-msg-thread{text-align:start;border:1px solid #e2e8f2;border-radius:12px;padding:10px 12px;background:#fff;cursor:pointer;font-family:inherit}"
+      + ".akar-msg-thread:hover{background:#f4f8ff;border-color:#bcd4f7}"
+      + ".akar-msg-thread b{display:block;font-size:12px;color:#152744;margin-bottom:3px}"
+      + ".akar-msg-thread span{display:block;font-size:11px;color:#6a7d97;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + ".akar-msg-log{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0}"
+      + ".akar-msg-bubble{max-width:80%;padding:7px 11px;border-radius:14px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word}"
+      + ".akar-msg-in{align-self:flex-start;background:#eef3fb;color:#243b63;border-bottom-left-radius:4px}"
+      + ".akar-msg-out{align-self:flex-end;background:#1769ff;color:#fff;border-bottom-right-radius:4px}"
+      + ".akar-msg-compose{display:flex;gap:6px;margin-top:8px}"
+      + ".akar-msg-compose input{flex:1;min-width:0;border:1px solid #d4e0f0;border-radius:999px;padding:8px 14px;font-family:inherit;font-size:12px;outline:none}"
+      + ".akar-msg-compose button{border:0;background:#1769ff;color:#fff;border-radius:999px;padding:8px 16px;font-weight:800;font-family:inherit;font-size:12px;cursor:pointer}"
       + ".akar-profile-card{width:min(460px,92vw);max-height:88vh;overflow-y:auto}"
       + ".akar-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}"
       + ".akar-profile-grid .akar-auth-field.akar-full{grid-column:1/-1}"
@@ -495,6 +508,121 @@
   }
 
   // ---- account chip (profile + logout) ------------------------------------
+  // ---- advertiser enquiries (website "contact advertiser" threads) --------
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function showMessages() {
+    if (document.getElementById("akar-msg-backdrop")) return;
+    injectStyles();
+    var wrap = document.createElement("div");
+    wrap.id = "akar-msg-backdrop";
+    wrap.className = "akar-auth-backdrop";
+    wrap.innerHTML =
+      '<div class="akar-auth-card akar-mgr-card" role="dialog" aria-label="الرسائل">' +
+      '  <div class="akar-auth-logo"><img src="' + PLATFORM + '/icons/icon-192.png" alt="" onerror="this.style.display=\'none\'"/>' +
+      "    <div><b>رسائل المهتمين بعقاراتك</b><span>محادثات \"تواصل مع المعلن\" من الموقع — رُدّ عليها مباشرةً من هنا</span></div></div>" +
+      '  <div class="akar-auth-err" id="akar-msg-err"></div>' +
+      '  <div id="akar-msg-body"><p class="akar-mgr-empty">جارٍ التحميل...</p></div>' +
+      '  <button class="akar-auth-btn" id="akar-msg-close" style="background:transparent;color:#6a7d97;margin-top:10px">إغلاق</button>' +
+      "</div>";
+    document.body.appendChild(wrap);
+    document.getElementById("akar-msg-close").addEventListener("click", function () { wrap.remove(); });
+
+    function msgErr(m) { var el = document.getElementById("akar-msg-err"); if (el) { el.textContent = m; el.style.display = m ? "block" : "none"; } }
+
+    function openThread(id, title) {
+      var bodyEl = document.getElementById("akar-msg-body");
+      bodyEl.innerHTML = '<p class="akar-mgr-empty">جارٍ التحميل...</p>';
+      authedFetch("/api/program/messages?threadId=" + encodeURIComponent(id), { method: "GET" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.success) { msgErr("تعذّر تحميل المحادثة."); return; }
+          var mine = data.myUserId;
+          var logHtml = (data.messages || []).map(function (m) {
+            var cls = m.senderId === mine ? "akar-msg-out" : "akar-msg-in";
+            return '<div class="akar-msg-bubble ' + cls + '">' + escapeHtml(m.content) + "</div>";
+          }).join("");
+          bodyEl.innerHTML =
+            '<button class="akar-auth-btn" id="akar-msg-back" style="background:transparent;color:#6a7d97;margin-bottom:6px">‹ رجوع للقائمة</button>' +
+            '<b style="display:block;font-size:12px;color:#152744;margin-bottom:6px">' + escapeHtml(title) + "</b>" +
+            '<div class="akar-msg-log" id="akar-msg-log">' + (logHtml || '<p class="akar-mgr-empty">لا رسائل بعد.</p>') + "</div>" +
+            '<div class="akar-msg-compose"><input id="akar-msg-input" placeholder="اكتب ردك..." maxlength="4000"/><button id="akar-msg-send">إرسال</button></div>';
+          var logEl = document.getElementById("akar-msg-log");
+          if (logEl) logEl.scrollTop = logEl.scrollHeight;
+          document.getElementById("akar-msg-back").addEventListener("click", loadThreads);
+          var input = document.getElementById("akar-msg-input");
+          function send() {
+            var content = (input.value || "").trim();
+            if (!content) return;
+            input.disabled = true;
+            authedFetch("/api/program/messages", { method: "POST", body: JSON.stringify({ threadId: id, content: content }) })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (res) {
+                input.disabled = false;
+                if (!res || !res.success) { msgErr("تعذّر الإرسال."); return; }
+                input.value = "";
+                openThread(id, title);
+              })
+              .catch(function () { input.disabled = false; msgErr("تعذّر الاتصال بالخادم."); });
+          }
+          document.getElementById("akar-msg-send").addEventListener("click", send);
+          input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send(); } });
+        })
+        .catch(function () { msgErr("تعذّر الاتصال بالخادم."); });
+    }
+
+    function loadThreads() {
+      msgErr("");
+      var bodyEl = document.getElementById("akar-msg-body");
+      bodyEl.innerHTML = '<p class="akar-mgr-empty">جارٍ التحميل...</p>';
+      authedFetch("/api/program/messages", { method: "GET" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var threads = (data && Array.isArray(data.threads)) ? data.threads : [];
+          if (!threads.length) { bodyEl.innerHTML = '<p class="akar-mgr-empty">لا توجد رسائل بعد. ستظهر هنا استفسارات المهتمين بعقاراتك.</p>'; return; }
+          var html = '<div class="akar-msg-threads">';
+          threads.forEach(function (t) {
+            var title = t.title || "محادثة";
+            html += '<button class="akar-msg-thread" data-id="' + escapeHtml(t.id) + '" data-title="' + escapeHtml(title) + '">' +
+              "<b>" + escapeHtml(title) + "</b><span>" + escapeHtml(t.lastMessage || "—") + "</span></button>";
+          });
+          html += "</div>";
+          bodyEl.innerHTML = html;
+          Array.prototype.forEach.call(bodyEl.querySelectorAll(".akar-msg-thread"), function (btn) {
+            btn.addEventListener("click", function () { openThread(btn.getAttribute("data-id"), btn.getAttribute("data-title")); });
+          });
+        })
+        .catch(function () { msgErr("تعذّر الاتصال بالخادم."); });
+    }
+
+    loadThreads();
+  }
+
+  // Lightweight unread indicator: count threads and badge the chip button.
+  function refreshMessageBadge() {
+    if (!isLoggedIn()) return;
+    authedFetch("/api/program/messages", { method: "GET" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var badge = document.getElementById("akar-chip-msg-badge");
+        if (!badge) return;
+        var n = (data && Array.isArray(data.threads)) ? data.threads.length : 0;
+        if (n > 0) { badge.textContent = n > 99 ? "99+" : String(n); badge.style.display = "inline-grid"; }
+        else { badge.style.display = "none"; }
+      })
+      .catch(function () {});
+  }
+  var messageBadgeTimer = null;
+  function startMessageBadge() {
+    refreshMessageBadge();
+    if (messageBadgeTimer) return;
+    messageBadgeTimer = window.setInterval(function () { if (isLoggedIn()) refreshMessageBadge(); }, 60000);
+  }
+
   function mountChip() {
     var existing = document.getElementById("akar-acct-chip");
     if (existing) existing.remove();
@@ -510,9 +638,11 @@
     chip.className = "akar-acct-chip";
     chip.innerHTML =
       '<small title="' + name + '">🟢 ' + name + "</small>" +
+      '<button id="akar-chip-messages">الرسائل<span id="akar-chip-msg-badge" class="akar-chip-badge" style="display:none">0</span></button>' +
       '<button id="akar-chip-props">عقاراتي المنشورة</button>' +
       '<button id="akar-chip-profile">بيانات المكتب</button>' +
       '<button class="akar-chip-logout" id="akar-chip-logout">خروج</button>';
+    chip.querySelector("#akar-chip-messages").addEventListener("click", function () { showMessages(); });
     chip.querySelector("#akar-chip-props").addEventListener("click", function () { showPropertyManager(); });
     chip.querySelector("#akar-chip-profile").addEventListener("click", function () { showProfileForm(false); });
     chip.querySelector("#akar-chip-logout").addEventListener("click", function () {
@@ -522,6 +652,7 @@
       showLogin();
     });
     document.body.appendChild(chip);
+    startMessageBadge();
   }
 
   // ---- office profile (name/logo/contact/location) ------------------------
