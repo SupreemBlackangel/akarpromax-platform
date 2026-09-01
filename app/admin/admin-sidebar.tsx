@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { roleNameAr } from "@/src/constants/roles";
 import type { UserIdentity } from "@/lib/identity-auth";
+import Icon, { type IconName } from "@/src/components/ui/Icon";
 
 const countries: Record<string, string> = {
   om: "عُمان", sa: "السعودية", ae: "الإمارات", qa: "قطر", kw: "الكويت",
@@ -20,56 +21,56 @@ const SERVICE_PERMISSIONS = [
   PERMISSIONS.SERVICE_PROVIDERS_REVIEW,
 ];
 
-type NavItem = { href: string; icon: string; label: string; permission?: string | string[] };
+type NavItem = { href: string; icon: IconName; label: string; permission?: string | string[] };
 type NavGroup = { label: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
     label: "الإدارة العامة",
-    items: [{ href: "/admin", icon: "▦", label: "لوحة الإحصاءات", permission: PERMISSIONS.ADMIN_DASHBOARD_VIEW }],
+    items: [{ href: "/admin", icon: "dashboard", label: "لوحة الإحصاءات", permission: PERMISSIONS.ADMIN_DASHBOARD_VIEW }],
   },
   {
     label: "المستخدمون والصلاحيات",
     items: [
-      { href: "/admin/users", icon: "♙", label: "المستخدمون", permission: PERMISSIONS.USERS_VIEW },
-      { href: "/admin/roles", icon: "♛", label: "الأدوار والصلاحيات", permission: PERMISSIONS.ROLES_VIEW },
+      { href: "/admin/users", icon: "users", label: "المستخدمون", permission: PERMISSIONS.USERS_VIEW },
+      { href: "/admin/roles", icon: "roles", label: "الأدوار والصلاحيات", permission: PERMISSIONS.ROLES_VIEW },
     ],
   },
   {
     label: "الخدمات والمنظمات",
     items: [
-      { href: "/admin/services", icon: "✦", label: "سوق الخدمات", permission: SERVICE_PERMISSIONS },
-      { href: "/admin/properties", icon: "⌂", label: "تصنيف العقارات", permission: PERMISSIONS.PROPERTIES_VIEW },
-      { href: "/admin/companies", icon: "◉", label: "تصنيف الشركات", permission: PERMISSIONS.PROPERTIES_VIEW },
-      { href: "/admin/advertisers", icon: "▣", label: "المعلنون", permission: PERMISSIONS.ADVERTISERS_VIEW },
-      { href: "/admin/auction-organizers", icon: "⚖", label: "منظمات المزادات", permission: PERMISSIONS.SETTINGS_MANAGE },
+      { href: "/admin/services", icon: "services", label: "سوق الخدمات", permission: SERVICE_PERMISSIONS },
+      { href: "/admin/properties", icon: "property", label: "تصنيف العقارات", permission: PERMISSIONS.PROPERTIES_VIEW },
+      { href: "/admin/companies", icon: "company", label: "تصنيف الشركات", permission: PERMISSIONS.PROPERTIES_VIEW },
+      { href: "/admin/advertisers", icon: "advertisers", label: "المعلنون", permission: PERMISSIONS.ADVERTISERS_VIEW },
+      { href: "/admin/auction-organizers", icon: "auction", label: "منظمات المزادات", permission: PERMISSIONS.SETTINGS_MANAGE },
     ],
   },
   {
     label: "المحتوى والقانون",
     items: [
-      { href: "/admin/news", icon: "➤", label: "إدارة الأخبار", permission: PERMISSIONS.NEWS_VIEW },
-      { href: "/admin/i18n", icon: "🔤", label: "إدارة الترجمات", permission: PERMISSIONS.I18N_VIEW },
+      { href: "/admin/news", icon: "news", label: "إدارة الأخبار", permission: PERMISSIONS.NEWS_VIEW },
+      { href: "/admin/i18n", icon: "i18n", label: "إدارة الترجمات", permission: PERMISSIONS.I18N_VIEW },
     ],
   },
   {
     label: "الإعلانات والتقارير",
     items: [
-      { href: "/admin/ads", icon: "▤", label: "مركز الإعلانات", permission: PERMISSIONS.ADS_VIEW },
-      { href: "/admin/reports", icon: "↗", label: "التقارير", permission: PERMISSIONS.REPORTS_VIEW },
+      { href: "/admin/ads", icon: "ads", label: "مركز الإعلانات", permission: PERMISSIONS.ADS_VIEW },
+      { href: "/admin/reports", icon: "reports", label: "التقارير", permission: PERMISSIONS.REPORTS_VIEW },
     ],
   },
   {
     label: "النظام المتصل",
-    items: [{ href: "/admin/integration", icon: "🔗", label: "مركز التكامل", permission: PERMISSIONS.OFFICE_ADMIN_VIEW }],
+    items: [{ href: "/admin/integration", icon: "integration", label: "مركز التكامل", permission: PERMISSIONS.OFFICE_ADMIN_VIEW }],
   },
   {
     label: "التدقيق والمراجعة",
-    items: [{ href: "/admin/audit", icon: "📓", label: "سجل التدقيق", permission: PERMISSIONS.ADMIN_DASHBOARD_VIEW }],
+    items: [{ href: "/admin/audit", icon: "audit", label: "سجل التدقيق", permission: PERMISSIONS.ADMIN_DASHBOARD_VIEW }],
   },
   {
     label: "إعدادات النظام",
-    items: [{ href: "/admin/settings", icon: "⚙", label: "الإعدادات", permission: PERMISSIONS.SETTINGS_MANAGE }],
+    items: [{ href: "/admin/settings", icon: "settings", label: "الإعدادات", permission: PERMISSIONS.SETTINGS_MANAGE }],
   },
 ];
 
@@ -101,7 +102,7 @@ export default function AdminSidebar({ identity }: { identity: UserIdentity }) {
               <div className="admin-nav-group-head">{group.label}</div>
               {items.map((item) => (
                 <Link key={item.href} href={item.href} className={isActive(item.href) ? "admin-nav-link active" : "admin-nav-link"}>
-                  <span aria-hidden="true">{item.icon}</span>{item.label}
+                  <Icon name={item.icon} size="sm" />{item.label}
                 </Link>
               ))}
             </div>

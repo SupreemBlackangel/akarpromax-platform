@@ -6,6 +6,7 @@ import type { Locale, ViewerContext } from "@/src/types/site";
 import { apiFetch, formatTime } from "@services-client";
 import { getSidebarConfig, type SidebarItem } from "@/src/config/sidebar";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import Icon from "@/src/components/ui/Icon";
 
 type NotificationRow = {
   id: string;
@@ -138,7 +139,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
               : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           }`}
         >
-          <span>{item.icon}</span>
+          <Icon name={item.icon} size="sm" />
           <span>{t(item.labelKey)}</span>
           <span className="transition-transform group-open:rotate-90">▸</span>
         </button>
@@ -153,7 +154,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
-              <span>{child.icon}</span>
+              <Icon name={child.icon} size="sm" />
               <span>{t(child.labelKey)}</span>
             </Link>
           ))}
@@ -172,7 +173,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
           : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
       }`}
     >
-      <span>{item.icon}</span>
+      <Icon name={item.icon} size="sm" />
       <span>{t(item.labelKey)}</span>
       {badgeValue > 0 && (
         <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-error-soft)] rounded-full">
