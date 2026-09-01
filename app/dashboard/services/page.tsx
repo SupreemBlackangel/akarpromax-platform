@@ -81,7 +81,7 @@ export default function ServicesDashboardPage() {
           {viewer.authenticated && (
             <section>
               <div className="mb-5">
-                <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">
+                <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">
                   {t("services.myRequests") ?? "طلباتي الأخيرة"}
                 </h2>
 

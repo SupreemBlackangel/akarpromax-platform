@@ -41,7 +41,7 @@ export default function MyRequestsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="my-requests">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.myRequests") ?? "طلباتي"}</h2>
+          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.myRequests") ?? "طلباتي"}</h2>
           <Link href="/service-requests/new" className="px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">➕ {t("services.postRequest") ?? "طلب جديد"}</Link>
         </div>
 
@@ -55,7 +55,7 @@ export default function MyRequestsPage() {
               <div key={request.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
+                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-text-primary)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                       {request.title || request.reference_number}
                     </Link>
                     <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {formatDate(request.created_at)}</p>

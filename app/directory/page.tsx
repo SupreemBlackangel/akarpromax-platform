@@ -168,7 +168,7 @@ export default function DirectoryPage() {
                       <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">{organization.type}</span>
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{organization.classification}</span>
                     </div>
-                    <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{pickOrg(locale, organization, "name")}</h2>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{pickOrg(locale, organization, "name")}</h2>
                     <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pickOrg(locale, organization, "description") || organization.slug}</p>
                   </Link>
                 ))}

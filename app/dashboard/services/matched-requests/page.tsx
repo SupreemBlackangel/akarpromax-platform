@@ -46,7 +46,7 @@ export default function MatchedRequestsPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="matched-requests">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
 
         {!loading && hasProfile === false && (
           <div className="mb-4 rounded-xl bg-[var(--accent-soft)] dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-[var(--accent)] dark:text-[var(--accent)]">
@@ -65,7 +65,7 @@ export default function MatchedRequestsPage() {
               <div key={request.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
+                    <Link href={`/service-requests/${request.id}`} className="font-bold text-gray-900 dark:text-[var(--color-text-primary)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                       {request.title || request.reference_number}
                     </Link>
                     <p className="mt-1 text-xs text-gray-400">{request.reference_number} • {formatDate(request.created_at)}</p>

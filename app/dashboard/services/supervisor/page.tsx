@@ -124,7 +124,7 @@ export default function SupervisorDashboardPage() {
     <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active={active}>
       <PageContainer dir={dir} className="py-8">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
         </div>
 
         {message && <div className="mb-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{message}</div>}

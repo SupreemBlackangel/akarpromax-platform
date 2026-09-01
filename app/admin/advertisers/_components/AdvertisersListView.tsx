@@ -72,7 +72,7 @@ export default function AdvertisersListView() {
   return (
     <div className="max-w-6xl mx-auto p-6" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">المعلنون</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">المعلنون</h1>
         <div className="flex gap-2">
           <Link href="/admin/advertisers/new" className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg text-sm transition-colors">
             + إضافة معلن
@@ -87,9 +87,9 @@ export default function AdvertisersListView() {
         <input
           type="text" placeholder="بحث بالاسم أو البريد أو الهاتف..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)] text-sm min-w-[200px]"
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] text-sm min-w-[200px]"
         />
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-sm">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-sm">
           <option value="">كل الحالات</option>
           {statuses.map(s => <option key={s} value={s}>{statusLabels[s] || s}</option>)}
         </select>
@@ -101,15 +101,15 @@ export default function AdvertisersListView() {
           ⚑ فلترة الموقع المتقدم ▼
         </summary>
         <div className="flex gap-2 mt-2 flex-wrap">
-          <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs min-w-[100px]">
+          <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs min-w-[100px]">
             <option value="">⚑ الدولة</option>
             {Object.entries(countries).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <input type="text" placeholder="◈ المحافظة" value={filterGovernorate} onChange={e => setFilterGovernorate(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs w-[100px]" />
-          <input type="text" placeholder="⌖ المدينة" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs w-[100px]" />
-          <input type="text" placeholder="⊞ القرية" value={filterVillage} onChange={e => setFilterVillage(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs w-[100px]" />
-          <input type="text" placeholder="▣ الحي" value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs w-[100px]" />
-          <input type="text" placeholder="⛩ الشارع" value={filterStreet} onChange={e => setFilterStreet(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] text-xs w-[100px]" />
+          <input type="text" placeholder="◈ المحافظة" value={filterGovernorate} onChange={e => setFilterGovernorate(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs w-[100px]" />
+          <input type="text" placeholder="⌖ المدينة" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs w-[100px]" />
+          <input type="text" placeholder="⊞ القرية" value={filterVillage} onChange={e => setFilterVillage(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs w-[100px]" />
+          <input type="text" placeholder="▣ الحي" value={filterDistrict} onChange={e => setFilterDistrict(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs w-[100px]" />
+          <input type="text" placeholder="⛩ الشارع" value={filterStreet} onChange={e => setFilterStreet(e.target.value)} className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] text-xs w-[100px]" />
         </div>
       </details>
 
@@ -135,7 +135,7 @@ export default function AdvertisersListView() {
               {filtered.map(profile => (
                 <tr key={profile.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="p-3 font-mono text-xs text-gray-500 dark:text-gray-400">{profile.advertiserCode}</td>
-                  <td className="p-3 font-medium text-gray-900 dark:text-[var(--color-surface)]">{profile.companyNameAr}</td>
+                  <td className="p-3 font-medium text-gray-900 dark:text-[var(--color-text-primary)]">{profile.companyNameAr}</td>
                   <td className="p-3 text-gray-600 dark:text-gray-400">{countries[profile.countryCode] || profile.countryCode.toUpperCase()}</td>
                   <td className="p-3 text-gray-600 dark:text-gray-400">{profile.email || "—"}</td>
                   <td className="p-3">

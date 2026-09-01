@@ -309,7 +309,7 @@ export default function ProviderProfilePage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={rawT} active="provider-profile">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.providerProfile") ?? "ملف مقدم الخدمة"}</h2>
+          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.providerProfile") ?? "ملف مقدم الخدمة"}</h2>
           {profile && <ProviderStatusPill status={profile.status} locale={locale} />}
         </div>
 

@@ -173,7 +173,7 @@ export default function AuditAdminClient() {
       </section>
 
       {loading && !data ? (
-        <div className="admin-panel" style={{ textAlign: "center", color: "#6b7b93" }}>
+        <div className="admin-panel" style={{ textAlign: "center", color: "var(--color-text-muted)" }}>
           <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>&#8987;</div>
           <p>جارٍ تحميل السجلات...</p>
         </div>
@@ -217,7 +217,7 @@ export default function AuditAdminClient() {
                       {row.details ? (
                         <details style={{ fontSize: 12 }}>
                           <summary style={{ cursor: "pointer" }}>عرض</summary>
-                          <pre style={{ whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left", marginTop: 4, background: "#f5f6f8", padding: 8, borderRadius: 4 }}>
+                          <pre style={{ whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left", marginTop: 4, background: "var(--color-surface-muted)", padding: 8, borderRadius: 4 }}>
                             {JSON.stringify(row.details, null, 2)}
                           </pre>
                         </details>
@@ -226,7 +226,7 @@ export default function AuditAdminClient() {
                   </tr>
                 ))}
                 {data?.rows.length === 0 && (
-                  <tr><td colSpan={7} style={{ ...tdStyle, textAlign: "center", color: "#6b7b93" }}>لا توجد سجلات</td></tr>
+                  <tr><td colSpan={7} style={{ ...tdStyle, textAlign: "center", color: "var(--color-text-muted)" }}>لا توجد سجلات</td></tr>
                 )}
               </tbody>
             </table>
@@ -245,9 +245,9 @@ export default function AuditAdminClient() {
 }
 
 const tableStyle: React.CSSProperties = { width: "100%", borderCollapse: "collapse", fontSize: 14 };
-const thStyle: React.CSSProperties = { textAlign: "right", padding: "10px 12px", borderBottom: "2px solid #e2e5ea", fontWeight: 600, whiteSpace: "nowrap" };
-const tdStyle: React.CSSProperties = { textAlign: "right", padding: "8px 12px", borderBottom: "1px solid #eef0f3", verticalAlign: "top" };
-const badgeStyle: React.CSSProperties = { display: "inline-block", padding: "2px 8px", borderRadius: 4, background: "#eef1f6", fontSize: 12, whiteSpace: "nowrap" };
-const selectStyle: React.CSSProperties = { padding: "6px 10px", borderRadius: 6, border: "1px solid #d0d5dd", fontSize: 13, background: "#fff", minWidth: 140 };
-const inputStyle: React.CSSProperties = { padding: "6px 10px", borderRadius: 6, border: "1px solid #d0d5dd", fontSize: 13, background: "#fff", minWidth: 130 };
-const pageBtnStyle: React.CSSProperties = { padding: "6px 16px", borderRadius: 6, border: "1px solid #d0d5dd", background: "#fff", cursor: "pointer", fontSize: 13 };
+const thStyle: React.CSSProperties = { textAlign: "right", padding: "10px 12px", borderBottom: "2px solid var(--color-border)", fontWeight: 600, whiteSpace: "nowrap" };
+const tdStyle: React.CSSProperties = { textAlign: "right", padding: "8px 12px", borderBottom: "1px solid var(--color-border)", verticalAlign: "top" };
+const badgeStyle: React.CSSProperties = { display: "inline-block", padding: "2px 8px", borderRadius: 4, background: "var(--color-surface-soft)", fontSize: 12, whiteSpace: "nowrap" };
+const selectStyle: React.CSSProperties = { padding: "6px 10px", borderRadius: 6, border: "1px solid var(--color-border)", fontSize: 13, background: "var(--color-surface)", minWidth: 140 };
+const inputStyle: React.CSSProperties = { padding: "6px 10px", borderRadius: 6, border: "1px solid var(--color-border)", fontSize: 13, background: "var(--color-surface)", minWidth: 130 };
+const pageBtnStyle: React.CSSProperties = { padding: "6px 16px", borderRadius: 6, border: "1px solid var(--color-border)", background: "var(--color-surface)", cursor: "pointer", fontSize: 13 };

@@ -135,11 +135,11 @@ export default function CompaniesAdminClient() {
     }
   }
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "8px 10px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 };
-  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, marginBottom: 4, display: "block", color: "#374151" };
-  const btnPrimary: React.CSSProperties = { padding: "8px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14, fontWeight: 600 };
-  const btnSecondary: React.CSSProperties = { padding: "8px 16px", background: "#e5e7eb", color: "#374151", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 };
-  const btnDanger: React.CSSProperties = { padding: "4px 10px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: 4, cursor: "pointer", fontSize: 13 };
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "8px 10px", border: "1px solid var(--color-border)", borderRadius: 6, fontSize: 14 };
+  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, marginBottom: 4, display: "block", color: "var(--color-text-secondary)" };
+  const btnPrimary: React.CSSProperties = { padding: "8px 16px", background: "var(--color-primary)", color: "var(--color-primary-foreground)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14, fontWeight: 600 };
+  const btnSecondary: React.CSSProperties = { padding: "8px 16px", background: "var(--color-surface-muted)", color: "var(--color-text-secondary)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 };
+  const btnDanger: React.CSSProperties = { padding: "4px 10px", background: "var(--color-danger-soft)", color: "var(--color-danger)", border: "1px solid var(--color-danger)", borderRadius: 4, cursor: "pointer", fontSize: 13 };
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }} dir="rtl">
@@ -148,10 +148,10 @@ export default function CompaniesAdminClient() {
         <button onClick={startCreate} style={btnPrimary}>+ إضافة تصنيف</button>
       </div>
 
-      {error && <div style={{ padding: "10px 14px", background: "#fef2f2", color: "#b91c1c", borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{error}</div>}
+      {error && <div style={{ padding: "10px 14px", background: "var(--color-danger-soft)", color: "var(--color-danger)", borderRadius: 8, marginBottom: 16, fontSize: 14 }}>{error}</div>}
 
       {(editingId || showCreate) && (
-        <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: 20, marginBottom: 24 }}>
+        <div style={{ background: "var(--color-surface-muted)", border: "1px solid var(--color-border)", borderRadius: 10, padding: 20, marginBottom: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>{editingId ? "تعديل التصنيف" : "إضافة تصنيف جديد"}</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
@@ -196,10 +196,10 @@ export default function CompaniesAdminClient() {
       ) : specialties.length === 0 ? (
         <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>لا توجد تصنيفات</div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, overflowX: "auto" }}>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 10, overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
-              <tr style={{ background: "#f3f4f6" }}>
+              <tr style={{ background: "var(--color-surface-muted)" }}>
                 <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600 }}>الأيقونة</th>
                 <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600 }}>الاسم (EN)</th>
                 <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600 }}>الاسم (AR)</th>
@@ -211,20 +211,20 @@ export default function CompaniesAdminClient() {
             </thead>
             <tbody>
               {specialties.map((s) => (
-                <tr key={s.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                <tr key={s.id} style={{ borderTop: "1px solid var(--color-border)" }}>
                   <td style={{ padding: "10px 14px", fontSize: 20 }}>{s.icon ?? "—"}</td>
                   <td style={{ padding: "10px 14px" }}>{s.name_en}</td>
                   <td style={{ padding: "10px 14px" }} dir="rtl">{s.name_ar}</td>
                   <td style={{ padding: "10px 14px" }}>{s.name_tr}</td>
                   <td style={{ padding: "10px 14px" }}>{s.sort_order}</td>
                   <td style={{ padding: "10px 14px" }}>
-                    <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 10, fontSize: 12, fontWeight: 600, background: s.is_active ? "#d1fae5" : "#fee2e2", color: s.is_active ? "#065f46" : "#b91c1c" }}>
+                    <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: 10, fontSize: 12, fontWeight: 600, background: s.is_active ? "var(--color-success-soft)" : "var(--color-danger-soft)", color: s.is_active ? "var(--color-success)" : "var(--color-danger)" }}>
                       {s.is_active ? "مفعّل" : "معطّل"}
                     </span>
                   </td>
                   <td style={{ padding: "10px 14px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => startEdit(s)} style={{ padding: "4px 10px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: 4, cursor: "pointer", fontSize: 13 }}>تعديل</button>
+                      <button onClick={() => startEdit(s)} style={{ padding: "4px 10px", background: "var(--color-primary-soft)", color: "var(--color-primary)", border: "1px solid var(--color-border)", borderRadius: 4, cursor: "pointer", fontSize: 13 }}>تعديل</button>
                       <button onClick={() => handleDelete(s.id)} disabled={saving} style={btnDanger}>حذف</button>
                     </div>
                   </td>

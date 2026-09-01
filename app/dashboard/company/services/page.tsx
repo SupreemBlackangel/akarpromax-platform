@@ -47,7 +47,7 @@ export default async function CompanyServicesPage({ searchParams }: { searchPara
     <CompanyWorkspaceShell activeTab="services">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">الخدمات والمنتجات</h2>
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">الخدمات والمنتجات</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">الخدمات المقدمة عبر أعضاء {company.nameAr ?? company.nameEn}</p>
         </div>
 
@@ -65,7 +65,7 @@ export default async function CompanyServicesPage({ searchParams }: { searchPara
             <div key={`${service.provider_id}-${service.category_name_ar ?? index}`} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
               <div className="flex items-center gap-2">
                 <span className="text-xl">{service.category_icon ?? "🧰"}</span>
-                <h3 className="font-bold text-gray-900 dark:text-[var(--color-surface)]">
+                <h3 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">
                   {service.category_name_ar ?? service.category_name_en ?? "خدمة"}
                 </h3>
               </div>

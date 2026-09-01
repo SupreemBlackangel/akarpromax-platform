@@ -122,7 +122,7 @@ function OfficeDevicesPageInner() {
 
       {activeTab === "pairing" ? (
         <div className="max-w-2xl rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">ربط تطبيق المكتب</h2>
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">ربط تطبيق المكتب</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             أنشئ رمز ربط لمرة واحدة (صالح 15 دقيقة). أدخله في تطبيق AkarPromax Office على الجهاز.
             لا يُستخدم الرمز للمصادقة الدائمة — يتسلم الجهاز رمزًا مخولًا بصلاحيات محدودة.
@@ -167,7 +167,7 @@ function OfficeDevicesPageInner() {
       ) : (
         <div className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] dark:border-gray-800 dark:bg-gray-900">
           <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">الأجهزة المتصلة</h2>
+            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">الأجهزة المتصلة</h2>
           </div>
           {loading ? (
             <p className="px-5 py-10 text-center text-sm text-gray-500">جارٍ التحميل…</p>
@@ -180,7 +180,7 @@ function OfficeDevicesPageInner() {
               {devices.map((device) => (
                 <li key={device.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                   <div className="min-w-0">
-                    <p className="font-bold text-gray-900 dark:text-[var(--color-surface)]">{String(device.device_name ?? "") || "جهاز مكتب"}</p>
+                    <p className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{String(device.device_name ?? "") || "جهاز مكتب"}</p>
                     <p className="text-xs text-gray-400">
                       {String(device.os ?? "OS")} {String(device.os_version ?? "")} · app v{String(device.app_version ?? "?")} · proto v{String(device.protocol_version ?? 1)}
                     </p>

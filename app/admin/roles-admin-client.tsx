@@ -349,10 +349,10 @@ export default function RolesAdminClient() {
             style={{
               padding: "8px 16px",
               border: "1px solid",
-              borderColor: tab === t.id ? "#1769ff" : "#dce5f2",
+              borderColor: tab === t.id ? "var(--color-primary)" : "var(--color-border)",
               borderRadius: 8,
-              background: tab === t.id ? "#1769ff" : "#fff",
-              color: tab === t.id ? "#fff" : "#4f6483",
+              background: tab === t.id ? "var(--color-primary)" : "var(--color-surface)",
+              color: tab === t.id ? "var(--color-primary-foreground)" : "var(--color-text-secondary)",
               cursor: "pointer",
               fontSize: 10,
               fontWeight: 900,
@@ -462,7 +462,7 @@ export default function RolesAdminClient() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  style={{ padding: "6px 10px", border: "1px solid #dce5f2", borderRadius: 7, fontSize: 9, fontWeight: 800, background: "#fff", color: "#20375b" }}
+                  style={{ padding: "6px 10px", border: "1px solid var(--color-border)", borderRadius: 7, fontSize: 9, fontWeight: 800, background: "var(--color-surface)", color: "var(--color-text-primary)" }}
                 >
                   <option value="all">كل الأدوار</option>
                   {ROLE_ORDER.filter((r) => r !== "guest").map((r) => (
@@ -496,20 +496,20 @@ export default function RolesAdminClient() {
                       return (
                         <tr key={user.id}>
                           <td className="roles-perm-cell" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                            <span style={{ display: "inline-grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", background: "#edf4ff", color: "#1769ff", fontSize: 9, fontWeight: 900, marginLeft: 6 }}>
+                            <span style={{ display: "inline-grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 9, fontWeight: 900, marginLeft: 6 }}>
                               {(user.displayName || user.email).slice(0, 1).toUpperCase()}
                             </span>
                             {user.displayName || user.email}
                           </td>
-                          <td style={{ fontSize: 8, color: "#8a99b0" }}>{user.email}</td>
+                          <td style={{ fontSize: 8, color: "var(--color-text-muted)" }}>{user.email}</td>
                           <td>
-                            <span style={{ padding: "3px 8px", borderRadius: 12, background: "#edf4ff", color: "#1769ff", fontSize: 8, fontWeight: 900 }}>
+                            <span style={{ padding: "3px 8px", borderRadius: 12, background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 8, fontWeight: 900 }}>
                               {ROLE_CATALOG[user.role as keyof typeof ROLE_CATALOG]?.nameAr ?? user.role}
                             </span>
                           </td>
-                          <td style={{ fontSize: 8, color: "#526681" }}>{country ?? "—"}</td>
+                          <td style={{ fontSize: 8, color: "var(--color-text-secondary)" }}>{country ?? "—"}</td>
                           <td>
-                            <span style={{ padding: "3px 7px", borderRadius: 20, background: user.status === "active" ? "#e6f8ef" : "#fff0f0", color: user.status === "active" ? "#19734e" : "#a83f4d", fontSize: 7, fontWeight: 900 }}>
+                            <span style={{ padding: "3px 7px", borderRadius: 20, background: user.status === "active" ? "var(--color-success-soft)" : "var(--color-danger-soft)", color: user.status === "active" ? "var(--color-success)" : "var(--color-danger)", fontSize: 7, fontWeight: 900 }}>
                               {user.status === "active" ? "نشط" : "معطل"}
                             </span>
                           </td>
@@ -519,7 +519,7 @@ export default function RolesAdminClient() {
                                 value={user.role}
                                 onChange={(e) => updateUserRole(user.id, e.target.value)}
                                 disabled={usersBusy}
-                                style={{ padding: "5px 8px", border: "1px solid #dce5f2", borderRadius: 6, fontSize: 8, background: "#fbfcff", color: "#1d3559" }}
+                                style={{ padding: "5px 8px", border: "1px solid var(--color-border)", borderRadius: 6, fontSize: 8, background: "var(--color-surface-input)", color: "var(--color-text-primary)" }}
                               >
                                 {ROLE_ORDER.filter((r) => r !== "guest").map((r) => (
                                   <option key={r} value={r}>{ROLE_CATALOG[r].nameAr}</option>
@@ -602,7 +602,7 @@ export default function RolesAdminClient() {
                               {user ? (user.displayName || user.email) : scope.userId}
                             </td>
                             <td>
-                              <span style={{ padding: "3px 8px", borderRadius: 12, background: "#edf4ff", color: "#1769ff", fontSize: 8, fontWeight: 900 }}>
+                              <span style={{ padding: "3px 8px", borderRadius: 12, background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 8, fontWeight: 900 }}>
                                 {scope.module}
                               </span>
                             </td>
@@ -647,7 +647,7 @@ export default function RolesAdminClient() {
                   </select>
                 </label>
                 <label>
-                  الدولة <small style={{ color: "#8c9ab0", fontWeight: 400 }}>(اختياري — اتركه فارغاً لكل الدول)</small>
+                  الدولة <small style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(اختياري — اتركه فارغاً لكل الدول)</small>
                   <select value={scopeForm.countryCode} onChange={(e) => setScopeForm({ ...scopeForm, countryCode: e.target.value })}>
                     <option value="">كل الدول</option>
                     {countries.map(([id, label]) => (
@@ -656,7 +656,7 @@ export default function RolesAdminClient() {
                   </select>
                 </label>
                 <label>
-                  المدينة <small style={{ color: "#8c9ab0", fontWeight: 400 }}>(اختياري)</small>
+                  المدينة <small style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>(اختياري)</small>
                   <input value={scopeForm.cityId} onChange={(e) => setScopeForm({ ...scopeForm, cityId: e.target.value })} placeholder="مثال: om-muscat" />
                 </label>
                 <button className="admin-primary" type="submit" disabled={scopesBusy || !scopeForm.userId || !scopeForm.module}>
@@ -682,7 +682,7 @@ export default function RolesAdminClient() {
               </p>
 
               {applyError && (
-                <div style={{ padding: "8px 12px", borderRadius: 8, background: "var(--color-error-soft, #fff0f0)", color: "var(--color-error, #a83f4d)", fontSize: 12, fontWeight: 800 }} role="alert">
+                <div style={{ padding: "8px 12px", borderRadius: 8, background: "var(--color-danger-soft)", color: "var(--color-danger)", fontSize: 12, fontWeight: 800 }} role="alert">
                   {applyError}
                 </div>
               )}
@@ -716,10 +716,10 @@ export default function RolesAdminClient() {
                         style={{
                           display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px",
                           border: 0, borderBottom: "1px solid var(--color-border)", cursor: "pointer", textAlign: "start",
-                          background: selected ? "var(--color-primary-soft, #edf4ff)" : "transparent",
+                          background: selected ? "var(--color-primary-soft)" : "transparent",
                         }}
                       >
-                        <span style={{ display: "inline-grid", placeItems: "center", width: 30, height: 30, borderRadius: "50%", background: "var(--color-primary-soft, #edf4ff)", color: "var(--color-primary)", fontSize: 12, fontWeight: 900, flexShrink: 0 }}>
+                        <span style={{ display: "inline-grid", placeItems: "center", width: 30, height: 30, borderRadius: "50%", background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 12, fontWeight: 900, flexShrink: 0 }}>
                           {(u.displayName || u.email).slice(0, 1).toUpperCase()}
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>

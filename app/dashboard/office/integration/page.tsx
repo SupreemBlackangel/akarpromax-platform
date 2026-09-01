@@ -74,7 +74,7 @@ export default function OfficeIntegrationPage() {
             <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg ${toneClasses[card.tone]}`}>
               {card.icon}
             </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{loading ? "…" : card.value}</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{loading ? "…" : card.value}</p>
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400">{card.label}</p>
           </Link>
         ))}
@@ -83,7 +83,7 @@ export default function OfficeIntegrationPage() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">أحدث الأجهزة</h2>
+            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">أحدث الأجهزة</h2>
             <Link href="/dashboard/office/devices" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               إدارة
             </Link>
@@ -119,7 +119,7 @@ export default function OfficeIntegrationPage() {
 
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">آخر التنبيهات</h2>
+            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">آخر التنبيهات</h2>
             <Link href="/dashboard/office/notifications" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               الكل
             </Link>

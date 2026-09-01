@@ -310,7 +310,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
   return (
     <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-[var(--color-surface)]">الاستهداف حسب القنوات (Placements)</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-[var(--color-text-primary)]">الاستهداف حسب القنوات (Placements)</h3>
         {canUpdate && (
           <button onClick={startCreate} className="px-3 py-1.5 text-xs bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg transition-colors">+ استهداف جديد</button>
         )}
@@ -677,7 +677,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">المصادر الخارجية</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">المصادر الخارجية</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">سجل المصادر الموثوقة لاستيراد الأخبار — العناصر المستوردة تصل كمسودات بانتظار المراجعة.</p>
         </div>
         {canManage && (
@@ -688,7 +688,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
 
       {editing && canManage && (
         <div className="mb-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">{editing.id ? "تعديل مصدر" : "مصدر جديد"}</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{editing.id ? "تعديل مصدر" : "مصدر جديد"}</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-xs text-gray-500 dark:text-gray-400">الاسم</span>
@@ -769,7 +769,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
               {sources.map((source) => (
                 <tr key={source.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">{source.name}</div>
+                    <div className="font-medium text-gray-900 dark:text-[var(--color-text-primary)]">{source.name}</div>
                     <div className="text-xs text-gray-400 truncate max-w-xs">{source.url}</div>
                     <div className="text-xs text-gray-400">{source.sourceType} • كل {source.fetchIntervalMinutes} دقيقة</div>
                   </td>
@@ -852,7 +852,7 @@ function AnalyticsTab() {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">الإحصائيات</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">الإحصائيات</h2>
         <p className="text-xs text-gray-500 dark:text-gray-400">الظهور والنقرات المسجلة عبر القنوات — النقرات تُحتسب فقط للزوار الحقيقيين (تُستبعد الزواحف والجلب المسبق).</p>
       </div>
       {message && <div className="mb-4 px-4 py-3 bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded-lg text-sm">{message}</div>}
@@ -864,19 +864,19 @@ function AnalyticsTab() {
           <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">الظهور</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totals?.impressions ?? items.reduce((sum, item) => sum + item.impressions, 0)}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{totals?.impressions ?? items.reduce((sum, item) => sum + item.impressions, 0)}</div>
             </div>
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">ظهور مرئي</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totalVisible}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{totalVisible}</div>
             </div>
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">النقرات</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{totalClicks}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{totalClicks}</div>
             </div>
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
               <div className="text-xs text-gray-500 dark:text-gray-400">معدل النقر (CTR)</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{overallCtr}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{overallCtr}</div>
             </div>
           </div>
 
@@ -907,7 +907,7 @@ function AnalyticsTab() {
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.newsId} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-[var(--color-surface)]">{item.newsId}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-[var(--color-text-primary)]">{item.newsId}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.impressions}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.visibleImpressions}</td>
                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{item.clicks}</td>
@@ -1071,7 +1071,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)]">شريط الأخبار</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">شريط الأخبار</h2>
         <p className="text-xs text-gray-500 dark:text-gray-400">العناصر التي تظهر حاليًا في شريط الموقع (قناة WEBSITE_TICKER) — الأولوية الأصغر تظهر أولًا.</p>
       </div>
 
@@ -1125,7 +1125,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">{row.item.titleAr}</div>
+                      <div className="font-medium text-gray-900 dark:text-[var(--color-text-primary)]">{row.item.titleAr}</div>
                       {!row.placement && <div className="text-xs text-gray-400">استهداف افتراضي (بدون سجل مخصص)</div>}
                     </td>
                     <td className="px-4 py-3">
@@ -1333,7 +1333,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <header className="bg-[var(--color-surface)] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-[var(--color-surface)]">إدارة الأخبار والشريط</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">إدارة الأخبار والشريط</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">الشريط الإخباري حسب الدولة والمنطقة — عالميًا أو محليًا</p>
         </div>
         <div className="flex items-center gap-3">
@@ -1383,7 +1383,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
 
             {editing && (
               <div className="mb-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-surface)] mb-4">{editing.id ? "تعديل خبر" : "خبر جديد"}</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{editing.id ? "تعديل خبر" : "خبر جديد"}</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <label className="block">
@@ -1563,7 +1563,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                     {filtered.map((item) => (
                       <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900 dark:text-[var(--color-surface)]">
+                          <div className="font-medium text-gray-900 dark:text-[var(--color-text-primary)]">
                             {item.isBreaking && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded mr-1">عاجل</span>}
                             {item.isPinned && <span className="inline-block px-1.5 py-0.5 text-[10px] bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded mr-1">مثبت</span>}
                             {item.titleAr}

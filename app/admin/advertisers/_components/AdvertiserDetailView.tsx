@@ -61,7 +61,7 @@ export default function AdvertiserDetailView() {
   return (
     <div className="max-w-3xl mx-auto p-6" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-surface)]">{profile.companyNameAr}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{profile.companyNameAr}</h1>
         <div className="flex gap-2">
           <Link href={`/admin/advertisers/${profile.id}/edit`} className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg transition-colors text-sm">
             تعديل
@@ -121,7 +121,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   return (
     <div>
       <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="mt-0.5 text-sm text-gray-900 dark:text-[var(--color-surface)]">{value}</dd>
+      <dd className="mt-0.5 text-sm text-gray-900 dark:text-[var(--color-text-primary)]">{value}</dd>
     </div>
   );
 }

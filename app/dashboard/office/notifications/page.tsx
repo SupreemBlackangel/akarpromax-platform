@@ -76,7 +76,7 @@ export default function OfficeNotificationsPage() {
             {deliveries.map((d) => (
               <li key={d.id} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-bold text-gray-900 dark:text-[var(--color-surface)]">{d.title || d.event_type}</p>
+                  <p className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{d.title || d.event_type}</p>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${STATUS_TONES[d.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
                     {d.status}
                   </span>

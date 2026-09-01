@@ -58,7 +58,7 @@ export default function ServiceRequestsListPage() {
       <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.requests") ?? "طلبات الخدمات"}</h1>
+            <h1 className="text-3xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.requests") ?? "طلبات الخدمات"}</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.requestsSub") ?? "استعرض الطلبات المنشورة من العملاء."}</p>
           </div>
           <div className="flex items-center gap-2">

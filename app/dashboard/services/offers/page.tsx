@@ -40,7 +40,7 @@ export default function MyOffersPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="offers">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.offers") ?? "العروض"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.offers") ?? "العروض"}</h2>
 
         {loading ? (
           <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}</div>
@@ -54,7 +54,7 @@ export default function MyOffersPage() {
                 <div key={offer.id} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <Link href={`/dashboard/services/offers/${offer.id}`} className="font-bold text-gray-900 dark:text-[var(--color-surface)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
+                      <Link href={`/dashboard/services/offers/${offer.id}`} className="font-bold text-gray-900 dark:text-[var(--color-text-primary)] hover:text-[var(--color-primary)] dark:hover:text-blue-400">
                         {offer.request_title ? String(offer.request_title) : `عرض #${String(offer.id).slice(0, 8)}`}
                       </Link>
                       <p className="mt-1 text-xs text-gray-400">

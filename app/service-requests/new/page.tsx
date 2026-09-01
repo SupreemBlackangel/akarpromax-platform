@@ -372,7 +372,7 @@ export default function NewServiceRequestPage() {
         <div className="mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
+              <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">{STEP_DESCRIPTIONS[currentStep]}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -454,7 +454,7 @@ export default function NewServiceRequestPage() {
               </div>
               {dynamicFields.length > 0 && (
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-                  <h2 className="text-sm font-black text-gray-900 dark:text-[var(--color-surface)] mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
+                  <h2 className="text-sm font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
                   <Grid columns={2}>
                     {dynamicFields.map((field) => {
                       const label = field.label ?? field.label_ar ?? field.label_en ?? field.key;
@@ -621,16 +621,16 @@ export default function NewServiceRequestPage() {
           {currentStep === 8 && (
             <div className="space-y-5">
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 dark:text-[var(--color-surface)] mb-3">{t("services.reviewTitle") ?? "مراجعة الطلب"}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-3">{t("services.reviewTitle") ?? "مراجعة الطلب"}</h3>
                 <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.category") ?? "التصنيف"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code) : draft.categoryId}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.title") ?? "العنوان"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.title || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.cityId || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.category") ?? "التصنيف"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code) : draft.categoryId}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.title") ?? "العنوان"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.title || "—"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.cityId || "—"}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموقع</dt><dd className="font-semibold text-[var(--color-success)] dark:text-[var(--color-success)]">{draft.latitude && draft.longitude ? "محدد بدقة" : "غير محدد"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموعد</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.preferredDate || "مرن"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{(draft.budgetMin ? `${draft.budgetMin} ${draft.currency}` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ${draft.currency}` : "—")}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-surface)]">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموعد</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.preferredDate || "مرن"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{(draft.budgetMin ? `${draft.budgetMin} ${draft.currency}` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ${draft.currency}` : "—")}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
                 </dl>
               </div>
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">

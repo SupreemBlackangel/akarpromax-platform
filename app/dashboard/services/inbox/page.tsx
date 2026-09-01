@@ -59,7 +59,7 @@ export default function InboxPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="inbox">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)] mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
+        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
 
         {loading ? (
           <div className="h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />

@@ -63,7 +63,7 @@ export default function NewAdvertiserForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6" dir="rtl">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-[var(--color-surface)]">إضافة معلن جديد</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-[var(--color-text-primary)]">إضافة معلن جديد</h1>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-400 rounded-lg text-sm">
@@ -75,18 +75,18 @@ export default function NewAdvertiserForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم الشركة (عربي) *</label>
-            <input name="companyNameAr" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="companyNameAr" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">اسم الشركة (إنجليزي) *</label>
-            <input name="companyNameEn" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="companyNameEn" required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدولة *</label>
-            <select name="countryCode" defaultValue="om" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]">
+            <select name="countryCode" defaultValue="om" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]">
               {countries.map(([code, label]) => (
                 <option key={code} value={code}>{label}</option>
               ))}
@@ -94,24 +94,24 @@ export default function NewAdvertiserForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البريد الإلكتروني</label>
-            <input name="email" type="email" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="email" type="email" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">رقم الهاتف</label>
-            <input name="phone" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="phone" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الشخص المسؤول</label>
-            <input name="contactName" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="contactName" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الموقع الإلكتروني</label>
-          <input name="website" type="url" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+          <input name="website" type="url" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -122,17 +122,17 @@ export default function NewAdvertiserForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">السجل التجاري</label>
-            <input name="commercialRegistration" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="commercialRegistration" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الرقم الضريبي</label>
-            <input name="taxNumber" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+            <input name="taxNumber" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">العنوان</label>
-          <textarea name="addressAr" rows={2} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-surface)] focus:ring-2 focus:ring-[var(--color-primary)]" />
+          <textarea name="addressAr" rows={2} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[var(--color-surface)] dark:bg-gray-800 text-gray-900 dark:text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)]" />
         </div>
 
         <div className="flex gap-3 pt-4">

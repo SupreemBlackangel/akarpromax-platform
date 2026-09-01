@@ -67,7 +67,7 @@ function OfficeSyncPageInner() {
   return (
     <OfficeWorkspaceShell activeTab="sync">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">عمليات المزامنة</h2>
+        <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">عمليات المزامنة</h2>
         <button type="button" onClick={() => void retry()} className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-xs font-black text-white hover:bg-[var(--color-primary-hover)]">
           إعادة محاولة الفاشلة
         </button>

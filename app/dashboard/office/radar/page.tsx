@@ -53,7 +53,7 @@ export default function OfficeRadarPage() {
     <OfficeWorkspaceShell activeTab="radar">
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">مسح الرادار الجغرافي</h2>
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">مسح الرادار الجغرافي</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             يبحث عن العقارات ومزودي الخدمات ضمن نصف قطر (حتى 100 كم) باستخدام مسافة هافرساين.
           </p>
@@ -86,7 +86,7 @@ export default function OfficeRadarPage() {
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">سجل عمليات المسح</h2>
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">سجل عمليات المسح</h2>
           {loading ? (
             <p className="py-8 text-center text-sm text-gray-500">جارٍ التحميل…</p>
           ) : queries.length === 0 ? (
@@ -110,7 +110,7 @@ export default function OfficeRadarPage() {
 
       {result && (
         <section className="mt-5 rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-surface)]">
+          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">
             النتائج — {result.targets.length} نتيجة (استعلام {result.queryId.slice(0, 8)})
           </h2>
           {result.targets.length === 0 ? (

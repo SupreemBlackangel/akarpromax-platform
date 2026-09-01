@@ -43,7 +43,7 @@ export default function MyJobsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="jobs">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.jobs") ?? "المهام"}</h2>
+          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.jobs") ?? "المهام"}</h2>
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
             {FILTERS.map((f) => (
               <option key={f} value={f}>{f.replace(/_/g, " ")}</option>

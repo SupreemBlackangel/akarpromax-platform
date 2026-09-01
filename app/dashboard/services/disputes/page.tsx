@@ -64,7 +64,7 @@ export default function CustomerDisputesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.disputes") ?? "نزاعاتي"}</h1>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.disputes") ?? "نزاعاتي"}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.disputesSub") ?? "إدارة النزاعات المرتبطة بطلباتك"}</p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function CustomerDisputesPage() {
         ) : disputes.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">⚖</div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-surface)]">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
+            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noDisputesSub") ?? "ستظهر النزاعات هنا عند وجودها"}</p>
           </div>
         ) : (
@@ -90,7 +90,7 @@ export default function CustomerDisputesPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-sm font-bold text-gray-900 dark:text-[var(--color-surface)]">{t("services.disputeId") ?? "نزاع"} #{d.id.slice(0, 8)}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.disputeId") ?? "نزاع"} #{d.id.slice(0, 8)}</span>
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold
                         {d.status === 'open' ? 'bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]' :
                          d.status === 'in_review' ? 'bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]' :
