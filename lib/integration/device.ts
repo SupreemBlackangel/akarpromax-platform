@@ -138,6 +138,90 @@ export async function rotateDeviceToken(rawToken: string): Promise<{ token: stri
   return { token, tokenPrefix, expiresAt };
 }
 
+export type DeviceRegistrationInput = {
+  sponsorId: string;
+  officeId?: string | null;
+  installationId: string;
+  deviceName?: string | null;
+  model?: string | null;
+  os?: string | null;
+  osVersion?: string | null;
+  appVersion?: string | null;
+  protocolVersion?: number;
+  lastIp?: string | null;
+  createdBy?: string | null;
+};
+
+export type DeviceRegistrationResult = {
+  deviceId: string;
+  status: string;
+  created: boolean;
+  lastSeenAt: string;
+};
+
+/**
+ * Self-service device registration for the desktop app: keyed by
+ * installation_id, it upserts the machine into office_devices and marks it
+ * online (last_seen_at = now). Unlike the pairing flow this needs no manual
+ * code — the caller is already authenticated as the office account, so the
+ * device is created active and immediately visible in the office's devices
+ * dashboard. Re-calling with the same installation_id is the heartbeat.
+ */
+export async function registerOrTouchDevice(input: DeviceRegistrationInput): Promise<DeviceRegistrationResult> {
+  const db = await getIntegrationDb();
+  const now = nowIso();
+  const s = (v: unknown, n: number) => (v == null ? null : String(v).slice(0, n));
+
+  const existing = await db
+    .prepare("SELECT id, status FROM office_devices WHERE installation_id = ?1 AND sponsor_id = ?2 LIMIT 1")
+    .bind(input.installationId.slice(0, 120), input.sponsorId.slice(0, 80))
+    .first<{ id: string; status: string }>();
+
+  if (existing) {
+    // Preserve a deliberate 'revoked' state; otherwise a check-in is 'active'.
+    const nextStatus = existing.status === "revoked" ? "revoked" : "active";
+    await db
+      .prepare(
+        `UPDATE office_devices SET
+           device_name = COALESCE(?1, device_name),
+           model = COALESCE(?2, model),
+           os = COALESCE(?3, os),
+           os_version = COALESCE(?4, os_version),
+           app_version = COALESCE(?5, app_version),
+           protocol_version = ?6,
+           last_ip = COALESCE(?7, last_ip),
+           last_seen_at = ?8,
+           status = ?9,
+           updated_at = ?8
+         WHERE id = ?10`,
+      )
+      .bind(
+        s(input.deviceName, 120), s(input.model, 120), s(input.os, 64), s(input.osVersion, 64),
+        s(input.appVersion, 30), Number(input.protocolVersion) || OFFICE_PROTOCOL_VERSION,
+        s(input.lastIp, 45), now, nextStatus, existing.id,
+      )
+      .run();
+    return { deviceId: existing.id, status: nextStatus, created: false, lastSeenAt: now };
+  }
+
+  const deviceId = crypto.randomUUID();
+  await db
+    .prepare(
+      `INSERT INTO office_devices
+         (id, sponsor_id, office_id, device_name, model, os, os_version, app_version,
+          protocol_version, installation_id, status, last_seen_at, last_ip, created_by, created_at, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'active', ?11, ?12, ?13, ?11, ?11)`,
+    )
+    .bind(
+      deviceId, input.sponsorId.slice(0, 80), s(input.officeId, 80), s(input.deviceName, 120),
+      s(input.model, 120), s(input.os, 64), s(input.osVersion, 64), s(input.appVersion, 30),
+      Number(input.protocolVersion) || OFFICE_PROTOCOL_VERSION, input.installationId.slice(0, 120),
+      now, s(input.lastIp, 45), s(input.createdBy, 255),
+    )
+    .run();
+  return { deviceId, status: "active", created: true, lastSeenAt: now };
+}
+
 export type HeartbeatMetadata = {
   appVersion?: string;
   osVersion?: string;

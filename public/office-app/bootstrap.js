@@ -549,6 +549,71 @@
       .catch(function () { return null; });
   }
 
+  // ---- device registration + online heartbeat ----------------------------
+  // On login/profile-setup the machine registers itself with the platform so
+  // the office owner sees it under "linked devices"; a periodic heartbeat
+  // keeps the online status fresh. Idempotent (upsert by installation_id).
+  var INSTALL_ID_KEY = "akar_device_installation_id";
+  var deviceHeartbeatTimer = null;
+
+  function getInstallationId() {
+    var id = ls("get", INSTALL_ID_KEY) || "";
+    if (!id) {
+      try {
+        id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID()
+          : "inst-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+      } catch (e) { id = "inst-" + Date.now().toString(36); }
+      ls("set", INSTALL_ID_KEY, id);
+    }
+    return id;
+  }
+
+  function detectSystem() {
+    var ua = (navigator && navigator.userAgent) || "";
+    var os = "Windows", osVersion = "";
+    var m = ua.match(/Windows NT ([0-9.]+)/);
+    if (m) {
+      var map = { "10.0": "10/11", "6.3": "8.1", "6.2": "8", "6.1": "7" };
+      osVersion = map[m[1]] || m[1];
+    } else if (/Mac OS X/.test(ua)) { os = "macOS"; }
+    else if (/Linux/.test(ua)) { os = "Linux"; }
+    return { os: os, osVersion: osVersion };
+  }
+
+  function buildDevicePayload() {
+    var sys = detectSystem();
+    var profile = null;
+    try { profile = JSON.parse(ls("get", OFFICE_PROFILE_CACHE_KEY) || "null"); } catch (e) {}
+    var name = (profile && profile.name) ? ("مكتب " + profile.name) : "جهاز مكتب AkarProMax";
+    return {
+      installationId: getInstallationId(),
+      deviceName: name.slice(0, 120),
+      model: "Desktop",
+      os: sys.os,
+      osVersion: sys.osVersion,
+      appVersion: INSTALLED_VERSION,
+      protocolVersion: 1
+    };
+  }
+
+  function registerDevice() {
+    if (!isLoggedIn()) return Promise.resolve(false);
+    return authedFetch("/api/program/devices", {
+      method: "POST",
+      body: JSON.stringify(buildDevicePayload())
+    })
+      .then(function (r) { return r.ok; })
+      .catch(function () { return false; });
+  }
+
+  function startDeviceHeartbeat() {
+    if (deviceHeartbeatTimer) return;
+    // Re-announce every 5 minutes so the platform's online status stays live.
+    deviceHeartbeatTimer = window.setInterval(function () {
+      if (isLoggedIn()) registerDevice();
+    }, 5 * 60 * 1000);
+  }
+
   // ---- pull the office's published properties down for display ------------
   // The portal only ever showed local rows; a property published from here
   // then "vanished" because nothing read it back. Map each platform property
@@ -1038,6 +1103,9 @@
       if (isLoggedIn()) {
         mountChip();
         ensureProfile();
+        // Register this machine with the platform and keep it "online".
+        registerDevice();
+        startDeviceHeartbeat();
         // Pull the office's published properties down so they show in the
         // portal. One guarded reload lets the list re-read them this session.
         syncPlatformProperties().then(function (changed) {
