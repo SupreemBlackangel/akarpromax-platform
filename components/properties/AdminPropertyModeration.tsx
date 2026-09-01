@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Trash2, ImagePlus, Star, Power, PowerOff } from 'lucide-react';
 
-type AdminMedia = { id: string; url: string; type: string };
+type AdminMedia = { id: string; url: string; type: string; isFeatured?: boolean };
 
 type AdminProperty = {
   id: string;
@@ -39,6 +39,7 @@ const STATUS_TABS: Array<{ value: string; label: string }> = [
   { value: 'pending_review', label: 'بانتظار المراجعة' },
   { value: 'approved', label: 'منشور' },
   { value: 'rejected', label: 'مرفوض' },
+  { value: 'archived', label: 'غير نشط' },
   { value: 'draft', label: 'مسودة' },
   { value: 'all', label: 'الكل' },
 ];
@@ -147,6 +148,90 @@ export default function AdminPropertyModeration() {
     }
   };
 
+  // ---- full admin control: activate/deactivate, delete, image system ----
+  const patchProperty = async (id: string, body: Record<string, unknown>, okMsg: string) => {
+    setBusyId(id);
+    setNotice('');
+    try {
+      const res = await fetch(`/api/admin/properties/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) { setNotice(data.error || 'فشل تنفيذ الإجراء'); return; }
+      setNotice(okMsg);
+      load();
+    } catch {
+      setNotice('فشل في الاتصال بالخادم');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const removeProperty = async (id: string) => {
+    if (!window.confirm('حذف هذا العقار نهائياً مع صوره؟ لا يمكن التراجع.')) return;
+    setBusyId(id);
+    setNotice('');
+    try {
+      const res = await fetch(`/api/admin/properties/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) { setNotice(data.error || 'فشل الحذف'); return; }
+      setNotice('تم حذف العقار.');
+      setExpanded(null);
+      load();
+    } catch {
+      setNotice('فشل في الاتصال بالخادم');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const patchMedia = (rowId: string, mediaList: AdminMedia[]) =>
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, media: mediaList } : r)));
+
+  const uploadImage = async (id: string, file: File) => {
+    setBusyId(id);
+    setNotice('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/admin/properties/${encodeURIComponent(id)}/media`, { method: 'POST', body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) { setNotice(data.error || 'تعذّر رفع الصورة'); return; }
+      const listRes = await fetch(`/api/admin/properties/${encodeURIComponent(id)}/media`, { cache: 'no-store' });
+      const listData = await listRes.json().catch(() => ({}));
+      if (listData.success) patchMedia(id, listData.data);
+      setNotice('تمت إضافة الصورة.');
+    } catch {
+      setNotice('فشل في الاتصال بالخادم');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const mediaAction = async (id: string, init: RequestInit, url: string, okMsg: string) => {
+    setBusyId(id);
+    setNotice('');
+    try {
+      const res = await fetch(url, init);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) { setNotice(data.error || 'تعذّر تنفيذ الإجراء'); return; }
+      if (Array.isArray(data.data)) patchMedia(id, data.data);
+      setNotice(okMsg);
+    } catch {
+      setNotice('فشل في الاتصال بالخادم');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const deleteImage = (id: string, mediaId: string) =>
+    mediaAction(id, { method: 'DELETE' }, `/api/admin/properties/${encodeURIComponent(id)}/media?mediaId=${encodeURIComponent(mediaId)}`, 'تم حذف الصورة.');
+
+  const setCover = (id: string, mediaId: string) =>
+    mediaAction(id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cover', mediaId }) }, `/api/admin/properties/${encodeURIComponent(id)}/media`, 'تم تعيين صورة الغلاف.');
+
   const countFor = useMemo(
     () => (value: string) =>
       value === 'all'
@@ -251,14 +336,44 @@ export default function AdminPropertyModeration() {
 
                 {isOpen && (
                   <div style={{ gridColumn: "1 / -1" }} className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 space-y-4">
-                    {row.media && row.media.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {row.media.map((m) => (
-                          // eslint-disable-next-line @next/next/no-img-element -- runtime-managed URL
-                          <img key={m.id} src={m.url} alt="" width={144} height={96} loading="lazy" decoding="async" className="h-24 w-36 shrink-0 rounded-xl object-cover bg-gray-100" />
-                        ))}
+                    {/* Image system: upload / delete / set-cover */}
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[11px] font-black text-[var(--color-text-secondary)]">الصور ({row.media?.length ?? 0})</span>
+                        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-primary)] px-3 py-1.5 text-[11px] font-black text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] ${busyId === row.id ? 'pointer-events-none opacity-50' : ''}`}>
+                          <ImagePlus className="h-3.5 w-3.5" /> إضافة صورة
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(row.id, f); e.target.value = ''; }}
+                          />
+                        </label>
                       </div>
-                    )}
+                      {row.media && row.media.length > 0 ? (
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {row.media.map((m) => (
+                            <div key={m.id} className="relative shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element -- runtime-managed URL */}
+                              <img src={m.url} alt="" width={144} height={96} loading="lazy" decoding="async" className={`h-24 w-36 rounded-xl object-cover bg-[var(--color-surface-muted)] ${m.isFeatured ? 'ring-2 ring-[var(--color-primary)]' : ''}`} />
+                              {m.isFeatured && <span className="absolute top-1 start-1 rounded-md bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-black text-white">الغلاف</span>}
+                              <div className="absolute bottom-1 end-1 flex gap-1">
+                                {!m.isFeatured && (
+                                  <button type="button" title="تعيين كغلاف" disabled={busyId === row.id} onClick={() => setCover(row.id, m.id)} className="grid h-6 w-6 place-items-center rounded-md bg-black/55 text-white transition hover:bg-black/75 disabled:opacity-50">
+                                    <Star className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                <button type="button" title="حذف الصورة" disabled={busyId === row.id} onClick={() => deleteImage(row.id, m.id)} className="grid h-6 w-6 place-items-center rounded-md bg-red-600/80 text-white transition hover:bg-red-700 disabled:opacity-50">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-[11px] font-bold text-[var(--color-text-muted)]">لا توجد صور — أضف صورة من الزر أعلاه</p>
+                      )}
+                    </div>
                     <p className="text-xs leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">{row.descriptionAr || '—'}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-bold text-[var(--color-text-secondary)]">
                       <span>غرف: {row.bedrooms ?? '—'}</span>
@@ -299,6 +414,22 @@ export default function AdminPropertyModeration() {
                         </div>
                       </div>
                     )}
+
+                    {/* Full control: activate / deactivate / delete — any status */}
+                    <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-3">
+                      {row.status === 'archived' ? (
+                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'approved' }, 'تم تفعيل العقار ونشره.')} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-success)] px-4 py-2 text-xs font-black text-white hover:opacity-90 disabled:opacity-50 transition">
+                          <Power className="h-4 w-4" /> تفعيل ونشر
+                        </button>
+                      ) : row.status === 'approved' ? (
+                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'archived' }, 'تم تعطيل العقار (غير نشط).')} className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-xs font-black text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50 transition">
+                          <PowerOff className="h-4 w-4" /> تعطيل (غير نشط)
+                        </button>
+                      ) : null}
+                      <button type="button" disabled={busyId === row.id} onClick={() => removeProperty(row.id)} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-danger-soft)] px-4 py-2 text-xs font-black text-[var(--color-danger)] hover:opacity-90 disabled:opacity-50 transition">
+                        <Trash2 className="h-4 w-4" /> حذف نهائي
+                      </button>
+                    </div>
                   </div>
                 )}
               </article>
