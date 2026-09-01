@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
+import { processAdImage } from "@/lib/ads/image-processing";
 
 export const dynamic = "force-dynamic";
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -42,14 +43,28 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File) || !ALLOWED.has(file.type) || file.size < 1 || file.size > MAX_SIZE) {
     return NextResponse.json({ error: "Upload a JPG, PNG or WebP image up to 5 MB" }, { status: 400 });
   }
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!hasValidSignature(bytes, file.type)) return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+  const rawBytes = new Uint8Array(await file.arrayBuffer());
+  if (!hasValidSignature(rawBytes, file.type)) return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+
+  // Optimize before storing: these bytes live in the database and are streamed
+  // back on every render, so an unprocessed upload is paid for on every view.
+  const processed = await processAdImage(Buffer.from(rawBytes));
+  if (!processed) return NextResponse.json({ error: "Invalid image file" }, { status: 400 });
+  const bytes = new Uint8Array(processed.buffer);
+
   const id = crypto.randomUUID();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 180) || "ad-image";
   const db = await ensureTable();
   await db.prepare("INSERT INTO ad_request_assets (id,file_name,content_type,size_bytes,file_data) VALUES (?1,?2,?3,?4,?5)")
-    .bind(id, safeName, file.type, file.size, bytes).run();
-  return NextResponse.json({ asset: { id, url: `/api/ads/request-asset?id=${id}` } }, { status: 201 });
+    .bind(id, safeName, processed.contentType, bytes.byteLength, bytes).run();
+  return NextResponse.json({
+    asset: {
+      id,
+      url: `/api/ads/request-asset?id=${id}`,
+      width: processed.width,
+      height: processed.height,
+    },
+  }, { status: 201 });
 }
 
 export async function GET(request: NextRequest) {

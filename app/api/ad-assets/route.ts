@@ -3,6 +3,7 @@ import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { getSponsorAssetsBucket } from "@/lib/runtime-assets";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import { processAdImage } from "@/lib/ads/image-processing";
 
 export const dynamic = "force-dynamic";
 
@@ -208,13 +209,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "The uploaded file signature is invalid" }, { status: 415 });
   }
 
+  // Images run through the ad pipeline (EXIF rotate -> cap width -> WebP) so a
+  // creative is never served at its raw upload weight. Videos pass through.
+  const processed = definition.mediaType === "image" ? await processAdImage(Buffer.from(buffer)) : null;
+  const storedBody: ArrayBuffer | Buffer = processed ? processed.buffer : Buffer.from(buffer);
+  const storedContentType = processed ? processed.contentType : contentType;
+  const storedExtension = processed ? processed.extension : definition.extension;
+  const storedSize = processed ? processed.buffer.byteLength : file.size;
+
   const id = crypto.randomUUID();
-  const key = `ads/media/${id}.${definition.extension}`;
+  const key = `ads/media/${id}.${storedExtension}`;
   const url = `/api/ad-assets?key=${encodeURIComponent(key)}`;
   const bucket = await getSponsorAssetsBucket();
-  await bucket.put(key, buffer, {
+  await bucket.put(key, storedBody, {
     httpMetadata: {
-      contentType,
+      contentType: storedContentType,
       cacheControl: "public, max-age=31536000, immutable",
       contentDisposition: "inline",
     },
@@ -232,7 +241,7 @@ export async function POST(request: NextRequest) {
         `INSERT INTO ad_assets
           (id, object_key, url, file_name, content_type, media_type, size_bytes, uploaded_by)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`,
-      ).bind(id, key, url, file.name.slice(0, 180), contentType, definition.mediaType, file.size, identity.email),
+      ).bind(id, key, url, file.name.slice(0, 180), storedContentType, definition.mediaType, storedSize, identity.email),
       db.prepare(
         `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
          VALUES (?1, ?2, 'ad.asset_uploaded', 'ad_asset', ?3, ?4)`,

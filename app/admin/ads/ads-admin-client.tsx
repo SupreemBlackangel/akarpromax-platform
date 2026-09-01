@@ -778,6 +778,24 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     catch { return { error: response.status === 413 ? "حجم الملف كبير للرفع المباشر؛ أعد المحاولة وسيتم تقسيمه تلقائيًا." : (text || "تعذر الاتصال بخدمة الرفع.") } as T & { error?: string }; }
   }
 
+  /**
+   * Images go through the single request so the server can run them through the
+   * ad pipeline (EXIF rotate -> cap width -> WebP); the chunked path streams
+   * parts straight to storage and cannot optimize. Images are capped at 8 MB so
+   * one request is always enough; videos keep the chunked path.
+   */
+  async function uploadFile(file: File, duration?: number): Promise<Asset> {
+    if (!file.type.startsWith("video/")) {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/ad-assets", { method: "POST", body });
+      const data = await readUploadResponse<{ asset?: Asset }>(response);
+      if (!response.ok || !data.asset) throw new Error(data.error || `تعذر رفع ${file.name}`);
+      return data.asset;
+    }
+    return uploadFileInParts(file, duration);
+  }
+
   async function uploadFileInParts(file: File, duration?: number): Promise<Asset> {
     const initResponse = await fetch("/api/ad-assets?upload=init", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size, duration }) });
     const init = await readUploadResponse<{ id?: string; key?: string; uploadId?: string; mediaType?: "image" | "video"; contentType?: string }>(initResponse);
@@ -813,7 +831,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       const uploaded: Asset[] = [];
       for (const file of uploads) {
         const duration = videoDurations.get(file);
-        uploaded.push(await uploadFileInParts(file, duration));
+        uploaded.push(await uploadFile(file, duration));
       }
       setAssets((items) => [...uploaded, ...items]);
       const selected = uploaded[0];
