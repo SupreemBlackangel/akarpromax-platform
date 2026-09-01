@@ -2,7 +2,7 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { LayoutDashboard, MessageCircle, MonitorDown } from "lucide-react";
+import { LayoutDashboard, MessageCircle, MonitorDown, PlusSquare, Wrench } from "lucide-react";
 import ChatWidget from "@/src/components/public/chat-widget";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
@@ -132,6 +132,18 @@ export function PublicShellLayout({
   // main browsing destinations.
   const sidebarNavItems = navItems.filter((item) => item.key !== "advertise" && item.key !== "about" && item.key !== "contact");
   const sidebarExtraItems = [
+    {
+      key: "advertise-property",
+      label: locale === "ar" ? "أعلن عقارك" : locale === "tr" ? "Mülkünüzü yayınlayın" : "List your property",
+      href: "/dashboard/properties/new",
+      icon: PlusSquare,
+    },
+    {
+      key: "request-service",
+      label: locale === "ar" ? "اطلب خدمة" : locale === "tr" ? "Hizmet isteyin" : "Request a service",
+      href: "/service-requests/new",
+      icon: Wrench,
+    },
     {
       key: "office-app-download",
       label: locale === "ar" ? "البرنامج المكتبي" : locale === "tr" ? "Ofis Programı" : "Office App",
