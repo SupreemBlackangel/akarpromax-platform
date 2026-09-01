@@ -2,7 +2,8 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { LayoutDashboard, MessageCircle, MonitorDown, PlusSquare, Wrench } from "lucide-react";
+import Link from "next/link";
+import { LayoutDashboard, MessageCircle, MonitorDown, PlusSquare, Wrench, LogIn } from "lucide-react";
 import ChatWidget from "@/src/components/public/chat-widget";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
@@ -182,13 +183,15 @@ export function PublicShellLayout({
     </div>
   ) : (
     <div className="flex flex-col gap-[var(--space-3)]">
-      <button
-        type="button"
-        onClick={onLogin}
-        className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+      {/* Same destination as the header's sign-in: the full page, which also
+          carries the Google/Facebook options and the register link. */}
+      <Link
+        href="/login"
+        className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
       >
+        <LogIn className="size-4" aria-hidden="true" />
         {labels.login}
-      </button>
+      </Link>
       {sidebarChatButton}
     </div>
   );
