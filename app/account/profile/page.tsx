@@ -78,7 +78,7 @@ function AccountProfileForm() {
         </div>
       </div>
 
-      <dl className="mt-6 space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] p-[var(--space-4)] text-sm">
+      <dl className="mt-6 space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] p-[var(--space-4)] text-sm">
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[color:var(--color-text-secondary)]">{t.emailLabel ?? "البريد الإلكتروني"}</dt>
           <dd className="font-semibold text-[color:var(--color-text)]" dir="ltr">{me?.email ?? "—"}</dd>

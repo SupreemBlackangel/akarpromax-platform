@@ -78,11 +78,11 @@ function ChangePasswordForm({ t }: { t: import("@/lib/auth-labels").AuthLabels }
       <h2 className="text-lg font-semibold">{t.changePasswordTitle}</h2>
       <div>
         <label className="auth-label block text-sm font-medium">{t.currentPasswordLabel}</label>
-        <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]" required />
+        <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]" required />
       </div>
       <div>
         <label className="auth-label block text-sm font-medium">{t.newPasswordLabel}</label>
-        <input type="password" value={next} onChange={(e) => setNext(e.target.value)} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]" required minLength={8} />
+        <input type="password" value={next} onChange={(e) => setNext(e.target.value)} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]" required minLength={8} />
         <p className="auth-hint mt-1 text-xs text-[color:var(--color-text-secondary)]">{t.passwordHint}</p>
       </div>
       <Button type="submit" variant="primary" loading={submitting}>{t.changePasswordSubmit}</Button>
@@ -132,7 +132,7 @@ function ChangeEmailForm({ t, onStarted }: { t: import("@/lib/auth-labels").Auth
       <h2 className="text-lg font-semibold">{t.changeEmailTitle}</h2>
       <div>
         <label className="auth-label block text-sm font-medium">{t.newEmailLabel}</label>
-        <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.newEmailPlaceholder} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]" required />
+        <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.newEmailPlaceholder} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]" required />
       </div>
       <Button type="submit" variant="primary" loading={submitting}>{t.changeEmailSubmit}</Button>
       {status === "sent" && <p className="auth-ok text-sm text-[color:var(--color-accent)]">✓ أرسلنا رمزاً إلى بريدك الجديد</p>}

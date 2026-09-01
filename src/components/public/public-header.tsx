@@ -1,4 +1,5 @@
-import { Menu, MonitorDown, User } from "lucide-react";
+import Link from "next/link";
+import { Menu, MonitorDown, User, LogIn } from "lucide-react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import { isNavItemActive, type PublicNavItem } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
@@ -132,9 +133,15 @@ export default function PublicHeader({
                   </Button>
                 </>
               ) : (
-                <Button variant="primary" size="sm" onClick={onLogin}>
+                // Full page, not the modal: the sign-in page also carries the
+                // Google/Facebook options and the register link.
+                <Link
+                  href="/login"
+                  className="inline-flex select-none items-center justify-center gap-1.5 rounded-lg bg-[color:var(--color-primary)] px-3.5 py-1.5 text-sm font-bold text-[color:var(--color-primary-foreground)] transition hover:bg-[color:var(--color-primary-hover)]"
+                >
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
                   {labels.login}
-                </Button>
+                </Link>
               )}
             </div>
             <LanguageSwitcher labels={labels} />

@@ -62,7 +62,7 @@ function ForgotPasswordForm() {
       <form onSubmit={handleSubmit} className="auth-form mt-6 space-y-4">
         <div>
           <label className="auth-label block text-sm font-medium">{t.emailLabel}</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]" required />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]" required />
         </div>
         <Button type="submit" variant="primary" loading={loading} className="w-full">{t.forgotSubmit}</Button>
         {error && <p className="auth-error text-sm text-[color:var(--color-danger)]">{error}</p>}

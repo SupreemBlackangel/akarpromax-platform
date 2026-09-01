@@ -77,7 +77,7 @@ function LoginForm() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder={t.emailPlaceholder}
-            className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]"
+            className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]"
             required
           />
         </div>
@@ -88,7 +88,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t.passwordPlaceholder}
-            className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-2)] px-[var(--space-3)] py-[var(--space-2)]"
+            className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]"
             required
             minLength={8}
           />
@@ -112,7 +112,7 @@ function LoginForm() {
       <div className="space-y-3">
         <a
           href="/api/auth/google"
-          className="flex w-full items-center justify-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+          className="flex w-full items-center justify-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-[color:var(--color-text-primary)] shadow-[var(--shadow-xs)] transition hover:bg-[color:var(--color-surface-muted)]"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>

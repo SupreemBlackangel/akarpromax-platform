@@ -8,10 +8,11 @@ import {
   Mail,
   Lock,
   User,
-  CheckCircle,
   AlertCircle,
   Loader2,
 } from "lucide-react";
+
+import AuthPageShell from "@/src/components/AuthPageShell";
 
 const REGISTER_URL = "/api/auth/register";
 
@@ -19,7 +20,7 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[color:var(--color-background)] flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]" />
         </div>
       }
@@ -139,55 +140,16 @@ function RegisterForm() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-gray-50 flex items-center justify-center p-4"
-      dir="rtl"
-    >
-      <div className="w-full max-w-5xl bg-[var(--color-surface)] rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-        {/* Brand Side */}
-        <div className="md:w-5/11 bg-gradient-to-br from-blue-700 to-blue-900 p-8 md:p-12 text-white flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-[var(--color-surface)]/20 rounded-xl flex items-center justify-center text-2xl font-bold">
-                ع
-              </div>
-              <span className="text-2xl font-bold">عقار بروماكس</span>
-            </div>
-            <h1 className="text-3xl font-bold mb-4">مرحباً بك</h1>
-            <p className="text-[var(--color-primary)]/80 text-lg mb-8">
-              عقارك، خدماتك، أعمالك ومجتمعك المهني في منصة واحدة
-            </p>
-            <ul className="space-y-4 text-[var(--color-primary)]/80">
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
-                اكتشف العقارات للبيع والإيجار
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
-                تواصل مع المحترفين والمكاتب العقارية
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
-                أنشئ ملفك المهني وطور أعمالك
-              </li>
-            </ul>
-          </div>
-          <div className="text-[var(--color-primary)] text-sm">
-            © 2026 عقار بروماكس. جميع الحقوق محفوظة
-          </div>
-        </div>
-
-        {/* Form Side */}
-        <div className="md:w-6/11 p-8 md:p-12">
+    <AuthPageShell>
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">إنشاء حساب</h2>
-            <p className="text-gray-500 text-sm mt-1">
+            <h2 className="text-2xl font-bold text-[color:var(--color-text-primary)]">إنشاء حساب</h2>
+            <p className="text-[color:var(--color-text-muted)] text-sm mt-1">
               أدخل بياناتك لإنشاء حساب جديد
             </p>
           </div>
 
           {errors.general && (
-            <div className="mb-4 p-3 bg-[var(--color-error-soft)] border border-[var(--color-error)]/30 rounded-lg text-[var(--color-error)] text-sm flex items-start gap-2">
+            <div className="mb-4 p-3 bg-[var(--color-danger-soft)] border border-[var(--color-danger)]/30 rounded-lg text-[var(--color-danger)] text-sm flex items-start gap-2">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               {errors.general}
             </div>
@@ -195,11 +157,11 @@ function RegisterForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
                 الاسم الكامل
               </label>
               <div className="relative">
-                <User className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
+                <User className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
                 <input
                   type="text"
                   value={formData.name}
@@ -207,23 +169,23 @@ function RegisterForm() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className={`w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${
-                    errors.name ? "border-[var(--color-error)]" : "border-gray-300"
+                    errors.name ? "border-[var(--color-danger)]" : "border-[color:var(--color-border-strong)]"
                   }`}
                   placeholder="أحمد محمد"
                   required
                 />
               </div>
               {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                <p className="text-[color:var(--color-danger)] text-sm mt-1">{errors.name}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
                 البريد الإلكتروني
               </label>
               <div className="relative">
-                <Mail className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
+                <Mail className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
                 <input
                   type="email"
                   value={formData.email}
@@ -231,7 +193,7 @@ function RegisterForm() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className={`w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${
-                    errors.email ? "border-[var(--color-error)]" : "border-gray-300"
+                    errors.email ? "border-[var(--color-danger)]" : "border-[color:var(--color-border-strong)]"
                   }`}
                   placeholder="example@email.com"
                   required
@@ -239,18 +201,18 @@ function RegisterForm() {
               </div>
               {errors.email && (
                 <p
-                  className="text-red-500 text-sm mt-1"
+                  className="text-[color:var(--color-danger)] text-sm mt-1"
                   dangerouslySetInnerHTML={{ __html: errors.email }}
                 />
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
                 كلمة المرور
               </label>
               <div className="relative">
-                <Lock className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
+                <Lock className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
@@ -258,7 +220,7 @@ function RegisterForm() {
                     setFormData({ ...formData, password: e.target.value })
                   }
                   className={`w-full p-3 pr-10 pl-12 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${
-                    errors.password ? "border-[var(--color-error)]" : "border-gray-300"
+                    errors.password ? "border-[var(--color-danger)]" : "border-[color:var(--color-border-strong)]"
                   }`}
                   placeholder="••••••••"
                   required
@@ -267,7 +229,7 @@ function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-3 text-gray-400 hover:text-gray-600"
+                  className="absolute left-3 top-3 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-secondary)]"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -278,14 +240,14 @@ function RegisterForm() {
               </div>
               {formData.password && (
                 <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-[color:var(--color-surface-muted)] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         passwordStrength.color === "red"
-                          ? "bg-[var(--color-error-soft)]0"
+                          ? "bg-[var(--color-danger-soft)]0"
                           : passwordStrength.color === "yellow"
                             ? "bg-yellow-500"
-                            : "bg-green-500"
+                            : "bg-[color:var(--color-success)]"
                       }`}
                       style={{ width: `${(passwordStrength.score + 1) * 25}%` }}
                     />
@@ -293,10 +255,10 @@ function RegisterForm() {
                   <span
                     className={`text-xs font-medium ${
                       passwordStrength.color === "red"
-                        ? "text-red-500"
+                        ? "text-[color:var(--color-danger)]"
                         : passwordStrength.color === "yellow"
                           ? "text-yellow-600"
-                          : "text-green-600"
+                          : "text-[color:var(--color-success)]"
                     }`}
                   >
                     {passwordStrength.label}
@@ -304,16 +266,16 @@ function RegisterForm() {
                 </div>
               )}
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                <p className="text-[color:var(--color-danger)] text-sm mt-1">{errors.password}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
                 تأكيد كلمة المرور
               </label>
               <div className="relative">
-                <Lock className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
+                <Lock className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
                 <input
                   type={showConfirm ? "text" : "password"}
                   value={formData.confirmPassword}
@@ -325,8 +287,8 @@ function RegisterForm() {
                   }
                   className={`w-full p-3 pr-10 pl-12 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${
                     errors.confirmPassword
-                      ? "border-[var(--color-error)]"
-                      : "border-gray-300"
+                      ? "border-[var(--color-danger)]"
+                      : "border-[color:var(--color-border-strong)]"
                   }`}
                   placeholder="••••••••"
                   required
@@ -334,7 +296,7 @@ function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute left-3 top-3 text-gray-400 hover:text-gray-600"
+                  className="absolute left-3 top-3 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-secondary)]"
                 >
                   {showConfirm ? (
                     <EyeOff className="w-5 h-5" />
@@ -344,14 +306,14 @@ function RegisterForm() {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-[color:var(--color-danger)] text-sm mt-1">
                   {errors.confirmPassword}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-start gap-2 text-sm text-gray-600 cursor-pointer">
+              <label className="flex items-start gap-2 text-sm text-[color:var(--color-text-secondary)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.acceptTerms}
@@ -361,7 +323,7 @@ function RegisterForm() {
                       acceptTerms: e.target.checked,
                     })
                   }
-                  className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-gray-300 rounded focus:ring-[var(--color-primary)]"
+                  className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-[color:var(--color-border-strong)] rounded focus:ring-[var(--color-primary)]"
                   required
                 />
                 <span>
@@ -382,9 +344,9 @@ function RegisterForm() {
                 </span>
               </label>
               {errors.acceptTerms && (
-                <p className="text-red-500 text-sm">{errors.acceptTerms}</p>
+                <p className="text-[color:var(--color-danger)] text-sm">{errors.acceptTerms}</p>
               )}
-              <label className="flex items-start gap-2 text-sm text-gray-500 cursor-pointer">
+              <label className="flex items-start gap-2 text-sm text-[color:var(--color-text-muted)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.acceptMarketing}
@@ -394,7 +356,7 @@ function RegisterForm() {
                       acceptMarketing: e.target.checked,
                     })
                   }
-                  className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-gray-300 rounded focus:ring-[var(--color-primary)]"
+                  className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-[color:var(--color-border-strong)] rounded focus:ring-[var(--color-primary)]"
                 />
                 <span>أرغب في تلقي الأخبار والعروض والتحديثات (اختياري)</span>
               </label>
@@ -417,10 +379,10 @@ function RegisterForm() {
             {/* Social Login Divider */}
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-[color:var(--color-border)]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-[var(--color-surface)] px-3 text-gray-500">أو</span>
+                <span className="bg-[var(--color-surface)] px-3 text-[color:var(--color-text-muted)]">أو</span>
               </div>
             </div>
 
@@ -428,7 +390,7 @@ function RegisterForm() {
             <div className="space-y-3">
               <a
                 href="/api/auth/google"
-                className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border border-[color:var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-medium text-[color:var(--color-text-secondary)] shadow-sm transition hover:bg-[color:var(--color-surface-muted)]"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -449,7 +411,7 @@ function RegisterForm() {
               </a>
             </div>
 
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-sm text-[color:var(--color-text-muted)]">
               لديك حساب بالفعل؟{" "}
               <a
                 href="/login"
@@ -458,9 +420,7 @@ function RegisterForm() {
                 تسجيل الدخول
               </a>
             </p>
-          </form>
-        </div>
-      </div>
-    </div>
+        </form>
+    </AuthPageShell>
   );
 }
