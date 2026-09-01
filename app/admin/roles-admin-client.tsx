@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { UserCog, Search, Check, X } from "lucide-react";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { ROLE_CATALOG, ROLE_ORDER, roleNameEn } from "@/src/constants/roles";
 
@@ -152,6 +153,14 @@ export default function RolesAdminClient() {
   const [usersMessage, setUsersMessage] = useState("");
   const [canManage, setCanManage] = useState(false);
 
+  // Quick "apply a role to a registered user" flow, reachable from the header.
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applySearch, setApplySearch] = useState("");
+  const [applyUserId, setApplyUserId] = useState("");
+  const [applyRole, setApplyRole] = useState("");
+  const [applyBusy, setApplyBusy] = useState(false);
+  const [applyError, setApplyError] = useState("");
+
   const [scopes, setScopes] = useState<ScopeEntry[]>([]);
   const [eligibleUsers, setEligibleUsers] = useState<EligibleUser[]>([]);
   const [scopeModules, setScopeModules] = useState<string[]>([]);
@@ -223,6 +232,46 @@ export default function RolesAdminClient() {
     }
   }
 
+  const openApplyModal = useCallback(() => {
+    setApplyOpen(true);
+    setApplyError("");
+    setApplySearch("");
+    setApplyUserId("");
+    setApplyRole("");
+    if (users.length === 0) void loadUsers();
+  }, [users.length, loadUsers]);
+
+  const applyRoleToUser = useCallback(async () => {
+    if (!applyUserId || !applyRole) return;
+    setApplyBusy(true);
+    setApplyError("");
+    try {
+      const res = await fetch("/api/admin/roles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: applyUserId, role: applyRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشل تحديث الدور");
+      setUsers((prev) => prev.map((u) => (u.id === applyUserId ? { ...u, role: applyRole } : u)));
+      const target = users.find((u) => u.id === applyUserId);
+      setUsersMessage(`تم تعيين دور «${ROLE_CATALOG[applyRole as keyof typeof ROLE_CATALOG]?.nameAr ?? applyRole}» للمستخدم ${target?.displayName || target?.email || ""}.`);
+      setApplyOpen(false);
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "حدث خطأ");
+    } finally {
+      setApplyBusy(false);
+    }
+  }, [applyUserId, applyRole, users]);
+
+  const applyFilteredUsers = useMemo(() => {
+    const q = applySearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) => (u.displayName ?? "").toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+    );
+  }, [users, applySearch]);
+
   async function addScope(e: React.FormEvent) {
     e.preventDefault();
     if (!scopeForm.userId || !scopeForm.module) return;
@@ -282,7 +331,13 @@ export default function RolesAdminClient() {
     <>
       <header className="advertiser-admin-header">
         <div><p>نظام الصلاحيات</p><h1>الأدوار والصلاحيات</h1></div>
-        <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link></div>
+        <div className="admin-header-actions">
+          <button type="button" onClick={openApplyModal} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <UserCog size={16} strokeWidth={2.2} aria-hidden />
+            تطبيق دور على مستخدم
+          </button>
+          <Link href="/" target="_blank">معاينة الموقع ↗</Link>
+        </div>
       </header>
 
       <nav style={{ display: "flex", gap: 6, marginBottom: 20 }}>
@@ -611,6 +666,117 @@ export default function RolesAdminClient() {
             )}
           </div>
         </>
+      )}
+
+      {applyOpen && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="تطبيق دور على مستخدم" onClick={() => setApplyOpen(false)}>
+          <div className="modal-content" style={{ width: "min(520px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="modal-close" onClick={() => setApplyOpen(false)} aria-label="إغلاق"><X size={18} /></button>
+            <div className="modal-header">
+              <h2 className="modal-title">تطبيق دور على مستخدم</h2>
+            </div>
+
+            <div className="modal-body">
+              <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-secondary)" }}>
+                اختر مستخدماً مسجلاً ثم عيّن له الدور المناسب. يُطبَّق فوراً على حسابه.
+              </p>
+
+              {applyError && (
+                <div style={{ padding: "8px 12px", borderRadius: 8, background: "var(--color-error-soft, #fff0f0)", color: "var(--color-error, #a83f4d)", fontSize: 12, fontWeight: 800 }} role="alert">
+                  {applyError}
+                </div>
+              )}
+
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--color-text-secondary)" }}>
+                البحث عن مستخدم
+                <div style={{ position: "relative", marginTop: 6 }}>
+                  <Search size={15} aria-hidden style={{ position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)" }} />
+                  <input
+                    value={applySearch}
+                    onChange={(e) => setApplySearch(e.target.value)}
+                    placeholder="الاسم أو البريد الإلكتروني"
+                    style={{ width: "100%", padding: "9px 12px 9px 32px", border: "1px solid var(--color-border)", borderRadius: 8, background: "var(--color-surface)", color: "var(--color-text-primary)", fontSize: 13 }}
+                  />
+                </div>
+              </label>
+
+              <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid var(--color-border)", borderRadius: 10, background: "var(--color-surface)" }}>
+                {users.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", fontSize: 12, color: "var(--color-text-muted)" }}>جارٍ تحميل المستخدمين…</div>
+                ) : applyFilteredUsers.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", fontSize: 12, color: "var(--color-text-muted)" }}>لا يوجد مستخدم مطابق</div>
+                ) : (
+                  applyFilteredUsers.map((u) => {
+                    const selected = applyUserId === u.id;
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => setApplyUserId(u.id)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 12px",
+                          border: 0, borderBottom: "1px solid var(--color-border)", cursor: "pointer", textAlign: "start",
+                          background: selected ? "var(--color-primary-soft, #edf4ff)" : "transparent",
+                        }}
+                      >
+                        <span style={{ display: "inline-grid", placeItems: "center", width: 30, height: 30, borderRadius: "50%", background: "var(--color-primary-soft, #edf4ff)", color: "var(--color-primary)", fontSize: 12, fontWeight: 900, flexShrink: 0 }}>
+                          {(u.displayName || u.email).slice(0, 1).toUpperCase()}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--color-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.displayName || u.email}</span>
+                          <span style={{ display: "block", fontSize: 11, color: "var(--color-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email} · {ROLE_CATALOG[u.role as keyof typeof ROLE_CATALOG]?.nameAr ?? u.role}</span>
+                        </span>
+                        {selected && <Check size={17} strokeWidth={2.6} aria-hidden style={{ color: "var(--color-primary)", flexShrink: 0 }} />}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, color: "var(--color-text-secondary)" }}>
+                الدور الجديد
+                <select
+                  value={applyRole}
+                  onChange={(e) => setApplyRole(e.target.value)}
+                  disabled={!canManage}
+                  style={{ width: "100%", marginTop: 6, padding: "10px 12px", border: "1px solid var(--color-border)", borderRadius: 8, background: "var(--color-surface)", color: "var(--color-text-primary)", fontSize: 13, fontWeight: 700 }}
+                >
+                  <option value="">— اختر الدور —</option>
+                  {(assignableRoles.length > 0
+                    ? assignableRoles.map((r) => [r.id, r.nameAr] as const)
+                    : ROLE_ORDER.filter((r) => r !== "guest").map((r) => [r, ROLE_CATALOG[r].nameAr] as const)
+                  ).map(([id, nameAr]) => (
+                    <option key={id} value={id}>{nameAr}</option>
+                  ))}
+                </select>
+              </label>
+
+              {!canManage && (
+                <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-muted)" }}>ليس لديك صلاحية تعديل الأدوار.</p>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setApplyOpen(false)}
+                  style={{ padding: "10px 16px", border: "1px solid var(--color-border)", borderRadius: 8, background: "var(--color-surface)", color: "var(--color-text-secondary)", fontSize: 13, fontWeight: 800, cursor: "pointer" }}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  className="admin-primary"
+                  onClick={() => void applyRoleToUser()}
+                  disabled={applyBusy || !canManage || !applyUserId || !applyRole}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 8, opacity: applyBusy || !canManage || !applyUserId || !applyRole ? 0.55 : 1 }}
+                >
+                  <Check size={16} strokeWidth={2.4} aria-hidden />
+                  {applyBusy ? "جارٍ التطبيق…" : "تطبيق الدور"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
