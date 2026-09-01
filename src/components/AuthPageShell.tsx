@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck, Building2, Wrench } from "lucide-react";
 import Brand from "@/src/components/Brand";
@@ -93,13 +93,36 @@ function AuthArtwork() {
 }
 
 export default function AuthPageShell({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(readStoredLocale);
+  // Must match what the server renders, or hydration fails and the whole auth
+  // subtree freezes on the server markup (previously it read localStorage in the
+  // initializer, so every non-Arabic visitor hit a hydration mismatch). The
+  // stored preference is applied right after mount instead.
+  const [locale, setLocale] = useState<Locale>("ar");
+  // Guards the persist effect from writing the SSR default back over the user's
+  // stored preference before it has been read.
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- reading the
+       stored preference must happen after mount; doing it in the initializer
+       diverges from SSR and breaks hydration. */
+    const timer = window.setTimeout(() => {
+      const stored = readStoredLocale();
+      hydratedRef.current = true;
+      if (stored !== "ar") setLocale(stored);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.lang = locale;
     root.dir = locale === "ar" ? "rtl" : "ltr";
+    if (!hydratedRef.current) return;
     window.localStorage.setItem("akarpromax-lang", locale);
+    // Keep the platform-wide locale cookie in sync so the rest of the site
+    // (server-rendered via the cookie) agrees with the choice made here.
+    document.cookie = `akarpromax-locale=${locale}; path=/; max-age=31536000; samesite=lax`;
   }, [locale]);
 
   const t = authLabels(locale);

@@ -12,7 +12,8 @@ import {
   Loader2,
 } from "lucide-react";
 
-import AuthPageShell from "@/src/components/AuthPageShell";
+import AuthPageShell, { useAuthPage } from "@/src/components/AuthPageShell";
+import { REGISTER_COPY } from "./copy";
 
 const REGISTER_URL = "/api/auth/register";
 
@@ -25,12 +26,16 @@ export default function RegisterPage() {
         </div>
       }
     >
-      <RegisterForm />
+      <AuthPageShell>
+        <RegisterForm />
+      </AuthPageShell>
     </Suspense>
   );
 }
 
 function RegisterForm() {
+  const { locale, t } = useAuthPage();
+  const c = REGISTER_COPY[locale];
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite") || "";
@@ -57,11 +62,11 @@ function RegisterForm() {
     if (pass.match(/\d/)) score++;
     if (pass.match(/[^a-zA-Z\d]/)) score++;
     const levels = [
-      { score: 0, label: "ضعيفة", color: "red" },
-      { score: 1, label: "ضعيفة", color: "red" },
-      { score: 2, label: "متوسطة", color: "yellow" },
-      { score: 3, label: "قوية", color: "green" },
-      { score: 4, label: "قوية جداً", color: "green" },
+      { score: 0, label: c.strength[0], color: "red" },
+      { score: 1, label: c.strength[1], color: "red" },
+      { score: 2, label: c.strength[2], color: "yellow" },
+      { score: 3, label: c.strength[3], color: "green" },
+      { score: 4, label: c.strength[4], color: "green" },
     ];
     return levels[score] || levels[0];
   };
@@ -75,18 +80,18 @@ function RegisterForm() {
     e.preventDefault();
     setErrors({});
     const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = "الاسم مطلوب";
+    if (!formData.name.trim()) newErrors.name = c.errNameRequired;
     if (!formData.email.trim()) {
-      newErrors.email = "البريد الإلكتروني مطلوب";
+      newErrors.email = c.errEmailRequired;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "بريد إلكتروني غير صحيح";
+      newErrors.email = c.errEmailInvalid;
     }
     if (formData.password.length < 8)
-      newErrors.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل";
+      newErrors.password = c.errPasswordShort;
     if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "كلمتا المرور غير متطابقتين";
+      newErrors.confirmPassword = c.errPasswordMismatch;
     if (!formData.acceptTerms)
-      newErrors.acceptTerms = "يجب الموافقة على الشروط والأحكام";
+      newErrors.acceptTerms = c.errTermsRequired;
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -110,16 +115,16 @@ function RegisterForm() {
       if (!res.ok) {
         if (data.error === "already_registered") {
           setErrors({
-            email: "هذا البريد الإلكتروني مسجل مسبقاً. تسجيل الدخول",
+            email: `${c.errEmailTaken} ${c.errEmailTakenCta}`,
           });
         } else if (data.error === "EMAIL_UNVERIFIED") {
           setErrors({
             email:
-              "هذا البريد مسجل ولكن لم يتم تفعيله. إعادة إرسال التفعيل",
+              `${c.errEmailUnverified} ${c.errEmailUnverifiedCta}`,
           });
         } else {
           setErrors({
-            general: data.error || "حدث خطأ، حاول مرة أخرى",
+            general: data.error || c.errGeneric,
           });
         }
         setLoading(false);
@@ -134,17 +139,17 @@ function RegisterForm() {
         router.push("/onboarding");
       }
     } catch (error) {
-      setErrors({ general: "حدث خطأ في الاتصال بالخادم" });
+      setErrors({ general: c.errNetwork });
       setLoading(false);
     }
   };
 
   return (
-    <AuthPageShell>
+    <>
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-[color:var(--color-text-primary)]">إنشاء حساب</h2>
+            <h2 className="text-2xl font-bold text-[color:var(--color-text-primary)]">{t.registerTitle}</h2>
             <p className="text-[color:var(--color-text-muted)] text-sm mt-1">
-              أدخل بياناتك لإنشاء حساب جديد
+              {t.registerSubtitle}
             </p>
           </div>
 
@@ -158,7 +163,7 @@ function RegisterForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
-                الاسم الكامل
+                {t.nameLabel}
               </label>
               <div className="relative">
                 <User className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
@@ -171,7 +176,7 @@ function RegisterForm() {
                   className={`w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] ${
                     errors.name ? "border-[var(--color-danger)]" : "border-[color:var(--color-border-strong)]"
                   }`}
-                  placeholder="أحمد محمد"
+                  placeholder={c.namePlaceholder}
                   required
                 />
               </div>
@@ -182,7 +187,7 @@ function RegisterForm() {
 
             <div>
               <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
-                البريد الإلكتروني
+                {t.emailLabel}
               </label>
               <div className="relative">
                 <Mail className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
@@ -209,7 +214,7 @@ function RegisterForm() {
 
             <div>
               <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
-                كلمة المرور
+                {t.passwordLabel}
               </label>
               <div className="relative">
                 <Lock className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
@@ -272,7 +277,7 @@ function RegisterForm() {
 
             <div>
               <label className="block text-sm font-medium text-[color:var(--color-text-secondary)] mb-1">
-                تأكيد كلمة المرور
+                {c.confirmPasswordLabel}
               </label>
               <div className="relative">
                 <Lock className="absolute right-3 top-3 w-5 h-5 text-[color:var(--color-text-muted)]" />
@@ -327,19 +332,19 @@ function RegisterForm() {
                   required
                 />
                 <span>
-                  أوافق على{" "}
+                  {c.agreePrefix}{" "}
                   <a
                     href="/terms"
                     className="text-[var(--color-primary)] hover:underline"
                   >
-                    شروط الاستخدام
+                    {c.termsLink}
                   </a>{" "}
-                  و{" "}
+                  {c.and}{" "}
                   <a
                     href="/privacy"
                     className="text-[var(--color-primary)] hover:underline"
                   >
-                    سياسة الخصوصية
+                    {c.privacyLink}
                   </a>
                 </span>
               </label>
@@ -358,7 +363,7 @@ function RegisterForm() {
                   }
                   className="mt-0.5 w-4 h-4 text-[var(--color-primary)] border-[color:var(--color-border-strong)] rounded focus:ring-[var(--color-primary)]"
                 />
-                <span>أرغب في تلقي الأخبار والعروض والتحديثات (اختياري)</span>
+                <span>{c.marketingOptIn}</span>
               </label>
             </div>
 
@@ -369,10 +374,10 @@ function RegisterForm() {
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" /> جاري الإنشاء...
+                  <Loader2 className="w-5 h-5 animate-spin" /> {c.submitting}
                 </>
               ) : (
-                "إنشاء حساب"
+                t.registerSubmit
               )}
             </button>
 
@@ -382,7 +387,7 @@ function RegisterForm() {
                 <div className="w-full border-t border-[color:var(--color-border)]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-[var(--color-surface)] px-3 text-[color:var(--color-text-muted)]">أو</span>
+                <span className="bg-[var(--color-surface)] px-3 text-[color:var(--color-text-muted)]">{c.or}</span>
               </div>
             </div>
 
@@ -398,7 +403,7 @@ function RegisterForm() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                المتابعة عبر Google
+                {c.google}
               </a>
               <a
                 href="/api/auth/facebook"
@@ -407,20 +412,20 @@ function RegisterForm() {
                 <svg className="h-5 w-5" fill="white" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
-                المتابعة عبر Facebook
+                {c.facebook}
               </a>
             </div>
 
             <p className="text-center text-sm text-[color:var(--color-text-muted)]">
-              لديك حساب بالفعل؟{" "}
+              {t.registerHasAccount}{" "}
               <a
                 href="/login"
                 className="text-[var(--color-primary)] hover:underline font-medium"
               >
-                تسجيل الدخول
+                {t.registerToLogin}
               </a>
             </p>
         </form>
-    </AuthPageShell>
+    </>
   );
 }
