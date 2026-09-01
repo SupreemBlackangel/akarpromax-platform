@@ -153,8 +153,8 @@ export function RatingStars({ value, count }: { value?: number | null; count?: n
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
       <span className="text-[var(--accent)] tracking-tight" dir="ltr">{stars.join("")}</span>
-      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{v.toFixed(1)}</span>
-      {count != null && <span className="text-xs text-gray-500 dark:text-gray-400">({count})</span>}
+      <span className="text-xs font-semibold text-[var(--color-text-primary)]">{v.toFixed(1)}</span>
+      {count != null && <span className="text-xs text-[var(--color-text-secondary)]">({count})</span>}
     </span>
   );
 }
@@ -165,10 +165,10 @@ export function CategoryCard({ category, locale }: { category: CategoryRow; loca
   return (
     <Link
       href={`/services/catalog/${category.code}`}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:hover:border-blue-700"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)]"
     >
       <div className="flex items-center justify-between">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition group-hover:bg-[var(--color-primary)] group-hover:text-white dark:bg-blue-950/60 dark:text-[var(--color-primary)]">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition group-hover:bg-[var(--color-primary)] group-hover:text-white">
           <ServiceCategoryIcon name={category.icon} />
         </span>
         <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
@@ -195,7 +195,7 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
   return (
     <Link
       href={`/providers/${provider.id}`}
-      className="block rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:hover:border-blue-700"
+      className="block rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:shadow-lg hover:shadow-blue-950/5 dark:border-[var(--color-border)] dark:bg-[var(--color-surface)]"
     >
       <div className="flex items-center gap-3">
         <Avatar name={name} src={provider.logo_url} index={index} />
@@ -205,12 +205,12 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
         </div>
         {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-[10px] font-black text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
       </div>
-      {bio && <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{bio}</p>}
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-        {provider.governorate && <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.governorate}</span>}
-        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.jobs_completed ?? 0} أعمال</span>
-        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.completion_rate ?? 100}% إنجاز</span>
-        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{provider.response_rate ?? 100}% استجابة</span>
+      {bio && <p className="mt-3 text-sm text-[var(--color-text-secondary)] line-clamp-2">{bio}</p>}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">
+        {provider.governorate && <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)]">{provider.governorate}</span>}
+        <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)]">{provider.jobs_completed ?? 0} أعمال</span>
+        <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)]">{provider.completion_rate ?? 100}% إنجاز</span>
+        <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)]">{provider.response_rate ?? 100}% استجابة</span>
       </div>
     </Link>
   );
@@ -224,20 +224,20 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
   return (
     <Link
       href={`/service-requests/${request.id}`}
-      className="block bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30 dark:hover:border-blue-700"
+      className="block bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-bold text-gray-900 dark:text-white">{request.title || request.reference_number || "طلب خدمة"}</h3>
+        <h3 className="font-bold text-[var(--color-text-primary)]">{request.title || request.reference_number || "طلب خدمة"}</h3>
         <RequestStatusPill status={request.status} locale={locale} />
       </div>
-      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{request.reference_number} • {formatDate(request.created_at)}</p>
-      {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{request.description}</p>}
-      {answersSummary && <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{answersSummary}</p>}
+      <p className="mt-1 text-xs text-[var(--color-text-muted)]">{request.reference_number} • {formatDate(request.created_at)}</p>
+      {request.description && <p className="mt-2 text-sm text-[var(--color-text-secondary)] line-clamp-2">{request.description}</p>}
+      {answersSummary && <p className="mt-2 text-xs text-[var(--color-text-secondary)] line-clamp-1">{answersSummary}</p>}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-blue-400">
           {formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}
         </span>
-        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300">{categoryName}</span>
+        <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-secondary)]">{categoryName}</span>
       </div>
     </Link>
   );
@@ -246,47 +246,47 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
 export function OfferCard({ offer, locale, customer = false }: { offer: OfferRow; locale: Locale; customer?: boolean }) {
   const name = offer.business_name || nameFor(locale, offer.display_name_ar, offer.display_name_en, null, "مقدم خدمة");
   return (
-    <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           {customer ? (
             <>
               <Avatar name={name} src={offer.logo_url} />
               <div className="min-w-0">
-                <p className="truncate font-semibold text-gray-900 dark:text-white">{name}</p>
+                <p className="truncate font-semibold text-[var(--color-text-primary)]">{name}</p>
                 <RatingStars value={offer.rating_avg} count={offer.rating_count} locale={locale} />
               </div>
             </>
           ) : (
-            <p className="font-semibold text-gray-700 dark:text-gray-200">عرض #{String(offer.id).slice(0, 8)}</p>
+            <p className="font-semibold text-[var(--color-text-primary)]">عرض #{String(offer.id).slice(0, 8)}</p>
           )}
         </div>
         <OfferStatusPill status={offer.status} locale={locale} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <span className="block text-xs text-gray-500 dark:text-gray-400">السعر</span>
+          <span className="block text-xs text-[var(--color-text-secondary)]">السعر</span>
           <span className="font-bold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(offer.price, offer.currency)}</span>
         </div>
         <div>
-          <span className="block text-xs text-gray-500 dark:text-gray-400">الإجمالي</span>
-          <span className="font-bold text-gray-900 dark:text-white">{formatMoney(offer.total_price, offer.currency)}</span>
+          <span className="block text-xs text-[var(--color-text-secondary)]">الإجمالي</span>
+          <span className="font-bold text-[var(--color-text-primary)]">{formatMoney(offer.total_price, offer.currency)}</span>
         </div>
         {offer.duration_text && (
           <div>
-            <span className="block text-xs text-gray-500 dark:text-gray-400">المدة</span>
-            <span className="text-gray-800 dark:text-gray-100">{offer.duration_text}</span>
+            <span className="block text-xs text-[var(--color-text-secondary)]">المدة</span>
+            <span className="text-[var(--color-text-primary)]">{offer.duration_text}</span>
           </div>
         )}
         {offer.nearest_date && (
           <div>
-            <span className="block text-xs text-gray-500 dark:text-gray-400">أقرب موعد</span>
-            <span className="text-gray-800 dark:text-gray-100">{formatDate(offer.nearest_date)}</span>
+            <span className="block text-xs text-[var(--color-text-secondary)]">أقرب موعد</span>
+            <span className="text-[var(--color-text-primary)]">{formatDate(offer.nearest_date)}</span>
           </div>
         )}
       </div>
-      {offer.offer_notes && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{offer.offer_notes}</p>}
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+      {offer.offer_notes && <p className="mt-3 text-sm text-[var(--color-text-secondary)]">{offer.offer_notes}</p>}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">
         {Boolean(offer.materials_included) && <span className="px-2 py-0.5 rounded-md bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300">المواد متضمنة</span>}
         {Boolean(offer.needs_visit) && <span className="px-2 py-0.5 rounded-md bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]">يتطلب معاينة</span>}
       </div>
@@ -299,25 +299,25 @@ export function JobCard({ job, locale, viewerEmail }: { job: JobRow; locale: Loc
   return (
     <Link
       href={`/dashboard/services/jobs/${job.id}`}
-      className="block bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30 dark:hover:border-blue-700"
+      className="block bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 transition hover:shadow-md hover:border-[var(--color-primary)]/30"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-bold text-gray-900 dark:text-white">{job.source_type === "direct_booking" ? job.service_title_snapshot || "حجز مباشر" : `مهمة #${String(job.id).slice(0, 8)}`}</h3>
+        <h3 className="font-bold text-[var(--color-text-primary)]">{job.source_type === "direct_booking" ? job.service_title_snapshot || "حجز مباشر" : `مهمة #${String(job.id).slice(0, 8)}`}</h3>
         <OrderStatusPill status={job.status} locale={locale} />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <span className="block text-xs text-gray-500 dark:text-gray-400">القيمة</span>
+          <span className="block text-xs text-[var(--color-text-secondary)]">القيمة</span>
           <span className="font-semibold text-[var(--color-primary)] dark:text-blue-400">{formatMoney(job.price_snapshot ?? job.total_price ?? job.price, job.currency_snapshot ?? job.currency)}</span>
         </div>
         <div>
-          <span className="block text-xs text-gray-500 dark:text-gray-400">الموعد</span>
-          <span className="text-gray-800 dark:text-gray-100">{formatDate(job.scheduled_at ?? job.scheduled_date)}</span>
+          <span className="block text-xs text-[var(--color-text-secondary)]">الموعد</span>
+          <span className="text-[var(--color-text-primary)]">{formatDate(job.scheduled_at ?? job.scheduled_date)}</span>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-3 flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
         <span>{role === "provider" ? "عميل" : "مقدم خدمة"} • آخر تحديث {formatDate(job.updated_at)}</span>
-        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800">{job.status === "completed" ? "تم التسليم" : "قيد العمل"}</span>
+        <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)]">{job.status === "completed" ? "تم التسليم" : "قيد العمل"}</span>
       </div>
     </Link>
   );

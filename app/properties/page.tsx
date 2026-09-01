@@ -197,7 +197,7 @@ export default function PropertiesPage() {
               <select
                 value={listingType}
                 onChange={(event) => setListingType(event.target.value)}
-                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text-secondary)] focus:border-[var(--color-border-focus)] focus:outline-none"
                 aria-label={locale === "ar" ? "نوع العرض" : locale === "tr" ? "Teklif türü" : "Listing type"}
               >
                 <option value="all">{locale === "ar" ? "الكل" : locale === "tr" ? "Tümü" : "All"}</option>
@@ -211,7 +211,7 @@ export default function PropertiesPage() {
               <select
                 value={propertyType}
                 onChange={(event) => setPropertyType(event.target.value)}
-                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text-secondary)] focus:border-[var(--color-border-focus)] focus:outline-none"
                 aria-label={locale === "ar" ? "نوع العقار" : locale === "tr" ? "Mülk türü" : "Property type"}
               >
                 {propertyTypes.map((pt) => (
@@ -229,7 +229,7 @@ export default function PropertiesPage() {
                   value={customType}
                   onChange={(event) => setCustomType(event.target.value)}
                   placeholder={locale === "ar" ? "اكتب نوع العقار..." : locale === "tr" ? "Mülk türünü yazın..." : "Type property type..."}
-                  className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-emerald-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text-secondary)] focus:border-[var(--color-border-focus)] focus:outline-none"
                   aria-label={locale === "ar" ? "نوع عقار آخر" : locale === "tr" ? "Diğer mülk türü" : "Other property type"}
                 />
               )}
@@ -253,7 +253,7 @@ export default function PropertiesPage() {
                   value={adv[key]}
                   onChange={(event) => setAdv((current) => ({ ...current, [key]: event.target.value }))}
                   onKeyDown={(event) => { if (event.key === "Enter") setAdvApplied({ ...adv }); }}
-                  className="w-24 rounded-xl border border-gray-300 bg-white px-2.5 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                  className="w-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm font-semibold text-[var(--color-text-secondary)] focus:border-[var(--color-border-focus)] focus:outline-none"
                 />
               </label>
             ))}
