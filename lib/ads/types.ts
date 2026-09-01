@@ -126,6 +126,11 @@ export type ParsedCreative = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  /** Per-locale alternative text; ad images are meaningful and clickable. */
+  altText: { ar: string | null; en: string | null; tr: string | null };
+  /** Intrinsic pixel size, so the slot can reserve space before load. */
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   position: number;
   durationSeconds: number;
 };
@@ -222,6 +227,10 @@ export type AdMatchResult = {
   mediaType: string;
   imageUrl: string;
   posterUrl: string | null;
+  /** Localized alt text for the creative (falls back to the ad title). */
+  imageAlt: string;
+  imageWidth: number | null;
+  imageHeight: number | null;
   eyebrow: string;
   title: string;
   accent: string;

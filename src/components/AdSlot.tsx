@@ -400,7 +400,22 @@ export default function AdSlot({
         <span className="ad-slot-media">
           {ad.mediaType === "video" || isVideoAsset(ad.imageUrl)
             ? <video className="ad-slot-asset" src={ad.imageUrl} poster={ad.posterUrl ?? undefined} autoPlay muted loop playsInline preload={eager ? "auto" : "metadata"} />
-            : <img className="ad-slot-asset" src={ad.imageUrl} alt="" decoding="async" loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : "auto"} />}
+            : <img
+                className="ad-slot-asset"
+                src={ad.imageUrl}
+                /* Ad images are meaningful and clickable — never decorative. */
+                alt={ad.imageAlt || ad.title || ad.advertiserName || ""}
+                /* Intrinsic size lets the browser reserve the box before the
+                   bytes arrive, which removes the load-time layout shift. */
+                width={ad.imageWidth ?? undefined}
+                height={ad.imageHeight ?? undefined}
+                decoding="async"
+                loading={eager ? "eager" : "lazy"}
+                fetchPriority={eager ? "high" : "auto"}
+                /* A dead media_url used to render a broken-image box; hide the
+                   asset instead and let the copy block carry the ad. */
+                onError={(event) => { event.currentTarget.style.display = "none"; }}
+              />}
         </span>
         <span className="ad-slot-copy">
           {ad.eyebrow && <span className="ad-slot-eyebrow">{ad.eyebrow}</span>}

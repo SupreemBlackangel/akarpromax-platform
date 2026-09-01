@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRuntimeDb } from "@/lib/runtime-db";
+import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -30,6 +31,12 @@ async function ensureTable() {
 }
 
 export async function POST(request: NextRequest) {
+  // Public endpoint that writes image bytes into the database: without a limit
+  // anyone could fill the table with 5 MB blobs.
+  const rate = await enforceRateLimit("ads_request_asset", clientIp(request), request.nextUrl.pathname);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "محاولات كثيرة، حاول لاحقاً" }, { status: 429 });
+  }
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File) || !ALLOWED.has(file.type) || file.size < 1 || file.size > MAX_SIZE) {

@@ -128,6 +128,11 @@ type CreativeRow = {
   position: number;
   duration_seconds: number;
   status: string;
+  alt_text_ar: string | null;
+  alt_text_en: string | null;
+  alt_text_tr: string | null;
+  media_width: number | null;
+  media_height: number | null;
 };
 
 const ACTIVE_ADS_CACHE_TTL_MS = 30_000;
@@ -144,7 +149,8 @@ export async function loadCreatives(db: D1Database, campaignIds: string[]): Prom
   const placeholders = campaignIds.map((_, index) => `?${index + 1}`).join(",");
   const rows = await db
     .prepare(
-      `SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status
+      `SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status,
+              alt_text_ar, alt_text_en, alt_text_tr, media_width, media_height
        FROM ad_creatives
        WHERE campaign_id IN (${placeholders})
        ORDER BY position ASC`,
@@ -161,6 +167,9 @@ export async function loadCreatives(db: D1Database, campaignIds: string[]): Prom
       mobileMediaUrl: row.mobile_media_url,
       tabletMediaUrl: row.tablet_media_url,
       posterUrl: row.poster_url,
+      altText: { ar: row.alt_text_ar, en: row.alt_text_en, tr: row.alt_text_tr },
+      mediaWidth: row.media_width ? toNumber(row.media_width) : null,
+      mediaHeight: row.media_height ? toNumber(row.media_height) : null,
       position: toNumber(row.position),
       durationSeconds: Math.max(3, toNumber(row.duration_seconds) || 6),
     });
@@ -665,6 +674,9 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       mobileMediaUrl: ad.mobileMediaUrl,
       tabletMediaUrl: ad.tabletMediaUrl,
       posterUrl: ad.posterUrl,
+      altText: { ar: null, en: null, tr: null },
+      mediaWidth: null,
+      mediaHeight: null,
     };
     const imageUrl = channel === "office" || ctx.deviceType === "mobile"
       ? (media.mobileMediaUrl ?? media.tabletMediaUrl ?? media.mediaUrl)
@@ -678,6 +690,9 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       mediaType: creative?.mediaType ?? ad.mediaType,
       imageUrl,
       posterUrl: media.posterUrl ?? ad.posterUrl,
+      imageAlt: media.altText?.[locale] || ad.title[locale] || ad.advertiserName || "",
+      imageWidth: media.mediaWidth ?? null,
+      imageHeight: media.mediaHeight ?? null,
       eyebrow: ad.eyebrow[locale],
       title: ad.title[locale],
       accent: ad.accent[locale],

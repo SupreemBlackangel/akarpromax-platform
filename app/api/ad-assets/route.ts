@@ -153,6 +153,17 @@ export async function POST(request: NextRequest) {
     const partNumber = Number(request.headers.get("x-ad-part-number"));
     const bytes = await request.arrayBuffer();
     if (!validKey(key) || !uploadId || !Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10000 || !bytes.byteLength || bytes.byteLength > 6 * 1024 * 1024) return NextResponse.json({ error: "Invalid upload part" }, { status: 400 });
+    // The single-shot path verifies magic bytes, but the multipart path — which
+    // is the one the admin UI actually uses — did not, so the check could be
+    // bypassed entirely. The first part carries the file header: verify it
+    // against the content type implied by the object key.
+    if (partNumber === 1) {
+      const extension = key.split(".").pop() ?? "";
+      const declared = resolveDeclaredContentType(null, `x.${extension}`);
+      if (!declared || !signatureMatches(new Uint8Array(bytes.slice(0, 16)), declared)) {
+        return NextResponse.json({ error: "File content does not match its type" }, { status: 400 });
+      }
+    }
     const bucket = await getSponsorAssetsBucket() as MultipartBucket;
     const upload = bucket.resumeMultipartUpload(key, uploadId);
     const part = await upload.uploadPart(partNumber, bytes);

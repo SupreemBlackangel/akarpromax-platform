@@ -157,6 +157,16 @@ export const AD_TRACKING_NEW_COLUMNS: { table: string; column: string }[] = [
 
 export const AD_CREATIVE_NEW_COLUMNS: { table: string; column: string }[] = [
   { table: "ad_creatives", column: `ADD COLUMN tablet_media_url TEXT NULL` },
+  // Accessibility: every ad image is a meaningful, clickable image, so it needs
+  // real alternative text rather than the empty alt it used to render with.
+  { table: "ad_creatives", column: `ADD COLUMN alt_text_ar VARCHAR(180) NULL` },
+  { table: "ad_creatives", column: `ADD COLUMN alt_text_en VARCHAR(180) NULL` },
+  { table: "ad_creatives", column: `ADD COLUMN alt_text_tr VARCHAR(180) NULL` },
+  // Intrinsic pixel size, captured at upload. Lets the slot reserve space
+  // (no layout shift) and lets us warn when a creative does not match the
+  // placement's aspect ratio.
+  { table: "ad_creatives", column: `ADD COLUMN media_width INT NULL` },
+  { table: "ad_creatives", column: `ADD COLUMN media_height INT NULL` },
 ];
 
 function isDuplicateColumnError(message: string): boolean {

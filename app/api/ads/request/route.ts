@@ -4,6 +4,7 @@ import { ensureAdSchema } from "@/lib/ad-schema";
 import { cleanUrl } from "@/lib/ads/admin";
 import { AD_PLACEMENTS } from "@/src/constants/advertising";
 import { STANDARD_PUBLIC_AD_LAYOUT_V1 } from "@/src/config/standard-public-ad-layout";
+import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,11 @@ function localizedText(message: string): { ar: string; en: string; tr: string } 
 }
 
 export async function POST(request: NextRequest) {
+  // Public write into ad_campaigns — throttle it.
+  const rate = await enforceRateLimit("ads_request", clientIp(request), request.nextUrl.pathname);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "محاولات كثيرة، حاول لاحقاً" }, { status: 429 });
+  }
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });

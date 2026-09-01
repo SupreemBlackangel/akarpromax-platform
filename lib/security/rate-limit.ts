@@ -15,7 +15,9 @@ export type RateLimitOperation =
   | "change_email"
   | "dev_login"
   | "office_pairing_complete"
-  | "office_sync_push";
+  | "office_sync_push"
+  | "ads_request"
+  | "ads_request_asset";
 
 export type RateLimitConfig = {
   limit: number;
@@ -25,6 +27,9 @@ export type RateLimitConfig = {
 
 export const RATE_LIMIT_CONFIGS: Record<RateLimitOperation, RateLimitConfig> = {
   login: { limit: 10, windowMs: 60_000, cooldownMs: 60_000 },
+  // Public advertiser intake: unauthenticated writes, so keep them tight.
+  ads_request: { limit: 5, windowMs: 300_000, cooldownMs: 600_000 },
+  ads_request_asset: { limit: 10, windowMs: 300_000, cooldownMs: 600_000 },
   register: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   verify_code: { limit: 15, windowMs: 60_000, cooldownMs: 60_000 },
   verify_email: { limit: 5, windowMs: 60_000, cooldownMs: 60_000 },
