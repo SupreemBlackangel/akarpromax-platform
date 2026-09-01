@@ -380,22 +380,22 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
 
   const selectedType = (id: string) => offerTypes.find(t => t.id === id);
 
-  const inputClass = "w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition shadow-sm hover:border-slate-300";
-  const labelClass = "block text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5";
-  const selectClass = "w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition shadow-sm cursor-pointer hover:border-slate-300";
+  const inputClass = "w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]/20 focus:border-[var(--color-border-focus)] transition shadow-sm hover:border-[var(--color-border-strong)]";
+  const labelClass = "block text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)] mb-1.5";
+  const selectClass = "w-full px-4 py-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-border-focus)]/20 focus:border-[var(--color-border-focus)] transition shadow-sm cursor-pointer hover:border-[var(--color-border-strong)]";
 
   return (
     <form id="property-form" onSubmit={handleSubmit} className="space-y-6">
       {errors.general && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-xs">!</span>
+        <div className="p-4 rounded-xl bg-[var(--color-danger-soft)] border border-[var(--color-danger)] text-[var(--color-danger)] text-sm font-semibold flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-[var(--color-danger-soft)] flex items-center justify-center text-xs">!</span>
           {errors.general}
         </div>
       )}
 
-      <Card id="step-basic" data-section="basic" data-step="1" className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 rounded-t-2xl">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
+      <Card id="step-basic" data-section="basic" data-step="1" className="rounded-2xl border-[var(--color-border)] shadow-sm hover:shadow-md transition">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-[var(--color-border)] rounded-t-2xl">
+          <CardTitle className="flex items-center gap-2 text-[var(--color-text-primary)]">
             <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: 'var(--brand-gradient)' }}>
               <Home className="w-4 h-4" />
             </span>
@@ -407,7 +407,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
             <div>
               <label className={labelClass}>العنوان (عربي) *</label>
               <input type="text" value={formData.titleAr} onChange={(e) => handleChange('titleAr', e.target.value)} className={selectClass} required />
-              {errors.titleAr && <p className="text-red-600 text-xs mt-1">{errors.titleAr}</p>}
+              {errors.titleAr && <p className="text-[var(--color-danger)] text-xs mt-1">{errors.titleAr}</p>}
             </div>
             <div>
               <label className={labelClass}>العنوان (إنجليزي)</label>
@@ -422,7 +422,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                 <option value="">اختر</option>
                 {categories.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
               </select>
-              {errors.category && <p className="text-red-600 text-xs mt-1">{errors.category}</p>}
+              {errors.category && <p className="text-[var(--color-danger)] text-xs mt-1">{errors.category}</p>}
             </div>
             <div>
               <label className={labelClass}>نوع العقار *</label>
@@ -430,7 +430,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                 <option value="">اختر</option>
                 {formData.category && propertyTypes[formData.category]?.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
               </select>
-              {errors.propertyType && <p className="text-red-600 text-xs mt-1">{errors.propertyType}</p>}
+              {errors.propertyType && <p className="text-[var(--color-danger)] text-xs mt-1">{errors.propertyType}</p>}
             </div>
             <div>
               <label className={labelClass}>رقم مرجعي</label>
@@ -441,7 +441,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
           <div>
             <label className={labelClass}>الوصف (عربي) *</label>
             <textarea value={formData.descriptionAr} onChange={(e) => handleChange('descriptionAr', e.target.value)} className={`${inputClass} h-32`} required />
-            {errors.descriptionAr && <p className="text-red-600 text-xs mt-1">{errors.descriptionAr}</p>}
+            {errors.descriptionAr && <p className="text-[var(--color-danger)] text-xs mt-1">{errors.descriptionAr}</p>}
           </div>
 
           <div>
@@ -451,9 +451,9 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         </CardContent>
       </Card>
 
-      <Card id="step-location" data-section="location" data-step="2" className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 rounded-t-2xl">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
+      <Card id="step-location" data-section="location" data-step="2" className="rounded-2xl border-[var(--color-border)] shadow-sm hover:shadow-md transition">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-[var(--color-border)] rounded-t-2xl">
+          <CardTitle className="flex items-center gap-2 text-[var(--color-text-primary)]">
             <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: 'var(--brand-gradient)' }}>
               <MapPin className="w-4 h-4" />
             </span>
@@ -491,9 +491,9 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         </CardContent>
       </Card>
 
-      <Card id="step-specs" data-section="specs" data-step="3" className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 rounded-t-2xl">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
+      <Card id="step-specs" data-section="specs" data-step="3" className="rounded-2xl border-[var(--color-border)] shadow-sm hover:shadow-md transition">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-[var(--color-border)] rounded-t-2xl">
+          <CardTitle className="flex items-center gap-2 text-[var(--color-text-primary)]">
             <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: 'var(--brand-gradient)' }}>
               <Ruler className="w-4 h-4" />
             </span>
@@ -505,7 +505,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
             <div>
               <label className={labelClass}>المساحة (م²) *</label>
               <input type="number" value={formData.area || ''} onChange={(e) => handleChange('area', parseFloat(e.target.value) || 0)} className={inputClass} required min="0" />
-              {errors.area && <p className="text-red-600 text-xs mt-1">{errors.area}</p>}
+              {errors.area && <p className="text-[var(--color-danger)] text-xs mt-1">{errors.area}</p>}
             </div>
             <div>
               <label className={labelClass}>سنة البناء</label>
@@ -549,9 +549,9 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         </CardContent>
       </Card>
 
-      <Card id="step-offers" data-section="offers" data-step="4" className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition">
-        <CardHeader className="flex items-center justify-between bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 rounded-t-2xl">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
+      <Card id="step-offers" data-section="offers" data-step="4" className="rounded-2xl border-[var(--color-border)] shadow-sm hover:shadow-md transition">
+        <CardHeader className="flex items-center justify-between bg-gradient-to-r from-slate-50 to-white border-b border-[var(--color-border)] rounded-t-2xl">
+          <CardTitle className="flex items-center gap-2 text-[var(--color-text-primary)]">
             <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: 'var(--brand-gradient)' }}>
               <Tag className="w-4 h-4" />
             </span>
@@ -561,24 +561,24 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
             type="button"
             variant="secondary"
             onClick={addOffer}
-            className="text-sm px-4 py-2 rounded-lg font-bold text-blue-700 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1.5"
+            className="text-sm px-4 py-2 rounded-lg font-bold text-[var(--color-primary)] bg-[var(--color-primary-soft)] border border-[var(--color-border)] hover:bg-[var(--color-secondary-hover)] transition flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" /> إضافة عرض
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-500">أضف نوع عرض واحد أو أكثر (بيع، إيجار، مزاد، تقبيل...). كل عرض له سعره وطريقة تسويقه الخاصة.</p>
+          <p className="text-sm text-[var(--color-text-muted)]">أضف نوع عرض واحد أو أكثر (بيع، إيجار، مزاد، تقبيل...). كل عرض له سعره وطريقة تسويقه الخاصة.</p>
           {formData.offers.map((offer, index) => {
             const type = selectedType(offer.offerTypeId);
             return (
-              <div key={index} className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm">
+              <div key={index} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-700">العرض {index + 1}</span>
+                  <span className="font-bold text-[var(--color-text-secondary)]">العرض {index + 1}</span>
                   <button
                     type="button"
                     onClick={() => removeOffer(index)}
                     disabled={formData.offers.length <= 1}
-                    className="text-red-600 hover:text-red-800 disabled:opacity-30"
+                    className="text-[var(--color-danger)] hover:text-[var(--color-danger)] disabled:opacity-30"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -597,7 +597,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                         <option key={t.id} value={t.id}>{t.nameAr} ({t.nameEn})</option>
                       ))}
                     </select>
-                    {errors[`offer_${index}_type`] && <p className="text-red-600 text-xs mt-1">{errors[`offer_${index}_type`]}</p>}
+                    {errors[`offer_${index}_type`] && <p className="text-[var(--color-danger)] text-xs mt-1">{errors[`offer_${index}_type`]}</p>}
                   </div>
                   <div>
                     <label className={labelClass}>طريقة العرض *</label>
@@ -660,7 +660,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                       min="0"
                       required
                     />
-                    {errors[`offer_${index}_price`] && <p className="text-red-600 text-xs mt-1">{errors[`offer_${index}_price`]}</p>}
+                    {errors[`offer_${index}_price`] && <p className="text-[var(--color-danger)] text-xs mt-1">{errors[`offer_${index}_price`]}</p>}
                   </div>
                   <div>
                     <label className={labelClass}>العملة *</label>
@@ -673,7 +673,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                       <option value="" disabled>اختر العملة</option>
                       {CURRENCY_REGISTRY.map((c) => (<option key={c.code} value={c.code}>{`${c.nameAr} — ${c.code}`}</option>))}
                     </select>
-                    {errors[`offer_${index}_currency`] && <p className="text-red-600 text-xs mt-1">{errors[`offer_${index}_currency`]}</p>}
+                    {errors[`offer_${index}_currency`] && <p className="text-[var(--color-danger)] text-xs mt-1">{errors[`offer_${index}_currency`]}</p>}
                   </div>
                   <div className="flex items-end">
                     {offer.marketingMethod === 'direct' && (
@@ -709,9 +709,9 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         </CardContent>
       </Card>
 
-      <Card id="step-media" data-section="media" data-step="5" className="rounded-2xl border-slate-200 shadow-sm hover:shadow-md transition">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 rounded-t-2xl">
-          <CardTitle className="flex items-center gap-2 text-slate-800">
+      <Card id="step-media" data-section="media" data-step="5" className="rounded-2xl border-[var(--color-border)] shadow-sm hover:shadow-md transition">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b border-[var(--color-border)] rounded-t-2xl">
+          <CardTitle className="flex items-center gap-2 text-[var(--color-text-primary)]">
             <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: 'var(--brand-gradient)' }}>
               <ImageIcon className="w-4 h-4" />
             </span>
@@ -720,17 +720,17 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         </CardHeader>
         <CardContent className="space-y-3">
           {formData.media.length > 0 && (
-            <p className="text-xs text-gray-500">الصورة الأولى هي صورة الغلاف. رتب الروابط حسب الأهمية.</p>
+            <p className="text-xs text-[var(--color-text-muted)]">الصورة الأولى هي صورة الغلاف. رتب الروابط حسب الأهمية.</p>
           )}
           {formData.media.map((media, index) => (
             <div key={index} className="flex gap-2 items-center">
               {media.type === 'image' && media.url ? (
                 // eslint-disable-next-line @next/next/no-img-element -- preview of a runtime-managed URL
-                <img src={media.url} alt="" width={56} height={40} loading="lazy" decoding="async" className="h-10 w-14 shrink-0 rounded-lg object-cover bg-gray-100 border border-slate-200" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
+                <img src={media.url} alt="" width={56} height={40} loading="lazy" decoding="async" className="h-10 w-14 shrink-0 rounded-lg object-cover bg-[var(--color-surface-muted)] border border-[var(--color-border)]" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
               ) : (
-                <span className="h-10 w-14 shrink-0 rounded-lg bg-gray-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-gray-400">{media.type === 'video' ? 'فيديو' : '—'}</span>
+                <span className="h-10 w-14 shrink-0 rounded-lg bg-[var(--color-surface-muted)] border border-[var(--color-border)] flex items-center justify-center text-[10px] font-bold text-[var(--color-text-muted)]">{media.type === 'video' ? 'فيديو' : '—'}</span>
               )}
-              {index === 0 && <span className="shrink-0 rounded-full bg-blue-50 border border-blue-100 px-2 py-0.5 text-[10px] font-black text-blue-700">غلاف</span>}
+              {index === 0 && <span className="shrink-0 rounded-full bg-[var(--color-primary-soft)] border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-black text-[var(--color-primary)]">غلاف</span>}
               <input
                 type="text"
                 value={media.url}
@@ -750,7 +750,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
               <button
                 type="button"
                 onClick={() => handleChange('media', formData.media.filter((_, i) => i !== index))}
-                className="text-red-600 hover:text-red-800"
+                className="text-[var(--color-danger)] hover:text-[var(--color-danger)]"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -760,7 +760,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
             type="button"
             variant="secondary"
             onClick={() => handleChange('media', [...formData.media, { url: '', type: 'image' as const }])}
-            className="text-sm px-4 py-2 rounded-lg font-bold text-blue-700 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition flex items-center gap-1.5"
+            className="text-sm px-4 py-2 rounded-lg font-bold text-[var(--color-primary)] bg-[var(--color-primary-soft)] border border-[var(--color-border)] hover:bg-[var(--color-secondary-hover)] transition flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" /> إضافة وسيط
           </Button>
@@ -770,11 +770,11 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
             variant="secondary"
             disabled={uploadingImage}
             onClick={() => uploadInputRef.current?.click()}
-            className="text-sm px-4 py-2 rounded-lg font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition flex items-center gap-1.5 disabled:opacity-60"
+            className="text-sm px-4 py-2 rounded-lg font-bold text-[var(--color-success)] bg-[var(--color-success-soft)] border border-[var(--color-success)] hover:bg-[var(--color-success-soft)] transition flex items-center gap-1.5 disabled:opacity-60"
           >
             <Upload className="w-4 h-4" /> {uploadingImage ? 'جارٍ الرفع...' : 'رفع صور من جهازك'}
           </Button>
-          <p className="text-[11px] text-gray-400">تُحوَّل الصور تلقائيًا إلى WebP بمقاس موحد لسرعة التصفح.</p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">تُحوَّل الصور تلقائيًا إلى WebP بمقاس موحد لسرعة التصفح.</p>
         </CardContent>
       </Card>
 
@@ -792,7 +792,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
           type="button"
           variant="secondary"
           onClick={() => router.back()}
-          className="px-6 py-3 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition"
+          className="px-6 py-3 rounded-xl font-bold text-[var(--color-text-secondary)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] transition"
         >
           إلغاء
         </Button>

@@ -194,7 +194,7 @@ export default function NewPropertyPage() {
                         ${isActive
                           ? 'border-white text-white shadow-lg scale-110'
                           : isCompleted
-                            ? 'border-emerald-500 bg-[var(--color-success-soft)]0 text-white'
+                            ? 'border-[var(--color-success)] bg-[var(--color-success-soft)]0 text-white'
                             : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] group-hover:border-[var(--color-primary)]/30 group-hover:text-[var(--color-primary)]'
                         }
                       `}
@@ -219,9 +219,9 @@ export default function NewPropertyPage() {
                     </div>
                   </button>
                   {!isLast && (
-                    <div className="w-4 md:w-8 h-0.5 mx-1 md:mx-2 bg-slate-200 relative overflow-hidden rounded">
+                    <div className="w-4 md:w-8 h-0.5 mx-1 md:mx-2 bg-[var(--color-surface-muted)] relative overflow-hidden rounded">
                       <div
-                        className="absolute inset-y-0 right-0 bg-emerald-400 transition-all duration-500"
+                        className="absolute inset-y-0 right-0 bg-[var(--color-success)] transition-all duration-500"
                         style={{ width: isCompleted ? '100%' : '0%' }}
                       />
                     </div>
