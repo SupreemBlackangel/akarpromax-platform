@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { properties, propertyMedia } from '@/lib/db/schemas/properties-schema';
 import { propertyOffers, propertyOfferTypes } from '@/lib/db/schemas/offer-types-schema';
-import { eq, and, inArray, like, sql, or } from 'drizzle-orm';
+import { eq, and, inArray, like, sql, or, asc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
 import { createPropertySchema, propertySearchSchema } from '@/lib/validators/property-validators';
 import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
@@ -27,12 +27,13 @@ const PUBLIC_PROPERTY_FIELDS = [
   "createdAt", "updatedAt",
 ] as const;
 
-function toPublicProperty(row: Record<string, unknown>, offerCodes: string[]): Record<string, unknown> {
+function toPublicProperty(row: Record<string, unknown>, offerCodes: string[], media: unknown[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of PUBLIC_PROPERTY_FIELDS) {
     if (key in row) out[key] = row[key];
   }
   out.offerCodes = offerCodes;
+  out.media = media;
   return out;
 }
 
@@ -193,12 +194,38 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Attach each listing's images (cover first) so cards can render a photo —
+    // the properties table has no media column, media lives in property_media.
+    const mediaByProperty = new Map<string, Array<{ id: string; url: string; type: string; isFeatured: boolean | null; order: number | null }>>();
+    if (resultIds.length > 0) {
+      try {
+        const mediaRows = await db
+          .select({ id: propertyMedia.id, propertyId: propertyMedia.propertyId, url: propertyMedia.url, type: propertyMedia.type, isFeatured: propertyMedia.isFeatured, order: propertyMedia.order })
+          .from(propertyMedia)
+          .where(inArray(propertyMedia.propertyId, resultIds))
+          .orderBy(asc(propertyMedia.order));
+        for (const m of mediaRows) {
+          if (!m.propertyId) continue;
+          const list = mediaByProperty.get(m.propertyId) ?? [];
+          list.push({ id: m.id, url: m.url, type: m.type, isFeatured: m.isFeatured, order: m.order });
+          mediaByProperty.set(m.propertyId, list);
+        }
+        // Cover (isFeatured) first so the card's first-media pick is the cover.
+        for (const list of mediaByProperty.values()) {
+          list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+        }
+      } catch (mediaError) {
+        console.error('[Properties GET] media lookup failed:', mediaError);
+      }
+    }
+
     // Owners viewing their own listings (?mine=1) get the full row; the public
     // feed gets a safe projection so internal ids/moderation/auction mechanics
     // never leak.
     const data = results.map((row) => {
       const offerCodes = offerCodesByProperty.get(row.id) ?? [];
-      return mine ? { ...row, offerCodes } : toPublicProperty(row as Record<string, unknown>, offerCodes);
+      const media = mediaByProperty.get(row.id) ?? [];
+      return mine ? { ...row, offerCodes, media } : toPublicProperty(row as Record<string, unknown>, offerCodes, media);
     });
 
     return NextResponse.json({

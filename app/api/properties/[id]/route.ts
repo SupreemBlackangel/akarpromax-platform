@@ -4,6 +4,7 @@ import { properties, propertyMedia, propertyFavorites, propertyViews } from '@/l
 import { propertyOffers } from '@/lib/db/schemas/offer-types-schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
+import { canAccessAdminArea } from '@/lib/auth/access-control';
 import { updatePropertySchema } from '@/lib/validators/property-validators';
 import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
 
@@ -126,14 +127,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       );
     }
 
-    if (existing.userId !== session.userId) {
+    // The owner edits their own listing; a platform admin may edit any listing.
+    const isAdmin = canAccessAdminArea({ authenticated: true, role: session.role, permissions: session.permissions });
+    const isOwner = existing.userId === session.userId;
+    if (!isOwner && !isAdmin) {
       return NextResponse.json(
         { success: false, error: 'غير مصرح بتعديل هذا العقار' },
         { status: 403 }
       );
     }
 
-    if (!['draft', 'rejected'].includes(existing.status ?? 'draft')) {
+    // Owners can only edit before/after moderation (draft/rejected), and their
+    // edit re-enters the review queue. Admins may edit at any status, and the
+    // listing keeps its current status (a live edit stays live).
+    if (!isAdmin && !['draft', 'rejected'].includes(existing.status ?? 'draft')) {
       return NextResponse.json(
         {
           success: false,
@@ -148,13 +155,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     await assertPropertyOfferPolicies(db, validated.offers);
 
-    const updateData: Record<string, unknown> = {
-      status: 'draft',
-      rejectedReason: null,
-      approvedAt: null,
-      approvedBy: null,
-      isVerified: false,
-    };
+    const updateData: Record<string, unknown> = isAdmin
+      ? {} // admin edit preserves the current status / moderation state
+      : {
+          status: 'draft',
+          rejectedReason: null,
+          approvedAt: null,
+          approvedBy: null,
+          isVerified: false,
+        };
     const fields = ['titleAr', 'titleEn', 'descriptionAr', 'descriptionEn', 'dealType', 'category', 'propertyType', 'country', 'governorate', 'city', 'district', 'address', 'price', 'currency', 'area', 'bedrooms', 'bathrooms', 'floor', 'totalFloors', 'yearBuilt', 'facade', 'direction', 'referenceNumber', 'advertisingLicense', 'officeId'];
     for (const field of fields) {
       const value = validated[field as keyof typeof validated];

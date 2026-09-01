@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, CheckCircle2, XCircle, Trash2, ImagePlus, Star, Power, PowerOff } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Trash2, ImagePlus, Star, Power, PowerOff, Pencil } from 'lucide-react';
 
 type AdminMedia = { id: string; url: string; type: string; isFeatured?: boolean };
 
@@ -426,6 +426,9 @@ export default function AdminPropertyModeration() {
                           <PowerOff className="h-4 w-4" /> تعطيل (غير نشط)
                         </button>
                       ) : null}
+                      <a href={`/dashboard/properties/${row.id}/edit`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-primary)] px-4 py-2 text-xs font-black text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition">
+                        <Pencil className="h-4 w-4" /> تعديل كامل
+                      </a>
                       <button type="button" disabled={busyId === row.id} onClick={() => removeProperty(row.id)} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-danger-soft)] px-4 py-2 text-xs font-black text-[var(--color-danger)] hover:opacity-90 disabled:opacity-50 transition">
                         <Trash2 className="h-4 w-4" /> حذف نهائي
                       </button>
