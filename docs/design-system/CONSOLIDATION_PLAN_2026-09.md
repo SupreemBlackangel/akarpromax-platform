@@ -42,7 +42,25 @@ canonical standards; the work is migration onto them, not redesign.
 - **Phase 8 (icons)** — `ui/Icon.tsx` named registry over lucide; 15 admin
   glyphs + 55 sidebar emoji migrated; `icon: IconName` makes an unmapped name a
   build error.
+- **Auth surface redesign** — `AuthPageShell` rebuilt as a branded split layout
+  (gradient identity panel, real `logo.svg`, three value points with lucide
+  icons, inline token-drawn SVG skyline artwork). `/register` moved onto the
+  same shell, dropping its bespoke layout, hardcoded blue gradient,
+  letter-in-a-box logo and forced `dir="rtl"`. Both pages fully tokenized.
+  The header's "دخول" now links to `/login` instead of opening the modal.
 - Plus: global `<select>` chevron unification (RTL-aware, `appearance:none`).
+
+### Broken token references found and fixed
+
+These were referenced but **never defined**, so the rules silently did nothing:
+
+| Broken | Replaced with | Impact |
+|---|---|---|
+| `--color-surface-1` / `--color-surface-2` | `--color-surface` / `--color-surface-input` | 7 files (login, register, forgot/reset password, verify-otp, account profile + security) rendered with **no background at all** |
+| `--color-error*` | `--color-danger*` | register page feedback styling |
+
+Lesson: a typo'd `var()` fails silently. When adding a token reference, confirm
+it exists in `src/styles/tokens.css` first.
 
 ## Remaining
 
@@ -50,9 +68,18 @@ canonical standards; the work is migration onto them, not redesign.
 |---|--------|------|
 | 5b | Full rewrite of companies/audit/auction-organizers admin pages onto ui/Button+Table+Input+Badge (they are tokenized but still hand-rolled markup) | MEDIUM |
 | 6b | Remaining public bodies: `app/services/page.tsx` hero/chips, `tools.css` + its dark block, LandSearchPage hardcoded strings | MEDIUM |
+| 6c | Trilingual the register form's copy — the page now follows the locale via `AuthPageShell`, but its own field labels/messages are still Arabic-only (login uses `authLabels`) | LOW |
 | 7b | Delete the now-redundant `html[data-theme="dark"]` rules whose light counterpart consumes the same token | MEDIUM |
 | 8b | Unify the 5 dashboard shells; `<EmptyState>` primitive; hand-rolled tab bars → `ui/Tabs`; physical→logical RTL props; remaining emoji in page bodies | LOW × volume |
 
-Key facts for later sessions: `.modal-*` classes in globals.css are LIVE (used
-by roles modal + AccountDialog) — do not delete with the shared/ cleanup. The
-canonical feedback tokens are `--color-danger*` (not `--color-error*`).
+Key facts for later sessions:
+
+- `.modal-*` classes in globals.css are LIVE (used by the roles modal +
+  AccountDialog) — do not delete with the `shared/` cleanup.
+- Canonical feedback tokens are `--color-danger*`, **not** `--color-error*`.
+- Canonical surface tokens are `--color-surface`, `-elevated`, `-muted`,
+  `-soft`, `-input`. There is no `--color-surface-1`/`-2`.
+- New icons go through `ui/Icon.tsx`; config `icon:` fields are typed `IconName`,
+  so an unmapped name breaks the build rather than rendering a broken glyph.
+- Auth pages (login/register/forgot/reset/verify-otp) all render inside
+  `AuthPageShell` — change the shell, not the individual pages, for identity work.
