@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import SimulatorPanel from "./simulator-panel";
 import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES, visibleAdminPlacements } from "@/src/constants/advertising";
 import { checkCreativeFit, suggestedSize } from "@/lib/ads/creative-fit";
 
@@ -498,7 +499,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   });
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics" | "archived">("campaigns");
+  const [activeView, setActiveView] = useState<"campaigns" | "media" | "analytics" | "simulator" | "archived">("campaigns");
   const [archivedCampaigns, setArchivedCampaigns] = useState<Campaign[]>([]);
   const [perf, setPerf] = useState<{ name: string; totals: { impressions: number; clicks: number; conversions: number }; daily: Array<{ date: string; impressions: number; clicks: number; conversions: number }>; pricing?: { model: string; currency: string; cpc: number; monthlyRate: number; estimatedCost: number } } | null>(null);
   const [perfLoading, setPerfLoading] = useState(false);
@@ -909,6 +910,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             <button className={activeView === "campaigns" ? "active" : ""} type="button" onClick={() => setActiveView("campaigns")}><span aria-hidden="true">▣</span>الحملات</button>
             <button className={activeView === "media" ? "active" : ""} type="button" onClick={() => setActiveView("media")}><span aria-hidden="true">▧</span>مكتبة الوسائط</button>
             {canAnalytics && <button className={activeView === "analytics" ? "active" : ""} type="button" onClick={() => setActiveView("analytics")}><span aria-hidden="true">↗</span>التحليلات</button>}
+            {canAnalytics && <button className={activeView === "simulator" ? "active" : ""} type="button" onClick={() => setActiveView("simulator")}><span aria-hidden="true">◎</span>المحاكي</button>}
             {canEdit && <button className={activeView === "archived" ? "active" : ""} type="button" onClick={() => { setActiveView("archived"); void loadArchived().catch(() => setMessage("تعذر تحميل الأرشيف")); }}><span aria-hidden="true">▤</span>الأرشيف</button>}
           </nav>
           {message && <div className="ads-admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
@@ -978,6 +980,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
         </section>}
 
         {activeView === "analytics" && canAnalytics && <AnalyticsPanel />}
+        {activeView === "simulator" && canAnalytics && <SimulatorPanel />}
         </>
 
       {editing && (

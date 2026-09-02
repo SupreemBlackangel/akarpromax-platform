@@ -649,3 +649,26 @@ html[data-theme="dark"] .cc-status-warn { color: #fbbf24 !important; }
 html[dir="ltr"] .cc-bar-label { text-align: right; }
 html[dir="ltr"] .cc-bar-value { text-align: left; }
 html[dir="ltr"] .cc-metric-label { text-align: right; }
+
+/* Ad preview simulator: reports what the production engine decided, so its
+   emphasis follows the decision -- a competing campaign is the answer, an
+   eligible one that can never win is the warning worth reading. */
+.ads-simulator .ads-form-grid { margin-bottom: 16px; }
+.ads-simulator-run { padding: 11px 20px; border: 0; border-radius: 8px; background: var(--color-primary); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+.ads-simulator-run:disabled { opacity: .6; cursor: progress; }
+.ads-simulator-summary { margin: 16px 0 10px; color: var(--color-text-secondary); font-size: 13px; }
+.ads-simulator-summary b { color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.ads-simulator-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ads-simulator-table th { padding: 9px 10px; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 12px; font-weight: 800; text-align: start; }
+.ads-simulator-table td { padding: 11px 10px; border-bottom: 1px solid var(--color-border); vertical-align: middle; font-variant-numeric: tabular-nums; }
+.ads-simulator-table td strong { display: block; color: var(--color-text-primary); }
+.ads-simulator-table td small { color: var(--color-text-muted); }
+.ads-simulator-table tr.is-competing { background: var(--color-primary-soft); }
+.ads-error { margin-top: 12px; color: #b3261e; font-size: 13px; font-weight: 700; }
+
+.ads-conflicts { margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: 12px; }
+.ads-conflicts h3 { margin: 0 0 8px; color: var(--color-text-primary); font-size: 14px; }
+.ads-conflict { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; font-size: 13px; line-height: 1.6; }
+.ads-conflict-blocked { color: #b3261e; }
+.ads-conflict-warning { color: #8a5a00; }
+.ads-conflict > span { flex: none; line-height: 1.6; }

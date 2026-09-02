@@ -4,8 +4,8 @@ import { isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
 import { canonicalPlacementFor, sectionVariants } from "@/src/constants/advertising";
 import type { DeviceType } from "@/src/constants/advertising";
-import { evaluateEligibility, type EligibilityChecks } from "@/lib/ads/eligibility";
-import { selectCampaign, type SelectionCandidate } from "@/lib/ads/selection";
+import { evaluateEligibility, type EligibilityChecks, type EligibilityVerdict, type IneligibleReason, type PlacementSpecificity } from "@/lib/ads/eligibility";
+import { competingSet, selectCampaign, type SelectionCandidate } from "@/lib/ads/selection";
 
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
   if (!value) return fallback;
@@ -781,6 +781,100 @@ export async function matchAdsBatch(
     results.push(await matchAds(db, ctx, { count, usedCampaignIds: used, stats, ads, now }));
   }
   return results;
+}
+
+/**
+ * Explain what would serve in a hypothetical context, and why everything else
+ * would not.
+ *
+ * This is the admin preview simulator's engine, and it deliberately runs the
+ * REAL eligibility and selection code -- `eligibilityChecks`, `evaluateEligibility`
+ * and `competingSet` are the same functions production serves from. A simulator
+ * with its own copy of the rules answers a question nobody asked: it tells an
+ * operator what a second implementation would have done. The only thing left out
+ * is the weighted random draw, because a preview must be reproducible; instead
+ * the competing set is returned with each campaign's share of the traffic, which
+ * is more informative than one sampled winner.
+ */
+export type SimulatedCampaign = {
+  campaignId: string;
+  internalName: string;
+  advertiserName: string;
+  eligible: boolean;
+  reason: IneligibleReason | null;
+  specificity: PlacementSpecificity | null;
+  relevance: number | null;
+  priority: number;
+  weight: number;
+  competing: boolean;
+  trafficShare: number;
+};
+
+export type SimulationResult = {
+  context: ResolvedAdContext;
+  evaluated: number;
+  eligibleCount: number;
+  competingCount: number;
+  campaigns: SimulatedCampaign[];
+};
+
+export async function simulateMatch(
+  db: D1Database,
+  ctx: ResolvedAdContext,
+  options: { now?: Date; ads?: ParsedAd[]; stats?: EngineStats } = {},
+): Promise<SimulationResult> {
+  const now = options.now ?? new Date();
+  const [ads, stats] = await Promise.all([
+    options.ads ? Promise.resolve(options.ads) : loadActiveAds(db, now),
+    options.stats ? Promise.resolve(options.stats) : loadEngineStats(db, ctx, now),
+  ]);
+
+  const checks = eligibilityChecks(stats);
+  const verdicts = new Map<string, EligibilityVerdict>();
+  const candidates: SelectionCandidate[] = [];
+  for (const ad of ads) {
+    const verdict = evaluateEligibility(ad, ctx, now, checks);
+    verdicts.set(ad.id, verdict);
+    if (verdict.eligible) candidates.push({ ad, specificity: verdict.specificity, relevance: verdict.relevance });
+  }
+
+  const competing = competingSet(candidates);
+  const competingIds = new Set(competing.map((candidate) => candidate.ad.id));
+  const weightTotal = competing.reduce((sum, candidate) => sum + Math.max(0, candidate.ad.weight), 0);
+
+  const campaigns: SimulatedCampaign[] = ads.map((ad) => {
+    const verdict = verdicts.get(ad.id)!;
+    const isCompeting = competingIds.has(ad.id);
+    // An eligible campaign that lost the specificity or priority tier gets 0%:
+    // it is configured, it looks live in the list, and it will never be seen
+    // here. That is the single most useful thing this screen can tell someone.
+    const share = !isCompeting
+      ? 0
+      : weightTotal > 0
+        ? Math.max(0, ad.weight) / weightTotal
+        : 1 / competing.length;
+    return {
+      campaignId: ad.id,
+      internalName: ad.internalName,
+      advertiserName: ad.advertiserName,
+      eligible: verdict.eligible,
+      reason: verdict.eligible ? null : verdict.reason,
+      specificity: verdict.eligible ? verdict.specificity : null,
+      relevance: verdict.eligible ? verdict.relevance : null,
+      priority: ad.priority,
+      weight: ad.weight,
+      competing: isCompeting,
+      trafficShare: share,
+    };
+  });
+
+  return {
+    context: ctx,
+    evaluated: ads.length,
+    eligibleCount: candidates.length,
+    competingCount: competing.length,
+    campaigns,
+  };
 }
 
 /**
