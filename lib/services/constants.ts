@@ -113,7 +113,12 @@ export const ORDER_FLOW: Record<string, OrderStatus[]> = {
   [ORDER_STATUS.CREATED]: [ORDER_STATUS.ACCEPTED, ORDER_STATUS.CANCELLED],
   [ORDER_STATUS.ACCEPTED]: [ORDER_STATUS.SCHEDULED, ORDER_STATUS.IN_PROGRESS, ORDER_STATUS.CANCELLED],
   [ORDER_STATUS.SCHEDULED]: [ORDER_STATUS.IN_PROGRESS, ORDER_STATUS.CANCELLED],
-  [ORDER_STATUS.IN_PROGRESS]: [ORDER_STATUS.DELIVERED, ORDER_STATUS.WAITING_CUSTOMER_CONFIRMATION, ORDER_STATUS.CANCELLED],
+  // DISPUTED was missing here while the parallel table in state-machine.ts had
+  // it, so under the machine actually in force a customer could not raise a
+  // dispute on a job in progress -- they had to wait for the provider to mark it
+  // delivered first. That is a product consequence of a merge artefact, not a
+  // decision anyone made.
+  [ORDER_STATUS.IN_PROGRESS]: [ORDER_STATUS.DELIVERED, ORDER_STATUS.WAITING_CUSTOMER_CONFIRMATION, ORDER_STATUS.CANCELLED, ORDER_STATUS.DISPUTED],
   [ORDER_STATUS.WAITING_CUSTOMER_CONFIRMATION]: [ORDER_STATUS.COMPLETED, ORDER_STATUS.DISPUTED],
   [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.COMPLETED, ORDER_STATUS.WAITING_CUSTOMER_CONFIRMATION, ORDER_STATUS.DISPUTED],
   [ORDER_STATUS.COMPLETED]: [],
@@ -125,6 +130,50 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ORDER_FLOW[from]?.includes(to) ?? false;
 }
 
+export const PROVIDER_STATUS_VALUES = {
+  DRAFT: "draft",
+  SUBMITTED: "submitted",
+  UNDER_REVIEW: "under_review",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  SUSPENDED: "suspended",
+} as const;
+
+export type ProviderStatusValue = (typeof PROVIDER_STATUS_VALUES)[keyof typeof PROVIDER_STATUS_VALUES];
+
+/**
+ * Provider lifecycle.
+ *
+ * `setProviderStatus` accepted any of the six values from any other, so a
+ * reviewer could move a suspended provider straight back to approved, or send an
+ * approved one back to draft, without the review that is supposed to stand
+ * behind the Verified badge. Reinstating a suspended or rejected provider now
+ * goes back through review rather than jumping to approved.
+ */
+export const PROVIDER_FLOW: Record<string, ProviderStatusValue[]> = {
+  [PROVIDER_STATUS_VALUES.DRAFT]: [PROVIDER_STATUS_VALUES.SUBMITTED],
+  [PROVIDER_STATUS_VALUES.SUBMITTED]: [PROVIDER_STATUS_VALUES.UNDER_REVIEW, PROVIDER_STATUS_VALUES.APPROVED, PROVIDER_STATUS_VALUES.REJECTED],
+  [PROVIDER_STATUS_VALUES.UNDER_REVIEW]: [PROVIDER_STATUS_VALUES.APPROVED, PROVIDER_STATUS_VALUES.REJECTED],
+  [PROVIDER_STATUS_VALUES.APPROVED]: [PROVIDER_STATUS_VALUES.SUSPENDED, PROVIDER_STATUS_VALUES.UNDER_REVIEW],
+  [PROVIDER_STATUS_VALUES.REJECTED]: [PROVIDER_STATUS_VALUES.SUBMITTED, PROVIDER_STATUS_VALUES.UNDER_REVIEW],
+  [PROVIDER_STATUS_VALUES.SUSPENDED]: [PROVIDER_STATUS_VALUES.UNDER_REVIEW, PROVIDER_STATUS_VALUES.REJECTED],
+};
+
+export function canTransitionProvider(from: string, to: string): boolean {
+  return PROVIDER_FLOW[from]?.includes(to as ProviderStatusValue) ?? false;
+}
+
+export const OFFER_FLOW: Record<string, OfferStatus[]> = {
+  [OFFER_STATUS.SENT]: [OFFER_STATUS.ACCEPTED, OFFER_STATUS.REJECTED, OFFER_STATUS.WITHDRAWN],
+  [OFFER_STATUS.ACCEPTED]: [],
+  [OFFER_STATUS.REJECTED]: [],
+  [OFFER_STATUS.WITHDRAWN]: [],
+};
+
+export function canTransitionOffer(from: string, to: string): boolean {
+  return OFFER_FLOW[from]?.includes(to as OfferStatus) ?? false;
+}
+
 export const DISPUTE_STATUS = {
   OPEN: "open",
   IN_REVIEW: "in_review",
@@ -133,6 +182,17 @@ export const DISPUTE_STATUS = {
 } as const;
 
 export type DisputeStatus = (typeof DISPUTE_STATUS)[keyof typeof DISPUTE_STATUS];
+
+export const DISPUTE_FLOW: Record<string, DisputeStatus[]> = {
+  [DISPUTE_STATUS.OPEN]: [DISPUTE_STATUS.IN_REVIEW, DISPUTE_STATUS.RESOLVED, DISPUTE_STATUS.REJECTED],
+  [DISPUTE_STATUS.IN_REVIEW]: [DISPUTE_STATUS.RESOLVED, DISPUTE_STATUS.REJECTED],
+  [DISPUTE_STATUS.RESOLVED]: [],
+  [DISPUTE_STATUS.REJECTED]: [],
+};
+
+export function canTransitionDispute(from: string, to: string): boolean {
+  return DISPUTE_FLOW[from]?.includes(to as DisputeStatus) ?? false;
+}
 
 export const UNIT_TYPES = ["hour", "day", "project", "fixed"] as const;
 export type UnitType = (typeof UNIT_TYPES)[number];

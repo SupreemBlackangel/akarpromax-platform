@@ -37,16 +37,21 @@ const SURFACE = [
   "lib/services/marketplace.ts",
   "lib/services/core.ts",
   "lib/services/compat/services-api.ts",
+  "app/service-requests/new/page.tsx",
 ];
 
 /**
- * The single recorded exception. `app/service-requests/new/page.tsx` still sends
- * a hardcoded currency because `service_requests.currency` is NOT NULL DEFAULT
- * 'OMR'; the architect bound its correction to migration M3
- * (no budget => currency NULL, budget => explicit canonical currency).
- * When M3 lands this entry must be deleted and the file added to SURFACE.
+ * The client half of M3 has landed: the wizard no longer hardcodes a currency,
+ * it suggests one from the platform's country configuration and sends `null`
+ * when the requester gave no budget. It is therefore part of SURFACE now.
+ *
+ * The violation has NOT gone away, it has moved. `service_requests.currency` is
+ * still `NOT NULL DEFAULT 'OMR'` (verified on production), so the `null` the
+ * wizard sends is replaced by the database with a currency the platform chose --
+ * exactly what this file exists to forbid, one layer down. The exception stays
+ * recorded against the column until the migration half of M3 lands.
  */
-const MIGRATION_BOUND_EXCEPTIONS = ["app/service-requests/new/page.tsx"];
+const MIGRATION_BOUND_EXCEPTIONS = [];
 
 /** Currency symbols that name one currency in prose. */
 const CURRENCY_SYMBOLS = ["ر.ع", "ر.س", "د.إ", "₪", "ج.م", "د.ك", "ر.ق"];
@@ -151,10 +156,16 @@ test("no Services surface performs FX or infers a currency from a country", asyn
   assert.deepEqual(offenders, []);
 });
 
-test("the only currency exception left is the migration-bound request wizard", async () => {
-  assert.deepEqual(MIGRATION_BOUND_EXCEPTIONS, ["app/service-requests/new/page.tsx"]);
-  const wizard = await read(MIGRATION_BOUND_EXCEPTIONS[0]);
-  assert.match(wizard, /currency: "OMR"/, "if this ever changes, M3 has landed — delete this exception and add the file to SURFACE");
+test("the request wizard suggests a currency instead of imposing one", async () => {
+  assert.deepEqual(MIGRATION_BOUND_EXCEPTIONS, [], "no Services file may hold a currency of its own any more");
+  const wizard = await read("app/service-requests/new/page.tsx");
+
+  // Suggested from the platform's country configuration, and only suggested:
+  // the requester can change it, which is the whole point of the rule.
+  assert.match(wizard, /countryConfig\?\.currencyCode/);
+  // A request with no budget carries no currency, rather than being silently
+  // denominated in one.
+  assert.match(wizard, /currency: draft\.currency \|\| null/);
 
   const plan = await read("docs/refactor/L1C05B_SERVICES_MIGRATION_PLAN.md");
   assert.match(plan, /budget_min IS NULL AND budget_max IS NULL/, "the M3 decision must stay recorded");

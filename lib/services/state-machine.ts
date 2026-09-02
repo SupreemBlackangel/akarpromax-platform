@@ -1,3 +1,33 @@
+/**
+ * Canonical, UPPERCASE status vocabulary for the services marketplace, and the
+ * transition guards expressed in it.
+ *
+ * This module used to carry its OWN transition tables, parallel to the ones in
+ * `constants.ts`. Nothing imported it -- verified across app/, lib/ and src/ --
+ * so the tables never ran, and they had silently drifted apart from the ones
+ * that do:
+ *
+ *   - For an order IN_PROGRESS, this file allowed DISPUTED and forbade
+ *     DELIVERED; `constants.ts` did the exact opposite.
+ *   - Its request table had no DRAFT -> OPEN edge at all, only
+ *     DRAFT -> PENDING_REVIEW, and PENDING_REVIEW is a status no database row
+ *     has ever held. Adopting these tables would have made publishing a request
+ *     illegal.
+ *
+ * A second table that disagrees with the live one is worse than no table: it
+ * looks authoritative and is wrong. The vocabulary and the mapping stay here,
+ * because presenting a status to a person is a real need and the lowercase
+ * database values are not what you want on a screen. The transition rules now
+ * come from `constants.ts`, which is the one the system actually runs on.
+ */
+import {
+  REQUEST_FLOW,
+  OFFER_FLOW,
+  ORDER_FLOW,
+  PROVIDER_FLOW,
+  DISPUTE_FLOW,
+} from "@services/constants";
+
 export type CanonicalRequestStatus =
   | "DRAFT"
   | "PENDING_REVIEW"
@@ -104,61 +134,6 @@ const DISPUTE_STATUS_MAP: Record<string, CanonicalDisputeStatus> = {
   closed: "CLOSED",
 };
 
-const REQUEST_TRANSITIONS: Record<CanonicalRequestStatus, CanonicalRequestStatus[]> = {
-  DRAFT: ["PENDING_REVIEW", "CANCELLED"],
-  PENDING_REVIEW: ["OPEN", "CANCELLED", "REJECTED"],
-  OPEN: ["RECEIVING_OFFERS", "CANCELLED", "EXPIRED"],
-  RECEIVING_OFFERS: ["OFFER_ACCEPTED", "OPEN", "CANCELLED", "EXPIRED"],
-  OFFER_ACCEPTED: ["SCHEDULED", "IN_PROGRESS", "CANCELLED"],
-  SCHEDULED: ["IN_PROGRESS", "CANCELLED"],
-  IN_PROGRESS: ["COMPLETED", "CANCELLED", "DISPUTED"],
-  COMPLETED: [],
-  CANCELLED: [],
-  REJECTED: [],
-  EXPIRED: [],
-  DISPUTED: ["COMPLETED", "CANCELLED"],
-};
-
-const OFFER_TRANSITIONS: Record<CanonicalOfferStatus, CanonicalOfferStatus[]> = {
-  SENT: ["ACCEPTED", "REJECTED", "WITHDRAWN", "REVISED", "EXPIRED"],
-  WITHDRAWN: [],
-  ACCEPTED: [],
-  REJECTED: [],
-  REVISED: ["ACCEPTED", "REJECTED", "WITHDRAWN", "EXPIRED"],
-  EXPIRED: [],
-};
-
-const ORDER_TRANSITIONS: Record<CanonicalOrderStatus, CanonicalOrderStatus[]> = {
-  CREATED: ["ACCEPTED", "CANCELLED"],
-  ACCEPTED: ["SCHEDULED", "IN_PROGRESS", "CANCELLED"],
-  SCHEDULED: ["IN_PROGRESS", "CANCELLED"],
-  IN_PROGRESS: ["WAITING_CUSTOMER_CONFIRMATION", "COMPLETED", "CANCELLED", "DISPUTED"],
-  WAITING_CUSTOMER_CONFIRMATION: ["COMPLETED", "DISPUTED"],
-  DELIVERED: ["COMPLETED", "WAITING_CUSTOMER_CONFIRMATION", "DISPUTED"],
-  COMPLETED: [],
-  CANCELLED: [],
-  DISPUTED: ["COMPLETED", "CANCELLED"],
-};
-
-const PROVIDER_TRANSITIONS: Record<CanonicalProviderStatus, CanonicalProviderStatus[]> = {
-  DRAFT: ["PENDING"],
-  PENDING: ["UNDER_REVIEW", "REJECTED"],
-  UNDER_REVIEW: ["VERIFIED", "REJECTED"],
-  VERIFIED: ["SUSPENDED"],
-  REJECTED: ["PENDING"],
-  SUSPENDED: ["VERIFIED", "REJECTED"],
-};
-
-const DISPUTE_TRANSITIONS: Record<CanonicalDisputeStatus, CanonicalDisputeStatus[]> = {
-  OPEN: ["UNDER_REVIEW", "WAITING_CUSTOMER", "WAITING_PROVIDER", "REJECTED", "CLOSED"],
-  UNDER_REVIEW: ["WAITING_CUSTOMER", "WAITING_PROVIDER", "RESOLVED", "REJECTED"],
-  WAITING_CUSTOMER: ["RESOLVED", "REJECTED", "UNDER_REVIEW"],
-  WAITING_PROVIDER: ["RESOLVED", "REJECTED", "UNDER_REVIEW"],
-  RESOLVED: ["CLOSED"],
-  REJECTED: ["CLOSED"],
-  CLOSED: [],
-};
-
 export function toCanonicalRequestStatus(status: string): CanonicalRequestStatus {
   return REQUEST_STATUS_MAP[status] ?? ("OPEN" as CanonicalRequestStatus);
 }
@@ -178,6 +153,36 @@ export function toCanonicalProviderStatus(status: string): CanonicalProviderStat
 export function toCanonicalDisputeStatus(status: string): CanonicalDisputeStatus {
   return DISPUTE_STATUS_MAP[status] ?? ("OPEN" as CanonicalDisputeStatus);
 }
+
+/**
+ * Derive the canonical transition table for one entity from the live lowercase
+ * flow, so there is exactly one set of rules in the system. Several database
+ * values can share a canonical status (`waiting_customer_confirmation` and
+ * `in_progress` are both IN_PROGRESS), so the edges are unioned.
+ */
+function canonicalFlow<T extends string>(
+  flow: Record<string, string[]>,
+  toCanonical: (status: string) => T,
+): Record<string, T[]> {
+  const table: Record<string, Set<T>> = {};
+  for (const [from, targets] of Object.entries(flow)) {
+    const key = toCanonical(from);
+    const set = (table[key] ??= new Set<T>());
+    for (const to of targets) {
+      const canonicalTo = toCanonical(to);
+      // A pair of database values that collapse to the same canonical status is
+      // not a transition; recording it would make a terminal state look live.
+      if (canonicalTo !== key) set.add(canonicalTo);
+    }
+  }
+  return Object.fromEntries(Object.entries(table).map(([key, set]) => [key, [...set]]));
+}
+
+const REQUEST_TRANSITIONS = canonicalFlow(REQUEST_FLOW, toCanonicalRequestStatus);
+const OFFER_TRANSITIONS = canonicalFlow(OFFER_FLOW, toCanonicalOfferStatus);
+const ORDER_TRANSITIONS = canonicalFlow(ORDER_FLOW, toCanonicalOrderStatus);
+const PROVIDER_TRANSITIONS = canonicalFlow(PROVIDER_FLOW, toCanonicalProviderStatus);
+const DISPUTE_TRANSITIONS = canonicalFlow(DISPUTE_FLOW, toCanonicalDisputeStatus);
 
 export function canTransitionRequest(from: string, to: string): boolean {
   const canonicalFrom = toCanonicalRequestStatus(from);

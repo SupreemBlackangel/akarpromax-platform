@@ -16,6 +16,7 @@ import {
   ORDER_STATUS,
   isOrderStatus,
   canTransition,
+  canTransitionProvider,
   type OrderStatus,
 } from "@services/constants";
 
@@ -203,6 +204,14 @@ export async function setProviderStatus(providerId: string, status: ProviderStat
   const db = await getServicesDb();
   const provider = await getProviderProfileById(providerId);
   if (!provider) throw new Error("PROVIDER_NOT_FOUND");
+  // The route validated that `status` is one of the six values; nothing checked
+  // that the move was legal from where the provider actually is. A suspended
+  // provider could be returned straight to approved, and a rejected one
+  // approved, without the review the Verified badge is supposed to stand on.
+  const from = String(provider.status);
+  if (from !== status && !canTransitionProvider(from, status)) {
+    throw new Error("PROVIDER_STATUS_INVALID");
+  }
   const now = nowMySqlDateTime();
   const stamp = status === PROVIDER_STATUS.APPROVED ? "approved_at" : status === PROVIDER_STATUS.SUSPENDED ? "suspended_at" : null;
   await db
