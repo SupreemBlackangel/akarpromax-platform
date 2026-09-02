@@ -172,7 +172,8 @@ elevation, which is why the save silently failed on properly-installed copies.
    built and the installer script is bumped to 2.0.7 with its payload staged.
    Inno Setup is not installed on this machine, so the `Setup.exe` is one `ISCC`
    run away rather than done, and a testable ZIP is published to
-   `/downloads/AkarProMaxOffice-2.0.7-UNRELEASED.zip`.
+   `/downloads/AkarProMaxOffice-2.0.7-UNRELEASED.zip` — 19,099,989 bytes,
+   sha256 `303e0c4c0aefaecf05d0bf8965148245cb2e0bd35245965adecc71a38d826c02`.
 
    **`version.json` is untouched and still advertises 2.0.6.** Nothing reaches a
    customer. With `mandatory: true`, publishing a version without a matching
@@ -188,6 +189,8 @@ elevation, which is why the save silently failed on properly-installed copies.
 | `Akar_ProMax_2026_Secure_Key` | **0 occurrences** |
 | `AKARPROMAX_API_BASE` override | present |
 | `subscription-checks.log` | present |
+| `EnableUnsafeBinaryFormatterSerialization` | **false** |
+| Credential path | `%LOCALAPPDATA%\AkarApp` |
 
 ---
 
