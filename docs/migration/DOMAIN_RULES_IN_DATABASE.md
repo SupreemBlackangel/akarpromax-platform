@@ -2,6 +2,16 @@
 
 Extracted verbatim from `AkarApp_LIVE/AkarDB.sqlite` on 2026-09-02.
 
+> **Read this first.** These rules guard the SQLite database, and the SQLite
+> database belongs to the **dormant** WPF application. The product users
+> actually run keeps its data as whole-file JSON documents under
+> `%LOCALAPPDATA%\AkarApp\AkarData` and opens SQLite only to read a storage
+> path — see [ADR-002](./ADR-002-live-data-store.md).
+>
+> So none of the three rules below currently protects any live data. They are
+> still the authoritative statement of what the business rules *are*, which is
+> why they matter to the migration; they are just not currently in force.
+
 These five triggers enforce three business rules. **No C# file states them.** A
 port that recreates the schema from the EF model, or that writes a new Domain
 layer from the services alone, will drop all three silently — the application
