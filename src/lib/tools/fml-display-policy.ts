@@ -21,6 +21,12 @@ const UTM_WITH_ZONE = /(?:^|\s)(\d{1,2})\s*([NS])[\s,;|	]+(\d{5,7}(?:\.\d+)?)[\s
 const BARE_PROJECTED_PAIR = /(?:^|\s)(\d{5,7}(?:\.\d+)?)[\s,;|	]+(\d{5,7}(?:\.\d+)?)(?:\s|$)/;
 const LINE_LABEL = /\b(?:LINE\s*)?(\d{1,4})\s*[-–—]\s*(\d{1,4})\b/i;
 const TRAILING_REFERENCE = /(?:^|\s)(\d{5,14})\s*$/;
+// A survey point number can lead its row as easily as trail it. Saudi survey
+// reports put it first -- "23915169  39.2213... E  21.7696... N" -- and the
+// trailing pattern alone therefore found nothing and the point was renumbered
+// P1..Pn. The negative lookahead keeps a coordinate from being mistaken for a
+// reference: a point number is a bare integer, a coordinate carries a decimal.
+const LEADING_REFERENCE = /^\s*(\d{5,14})(?![\d.])/;
 
 const EXPLICIT_ZONE_PATTERNS: RegExp[] = [
   /(?:PROJECTION\s*:?\s*)?(?:WGS\s*84\s*)?(?:UTM\s*)?ZONE\s*[:：\-]?\s*(\d{1,2})\s*([NS])?/i,
@@ -46,11 +52,23 @@ function plausibleNorthing(value: number): boolean {
   return value >= 100_000 && value <= 10_000_000;
 }
 
+/**
+ * The point's own identifier, taken from the document wherever it sits.
+ *
+ * A survey point number is how the parcel is discussed in the field and written
+ * on the deed, so replacing it with P1..Pn makes the tool's table impossible to
+ * check against the official document -- which is the one thing somebody
+ * opening a survey report wants to do.
+ *
+ * Trailing was handled; leading was not, and Saudi survey reports lead with it.
+ */
 export function sourcePointLabel(raw: string, fallbackIndex: number): string {
   const line = LINE_LABEL.exec(raw);
   if (line) return `${line[1]}-${line[2]}`;
-  const reference = TRAILING_REFERENCE.exec(raw);
-  if (reference) return reference[1];
+  const trailing = TRAILING_REFERENCE.exec(raw);
+  if (trailing) return trailing[1];
+  const leading = LEADING_REFERENCE.exec(raw);
+  if (leading) return leading[1];
   return `P${fallbackIndex + 1}`;
 }
 

@@ -106,3 +106,36 @@ test("the parsed pair round-trips through the projection exactly", () => {
 test("the parcel's zone is derived correctly from its position", () => {
   assert.equal(utmZoneForPoint(21.769673436051665, 39.22136707084851), 37);
 });
+
+// ---- the document's own point numbers ---------------------------------------
+
+import { sourcePointLabel } from "../src/lib/tools/fml-display-policy.ts";
+
+test("a leading survey point number is kept", () => {
+  // From a real Saudi survey report (تقرير مساحي معتمد, Jeddah): the point
+  // number leads the row. The trailing pattern alone found nothing, so the
+  // official numbers were replaced with P1..Pn and the table could no longer be
+  // checked against the document -- the one thing somebody opening a survey
+  // report wants to do.
+  assert.equal(sourcePointLabel("23915169 39.22136707084851 E 21.769673436051665 N", 0), "23915169");
+  assert.equal(sourcePointLabel("23915174 39.221640146864466 E 21.768977881645778 N", 5), "23915174");
+});
+
+test("a trailing reference still wins, as before", () => {
+  assert.equal(sourcePointLabel("39.221367 E 21.769673 N 23915169", 0), "23915169");
+});
+
+test("a coordinate is never mistaken for a point number", () => {
+  // A point number is a bare integer; a coordinate carries a decimal. Without
+  // that distinction the longitude would become the label.
+  assert.equal(sourcePointLabel("39.22136707084851 E 21.769673436051665 N", 0), "P1");
+  assert.equal(sourcePointLabel("522886.451 2407349.790", 2), "P3");
+});
+
+test("a line label still takes precedence", () => {
+  assert.equal(sourcePointLabel("LINE 12-13 522886.451 2407349.790", 0), "12-13");
+});
+
+test("a row with no identifier falls back to its position", () => {
+  assert.equal(sourcePointLabel("no numbers here", 4), "P5");
+});
