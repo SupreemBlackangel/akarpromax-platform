@@ -1,6 +1,7 @@
 import { AD_PLACEMENTS, resolveSectionFromPath, resolvePageType, type DeviceType, type PlatformSection } from "@/src/constants/advertising";
 import type { ResolvedAdContext, AdChannel } from "@/lib/ads/types";
 import { isAdChannel } from "@/lib/ads/types";
+import type { ServerAdContext } from "@/lib/ads/server-context";
 
 export const SUPPORTED_LOCALES = ["ar", "en", "tr"] as const;
 export const SUPPORTED_DEVICES = ["desktop", "tablet", "mobile"] as const;
@@ -56,7 +57,14 @@ function cleanTagList(value: unknown, maxItems = 30): string[] {
   return [...new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim().toLowerCase()).filter((item) => item.length > 0 && item.length <= 60))].slice(0, maxItems);
 }
 
-export function buildContext(input: MatchRequest): ResolvedAdContext {
+/**
+ * Build a match context. When `server` is supplied, the fields the request
+ * itself proves (device, domain, session) override whatever the browser
+ * claimed — the client can no longer pick which device-targeted campaign it
+ * sees, bypass a domain allowlist, or reset its own frequency cap by clearing
+ * sessionStorage.
+ */
+export function buildContext(input: MatchRequest, server?: ServerAdContext): ResolvedAdContext {
   const language: ResolvedAdContext["language"] = SUPPORTED_LOCALES.includes(input.language as (typeof SUPPORTED_LOCALES)[number])
     ? (input.language as ResolvedAdContext["language"])
     : "ar";
@@ -70,7 +78,7 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
   const placement = cleanString(input.placement, 64);
   const channel: AdChannel = isAdChannel(input.channel) ? input.channel : "website";
 
-  const sessionId = cleanString(input.sessionId, 120);
+  const sessionId = server ? server.sessionId : cleanString(input.sessionId, 120);
   const userId = cleanString(input.userId, 120);
   const entityType = cleanString(input.entityType, 64);
   const operatingSystem = cleanString(input.operatingSystem, 40);
@@ -83,14 +91,14 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
     entityType: entityType || undefined,
     entityId: input.entityId != null ? String(input.entityId).slice(0, 100) : undefined,
     categoryId: input.categoryId != null ? String(input.categoryId).slice(0, 100) : undefined,
-    countryCode: cleanString(input.countryCode, 8) || undefined,
+    countryCode: server ? server.countryCode : cleanString(input.countryCode, 8) || undefined,
     regionId: input.regionId != null ? String(input.regionId).slice(0, 100) : undefined,
     cityId: input.cityId != null ? String(input.cityId).slice(0, 100) : undefined,
     districtId: input.districtId != null ? String(input.districtId).slice(0, 100) : undefined,
     latitude: cleanCoordinate(input.latitude, 90),
     longitude: cleanCoordinate(input.longitude, 180),
     language,
-    deviceType,
+    deviceType: server ? server.deviceType : deviceType,
     operatingSystem: operatingSystem || undefined,
     userId: userId || undefined,
     sessionId: sessionId || undefined,
@@ -98,7 +106,11 @@ export function buildContext(input: MatchRequest): ResolvedAdContext {
     hour: cleanNumber(input.hour),
     dayOfWeek: cleanNumber(input.dayOfWeek),
     path: path || undefined,
-    domain: cleanString(input.domain, 300) || undefined,
+    domain: server ? server.domain : cleanString(input.domain, 300) || undefined,
+    // Dayparting must run on the server clock. These were client-supplied and
+    // took precedence in the engine, so a caller could simply claim the hour
+    // that made a scheduled campaign eligible.
+    ...(server ? { hour: undefined, dayOfWeek: undefined } : {}),
   };
 }
 

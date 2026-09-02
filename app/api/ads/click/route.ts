@@ -4,6 +4,7 @@ import { recordClick } from "@/lib/ads/events";
 import { resolveTrackRequest, type TrackRequest } from "@/lib/ads/track";
 import { buildContext, isValidPlacement } from "@/lib/ads/context";
 import { verifyTrackingToken } from "@/lib/ads/events";
+import { resolveServerAdContext } from "@/lib/ads/server-context";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,8 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  const resolved = await resolveTrackRequest(body);
+  const server = resolveServerAdContext(request, body.countryCode);
+  const resolved = await resolveTrackRequest(body, server);
   if (!resolved.ok) {
     return NextResponse.json({ error: resolved.error }, { status: resolved.status });
   }
