@@ -25,5 +25,38 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   typescript: { ignoreBuildErrors: false },
+
+  async headers() {
+    return [
+      {
+        // The office desktop app's update check.
+        //
+        // bootstrap.js runs inside WebView2 on the https://akarapp.local virtual
+        // host and fetches this manifest from akarpromax.com, which is
+        // cross-origin. The path served no Access-Control-Allow-Origin, so the
+        // fetch failed on CORS -- reproduced in a browser and confirmed against
+        // production -- and no installation has ever been told an update exists.
+        //
+        // These files are public by nature: a version number, a download URL and
+        // release notes, served to an app that has not signed in yet. There is
+        // nothing here to protect with an origin restriction, and the desktop
+        // host is not a fixed origin we could name anyway.
+        source: "/office-app/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+          // Never cached: an update check that reads a stale manifest is the
+          // same as no update check.
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
+      {
+        // The installer itself, for the same reason: the app follows the URL
+        // this manifest gives it.
+        source: "/downloads/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
+    ];
+  },
 };
 export default nextConfig;

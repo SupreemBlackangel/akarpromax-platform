@@ -41,15 +41,18 @@ const SURFACE = [
 ];
 
 /**
- * The client half of M3 has landed: the wizard no longer hardcodes a currency,
- * it suggests one from the platform's country configuration and sends `null`
- * when the requester gave no budget. It is therefore part of SURFACE now.
+ * M3 has landed in full.
  *
- * The violation has NOT gone away, it has moved. `service_requests.currency` is
- * still `NOT NULL DEFAULT 'OMR'` (verified on production), so the `null` the
- * wizard sends is replaced by the database with a currency the platform chose --
- * exactly what this file exists to forbid, one layer down. The exception stays
- * recorded against the column until the migration half of M3 lands.
+ * The client half came first: the wizard no longer hardcodes a currency, it
+ * suggests one from the platform's country configuration and sends `null` when
+ * the requester gave no budget. It is part of SURFACE now.
+ *
+ * The migration half followed on 2026-09-03. `service_requests.currency` had
+ * kept `NOT NULL DEFAULT 'OMR'`, so the `null` the wizard sent was replaced by
+ * the database with a currency the platform chose -- exactly what this file
+ * exists to forbid, one layer down. Both the default and the NOT NULL are now
+ * dropped, so a request with no budget carries no currency. The table was
+ * empty, and the migration refused to run if it had not been.
  */
 const MIGRATION_BOUND_EXCEPTIONS = [];
 
