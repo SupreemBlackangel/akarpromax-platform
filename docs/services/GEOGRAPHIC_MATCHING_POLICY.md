@@ -246,3 +246,48 @@ See `tests/services-matching.test.mjs`:
 3. **Real-Time Updates**: WebSocket for live match updates
 4. **Availability Calendar**: Provider schedule integration
 5. **Multi-Criteria Optimization**: Pareto-optimal matching
+
+---
+
+## Addendum — the documented radius is not the radius that runs
+
+Recorded rather than quietly patched, because the fix is a business decision
+and not a technical one.
+
+This document says a provider covers `service_radius_km`, "default 50km",
+"configurable per provider in profile". The code does not do that:
+
+```ts
+export const PLATFORM_MAX_SERVICE_RADIUS_KM = 10;   // lib/services/match-score.ts
+
+const providerRadius  = toNum(provider.service_radius_km) ?? PLATFORM_MAX_SERVICE_RADIUS_KM;
+const effectiveRadius = Math.max(0.1, Math.min(providerRadius, PLATFORM_MAX_SERVICE_RADIUS_KM));
+```
+
+`Math.min` makes the platform ceiling the real limit, so:
+
+* **The write path's own default is 50, and the matcher then caps it at 10.**
+  A provider who accepts the default is silently reduced to a fifth of the
+  coverage the form offered them.
+* **"Configurable per provider" is only true downward.** Any value above 10 has
+  no effect at all; the column stores a number that changes nothing.
+* **Ten kilometres is smaller than the cities being served.** Muscat's built-up
+  area spans roughly 50km end to end, so a provider in Seeb is refused a request
+  in central Muscat — both parties in the same governorate, both with correct
+  coordinates. Where coordinates are missing the `same_city` fallback still
+  matches them, which means **supplying an accurate position can lose a provider
+  work that omitting it would have won.** That is the wrong incentive to put in
+  front of the people filling in the profile.
+
+Two smaller divergences in the same table:
+
+* Distance scoring is documented as `max(0, 30 - distanceKm)`; the code uses
+  `max(0, 30 - round(distance * 2))` — twice the decay.
+* "Within `service_radius_km` (default 50km)" appears as criterion 4, and there
+  are two criteria numbered 4.
+
+**Nothing here has been changed.** Raising the ceiling widens who gets matched
+and notified across the whole marketplace, which is a product decision. What has
+been added is `tests/services-matching-policy.test.mjs`, which fails if the
+constant and this document drift apart again — the divergence above went
+unnoticed precisely because nothing tied them together.
