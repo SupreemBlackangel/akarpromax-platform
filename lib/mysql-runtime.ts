@@ -231,6 +231,7 @@ const MYSQL_SCHEMA_SQL: string[] = [
     section_scopes TEXT NULL,
     page_types TEXT NULL,
     placements TEXT NULL,
+    domains TEXT NULL,
     region_ids TEXT NULL,
     district_ids TEXT NULL,
     latitude REAL NULL,

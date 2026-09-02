@@ -114,6 +114,7 @@ export const CONTENT_TABLES_SQL: string[] = [
     section_scopes TEXT,
     page_types TEXT,
     placements TEXT,
+    domains TEXT,
     region_ids TEXT,
     district_ids TEXT,
     latitude REAL,

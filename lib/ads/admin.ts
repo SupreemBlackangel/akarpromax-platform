@@ -10,6 +10,7 @@ import {
   APPROVAL_STATUSES,
   AD_PLACEMENTS,
 } from "@/src/constants/advertising";
+import { normalizeCampaignBoundary } from "@/lib/ads/geo";
 
 const statuses = ["draft", "active", "paused", "expired", "archived"] as const;
 const campaignTypes = ["platform", "property", "service", "request"] as const;
@@ -244,8 +245,10 @@ export function normaliseCampaignPayload(body: Record<string, unknown>): Campaig
     devices: cleanList(body.devices, /^(?:desktop|tablet|mobile)$/, 3),
     priority: cleanNumber(body.priority, 1, 999, 100),
     weight: cleanNumber(body.weight, 1, 100, 100),
-    startAt: clean(body.startAt, 40) || null,
-    endAt: clean(body.endAt, 40) || null,
+    // Every writer funnels through the same normalizer so start_at/end_at are
+    // always in the one format the engine's lexicographic comparison expects.
+    startAt: normalizeCampaignBoundary(clean(body.startAt, 40), "start"),
+    endAt: normalizeCampaignBoundary(clean(body.endAt, 40), "end"),
     sectionScopes,
     pageTypes: cleanList(body.pageTypes, /^[a-z0-9-]+$/, 20).filter((item) => PAGE_TYPES_LIST.includes(item as never)),
     placements,

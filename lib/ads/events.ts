@@ -15,8 +15,23 @@ export type TrackingPayload = {
   ts: number;
 };
 
+/**
+ * Key for impression/click tracking tokens.
+ *
+ * This used to fall back to a constant that lives in the repository, which
+ * silently turned every environment that forgot the variable into one where
+ * anyone could mint a token for any campaign and POST it in a loop — and each
+ * accepted call increments spent_amount. Production does set it, but a default
+ * that never fails is exactly how such a gap reaches production unnoticed, so
+ * it now fails loudly there and only falls back for local/test runs.
+ */
 function getAdSecret(): string {
-  return process.env.AD_TRACKING_SECRET || "akar-ad-tracking-v1";
+  const secret = process.env.AD_TRACKING_SECRET?.trim();
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AD_TRACKING_SECRET is required in production: ad tracking tokens cannot be signed with a public default.");
+  }
+  return "akar-ad-tracking-dev-only";
 }
 
 function base64UrlEncode(value: string): string {

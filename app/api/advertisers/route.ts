@@ -6,6 +6,7 @@ import {
 } from "@/lib/identity-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import { normalizeCampaignBoundary } from "@/lib/ads/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -190,8 +191,8 @@ export async function POST(request: NextRequest) {
       normaliseText(body.contactEmail, 160) || null,
       normaliseText(body.contactPhone, 40) || null,
       JSON.stringify(placements.length ? placements : ["header", "content", "footer"]),
-      normaliseText(body.startAt, 40) || null,
-      normaliseText(body.endAt, 40) || null,
+      normalizeCampaignBoundary(normaliseText(body.startAt, 40), "start"),
+      normalizeCampaignBoundary(normaliseText(body.endAt, 40), "end"),
       Math.max(1, Math.min(999, Number(body.priority) || 100)),
       identity.email,
     )
@@ -255,8 +256,8 @@ export async function PATCH(request: NextRequest) {
       normaliseText(body.contactEmail, 160) || null,
       normaliseText(body.contactPhone, 40) || null,
       JSON.stringify(placements.length ? placements : ["header", "content", "footer"]),
-      normaliseText(body.startAt, 40) || null,
-      normaliseText(body.endAt, 40) || null,
+      normalizeCampaignBoundary(normaliseText(body.startAt, 40), "start"),
+      normalizeCampaignBoundary(normaliseText(body.endAt, 40), "end"),
       Math.max(1, Math.min(999, Number(body.priority) || 100)),
     )
     .run();

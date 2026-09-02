@@ -5,6 +5,7 @@ import { cleanUrl } from "@/lib/ads/admin";
 import { AD_PLACEMENTS } from "@/src/constants/advertising";
 import { STANDARD_PUBLIC_AD_LAYOUT_V1 } from "@/src/config/standard-public-ad-layout";
 import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
+import { normalizeCampaignBoundary } from "@/lib/ads/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -193,8 +194,8 @@ export async function POST(request: NextRequest) {
       JSON.stringify(["desktop"]),
       100,
       100,
-      startAt ? `${startAt}T00:00:00.000Z` : null,
-      endAt ? `${endAt}T23:59:59.000Z` : null,
+      normalizeCampaignBoundary(startAt, "start"),
+      normalizeCampaignBoundary(endAt, "end"),
       JSON.stringify([family || "home"]),
       JSON.stringify([family || "home"]),
       JSON.stringify([placement]),

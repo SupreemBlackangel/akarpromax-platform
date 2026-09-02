@@ -67,3 +67,44 @@ export function formatDateTime(date: Date): string {
   const seconds = String(date.getSeconds()).padStart(2, "0");
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
+
+/**
+ * Normalize any campaign start/end input into the exact string format the
+ * engine compares against.
+ *
+ * `start_at`/`end_at` are TEXT columns compared **lexicographically** against
+ * `formatDateTime(now)` ("2026-09-02 18:52:45"). Three writers previously fed
+ * three different formats into the same column:
+ *
+ *   - the admin form wrote "2026-09-02 14:00:00"        -> correct
+ *   - the public ad request wrote "2026-09-02T00:00:00.000Z"
+ *     'T' (0x54) sorts above ' ' (0x20), so the row never compared as started
+ *     -> campaigns went live a day late
+ *   - the advertisers admin wrote a bare "2026-09-02"
+ *     shorter string sorts lower, so end_at compared as already past
+ *     -> campaigns died a day early
+ *
+ * `boundary` decides how a date-only value is widened: "start" anchors to the
+ * beginning of that day, "end" to its final second, so a date range is
+ * inclusive of both endpoints.
+ */
+export function normalizeCampaignBoundary(value: string | null | undefined, boundary: "start" | "end"): string | null {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  // Already in the engine's format.
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) return raw;
+
+  // Date only — widen to the requested edge of that day.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return `${raw} ${boundary === "start" ? "00:00:00" : "23:59:59"}`;
+  }
+
+  // ISO (with or without a zone). Compare in the same local frame the engine
+  // uses, so a stored instant and "now" are measured the same way.
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+
+  return null;
+}

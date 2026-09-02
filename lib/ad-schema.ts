@@ -177,7 +177,31 @@ function isDuplicateKeyError(message: string): boolean {
   return /duplicate (key|index|column)|already exists/i.test(message);
 }
 
-export async function ensureAdSchema(db: D1Database): Promise<void> {
+/**
+ * Latch so the ~89 DDL statements below run once per process, not once per
+ * request.
+ *
+ * Two POST routes call this on every request — /api/admin/ads and the PUBLIC
+ * /api/ads/request — so a burst of submissions meant concurrent 50-statement
+ * ADD COLUMN sequences against ad_campaigns, which take an ACCESS EXCLUSIVE
+ * lock in PostgreSQL and block every concurrent ad read behind them. The
+ * statements are idempotent, so running them once at first use is sufficient;
+ * the rest of the codebase already latches its schema bootstrap the same way.
+ *
+ * A failure clears the latch so the next call retries rather than caching a
+ * half-applied schema for the life of the process.
+ */
+let adSchemaReady: Promise<void> | null = null;
+
+export function ensureAdSchema(db: D1Database): Promise<void> {
+  adSchemaReady ??= applyAdSchema(db).catch((error) => {
+    adSchemaReady = null;
+    throw error;
+  });
+  return adSchemaReady;
+}
+
+async function applyAdSchema(db: D1Database): Promise<void> {
   // Tracking tables must exist before the additive repair ALTERs below run.
   // On a clean PostgreSQL database the previous order failed immediately on
   // `ALTER TABLE ad_impressions`, preventing Zero -> Ready bootstrap.

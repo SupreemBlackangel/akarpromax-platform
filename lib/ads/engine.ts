@@ -260,7 +260,12 @@ async function loadDailyStats(db: D1Database, today: string): Promise<Map<string
 }
 
 export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, now = new Date()): Promise<EngineStats> {
-  const today = formatDateTime(now);
+  // ad_daily_statistics.stat_date is a DAY key ("2026-09-02"), written by
+  // events.ts via statDate(). Reading it with formatDateTime() produced
+  // "2026-09-02 18:52:45", which never matched a row — so daily stats always
+  // came back empty and every daily cap (daily_budget, the day's share of
+  // max_impressions/max_clicks, creative rotation) was silently inert.
+  const today = statDate(now);
 
   if (ctx.sessionId || ctx.userId) {
     // Count every cap window in one pass, so each campaign can be capped by its
