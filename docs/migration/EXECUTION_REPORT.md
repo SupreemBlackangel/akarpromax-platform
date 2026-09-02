@@ -124,8 +124,30 @@ it is undone — and the importer does exactly that.
 
 ## Known issues and risks
 
-| # | |
-|---|---|
+### Closed
+
+| # | | How |
+|---|---|---|
+| K2 | A careless manifest publish locks out every installation | `scripts/publish-office-manifest.sh` refuses to publish unless the installer is live, downloads end to end, matches its advertised length and carries an `MZ` header — then requires the version typed back. It backs up the previous manifest and records a `sha256` and `releaseDate`, which the manifest never had. |
+| K3 | Unverified `phones` / `addresses` element shapes | Unrecognised shapes are now named in the import report instead of skipped quietly. Blank entries are not reported, so the warning stays rare enough to be believed. The test written for it caught a real crash in the mapper: `TryGetProperty` throws on a non-object, and this store has no types. |
+| K4 | `EnableUnsafeBinaryFormatterSerialization` | Disabled, after confirming BinaryFormatter, `IFormatter`, `SoapFormatter` and `[Serializable]` appear nowhere and every clipboard call is `SetText`/`GetText`. Verified in the produced runtimeconfig. |
+| K5 | Credential stored beside the executable | Moved to `%LOCALAPPDATA%\AkarApp`. An existing file is moved, not copied, so the old exposure does not survive. DPAPI protection unchanged. |
+
+K5 was worse than first recorded: the program directory is replaced by the
+installer and the updater, so a routine update destroyed the saved credential;
+it is shared by every Windows account on the machine; and writing there needs
+elevation, which is why the save silently failed on properly-installed copies.
+
+### Open
+
+| # | | Why it stays open |
+|---|---|---|
+| K1 | Installed copies get none of this until a build ships | Needs a release. The package is built and staged; `Setup.exe` needs one `ISCC` run on a machine with Inno Setup. |
+| K6 | Properties, ledger, users, requests and contracts have no importer | Real work, not a risk to mitigate. Clients proved the pattern. |
+| K7 | All XAML is lost | Cannot be recovered. The 37 views run but cannot be read. |
+| K8 | What the SPA computes, validates and displays | Only observable by running it. No amount of code reading substitutes. |
+
+---|---|
 | K1 | Installed copies get none of this until a build ships. The domain and secret fixes are in .NET, not the SPA, so no server change reaches them. |
 | K2 | `mandatory: true` in the update manifest means publishing a version without a matching installer locks out every installation. |
 | K3 | Both live client records have empty `phones` and `addresses`, so their element shape is **unverified**. The mapper accepts objects and bare strings defensively. |
