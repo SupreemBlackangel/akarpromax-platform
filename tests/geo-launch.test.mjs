@@ -182,7 +182,12 @@ test("all advertising consumers and public services use the central geo contract
 test("legacy advertising adapter canonicalizes the home path and standard slot names", async () => {
   const source = await readFile(new URL("../app/api/advertising/match/route.ts", import.meta.url), "utf8");
   assert.match(source, /page === 'home' \|\| page === '\/'/);
-  assert.match(source, /hero: 'HERO'/);
-  assert.match(source, /bottom_03: 'BOTTOM_03'/);
-  assert.match(source, /placement: canonicalLegacyPlacement\(placement\)/);
+  // The adapter used to upper-case the short slot ("hero" -> "HERO"), which
+  // matched no registered placement and left these slots permanently empty. It
+  // now maps the short slot to its canonical SUFFIX and prefixes it with the
+  // page family, producing a real placement like web_office_detail_hero.
+  assert.match(source, /hero: 'hero'/);
+  assert.match(source, /bottom_03: 'bottom_03'/);
+  assert.match(source, /\$\{family\.prefix\}_\$\{suffix\}/, "the canonical placement is built from the family prefix");
+  assert.match(source, /placement: canonicalLegacyPlacement\(page, placement\)/, "the page family is needed to build the placement");
 });

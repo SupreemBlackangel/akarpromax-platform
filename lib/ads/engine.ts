@@ -1,9 +1,11 @@
 import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDayOfWeek, frequencyWindowSince, formatDateTime, statDate } from "@/lib/ads/geo";
 import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, FrequencyBuckets, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
-import { AD_CHANNELS, isAdChannel } from "@/lib/ads/types";
+import { isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
 import { canonicalPlacementFor, sectionVariants } from "@/src/constants/advertising";
 import type { DeviceType } from "@/src/constants/advertising";
+import { evaluateEligibility, type EligibilityChecks } from "@/lib/ads/eligibility";
+import { selectCampaign, type SelectionCandidate } from "@/lib/ads/selection";
 
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
   if (!value) return fallback;
@@ -508,6 +510,30 @@ function isBudgetEligible(ad: ParsedAd, stats: EngineStats | undefined): boolean
   return true;
 }
 
+/**
+ * The engine's predicates, handed to the eligibility module so that module
+ * stays free of query and scoring concerns. Eligibility decides *whether* a
+ * campaign may serve; selection decides *which* one does.
+ */
+function eligibilityChecks(stats: EngineStats | undefined): EligibilityChecks {
+  return {
+    isActive: (ad) => ad.isActive,
+    isApproved: (ad) => ad.approvalStatus === "approved",
+    channel: isChannelMatch,
+    schedule: isTimeMatch,
+    operatingSystem: isOsMatch,
+    budget: (ad) => isBudgetEligible(ad, stats),
+    section: isSectionMatch,
+    domain: isDomainMatch,
+    pageType: isPageTypeMatch,
+    device: isDeviceMatch,
+    language: isLanguageMatch,
+    geo: isGeoMatch,
+    entity: isEntityMatch,
+    category: isCategoryMatch,
+  };
+}
+
 type ScoredAd = { ad: ParsedAd; score: number };
 
 export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?: EngineStats): number | null {
@@ -553,26 +579,7 @@ export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?:
   return score;
 }
 
-function pickWeighted(candidates: ScoredAd[]): ScoredAd | null {
-  if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0];
-  const total = candidates.reduce((sum, candidate) => sum + candidate.ad.weight, 0);
-  if (total <= 0) return candidates[Math.floor(Math.random() * candidates.length)];
-  let target = Math.random() * total;
-  for (const candidate of candidates) {
-    target -= candidate.ad.weight;
-    if (target <= 0) return candidate;
-  }
-  return candidates[candidates.length - 1];
-}
 
-function selectBand(scored: ScoredAd[], used: Set<string>): ScoredAd[] {
-  const remaining = scored.filter((candidate) => !used.has(candidate.ad.id));
-  if (remaining.length === 0) return [];
-  const maxScore = Math.max(...remaining.map((candidate) => candidate.score));
-  if (maxScore <= 0) return [];
-  return remaining.filter((candidate) => candidate.score >= maxScore - 50);
-}
 
 /**
  * Deterministic even creative rotation: each campaign receives ONE turn and
@@ -606,13 +613,11 @@ function campaignImpressions(ad: ParsedAd, stats?: EngineStats): number {
   return ad.totalImpressions + (daily?.impressions ?? 0);
 }
 
-const HOUSE_FILL_THRESHOLD = 3;
 
 function selectHouseCandidates(
   allAds: ParsedAd[],
   ctx: ResolvedAdContext,
   used: Set<string>,
-  stats?: EngineStats,
 ): ScoredAd[] {
   const houseAds = allAds.filter(
     (ad) => ad.isFallback && ad.isActive && ad.approvalStatus === "approved" && !used.has(ad.id),
@@ -660,39 +665,30 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
   const count = Math.max(1, options.count ?? 1);
   const used = options.usedCampaignIds ?? new Set<string>();
 
-  const allEligible: ScoredAd[] = [];
-
+  // Stage 1 — eligibility: may this campaign serve here at all?
+  const checks = eligibilityChecks(stats);
+  const candidates: SelectionCandidate[] = [];
   for (const ad of ads) {
-    const score = scoreAd(ad, ctx, now, stats);
-    if (score == null) continue;
-    allEligible.push({ ad, score });
+    const verdict = evaluateEligibility(ad, ctx, now, checks);
+    if (verdict.eligible) {
+      candidates.push({ ad, specificity: verdict.specificity, relevance: verdict.relevance });
+    }
   }
 
+  // Stage 2 — selection: of those, which one actually serves? Specificity tier
+  // first, so a campaign that named this exact placement always beats one that
+  // named the canonical slot or nothing at all. That is what keeps each page's
+  // hero independent.
   const picks: ScoredAd[] = [];
-
-  const fill = (limit: number) => {
-    while (picks.length < limit) {
-      const band = selectBand(allEligible, used);
-      if (band.length === 0) break;
-      const chosen = pickWeighted(band);
-      if (!chosen) break;
-      picks.push(chosen);
-      used.add(chosen.ad.id);
-    }
-  };
-
-  fill(count);
-  if (picks.length < count) {
-    const leftovers = allEligible.filter((candidate) => !used.has(candidate.ad.id));
-    for (const candidate of leftovers) {
-      if (picks.length >= count) break;
-      picks.push(candidate);
-      used.add(candidate.ad.id);
-    }
+  while (picks.length < count) {
+    const chosen = selectCampaign(candidates, used);
+    if (!chosen) break;
+    picks.push({ ad: chosen.ad, score: chosen.relevance });
+    used.add(chosen.ad.id);
   }
 
   if (picks.length < count) {
-    const houseCandidates = selectHouseCandidates(ads, ctx, used, stats);
+    const houseCandidates = selectHouseCandidates(ads, ctx, used);
     for (const candidate of houseCandidates) {
       if (picks.length >= count) break;
       picks.push(candidate);
