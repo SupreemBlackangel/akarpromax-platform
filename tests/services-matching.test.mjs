@@ -125,7 +125,15 @@ test("matching pipeline inserts qualified providers and notifies both sides", as
   // uppercase, the provider profile stored the lowercase platform geo token,
   // and the column's C.UTF-8 collation makes `=` case-sensitive.
   assert.match(matching, /status = 'approved' AND UPPER\(country_code\) = \?1/);
-  assert.match(matching, /service_provider_categories WHERE provider_id = \?1 AND is_active = 1/);
+  // Categories are fetched for every candidate in ONE query. This assertion
+  // used to pin the per-provider form, which ran inside the loop: matching a
+  // single request cost 1 + N round trips, on the publish path, synchronously,
+  // while the customer waited -- and it grew with the marketplace rather than
+  // with the work.
+  assert.match(matching, /FROM service_provider_categories\s+WHERE is_active = 1 AND provider_id IN \(/);
+  // And nothing queries inside the per-provider loop any more.
+  const loop = matching.slice(matching.indexOf("for (const profile of rows)"));
+  assert.doesNotMatch(loop.slice(0, 600), /\.prepare\(/, "no query may run inside the per-provider loop");
   assert.match(score, /export function computeMatchScore/);
   assert.match(score, /coversCategory/);
   assert.match(score, /distance > effectiveRadius/);

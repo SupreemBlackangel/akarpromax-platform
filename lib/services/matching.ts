@@ -16,12 +16,44 @@ export async function findCandidateProviders(request: MatchRequestRow): Promise<
     .bind(country)
     .all<Record<string, unknown>>();
 
+  const rows = profiles.results ?? [];
+  if (rows.length === 0) {
+    return [];
+  }
+
+  // One query for every provider's categories, not one query per provider.
+  //
+  // This ran inside the loop, so matching a single request cost 1 + N round
+  // trips -- and it runs on the publish path, synchronously, while the customer
+  // waits. With a hundred approved providers in a country that is a hundred
+  // sequential queries to decide one request, and it grows with the marketplace
+  // rather than with the work.
+  //
+  // The parameter list is built from the ids rather than interpolated, so a
+  // provider id can never reach the statement as SQL.
+  const providerIds = rows.map((profile) => String(profile.id));
+  const placeholders = providerIds.map((_, index) => `?${index + 1}`).join(",");
+  const categoryRows = await db
+    .prepare(
+      `SELECT provider_id, category_id, price_from, price_to
+       FROM service_provider_categories
+       WHERE is_active = 1 AND provider_id IN (${placeholders})`,
+    )
+    .bind(...(providerIds as [string, ...string[]]))
+    .all<{ provider_id: string; category_id: string; price_from: number | null; price_to: number | null }>();
+
+  const byProvider = new Map<string, Array<{ category_id: string; price_from: number | null; price_to: number | null }>>();
+  for (const row of categoryRows.results ?? []) {
+    const list = byProvider.get(String(row.provider_id)) ?? [];
+    list.push({ category_id: row.category_id, price_from: row.price_from, price_to: row.price_to });
+    byProvider.set(String(row.provider_id), list);
+  }
+
   const providers: MatchProviderRow[] = [];
-  for (const profile of profiles.results ?? []) {
-    const categories = await db
-      .prepare("SELECT category_id, price_from, price_to FROM service_provider_categories WHERE provider_id = ?1 AND is_active = 1")
-      .bind(String(profile.id))
-      .all<{ category_id: string; price_from: number | null; price_to: number | null }>();
+  for (const profile of rows) {
+    // A provider with no active categories keeps an empty list, exactly as the
+    // per-provider query returned no rows for them.
+    const categories = { results: byProvider.get(String(profile.id)) ?? [] };
     providers.push({
       id: String(profile.id),
       user_id: String(profile.user_id),
