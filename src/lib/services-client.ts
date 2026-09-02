@@ -1,5 +1,23 @@
 import { getCurrency } from "@/lib/market/currency-registry";
 
+/**
+ * The verification document vocabulary, re-exported for the client.
+ *
+ * It is defined once in the domain layer so the requirements and the upload
+ * form cannot drift apart -- the last time they did, the policy asked for
+ * documents the form could not produce and no provider could have satisfied it.
+ * Dashboard pages reach the services domain only through this module, so the
+ * client-facing half comes through here rather than by importing lib/services
+ * directly. The module it comes from has no imports of its own, so nothing
+ * server-side follows it into the bundle.
+ */
+export {
+  DOCUMENT_TYPES,
+  DOCUMENT_LABELS,
+  isDocumentType,
+  type DocumentType,
+} from "@/lib/services/verification/requirements";
+
 export class ServiceError extends Error {
   code: string;
   status: number;

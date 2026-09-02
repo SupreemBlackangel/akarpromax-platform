@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/src/constants/permissions";
 import { getProviderProfileByUserId, addProviderDocument, listProviderDocuments, verifyProviderDocument } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 import { isVerificationFileUrl } from "@/lib/services/verification/document-storage";
+import { isDocumentType } from "@/lib/services/verification/requirements";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   // another provider's file, at a path outside the verification directory, or
   // at an external URL that the review screen would then render.
   if (!isVerificationFileUrl(fileUrl)) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
+  }
+  // A document filed under a type the platform does not know can never satisfy
+  // a requirement, so it is refused rather than stored where it will sit unread.
+  if (!isDocumentType(type)) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
   const documentId = await addProviderDocument(

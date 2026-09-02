@@ -5,7 +5,7 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import ServiceDashboardShell from "@services-ui/ServiceDashboardShell";
 import { ProviderStatusPill } from "@services-ui/ServiceStatusBadges";
-import { apiFetch, nameFor } from "@services-client";
+import { apiFetch, nameFor, DOCUMENT_TYPES, DOCUMENT_LABELS } from "@services-client";
 import type { CategoryRow } from "@services-ui/ServiceCards";
 
 type Profile = Record<string, unknown> & {
@@ -46,7 +46,7 @@ export default function ProviderProfilePage() {
   };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [docs, setDocs] = useState<Array<Record<string, unknown>>>([]);
-  const [docType, setDocType] = useState("commercial_register");
+  const [docType, setDocType] = useState<string>(DOCUMENT_TYPES.NATIONAL_ID);
   const [docUploading, setDocUploading] = useState(false);
   const [docMessage, setDocMessage] = useState("");
 
@@ -454,11 +454,12 @@ export default function ProviderProfilePage() {
               <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-1">مستندات التحقق</h3>
               <p className="text-xs text-gray-500 mb-3">ارفع سجلك التجاري أو هويتك (PDF أو صورة) — التوثيق يرفع ثقة العملاء ويُسرّع اعتماد ملفك.</p>
               <div className="flex flex-wrap items-center gap-2">
+                {/* Driven by the shared vocabulary, so a document the platform
+                    requires is always one this form can produce. */}
                 <select value={docType} onChange={(e) => setDocType(e.target.value)} className={inputCls} style={{ maxWidth: 220 }}>
-                  <option value="commercial_register">سجل تجاري</option>
-                  <option value="national_id">هوية وطنية</option>
-                  <option value="license">رخصة مزاولة</option>
-                  <option value="other">مستند آخر</option>
+                  {Object.values(DOCUMENT_TYPES).map((type) => (
+                    <option key={type} value={type}>{DOCUMENT_LABELS[type].ar}</option>
+                  ))}
                 </select>
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]">
                   {docUploading ? "جارٍ الرفع..." : "اختر ملفًا وارفعه"}

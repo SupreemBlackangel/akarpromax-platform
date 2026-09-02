@@ -19,6 +19,7 @@ import {
   canTransitionProvider,
   type OrderStatus,
 } from "@services/constants";
+import { assessVerification, providerKind } from "@/lib/services/verification/requirements";
 
 export type ActorContext = { userId?: string | null; ip?: string | null };
 
@@ -203,6 +204,18 @@ export async function submitProviderApplication(providerId: string, actor?: Acto
   }
   const categories = await listProviderCategories(providerId);
   if (!categories.length) throw new Error("PROVIDER_NO_CATEGORIES");
+  // Submitting used to need only one category, so an application could reach a
+  // reviewer with no identity document at all and nothing said which papers
+  // were expected. Requirements depend on the provider's kind and country and
+  // are read from the shared document vocabulary, so every type the platform
+  // asks for is one the upload form can actually produce.
+  const documents = await listProviderDocuments(providerId);
+  const assessment = assessVerification(providerKind(provider), documents, provider.country_code as string | null);
+  if (!assessment.canSubmit) {
+    const error = new Error("PROVIDER_DOCUMENTS_MISSING") as Error & { missing?: string[] };
+    error.missing = assessment.missing;
+    throw error;
+  }
   await db
     .prepare("UPDATE service_provider_profiles SET status = ?1, updated_at = ?2 WHERE id = ?3")
     .bind(PROVIDER_STATUS.SUBMITTED, nowMySqlDateTime(), providerId)
