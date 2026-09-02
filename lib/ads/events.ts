@@ -115,6 +115,32 @@ async function hasSeenBefore(db: D1Database, campaignId: string, ctx: ResolvedAd
   return Number(row?.n ?? 0) > 0;
 }
 
+/**
+ * Cost of one billable event, from the campaign's own pricing model.
+ *
+ * `spent_amount` used to be read by the engine's budget gate but written by
+ * nothing, so `budget` and `dailyBudget` were permanently inert — a campaign
+ * could never exhaust its money. Impressions bill CPM (price per mille) and
+ * clicks bill CPC; `fixed` campaigns are flat-rate and accrue nothing per event.
+ */
+async function eventCost(
+  db: D1Database,
+  campaignId: string,
+  event: "impression" | "click",
+): Promise<number> {
+  const row = await db
+    .prepare("SELECT pricing_model, price FROM ad_campaigns WHERE id = ?1")
+    .bind(campaignId)
+    .first<{ pricing_model: string | null; price: number | string | null }>();
+  if (!row) return 0;
+  const price = Number(row.price) || 0;
+  if (price <= 0) return 0;
+  const model = (row.pricing_model ?? "fixed").toLowerCase();
+  if (event === "impression" && model === "cpm") return price / 1000;
+  if (event === "click" && model === "cpc") return price;
+  return 0;
+}
+
 export async function recordImpression(
   db: D1Database,
   campaignId: string,
@@ -154,16 +180,18 @@ export async function recordImpression(
     )
     .run();
 
-  await upsertDailyStat(db, campaignId, statDate(now), { impressions: 1, uniqueImpressions: unique ? 1 : 0 });
+  const cost = await eventCost(db, campaignId, "impression");
+  await upsertDailyStat(db, campaignId, statDate(now), { impressions: 1, uniqueImpressions: unique ? 1 : 0, spent: cost });
   await db
     .prepare(
       `UPDATE ad_campaigns SET
          total_impressions = total_impressions + 1,
          total_unique_impressions = total_unique_impressions + ?,
+         spent_amount = spent_amount + ?,
          updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
     )
-    .bind(unique ? 1 : 0, campaignId)
+    .bind(unique ? 1 : 0, cost, campaignId)
     .run();
 }
 
@@ -205,15 +233,17 @@ export async function recordClick(
     )
     .run();
 
-  await upsertDailyStat(db, campaignId, statDate(now), { clicks: 1 });
+  const cost = await eventCost(db, campaignId, "click");
+  await upsertDailyStat(db, campaignId, statDate(now), { clicks: 1, spent: cost });
   await db
     .prepare(
       `UPDATE ad_campaigns SET
          total_clicks = total_clicks + 1,
+         spent_amount = spent_amount + ?1,
          updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?1`,
+       WHERE id = ?2`,
     )
-    .bind(campaignId)
+    .bind(cost, campaignId)
     .run();
 }
 
@@ -238,10 +268,11 @@ export async function recordConversion(
     .prepare(
       `UPDATE ad_campaigns SET
          total_conversions = total_conversions + 1,
+         spent_amount = spent_amount + ?1,
          updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?1`,
+       WHERE id = ?2`,
     )
-    .bind(campaignId)
+    .bind(value, campaignId)
     .run();
 }
 

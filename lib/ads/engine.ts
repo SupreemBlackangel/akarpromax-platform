@@ -1,5 +1,5 @@
 import { calculateDistanceKm, parseTimeToMinutes, currentHourDecimal, currentDayOfWeek, frequencyWindowSince, formatDateTime, statDate } from "@/lib/ads/geo";
-import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
+import type { AdEngineRow, ParsedAd, ParsedCreative, ResolvedAdContext, AdMatchResult, EngineStats, FrequencyBuckets, MatchOptions, InventoryHealth, AdChannel } from "@/lib/ads/types";
 import { AD_CHANNELS, isAdChannel } from "@/lib/ads/types";
 import { signTrackingToken } from "@/lib/ads/events";
 import { canonicalPlacementFor, sectionVariants } from "@/src/constants/advertising";
@@ -263,9 +263,15 @@ export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, no
   const today = formatDateTime(now);
 
   if (ctx.sessionId || ctx.userId) {
-    const windowStart = frequencyWindowSince("day", now);
-    const conditions = ["tracked_at >= ?"];
-    const params: unknown[] = [windowStart];
+    // Count every cap window in one pass, so each campaign can be capped by its
+    // own frequency_cap_period instead of everyone sharing a daily window.
+    // SUM(CASE ...) rather than FILTER: this SQL runs on Postgres, MySQL and
+    // SQLite through the runtime adapter.
+    const dayStart = frequencyWindowSince("day", now);
+    const weekStart = frequencyWindowSince("week", now);
+    const monthStart = frequencyWindowSince("month", now);
+    const conditions: string[] = [];
+    const params: unknown[] = [dayStart, weekStart, monthStart];
     if (ctx.sessionId) {
       conditions.push("session_id = ?");
       params.push(ctx.sessionId);
@@ -276,15 +282,26 @@ export async function loadEngineStats(db: D1Database, ctx: ResolvedAdContext, no
     }
     const [dailyMap, frequency] = await Promise.all([loadDailyStats(db, today), db
       .prepare(
-        `SELECT campaign_id, COUNT(*) AS n
+        `SELECT campaign_id,
+                SUM(CASE WHEN tracked_at >= ? THEN 1 ELSE 0 END) AS n_day,
+                SUM(CASE WHEN tracked_at >= ? THEN 1 ELSE 0 END) AS n_week,
+                SUM(CASE WHEN tracked_at >= ? THEN 1 ELSE 0 END) AS n_month,
+                COUNT(*) AS n_all
          FROM ad_impressions
          WHERE ${conditions.join(" AND ")}
          GROUP BY campaign_id`,
       )
       .bind(...(params as [unknown, ...unknown[]]))
-      .all<{ campaign_id: string; n: number }>()]);
-    const frequencyMap = new Map<string, number>();
-    for (const row of frequency.results) frequencyMap.set(row.campaign_id, row.n);
+      .all<{ campaign_id: string; n_day: number; n_week: number; n_month: number; n_all: number }>()]);
+    const frequencyMap = new Map<string, FrequencyBuckets>();
+    for (const row of frequency.results) {
+      frequencyMap.set(row.campaign_id, {
+        day: toNumber(row.n_day),
+        week: toNumber(row.n_week),
+        month: toNumber(row.n_month),
+        all: toNumber(row.n_all),
+      });
+    }
     return { daily: dailyMap, userFrequency: frequencyMap };
   }
 
@@ -458,6 +475,18 @@ function isCategoryMatch(ad: ParsedAd, ctx: ResolvedAdContext): { ok: boolean; s
   return { ok: true, score: 0 };
 }
 
+/** The bucket matching a campaign's configured cap period. */
+function frequencySeen(buckets: FrequencyBuckets, period: string): number {
+  switch (period) {
+    case "week": return buckets.week;
+    case "month": return buckets.month;
+    // "session" and "all" both mean "everything we have recorded for them".
+    case "session":
+    case "all": return buckets.all;
+    default: return buckets.day;
+  }
+}
+
 function isBudgetEligible(ad: ParsedAd, stats: EngineStats | undefined): boolean {
   if (ad.budget > 0 && ad.spentAmount >= ad.budget) return false;
   const daily = stats?.daily.get(ad.id);
@@ -467,7 +496,10 @@ function isBudgetEligible(ad: ParsedAd, stats: EngineStats | undefined): boolean
   }
   if (ad.maxImpressions > 0 && (ad.totalImpressions + (daily?.impressions ?? 0)) >= ad.maxImpressions) return false;
   if (ad.maxClicks > 0 && (ad.totalClicks + (daily?.clicks ?? 0)) >= ad.maxClicks) return false;
-  if (ad.frequencyCapPerUser > 0 && (stats?.userFrequency.get(ad.id) ?? 0) >= ad.frequencyCapPerUser) return false;
+  if (ad.frequencyCapPerUser > 0) {
+    const seen = stats?.userFrequency.get(ad.id);
+    if (seen && frequencySeen(seen, ad.frequencyCapPeriod) >= ad.frequencyCapPerUser) return false;
+  }
   return true;
 }
 

@@ -255,3 +255,45 @@ test("CASE 8: hidden/inactive tab cannot generate false impressions (client cont
   assert.match(source, /impressedRef/, "per-ad impression dedup set");
   assert.match(source, /visibilitychange/, "tab visibility listener");
 });
+
+// --- budget exhaustion and per-campaign frequency-cap periods ----------------
+// `spent_amount` was read by the budget gate but written by nothing, so budget
+// and dailyBudget never cut a campaign off. And every campaign was capped over
+// a daily window regardless of its configured frequency_cap_period.
+
+test("a campaign whose lifetime budget is exhausted stops serving", async () => {
+  const withinBudget = makeAd({ id: "budget-open", budget: 100, spentAmount: 40 });
+  const exhausted = makeAd({ id: "budget-spent", budget: 100, spentAmount: 100 });
+
+  const open = await matchAds(null, FALLBACK_CTX, { count: 1, ads: [withinBudget], stats: EMPTY_STATS });
+  const closed = await matchAds(null, FALLBACK_CTX, { count: 1, ads: [exhausted], stats: EMPTY_STATS });
+
+  assert.equal(open.length, 1, "a campaign under budget should still serve");
+  assert.equal(closed.length, 0, "a campaign at its budget should stop serving");
+});
+
+test("daily budget cuts a campaign off for the day", async () => {
+  const ad = makeAd({ id: "daily-budget", dailyBudget: 25 });
+  const stats = {
+    daily: new Map([["daily-budget", { campaign_id: "daily-budget", impressions: 10, unique_impressions: 10, clicks: 0, unique_clicks: 0, conversions: 0, spent_amount: 25 }]]),
+    userFrequency: new Map(),
+  };
+  const results = await matchAds(null, FALLBACK_CTX, { count: 1, ads: [ad], stats });
+  assert.equal(results.length, 0, "spending the daily budget should stop the campaign");
+});
+
+test("frequency cap uses the campaign's own period, not always daily", async () => {
+  // Seen twice today, five times this week. A cap of 3 must pass on a daily
+  // period and block on a weekly one.
+  const seen = new Map([["freq", { day: 2, week: 5, month: 5, all: 5 }]]);
+  const stats = { daily: new Map(), userFrequency: seen };
+
+  const daily = makeAd({ id: "freq", frequencyCapPerUser: 3, frequencyCapPeriod: "day" });
+  const weekly = makeAd({ id: "freq", frequencyCapPerUser: 3, frequencyCapPeriod: "week" });
+
+  const dailyResult = await matchAds(null, FALLBACK_CTX, { count: 1, ads: [daily], stats });
+  const weeklyResult = await matchAds(null, FALLBACK_CTX, { count: 1, ads: [weekly], stats });
+
+  assert.equal(dailyResult.length, 1, "2 of 3 seen today — still eligible");
+  assert.equal(weeklyResult.length, 0, "5 of 3 seen this week — capped");
+});

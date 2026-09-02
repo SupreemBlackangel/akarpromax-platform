@@ -215,9 +215,16 @@ export type DailyStatRow = {
   spent_amount: number;
 };
 
+export type FrequencyBuckets = { day: number; week: number; month: number; all: number };
+
 export type EngineStats = {
   daily: Map<string, DailyStatRow>;
-  userFrequency: Map<string, number>;
+  /**
+   * Per-campaign impression counts for this viewer, bucketed by cap period.
+   * A single "day" count used to be applied to every campaign, so any campaign
+   * configured for week/month/all-time capping was silently capped daily.
+   */
+  userFrequency: Map<string, FrequencyBuckets>;
 };
 
 export type AdMatchResult = {
