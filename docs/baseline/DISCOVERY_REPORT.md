@@ -1,166 +1,212 @@
 # AkarProMax Office — Discovery report
 
-PHASE 0. Measured on 2026-09-02 against the repository, the shipped binary, the
-local database and the live server. Nothing here is inferred from a file name;
-every claim states how it was checked.
+PHASE 0. Measured on 2026-09-02 against the source tree, the shipped binary, the
+local database and the live server. Every claim states how it was checked.
 
 ---
 
-## Gate 0 does not pass, and the reason changes the project
+## Where the code is
 
-**The desktop application's source code is not in this repository.**
+The desktop source is **not** in this repository. It lives beside it:
 
-| Searched for | Found |
+```
+E:\Akarpromax new 2027\
+├── AkarApp_SOURCE/        ← the WPF source, its own git (HEAD 1faef4c)
+├── AkarApp_INSTALLER/
+├── AkarApp_PUBLISH_TEST/
+├── AkarApp_Patcher/
+└── V 2.0 GPT - Copy/      ← this repository (the web platform)
+    └── AkarApp_LIVE/      ← 86 MB of compiled output, untracked by git
+```
+
+`AkarApp_SOURCE` holds **172 C# files** and `AkarApp.csproj`
+(`net8.0-windows`, `UseWPF=True`). Its git history records a single commit:
+*"restore compilable+runnable state from decompiled 2.0.6 source"*.
+
+That last point governs everything below. **This source was recovered by
+decompiling the shipped 2.0.6 assembly.** It compiles and runs, but it is
+machine-shaped C#, and one part of it did not survive decompilation at all.
+
+---
+
+## The XAML is gone
+
+| | Count |
 |---|---|
-| `*.sln` | **0** |
-| `*.vbproj` / `*.csproj` | **0** |
-| `*.cs` / `*.vb` / `*.xaml` | **2**, both shipped inside the output folder (`Localization/LocalizationManager.cs`, `LocExtension.cs`) |
-| `AkarApp_LIVE/` | 86 MB of **compiled output** — `AkarApp.exe`, `AkarApp.dll`, 50+ dependency DLLs |
-| `AkarApp_LIVE/webui`, `dist` | **built** SPA bundles; no `src/` |
-| `AkarApp_LIVE` in git | **0 tracked files** — the whole folder is untracked |
+| `.cs` files | **172** |
+| `.xaml` files | **0** |
+| `.baml` files | **37** |
 
-The mandate's Rule Zero says the original must stay runnable and untouched. That
-is satisfied by default and cannot be otherwise: there is nothing here to touch.
-But it also means the instruction *"convert the existing WPF code to VB.NET
-WinForms"* has no input. There is no WPF code in this repository to convert —
-only the program it compiles to.
+The views exist only as **compiled BAML**. The project embeds
+`AkarApp.g.resources` — extracted verbatim from the shipped DLL — because
+per-file BAML entries fail with *"Cannot locate resource 'app.xaml'"*.
 
-This is reported rather than worked around, per the mandate's own rules: §4
-forbids assuming anything not in the code, and §57 forbids hiding problems.
-
-### What that leaves
-
-Three options, and this is a decision only you can make:
-
-1. **Provide the source.** If the Visual Studio solution exists on another
-   machine or in another repository, point me at it and PHASE 0 completes
-   properly — everything below already maps the target.
-2. **Rewrite from the specification this report reconstructs.** The 37 screens,
-   55 tables, 5 business-rule triggers and the API contract are all recoverable
-   from the artefacts, and are documented here. This is a rewrite, not a
-   migration, and it will not reproduce behaviour that exists only inside
-   compiled methods.
-3. **Decompile the assembly** to recover C# source, then port. `AkarApp.dll` is
-   1.4 MB of managed .NET 8 and would decompile readably. This is your own
-   software, so it is legitimate — but it produces machine-shaped code that
-   still needs the architecture work in §7.
-
-I have not started any of the three. Option 2 and 3 are substantial and
-irreversible in effort, and picking for you would be guessing.
+So the 37 screens can be **run**, but not **read or edited**. Every layout,
+style, binding, colour and data template is opaque. A migration that must
+reproduce those screens has no source for them; they would have to be
+reconstructed from the running application, or the BAML decompiled back to XAML
+first.
 
 ---
 
-## What the application actually is
+## The 37 views are unreachable at runtime
 
-| Property | Value | How verified |
-|---|---|---|
-| Runtime | **.NET 8.0**, `Microsoft.WindowsDesktop.App` | `AkarApp.runtimeconfig.json` |
-| UI framework | **WPF** | `PresentationFramework` referenced; `AkarApp.g.resources` holds compiled BAML |
-| WinForms | **not used** | `System.Windows.Forms`: 0 occurrences in the assembly |
-| DevExpress | **not present** | absent from all 57 entries in `AkarApp.deps.json` |
-| Embedded browser | `Microsoft.Web.WebView2.Wpf.WebView2` 1.0.2903.40 | assembly strings |
-| Data | EF Core 8.0.4 + SQLite (`AkarDB.sqlite`) | `deps.json`, database opened directly |
-| Office documents | `DocumentFormat.OpenXml` | `deps.json` |
+This is the finding that reframes the whole mandate.
 
-> **A correction to an earlier note of mine.** I had previously recorded that the
-> WPF shell was dead compiled BAML and that the real UI was the WebView2 React
-> SPA. That is wrong, and this report supersedes it. The BAML resources contain
-> **37 live WPF views**; the SPA is reached through exactly one of them
-> (`AkarV2PortalWindow`). Migrating on the old assumption would have thrown away
-> the entire desktop application.
+`MainWindow.cs`:
+
+```csharp
+private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+{
+    TryOpenModernPortalOnStartup();      // → OpenModernPortal()
+}
+
+private void OpenModernPortal()
+{
+    AkarV2PortalWindow akarV2PortalWindow = new AkarV2PortalWindow("http://localhost:1420/") { ... };
+    akarV2PortalWindow.Closed += delegate { Application.Current.Shutdown(); };
+    Application.Current.MainWindow = akarV2PortalWindow;
+    akarV2PortalWindow.Show();
+}
+```
+
+MainWindow opens the WebView2 portal the moment it loads, hands it the
+`MainWindow` role, and shuts the application down when it closes. The user never
+reaches the WPF UI. `MainWindow` has 10 `_Click` handlers; none are reachable.
+
+`AkarV2PortalWindow` serves the React SPA from disk:
+
+```csharp
+_localIndexPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "webui", "index.html");
+Browser.CoreWebView2.SetVirtualHostNameToFolderMapping("akarapp.local", text, ...);
+Navigate("https://akarapp.local/index.html");
+```
+
+**So the product the user actually sees is a React SPA in a WebView2 window.**
+The WPF application is a launcher around it. The SPA ships as built bundles
+(`AkarApp_LIVE/webui/assets/*.js`); no React source was found in any sibling
+folder.
+
+### What that means for this mandate
+
+"Convert the WPF UI to VB.NET WinForms with DevExpress" would, executed
+literally, port 37 screens **no user can currently open**, and would not touch
+the interface they actually use. The result would look complete and change
+nothing.
+
+That is a decision for you, not for me, so I have stopped here. The three
+coherent readings:
+
+1. **Rebuild the real product as a native WinForms app** — i.e. reimplement the
+   SPA's functionality in VB.NET/DevExpress and drop WebView2. This is what
+   "professional desktop application" most likely means, and it is the largest
+   of the three. It needs the SPA's source, which I have not located.
+2. **Port the dormant WPF modules and revive them** — the 37 screens become the
+   product again and the portal becomes one tab. This matches the mandate's
+   literal words. The XAML being gone makes it a reconstruction.
+3. **Keep the WebView2 shell, harden and modernise it** — cheapest, addresses
+   the defects below, but is not a WinForms migration.
+
+I am not choosing between these, and I will not start one on assumption.
 
 ---
 
-## UI inventory — 37 compiled views
+## Source layout (what does exist, and is readable)
 
-Recovered from the BAML resource names inside `AkarApp.dll`.
+```
+AkarApp/
+├── App.cs, MainWindow.cs
+├── Models/        48 files — EF Core entities + AkarDbContext
+├── Services/      25 files — see below
+├── ViewModels/    ~30 files
+├── Views/         code-behind only (the XAML is gone)
+├── Security/      SecurityManager.cs
+├── Localization/  LocalizationManager.cs, LocExtension.cs
+├── Converters/    4 WPF value converters
+└── Migrations/    EF migrations + model snapshot
+```
 
-**Shell:** `App`, `MainWindow`
+**Services — the business logic worth preserving (§8):**
 
-**Core modules**
+`AccountingService`, `LedgerService`, `SubscriptionService`, `LicenseService`,
+`OfflineLicenseService`, `CloudBackupSyncService`, `RadarService`,
+`DesktopAdService`, `ContractFileLinkService`, `StorageService`, `PrintHelper`,
+`ScannerService`, `DatabaseSeeder`, `BackgroundServices`, `AppIntegrityService`,
+`IntegrityManifest`, `HwidGenerator`, `SecureDesktopSecretStore`,
+`BridgeHostObject` (the WebView2 ↔ .NET bridge).
 
-| Area | Views |
-|---|---|
-| Dashboard | `DashboardView`, `DashboardAlertsView` |
-| Clients | `ClientsView`, `AddClientView`, `ClientProfileView`, `ClientRequestMatchesWindow` |
-| Properties | `PropertiesView`, `AddPropertyView`, `PropertyBrokersWindow` |
-| Contracts | `ContractsView`, `ContractTemplatesView`, `SmartContractBuilderView`, `SaleContractView`, `SaleDialog`, `OfficeAuthContractView`, `OfficeAuthorizationWindow` |
-| Finance | `TreasuryView`, `VouchersView`, `FinancialReceiptView`, `FinancialReportsView`, `PostDatedChecksView` |
-| Operations | `MaintenanceTicketsView` |
-| Users | `UsersView`, `UserManagementView` |
-| Marketing | `SocialMediaView`, `WhatsAppReminderDialog` |
-| Platform link | `AkarV2PortalWindow` (the WebView2 host for the web app) |
-| Access | `LoginView`, `ActivationView`, `KeyGeneratorWindow`, `PasswordDialog` |
-| System | `SettingsView`, `LanguageSelectionWindow`, `FileNameDialog`, `PrintAcknowledgmentWindow` |
-
-Every one of these needs a feature-parity row per §6. None can be signed off
-without the original running to compare against.
+This layer is readable and portable. It is the part of a migration that can
+proceed on evidence rather than reconstruction.
 
 ---
 
 ## Database
 
-Full table listing in [DATABASE_INVENTORY.md](./DATABASE_INVENTORY.md).
+Full listing in [DATABASE_INVENTORY.md](./DATABASE_INVENTORY.md).
 
-- **55 tables**, **29 indexes**, **5 triggers**, 0 views.
+- **55 tables**, **29 indexes**, **5 triggers**, 0 views (`AkarApp_LIVE/AkarDB.sqlite`).
 - Reference data populated: 106 `LookupItems`, 19 `LookupCategories`,
-  8 `CountryConfigs`, 3 `ContractTemplates`, 3 `TaxFeeTypes`, 1 `Branch`,
-  3 `Clients`, 3 `Users`. Transactional tables empty — this is a seed copy, not
-  an office's production file.
-- **Business rules live in triggers**, not only in code: ownership shares must
-  total 100% (insert and update), a lead accepts at most two claims, and the
-  client timeline is append-only. A rewrite that recreates the schema without
-  these silently drops three real rules.
+  8 `CountryConfigs`, 3 each of `Clients`, `Users`, `ContractTemplates`,
+  `TaxFeeTypes`, 1 `Branch`. Transactional tables empty — a seed copy, not any
+  office's production file.
+- **Three business rules live in triggers, not in code:**
+  ownership shares must total 100% (insert and update), a lead accepts at most
+  two claims, and the client timeline is append-only (update and delete blocked).
+  A port that recreates the schema from the EF model alone silently drops all
+  three.
 
 ---
 
-## Server integration — two defects, both blocking
+## Server integration — three defects
 
-The assembly calls:
+### 1. The API domain does not exist
 
+`AkarApp/Services/SubscriptionService.cs` and `DesktopAdService.cs` hardcode:
+
+```csharp
+private const string SyncUrl   = "https://akar-promax.com/api/program/sync";
+private const string StatusUrl = "https://akar-promax.com/api/program/subscription-status";
 ```
-https://akar-promax.com
-https://akar-promax.com/api/program/subscription-status
-https://akar-promax.com/api/program/sync
-```
-
-**1. The domain does not exist.**
 
 ```
 nslookup akar-promax.com  →  Non-existent domain
-curl  → status 000, no route
+curl                      →  status 000, no route
 ```
 
-The live platform is `akarpromax.com`, without the hyphen. Every call the
-shipped binary makes to the server fails at DNS.
+The live platform is **`akarpromax.com`**, without the hyphen. Every server call
+the desktop app makes fails at DNS.
 
-**2. `subscription-status` is not implemented anywhere.**
+### 2. `subscription-status` is not implemented
 
 Against the real domain:
 
-| Endpoint the app calls | Live result |
+| Endpoint the app calls | Live |
 |---|---|
-| `/api/program/sync` | **200** — implemented |
-| `/api/program/subscription-status` | **404** — no such route |
-| `/api/desktop` | **404** — no such route |
+| `/api/program/sync` | **200** |
+| `/api/program/subscription-status` | **404** |
+| `/api/desktop/...` | **404** |
 
 The server implements `/api/program/{login, devices, profile, properties, messages, sync}`.
-Subscription status is not among them.
+Subscription status is not among them. So even with the domain corrected, the
+licence check has nothing to call.
 
-So the desktop app cannot check a subscription and cannot sync — first because
-of the domain, and then because one of the two endpoints does not exist.
+### 3. A shared secret is hardcoded and sent in the query string
 
-> **Caveat, stated because it matters.** `AkarApp.dll` in this folder is dated
-> 24 Jun 2026, while the installer published at
-> `/downloads/AkarProMaxOffice-Setup.exe` is dated 30 Aug 2026 (18.9 MB) and the
-> manifest advertises **2.0.6**. The shipped binary may differ from this copy. I
-> have not downloaded and inspected it, so treat the two findings above as
-> proven for *this* build and unverified for the released one. Confirming it is
-> a short job and should be done before any of it is acted on.
+```csharp
+string url = $"{StatusUrl}?signature={Uri.EscapeDataString("Akar_ProMax_2026_Secure_Key")}&userToken={...}";
+```
+
+The key is a literal in the assembly, so it is recoverable from any installed
+copy, and it travels as a **URL query parameter** — the one place a secret
+should never go, since query strings land in access logs, proxies and crash
+reports. The user token rides alongside it.
+
+This is the mandate's §42 (hardcoded secrets) and §11 (no plaintext secrets) in
+one line.
 
 ---
 
-## Update system as it stands
+## Update system
 
 `https://akarpromax.com/office-app/version.json`:
 
@@ -169,88 +215,89 @@ of the domain, and then because one of the two endpoints does not exist.
   "mandatory": true, "notes": "..." }
 ```
 
-The installer exists and is current. Against §32–§37 this manifest is missing
-`minimumSupportedVersion`, `channel`, `releaseDate`, `sha256` and structured
-release notes; there is no separate updater executable, no rollback, no
-per-version `/releases/<version>/` layout and no integrity check.
+The installer is present and current (18.9 MB, 30 Aug 2026).
+
+Against §32–§37 the manifest lacks `minimumSupportedVersion`, `channel`,
+`releaseDate` and `sha256`; there is no separate updater executable, no
+integrity verification, no rollback, and no `/releases/<version>/` layout.
 
 **Standing hazard:** `mandatory` is `true`. Publishing a version number without
-a matching installer at that URL makes every installed client demand an update
-it cannot obtain, which locks all of them out. Any change here must publish the
-installer first and the manifest second.
+a matching installer at that URL leaves every installed client demanding an
+update it cannot fetch — which locks all of them out. Installer first, manifest
+second, always.
 
 ---
 
 ## Localization
 
-`Localization/strings.ar.json` and `strings.en.json`, **197 keys each, perfectly
-aligned** — no key exists in one and not the other. That is a healthy starting
-point.
+`strings.ar.json` and `strings.en.json`: **197 keys each, perfectly aligned** —
+no key in one and missing from the other.
 
-**Turkish does not exist.** The mandate requires ar/en/tr, so `strings.tr.json`
-is 197 keys of new translation, not a port.
+**Turkish does not exist.** §22 requires ar/en/tr, so `strings.tr.json` is 197
+keys of new translation.
+
+Note this covers the WPF layer only. The SPA — the interface users actually see
+— carries its own strings inside its bundles.
 
 ---
 
 ## Security findings
 
-1. **A saved credential ships in the application directory.**
-   `AkarApp_LIVE/remember.json` contains `{"u":"admin","p":"AQAAANCMnd8BFdER..."}`.
-   The blob is DPAPI-protected, which is the right primitive (§11) — but it sits
-   beside the executable rather than under `%APPDATA%`, in a directory an
-   installer or updater may replace, and it is a real account's stored secret
-   sitting in a working folder. It is **not** tracked by git (verified), which is
-   the one piece of good news.
-2. **`EnableUnsafeBinaryFormatterSerialization: true`** in
-   `AkarApp.runtimeconfig.json`. `BinaryFormatter` is removed in .NET 9 and is a
-   known remote-code-execution vector whenever it deserializes anything not
-   fully trusted. Where it is used must be established before any port.
-3. Local database is unencrypted SQLite. Whether that is acceptable depends on
-   what an office stores in it; it needs a decision, not a default.
+| # | Finding | Severity |
+|---|---|---|
+| S1 | Shared secret hardcoded **and** sent as a URL query parameter, alongside the user token | **High** |
+| S2 | `EnableUnsafeBinaryFormatterSerialization: true` in `runtimeconfig.json` — a known RCE vector, and removed outright in .NET 9 | **High** |
+| S3 | `AkarApp_LIVE/remember.json` stores a saved credential (`admin` + DPAPI blob) beside the executable rather than under `%APPDATA%`, in a directory the updater replaces. DPAPI is the right primitive; the location is not. Not tracked by git — verified | Medium |
+| S4 | `AkarDB.sqlite` unencrypted. Whether that is acceptable depends on what an office keeps in it — a decision, not a default | Medium |
 
 ---
 
 ## Risk register
 
-| # | Risk | Severity | Note |
-|---|---|---|---|
-| R1 | No source code | **Blocker** | Gate 0 cannot pass; needs your decision |
-| R2 | Business rules in triggers | High | Invisible to a code-only port |
-| R3 | Dead API domain | High | Sync and subscription both fail today |
-| R4 | `subscription-status` unimplemented | High | Server-side work, not desktop |
-| R5 | Mandatory-update gate | High | A wrong manifest locks out every install |
-| R6 | `BinaryFormatter` enabled | Medium | RCE surface; blocks .NET 9 |
-| R7 | Turkish absent | Medium | New translation, 197 keys |
-| R8 | DevExpress not licensed/present | Medium | New dependency and licence cost |
-| R9 | No automated tests exist | Medium | Parity claims rest on manual comparison |
-| R10 | Repo binary may be stale vs 2.0.6 | Medium | Verify before acting on R3/R4 |
+| # | Risk | Severity |
+|---|---|---|
+| R1 | **The migration target is ambiguous** — the WPF UI is dormant; the real UI is the SPA | **Blocker** |
+| R2 | **All XAML is lost**; 37 views exist only as BAML and cannot be read or edited | **Blocker for option 2** |
+| R3 | Source is decompiled, not original — names and structure are machine-shaped | High |
+| R4 | Business rules live in database triggers, invisible to a code-only port | High |
+| R5 | API domain does not resolve | High |
+| R6 | `subscription-status` unimplemented server-side | High |
+| R7 | Hardcoded secret in query string (S1) | High |
+| R8 | Mandatory-update gate can lock out every installation | High |
+| R9 | SPA source not located — blocks option 1 | High |
+| R10 | `BinaryFormatter` enabled (S2) | Medium |
+| R11 | Turkish absent; SPA strings separate from RESX | Medium |
+| R12 | DevExpress neither referenced nor licensed | Medium |
+| R13 | No automated tests exist anywhere in the desktop tree | Medium |
 
 ---
 
-## Recommended order, once Gate 0 clears
+## Recommended order, once R1 is decided
 
-The mandate's phase order assumes source in hand. Two things should move,
-and per §62 I am recording the mismatch rather than quietly reordering:
+Per §62 I am recording a departure from the mandate's order rather than making
+it silently:
 
-- **Fix R3 and R4 first, on the current WPF app.** They are server-side and
-  desktop-config work, they are breaking users *today*, and they are independent
-  of any migration. Waiting for a rewrite to fix a DNS name would be poor
-  judgement.
-- **Recover the trigger logic into documented domain rules before PHASE 2.**
-  If it stays only in the database, the new Domain layer will not know it exists.
-
-Otherwise the mandate's PHASE 1 → 13 order stands.
+1. **Fix R5, R6 and R7 first, on the current shipped app.** They break users
+   today, they are independent of any migration, and two of them are
+   server-side. Deferring a dead DNS name until a rewrite lands would be poor
+   judgement.
+2. **Extract the trigger rules into documented domain rules before PHASE 2**, or
+   the new Domain layer will not know they exist.
+3. Then the mandate's PHASE 1 → 13, against whichever target you choose.
 
 ---
 
-## Baseline status
+## Baseline status — Gate 0 does **not** pass
 
 | Check | Result |
 |---|---|
-| Original application runs | **Not attempted** — no source to build; the shipped `AkarApp.exe` was not executed |
-| Solution builds | **N/A** — no solution |
-| Automated tests | **None exist** |
-| Isolated development copy | **Not created** — creating one before the source question is settled would only copy build output |
+| Source located | ✅ `AkarApp_SOURCE`, 172 C# files |
+| Solution builds | **Not attempted** this session (a prior session recorded a working recipe) |
+| Original runs | **Not attempted** |
+| XAML available | ❌ **Lost** — 37 views are BAML only |
+| Migration target agreed | ❌ **Open** — see R1 |
+| Isolated development copy | **Not created** — pointless before the target is settled |
+| Automated tests | ❌ none exist |
 
-Per §56 I am not calling any part of this complete. PHASE 0 is **blocked at
-Gate 0** pending your answer on where the source lives.
+Per §56, nothing here is called complete. PHASE 0 halts at Gate 0 pending your
+decision on R1.
