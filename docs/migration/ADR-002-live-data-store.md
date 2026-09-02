@@ -101,3 +101,77 @@ integrity above everything else.
 - Whether any installation has a `StoragePath1` pointing at a network share,
   where `File.Replace` semantics differ.
 - Whether `.bak` files should be retained beyond one generation.
+
+---
+
+## Addendum, 2026-09-03 — from running the SPA
+
+The SPA was served locally and opened in a browser. Four things that static
+reading had not established, and one correction.
+
+### The two layers disagree about the server, and only one of them is wrong
+
+The SPA calls **`https://akarpromax.com`** — the correct domain. The .NET
+services called `akar-promax.com`, which does not resolve.
+
+That is why nobody noticed: sign-in, the office screens and the platform sync
+all worked, because those are the SPA's calls. Only the .NET layer's
+subscription check and desktop ad service were pointed at nothing.
+
+### The update mechanism has never worked either
+
+`bootstrap.js` fetches `PLATFORM + "/office-app/version.json"`, and that path
+serves **no `Access-Control-Allow-Origin` header** — verified against
+production. The SPA runs on the `https://akarapp.local` virtual host, so the
+fetch is cross-origin and fails. Reproduced exactly: opening the SPA on a
+different origin produced
+
+```
+Access to fetch at 'https://akarpromax.com/office-app/version.json' ...
+blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
+```
+
+This cuts both ways and both matter:
+
+- **The mandatory-update gate cannot fire.** The risk recorded as K2 — that a
+  careless manifest publish locks every installation out — is smaller than
+  feared, because the check never completes.
+- **No installation has ever been told about an update.** Shipping a new version
+  would reach nobody automatically until the CORS header is added.
+
+Adding one `Access-Control-Allow-Origin` to that location fixes it. It is a
+one-line nginx change and it is deliberately **not** made here, because it
+activates a dormant mandatory gate across every customer at once. That is an
+outward-facing change with no undo and it needs a decision, not an inference.
+
+### A correction
+
+I stated mid-investigation that the bridge "is not in the SPA at all". That was
+wrong. It is there, minified as `window.chrome?.webview` with optional
+chaining, which a literal search for `chrome.webview` misses. The SPA sends
+request/reply actions through it — `get_path`, `get_hwid`,
+`get_subscription_status`, `apply_activation_code`, `backup_create`,
+`backup_restore`, `browse_folder`, `scan_document` — each carrying a
+`requestId`.
+
+### An open question that gates the migration
+
+The `save` and `migrate` actions the .NET host handles carry **no** `requestId`,
+and the current SPA bundle does not appear to send them. Its persistence is
+`localStorage`: 27 `getItem` and 24 `setItem` calls, and it reports
+"local path (localStorage)" when no bridge is present.
+
+So it is **not established** whether the current build still mirrors
+localStorage into the `AkarData` JSON files, or whether those files are frozen
+at the one-time migration recorded by `__akar_bridge_migrated_v1.json`. Their
+timestamps are recent and close to the WebView2 store's, which is consistent
+with them being in sync — but consistent is not the same as verified, and an
+attempt to read Chromium's LevelDB directly was inconclusive because its keys
+are UTF-16 and the probe was not.
+
+**The importer reads the JSON files. If localStorage is the authoritative store
+and the files lag it, the migration would import stale data.** Nothing should be
+migrated for real until this is settled, and it is settled by watching whether
+editing a client in the running application changes
+`AkarData/akar_v2_clients.json` — a two-minute check on a machine with the app
+installed, which is worth more than any further reading of a minified bundle.
