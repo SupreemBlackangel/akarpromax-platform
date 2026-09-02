@@ -6,10 +6,10 @@ import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { getProviderProfileByUserId } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 import { detectImageMime } from "@/lib/properties/image-processing";
+import { VERIFICATION_UPLOAD_DIR, VERIFICATION_URL_PREFIX } from "@/lib/services/verification/document-storage";
 
 export const dynamic = "force-dynamic";
 
-const UPLOAD_DIR = process.env.VERIFICATION_UPLOAD_DIR || "/var/www/uploads/verifications";
 const MAX_BYTES = 8 * 1024 * 1024;
 
 function isPdf(bytes: Uint8Array): boolean {
@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "الصيغة غير مدعومة — PDF أو JPG أو PNG أو WebP" }, { status: 400 });
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
+  await mkdir(VERIFICATION_UPLOAD_DIR, { recursive: true });
   const fileName = `${crypto.randomUUID()}.${ext}`;
-  await writeFile(join(UPLOAD_DIR, fileName), buffer);
+  await writeFile(join(VERIFICATION_UPLOAD_DIR, fileName), buffer);
 
-  return NextResponse.json({ ok: true, url: `/uploads/verifications/${fileName}`, size: buffer.byteLength, mimeType: ext === "pdf" ? "application/pdf" : `image/${ext === "jpg" ? "jpeg" : ext}` }, { status: 201 });
+  return NextResponse.json({ ok: true, url: `${VERIFICATION_URL_PREFIX}${fileName}`, size: buffer.byteLength, mimeType: ext === "pdf" ? "application/pdf" : `image/${ext === "jpg" ? "jpeg" : ext}` }, { status: 201 });
 }

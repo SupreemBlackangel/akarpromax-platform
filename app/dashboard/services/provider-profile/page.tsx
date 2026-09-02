@@ -478,7 +478,7 @@ export default function ProviderProfilePage() {
                         {Number(doc.verified) === 1
                           ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">موثّق ✓</span>
                           : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">بانتظار المراجعة</span>}
-                        <a href={String(doc.file_url)} target="_blank" rel="noreferrer" className="text-xs font-black text-[var(--color-primary)] hover:underline">فتح</a>
+                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="text-xs font-black text-[var(--color-primary)] hover:underline">فتح</a>
                       </span>
                     </li>
                   ))}

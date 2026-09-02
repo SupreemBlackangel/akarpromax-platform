@@ -417,6 +417,20 @@ export async function listProviderDocuments(providerId: string): Promise<Array<R
   return result.results ?? [];
 }
 
+/**
+ * One document with its owning provider, for the file endpoint's authorization
+ * check. Listing documents is already gated to the owner or a reviewer; serving
+ * the bytes needs the same gate, and that needs the owner's id from the row
+ * itself rather than from the caller.
+ */
+export async function getProviderDocument(documentId: string): Promise<Record<string, unknown> | null> {
+  const db = await getServicesDb();
+  return db
+    .prepare("SELECT * FROM service_provider_documents WHERE id = ?1 LIMIT 1")
+    .bind(documentId)
+    .first<Record<string, unknown>>();
+}
+
 export async function verifyProviderDocument(documentId: string, verified: boolean, actor?: ActorContext): Promise<void> {
   const db = await getServicesDb();
   await db

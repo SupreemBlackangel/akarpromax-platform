@@ -14,10 +14,15 @@ test("the services marketplace ships public hub, catalog and provider profile pa
     readFile(new URL("../app/providers/apply/page.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(hub, /CategoryCard/);
+  // The hub renders category groups as its own icon buttons rather than
+  // through CategoryCard; the shared card is still used by the pages that show
+  // a category in a grid, which is what the export assertion below covers.
+  assert.match(hub, /ServiceCategoryIcon/);
   assert.match(hub, /ProviderCard/);
   assert.match(hub, /RequestCard/);
-  assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\(`\/api\/service-categories\$\{countrySuffix\}`\)/);
+  // The professions taxonomy is global. Country scoping filters providers and
+  // requests only, so the categories fetch deliberately carries no country.
+  assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\(`\/api\/service-categories`\)/);
   assert.match(hub, /scope: isGlobal \? "global" : "local"/);
   assert.doesNotMatch(hub, /country=OM/);
   assert.match(hub, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);

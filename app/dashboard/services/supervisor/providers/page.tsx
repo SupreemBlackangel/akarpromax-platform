@@ -178,7 +178,7 @@ function SupervisorProvidersContent() {
                         </small>
                       </span>
                       <span style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        <a href={String(doc.file_url)} target="_blank" rel="noreferrer" className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-xs font-black text-[var(--color-primary)]">{isArabic ? "فتح" : "Open"}</a>
+                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-xs font-black text-[var(--color-primary)]">{isArabic ? "فتح" : "Open"}</a>
                         {Number(doc.verified) === 1 ? (
                           <button type="button" onClick={() => void setDocVerified(String(doc.id), false)} className="rounded-lg bg-amber-100 px-2.5 py-1.5 text-xs font-black text-amber-700">{isArabic ? "إلغاء التوثيق" : "Unverify"}</button>
                         ) : (

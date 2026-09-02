@@ -4,6 +4,7 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getProviderProfileByUserId, addProviderDocument, listProviderDocuments, verifyProviderDocument } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { isVerificationFileUrl } from "@/lib/services/verification/document-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   const fileUrl = clean(body.fileUrl, 800);
   const type = clean(body.type, 40);
   if (!fileName || !fileUrl || !type) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
+  }
+  // `fileUrl` arrives from the client. Only a reference the upload route itself
+  // minted is accepted, so a provider cannot point their own document row at
+  // another provider's file, at a path outside the verification directory, or
+  // at an external URL that the review screen would then render.
+  if (!isVerificationFileUrl(fileUrl)) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
   const documentId = await addProviderDocument(
