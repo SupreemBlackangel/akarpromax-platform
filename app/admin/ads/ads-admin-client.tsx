@@ -22,6 +22,11 @@ type CampaignCreative = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  altTextAr: string | null;
+  altTextEn: string | null;
+  altTextTr: string | null;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   position: number;
   durationSeconds: number;
   status: string;
@@ -34,6 +39,11 @@ type CreativeDraft = {
   mobileMediaUrl: string;
   tabletMediaUrl: string;
   posterUrl: string;
+  altTextAr: string;
+  altTextEn: string;
+  altTextTr: string;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   durationSeconds: string;
 };
 
@@ -319,6 +329,11 @@ function serialisedToForm(c: Campaign): FormState {
       mobileMediaUrl: creative.mobileMediaUrl || "",
       tabletMediaUrl: creative.tabletMediaUrl || "",
       posterUrl: creative.posterUrl || "",
+      altTextAr: creative.altTextAr || "",
+      altTextEn: creative.altTextEn || "",
+      altTextTr: creative.altTextTr || "",
+      mediaWidth: creative.mediaWidth ?? null,
+      mediaHeight: creative.mediaHeight ?? null,
       durationSeconds: String(creative.durationSeconds || 6),
     })),
   };
@@ -461,6 +476,11 @@ function toApiBody(form: FormState) {
       mobileMediaUrl: creative.mobileMediaUrl || null,
       tabletMediaUrl: creative.tabletMediaUrl || null,
       posterUrl: creative.posterUrl || null,
+      altTextAr: creative.altTextAr || null,
+      altTextEn: creative.altTextEn || null,
+      altTextTr: creative.altTextTr || null,
+      mediaWidth: creative.mediaWidth,
+      mediaHeight: creative.mediaHeight,
       durationSeconds: Number(creative.durationSeconds) || 6,
     })),
   };
@@ -595,7 +615,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
     setForm({
       ...emptyForm(initialCountries),
       priority: String(Math.min(999, Math.max(0, ...campaigns.map((item) => item.priority)) + 1)),
-      ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType, creatives: [{ id: "", mediaType: asset.mediaType, mediaUrl: asset.url, mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", durationSeconds: "6" }] } : {}),
+      ...(asset ? { mediaUrl: asset.url, mediaType: asset.mediaType, creatives: [{ id: "", mediaType: asset.mediaType, mediaUrl: asset.url, mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", altTextAr: "", altTextEn: "", altTextTr: "", mediaWidth: null, mediaHeight: null, durationSeconds: "6" }] } : {}),
     });
     setPreviewLocale("ar");
     setWizardStep(1);
@@ -633,7 +653,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
       if (current.creatives.length >= creativeLimit) return current;
       return {
         ...current,
-        creatives: [...current.creatives, { id: "", mediaType: "image", mediaUrl: "", mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", durationSeconds: "6" }],
+        creatives: [...current.creatives, { id: "", mediaType: "image", mediaUrl: "", mobileMediaUrl: "", tabletMediaUrl: "", posterUrl: "", altTextAr: "", altTextEn: "", altTextTr: "", mediaWidth: null, mediaHeight: null, durationSeconds: "6" }],
       };
     });
   }

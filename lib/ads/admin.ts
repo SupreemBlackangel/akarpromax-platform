@@ -159,10 +159,20 @@ export type CreativePayload = {
   mobileMediaUrl: string | null;
   tabletMediaUrl: string | null;
   posterUrl: string | null;
+  /** Localized alt text. `null` means "leave whatever is stored" on update. */
+  altText: { ar: string | null; en: string | null; tr: string | null };
+  /** Intrinsic pixels, captured at upload; `null` = unknown / keep stored. */
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   position: number;
   durationSeconds: number;
   status: string;
 };
+
+function positiveInt(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 && n <= 20000 ? n : null;
+}
 
 export function normaliseCreatives(body: Record<string, unknown>): CreativePayload[] {
   const cap = MAX_AD_CREATIVES;
@@ -179,6 +189,13 @@ export function normaliseCreatives(body: Record<string, unknown>): CreativePaylo
       mobileMediaUrl: cleanUrl(creative.mobileMediaUrl),
       tabletMediaUrl: cleanUrl(creative.tabletMediaUrl),
       posterUrl: cleanUrl(creative.posterUrl),
+      altText: {
+        ar: clean(creative.altTextAr, 180) || null,
+        en: clean(creative.altTextEn, 180) || null,
+        tr: clean(creative.altTextTr, 180) || null,
+      },
+      mediaWidth: positiveInt(creative.mediaWidth),
+      mediaHeight: positiveInt(creative.mediaHeight),
       position: index + 1,
       durationSeconds: Math.max(3, Math.min(15, Number(creative.durationSeconds) || 6)),
       status: "active",

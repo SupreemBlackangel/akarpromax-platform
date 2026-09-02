@@ -26,6 +26,11 @@ type CreativeRow = {
   position: number;
   duration_seconds: number;
   status: string;
+  alt_text_ar: string | null;
+  alt_text_en: string | null;
+  alt_text_tr: string | null;
+  media_width: number | null;
+  media_height: number | null;
 };
 
 function parseList(value: string | null | undefined, fallback: string[] = []): string[] {
@@ -78,7 +83,7 @@ export async function GET(request: NextRequest) {
     const ids = campaigns.map((campaign) => campaign.id);
     const placeholders = ids.map((_, index) => `?${index + 1}`).join(",");
     const creativeRows = await db
-      .prepare(`SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status FROM ad_creatives WHERE campaign_id IN (${placeholders}) ORDER BY position ASC`)
+      .prepare(`SELECT id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status, alt_text_ar, alt_text_en, alt_text_tr, media_width, media_height FROM ad_creatives WHERE campaign_id IN (${placeholders}) ORDER BY position ASC`)
       .bind(...ids)
       .all<CreativeRow>();
     const grouped = new Map<string, CreativeRow[]>();
@@ -92,6 +97,11 @@ export async function GET(request: NextRequest) {
         mobileMediaUrl: row.mobile_media_url,
         tabletMediaUrl: row.tablet_media_url,
         posterUrl: row.poster_url,
+        altTextAr: row.alt_text_ar ?? null,
+        altTextEn: row.alt_text_en ?? null,
+        altTextTr: row.alt_text_tr ?? null,
+        mediaWidth: row.media_width != null ? Number(row.media_width) : null,
+        mediaHeight: row.media_height != null ? Number(row.media_height) : null,
         position: Number(row.position),
         durationSeconds: Number(row.duration_seconds),
         status: row.status,
@@ -181,9 +191,9 @@ export async function POST(request: NextRequest) {
     .run();
   if (payload.creatives.length) {
     await db.batch(payload.creatives.map((creative) => db.prepare(
-      `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
-    ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status)));
+      `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status, alt_text_ar, alt_text_en, alt_text_tr, media_width, media_height)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
+    ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status, creative.altText.ar, creative.altText.en, creative.altText.tr, creative.mediaWidth, creative.mediaHeight)));
   }
   await writeAudit(db, identity.email, "ad.created", id, { status, approvalStatus, countries: payload.countries, creatives: payload.creatives.length });
   return NextResponse.json({ id }, { status: 201 });
@@ -281,13 +291,42 @@ export async function PATCH(request: NextRequest) {
     .bind(...values, id)
     .run();
   if (Array.isArray(body.creatives)) {
-    await db.prepare("DELETE FROM ad_creatives WHERE campaign_id = ?1").bind(id).run();
-    if (payload.creatives.length) {
-      await db.batch(payload.creatives.map((creative) => db.prepare(
-        `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
-      ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status)));
+    // Reconcile rather than delete-all + insert-all. The old approach re-created
+    // every row on each save: any creative the client sent without its id got a
+    // fresh UUID (orphaning its impression/click history), and rows lost every
+    // column the client does not round-trip - alt text, dimensions, created_at.
+    // Now: kept creatives are UPDATEd in place (COALESCE keeps stored alt text
+    // and dimensions when the payload has none), new ones INSERTed, and only
+    // the ones the admin actually removed are DELETEd.
+    const existing = await db
+      .prepare("SELECT id FROM ad_creatives WHERE campaign_id = ?1")
+      .bind(id)
+      .all<{ id: string }>();
+    const existingIds = new Set(existing.results.map((row) => row.id));
+    const keptIds = new Set(payload.creatives.map((creative) => creative.id));
+    const statements = payload.creatives.map((creative) =>
+      existingIds.has(creative.id)
+        ? db.prepare(
+            `UPDATE ad_creatives SET
+               media_type = ?1, media_url = ?2, mobile_media_url = ?3, tablet_media_url = ?4,
+               poster_url = ?5, position = ?6, duration_seconds = ?7, status = ?8,
+               alt_text_ar = COALESCE(?9, alt_text_ar),
+               alt_text_en = COALESCE(?10, alt_text_en),
+               alt_text_tr = COALESCE(?11, alt_text_tr),
+               media_width = COALESCE(?12, media_width),
+               media_height = COALESCE(?13, media_height)
+             WHERE id = ?14 AND campaign_id = ?15`,
+          ).bind(creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status, creative.altText.ar, creative.altText.en, creative.altText.tr, creative.mediaWidth, creative.mediaHeight, creative.id, id)
+        : db.prepare(
+            `INSERT INTO ad_creatives (id, campaign_id, media_type, media_url, mobile_media_url, tablet_media_url, poster_url, position, duration_seconds, status, alt_text_ar, alt_text_en, alt_text_tr, media_width, media_height)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
+          ).bind(creative.id, id, creative.mediaType, creative.mediaUrl, creative.mobileMediaUrl, creative.tabletMediaUrl, creative.posterUrl, creative.position, creative.durationSeconds, creative.status, creative.altText.ar, creative.altText.en, creative.altText.tr, creative.mediaWidth, creative.mediaHeight),
+    );
+    const removed = [...existingIds].filter((existingId) => !keptIds.has(existingId));
+    for (const removedId of removed) {
+      statements.push(db.prepare("DELETE FROM ad_creatives WHERE id = ?1 AND campaign_id = ?2").bind(removedId, id));
     }
+    if (statements.length) await db.batch(statements);
   }
   await writeAudit(db, identity.email, "ad.updated", id, { status, approvalStatus, creatives: Array.isArray(body.creatives) ? payload.creatives.length : undefined });
   return NextResponse.json({ ok: true });
