@@ -5,9 +5,36 @@ import { test } from "node:test";
 const read = (path) => fs.readFileSync(path, "utf8");
 
 test("clean ad bootstrap creates tracking tables before ALTER repair", () => {
+  // On a clean PostgreSQL database the ALTERs fail immediately if the tables do
+  // not exist yet, which blocks the Zero -> Ready bootstrap. So creation must
+  // come first.
+  //
+  // This used to slice from "export async function ensureAdSchema". That entry
+  // point is no longer async -- it returns a latched promise instead of
+  // awaiting one, so the schema runs once per process rather than once per
+  // request -- and the work moved into applyAdSchema. indexOf then returned -1,
+  // slice(-1) left a single character, and both lookups came back -1, so the
+  // assertion compared -1 < -1 and failed. The property it guards never
+  // stopped holding; only the way it looked for it did.
   const source = read("lib/ad-schema.ts");
-  const fn = source.slice(source.indexOf("export async function ensureAdSchema"));
-  assert.ok(fn.indexOf("for (const sql of AD_TABLES_SQL)") < fn.indexOf("for (const { table, column } of AD_TRACKING_NEW_COLUMNS)"));
+  const start = source.indexOf("function applyAdSchema");
+  assert.ok(start > 0, "applyAdSchema must exist -- this test is worthless if it cannot find the function");
+
+  const fn = source.slice(start);
+  const create = fn.indexOf("for (const sql of AD_TABLES_SQL)");
+  const alter = fn.indexOf("for (const { table, column } of AD_TRACKING_NEW_COLUMNS)");
+  assert.ok(create >= 0, "the table creation loop must be findable");
+  assert.ok(alter >= 0, "the tracking-column ALTER loop must be findable");
+  assert.ok(create < alter, "tables must be created before the ALTERs that depend on them");
+});
+
+test("the ad schema bootstrap runs once per process, not once per request", () => {
+  // Two POST routes call it on every request, and the ~89 DDL statements take
+  // an ACCESS EXCLUSIVE lock on ad_campaigns in PostgreSQL, blocking every
+  // concurrent ad read behind them.
+  const source = read("lib/ad-schema.ts");
+  assert.match(source, /adSchemaReady \?\?= applyAdSchema\(db\)/, "the latch must be there");
+  assert.match(source, /adSchemaReady = null;/, "and a failure must clear it so the next call retries");
 });
 
 test("PostgreSQL runtime translates SQLite datetime modifiers", async () => {

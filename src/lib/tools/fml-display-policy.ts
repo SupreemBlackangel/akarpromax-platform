@@ -13,8 +13,12 @@ export interface ProjectedSourceRow {
   northing: number;
 }
 
-const UTM_WITH_ZONE = /(?:^|\s)(\d{1,2})\s*([NS])\s+(\d{5,6}(?:\.\d+)?)\s+(\d{6,7}(?:\.\d+)?)(?:\s|$)/i;
-const BARE_PROJECTED_PAIR = /(?:^|\s)(\d{5,6}(?:\.\d+)?)\s+(\d{6,7}(?:\.\d+)?)(?:\s|$)/;
+// Same width range for both values: a row that names its zone may still list
+// the pair in either order, and orderProjectedPair decides which is which.
+const UTM_WITH_ZONE = /(?:^|\s)(\d{1,2})\s*([NS])[\s,;|	]+(\d{5,7}(?:\.\d+)?)[\s,;|	]+(\d{5,7}(?:\.\d+)?)(?:\s|$)/i;
+// Both values are matched with the same width range, because either may come
+// first; orderProjectedPair decides which is which by magnitude.
+const BARE_PROJECTED_PAIR = /(?:^|\s)(\d{5,7}(?:\.\d+)?)[\s,;|	]+(\d{5,7}(?:\.\d+)?)(?:\s|$)/;
 const LINE_LABEL = /\b(?:LINE\s*)?(\d{1,4})\s*[-–—]\s*(\d{1,4})\b/i;
 const TRAILING_REFERENCE = /(?:^|\s)(\d{5,14})\s*$/;
 
@@ -50,25 +54,61 @@ export function sourcePointLabel(raw: string, fallbackIndex: number): string {
   return `P${fallbackIndex + 1}`;
 }
 
+/**
+ * Decide which of a projected pair is the easting and which is the northing.
+ *
+ * Survey documents are written in both orders. This tool's own table puts N
+ * before E, and Arabic survey sheets commonly do the same, while the pattern
+ * here only ever accepted easting-then-northing -- so a northing-first document
+ * was not recognised as projected at all, and the panel headed "from the
+ * document" quietly fell back to showing the converted geographic coordinates
+ * instead of the document's own numbers.
+ *
+ * The two are separable by magnitude, because UTM constrains them differently:
+ * an easting is always between 100 km and 900 km from the false origin, so it
+ * has six digits; a northing runs to 10,000,000 and in the northern hemisphere
+ * above roughly 9 degrees it has seven. When exactly one of the pair is too
+ * large to be an easting, the order is certain.
+ *
+ * When both could be eastings -- two six-digit values, which happens near the
+ * equator -- the order is genuinely ambiguous and this returns null rather than
+ * guessing. Guessing would silently transpose a parcel by hundreds of
+ * kilometres, and for a survey tool a refusal the user can see beats a plausible
+ * wrong answer.
+ */
+function orderProjectedPair(a: number, b: number): { easting: number; northing: number } | null {
+  const aCanBeEasting = plausibleEasting(a);
+  const bCanBeEasting = plausibleEasting(b);
+
+  // Easting first: the second value is too large to be one.
+  if (aCanBeEasting && !bCanBeEasting && plausibleNorthing(b)) {
+    return { easting: a, northing: b };
+  }
+  // Northing first: the first value is too large to be an easting.
+  if (bCanBeEasting && !aCanBeEasting && plausibleNorthing(a)) {
+    return { easting: b, northing: a };
+  }
+  return null;
+}
+
 export function parseProjectedSourceRow(
   row: Pick<DisplayCoordinateRow, "label" | "raw">,
 ): ProjectedSourceRow | null {
   const withZone = UTM_WITH_ZONE.exec(row.raw);
   if (withZone) {
     const zone = Number.parseInt(withZone[1], 10);
-    const easting = Number.parseFloat(withZone[3]);
-    const northing = Number.parseFloat(withZone[4]);
-    if (zone >= 1 && zone <= 60 && plausibleEasting(easting) && plausibleNorthing(northing)) {
-      return { label: row.label, raw: row.raw, zone, easting, northing };
+    // A row that names its zone still may list the pair either way round.
+    const ordered = orderProjectedPair(Number.parseFloat(withZone[3]), Number.parseFloat(withZone[4]));
+    if (zone >= 1 && zone <= 60 && ordered) {
+      return { label: row.label, raw: row.raw, zone, ...ordered };
     }
   }
 
   const pair = BARE_PROJECTED_PAIR.exec(row.raw);
   if (!pair) return null;
-  const easting = Number.parseFloat(pair[1]);
-  const northing = Number.parseFloat(pair[2]);
-  if (!plausibleEasting(easting) || !plausibleNorthing(northing)) return null;
-  return { label: row.label, raw: row.raw, easting, northing };
+  const ordered = orderProjectedPair(Number.parseFloat(pair[1]), Number.parseFloat(pair[2]));
+  if (!ordered) return null;
+  return { label: row.label, raw: row.raw, ...ordered };
 }
 
 export function parseProjectedSourceRows(
