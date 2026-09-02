@@ -3,7 +3,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { LayoutDashboard, MessageCircle, MonitorDown, PlusSquare, Wrench, LogIn } from "lucide-react";
+import { LayoutDashboard, MessageCircle, LogIn } from "lucide-react";
 import ChatWidget from "@/src/components/public/chat-widget";
 import type { Locale, Translation, ViewerContext } from "@/src/types/site";
 import type { DeviceType } from "@/src/constants/advertising";
@@ -132,25 +132,10 @@ export function PublicShellLayout({
   // These pages stay reachable from the footer; the side rail keeps only the
   // main browsing destinations.
   const sidebarNavItems = navItems.filter((item) => item.key !== "advertise" && item.key !== "about" && item.key !== "contact");
+  // Listing a property, requesting a service and the office app each live on
+  // their own page (and the office app is promoted only on /offices); the rail
+  // stays a pure browsing map, so only the admin shortcut remains here.
   const sidebarExtraItems = [
-    {
-      key: "advertise-property",
-      label: locale === "ar" ? "أعلن عقارك" : locale === "tr" ? "Mülkünüzü yayınlayın" : "List your property",
-      href: "/dashboard/properties/new",
-      icon: PlusSquare,
-    },
-    {
-      key: "request-service",
-      label: locale === "ar" ? "اطلب خدمة" : locale === "tr" ? "Hizmet isteyin" : "Request a service",
-      href: "/service-requests/new",
-      icon: Wrench,
-    },
-    {
-      key: "office-app-download",
-      label: locale === "ar" ? "البرنامج المكتبي" : locale === "tr" ? "Ofis Programı" : "Office App",
-      href: "/download",
-      icon: MonitorDown,
-    },
     ...(isPlatformAdmin
       ? [{
           key: "admin-dashboard",

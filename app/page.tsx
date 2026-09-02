@@ -20,11 +20,6 @@ export default function HomePage() {
         city={city}
         currentPath="/"
         adLayout={{ mode: "standard", family: "home" }}
-        officePromotion={{
-          cta: "حمّل تطبيق AkarProMax Office",
-          description: "تطبيق سطح المكتب للمكاتب العقارية: أدر عقارك وعملاءك من جهازك، وارفع عقاراتك للمنصة واستقبل فرص منطقتك مباشرة.",
-          href: "/download",
-        }}
         onLogin={() => openLogin("login")}
         onLogout={handleLogout}
       >

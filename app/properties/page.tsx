@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PlusSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -184,7 +185,16 @@ export default function PropertiesPage() {
       <PageContainer className="py-8" dir={dir}>
         <div className="mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              {/* "List your property" lives on the properties page itself, not
+                  in the global side rail. */}
+              <Link
+                href="/dashboard/properties/new"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]"
+              >
+                <PlusSquare className="size-4 shrink-0" aria-hidden="true" />
+                {locale === "ar" ? "أعلن عقارك" : locale === "tr" ? "Mülkünüzü yayınlayın" : "List your property"}
+              </Link>
               <SearchInput
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
