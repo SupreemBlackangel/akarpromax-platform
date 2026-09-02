@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
 import { processAdImage } from "@/lib/ads/image-processing";
+import { maybePruneAdRequestAssets } from "@/lib/ads/asset-retention";
 
 export const dynamic = "force-dynamic";
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -57,6 +58,9 @@ export async function POST(request: NextRequest) {
   const db = await ensureTable();
   await db.prepare("INSERT INTO ad_request_assets (id,file_name,content_type,size_bytes,file_data) VALUES (?1,?2,?3,?4,?5)")
     .bind(id, safeName, processed.contentType, bytes.byteLength, bytes).run();
+  // These bytes live in the primary database, its backups and its replication
+  // stream, and nothing ever removed them. Sweep old, unreferenced uploads.
+  maybePruneAdRequestAssets(db);
   return NextResponse.json({
     asset: {
       id,

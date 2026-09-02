@@ -201,11 +201,45 @@ export function ensureAdSchema(db: D1Database): Promise<void> {
   return adSchemaReady;
 }
 
+/**
+ * Does this table name already resolve to something we can read?
+ *
+ * `CREATE TABLE IF NOT EXISTS ad_impressions` only checks the schema it is
+ * about to create in -- the first entry of search_path -- not the whole path.
+ * On this database search_path is "public, akarpromax" while the ad tables were
+ * created in akarpromax, so that statement happily created a SECOND, empty
+ * ad_impressions in public which then shadowed the real one. Measured on
+ * production: ad_campaigns and ad_creatives resolve to akarpromax, while
+ * ad_impressions, ad_clicks and ad_daily_statistics resolve to empty public
+ * copies. Campaigns and their own events had been split across two schemas, so
+ * frequency capping read a table nothing writes to and every viewer looked new.
+ *
+ * Probing with a real read is portable across the Postgres, MySQL and SQLite
+ * adapters, and answers the question that matters -- "will my unqualified
+ * statements find a table?" -- rather than "does one exist in this schema?".
+ */
+async function tableIsReachable(db: D1Database, table: string): Promise<boolean> {
+  try {
+    await db.prepare(`SELECT 1 FROM ${table} WHERE 1 = 0`).all();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Read the name out of the statement rather than keeping a parallel list that
+// can drift out of order when a table is added.
+function createdTableName(sql: string): string | null {
+  return /CREATE TABLE IF NOT EXISTS\s+([A-Za-z0-9_]+)/i.exec(sql)?.[1] ?? null;
+}
+
 async function applyAdSchema(db: D1Database): Promise<void> {
   // Tracking tables must exist before the additive repair ALTERs below run.
   // On a clean PostgreSQL database the previous order failed immediately on
   // `ALTER TABLE ad_impressions`, preventing Zero -> Ready bootstrap.
   for (const sql of AD_TABLES_SQL) {
+    const table = createdTableName(sql);
+    if (table && (await tableIsReachable(db, table))) continue;
     await db.prepare(sql).run();
   }
 
