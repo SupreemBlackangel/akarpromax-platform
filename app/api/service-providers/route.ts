@@ -4,6 +4,7 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { listProviderProfiles, upsertProviderProfile } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { toPublicProviderProfile } from "@services/public-dto";
 import { GeoService } from "@/lib/services/geo/geo.service";
 import { resolveGeoSelection } from "@/lib/services/geo/selection";
 
@@ -77,13 +78,19 @@ export async function GET(request: NextRequest) {
     search: q.get("search") ?? undefined,
     limit: q.get("limit") ? Math.max(1, Math.min(100, Number(q.get("limit")) || 50)) : 50,
   });
-  const safeProfiles = admin ? profiles : profiles.map((profile) => {
-    const safe = { ...profile };
-    for (const key of ["user_id", "email", "phone", "whatsapp", "latitude", "longitude", "tax_number", "commercial_registration", "licenses_text", "insurance_text", "rejection_reason"]) {
-      delete safe[key];
-    }
-    return safe;
-  });
+  // The same allow-list the single-profile route uses, rather than a list of
+  // fields to delete.
+  //
+  // A deny-list fails open: every column added to service_provider_profiles is
+  // published to the public directory until somebody remembers to extend the
+  // array. That had already happened -- `suspended_at` was not in the deny-list,
+  // so the directory told the world that a provider had been suspended and
+  // exactly when, while the profile page for the same provider correctly
+  // withheld it. `created_at` and `updated_at` leaked the same way.
+  //
+  // An allow-list fails closed. A new column is invisible until someone decides
+  // it should be public, which is the direction the mistake should point.
+  const safeProfiles = admin ? profiles : profiles.map(toPublicProviderProfile);
   return NextResponse.json({ profiles: safeProfiles }, { headers: { "Cache-Control": admin ? "no-store" : "public, max-age=60, stale-while-revalidate=120" } });
 }
 

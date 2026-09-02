@@ -160,3 +160,38 @@ test("being an approved provider is not by itself access to a request", async ()
     "access follows from being matched to this request, not from having a provider profile",
   );
 });
+
+// ---- what the public surface publishes -------------------------------------
+
+test("the public directory and the public profile publish the same fields", async () => {
+  // They disagreed. The profile route used an allow-list; the directory used a
+  // list of fields to delete, which fails open -- every column added to
+  // service_provider_profiles reached the public directory until somebody
+  // remembered to extend the array.
+  const listing = await read("app/api/service-providers/route.ts");
+  assert.match(listing, /profiles\.map\(toPublicProviderProfile\)/, "the directory must use the shared allow-list");
+  assert.doesNotMatch(listing, /delete safe\[key\]/, "a deny-list here is what let suspended_at through");
+});
+
+test("the allow-list withholds the fields that identify or expose a provider", async () => {
+  const dto = await read("lib/services/public-dto.ts");
+  const profile = dto.slice(dto.indexOf("toPublicProviderProfile"), dto.indexOf("toPublicProviderCategory"));
+
+  for (const field of [
+    "user_id", "email", "phone", "whatsapp",       // contact details and identity
+    "latitude", "longitude",                        // an exact home or office location
+    "tax_number", "commercial_registration",        // registration identifiers
+    "licenses_text", "insurance_text",              // documents
+    "rejection_reason",                             // why an application was refused
+    "suspended_at",                                 // that a provider was suspended, and when
+  ]) {
+    assert.doesNotMatch(profile, new RegExp(`\b${field}\b`), `${field} must not be published`);
+  }
+});
+
+test("an administrator still sees the whole row", async () => {
+  // The filtering is for the public, not for the people who moderate the
+  // marketplace and need the contact details to do it.
+  const listing = await read("app/api/service-providers/route.ts");
+  assert.match(listing, /admin \? profiles : profiles\.map\(toPublicProviderProfile\)/);
+});
