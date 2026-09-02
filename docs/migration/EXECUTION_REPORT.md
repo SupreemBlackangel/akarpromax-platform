@@ -137,14 +137,35 @@ it is undone — and the importer does exactly that.
 
 ---
 
-## Two decisions still with the owner
+## Two decisions, now made by the owner
 
-1. **Subscription enforcement.** The client currently fails open. Failing closed
-   could lock an office out of its own records over a network outage. That is a
-   commercial policy decision, not a technical one, and §59 asks for it to be
-   agreed rather than slipped in.
-2. **Releasing a build.** Nothing here reaches a customer until one ships, and
-   K2 makes a careless release worse than no release.
+1. **Subscription: keep failing open, and start recording.** Policy unchanged —
+   failing closed would lock an office out of its own client records over a
+   network outage, which costs more than an unverified subscription. What
+   changed is that it stops being silent: every check now logs its outcome
+   (active / inactive / unverified / never signed in) with a reason and a
+   timestamp, and no token, signature or personal data. A later decision to
+   tighten it can then be made against real numbers.
+2. **Build the package, do not release it.** Done. `AkarApp_PUBLISH_2.0.7` is
+   built and the installer script is bumped to 2.0.7 with its payload staged.
+   Inno Setup is not installed on this machine, so the `Setup.exe` is one `ISCC`
+   run away rather than done, and a testable ZIP is published to
+   `/downloads/AkarProMaxOffice-2.0.7-UNRELEASED.zip`.
+
+   **`version.json` is untouched and still advertises 2.0.6.** Nothing reaches a
+   customer. With `mandatory: true`, publishing a version without a matching
+   installer at that URL leaves every installed client demanding an update it
+   cannot fetch. Installer first, manifest second, always.
+
+### Verified in the compiled assembly, not assumed from the source
+
+| Check | Result |
+|---|---|
+| `akar-promax.com` (dead domain) | **0 occurrences** |
+| `https://akarpromax.com` | present |
+| `Akar_ProMax_2026_Secure_Key` | **0 occurrences** |
+| `AKARPROMAX_API_BASE` override | present |
+| `subscription-checks.log` | present |
 
 ---
 
