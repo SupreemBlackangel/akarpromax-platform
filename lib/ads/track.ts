@@ -7,7 +7,7 @@ import type { ServerAdContext } from "@/lib/ads/server-context";
 export type TrackRequest = MatchRequest & { campaignId?: string; token?: string; conversionType?: string; value?: number };
 
 export type ResolveResult =
-  | { ok: true; ctx: ResolvedAdContext; campaignId: string; creativeId: string | null; channel: string; inventoryClass: "commercial" }
+  | { ok: true; ctx: ResolvedAdContext; campaignId: string; creativeId: string | null; channel: string; inventoryClass: "commercial"; nonce: string | undefined }
   | { ok: false; error: string; status: number };
 
 export async function resolveTrackRequest(body: TrackRequest, server?: ServerAdContext): Promise<ResolveResult> {
@@ -30,5 +30,6 @@ export async function resolveTrackRequest(body: TrackRequest, server?: ServerAdC
     creativeId: payload.cr ?? null,
     channel: payload.ch ?? "website",
     inventoryClass: payload.ic ?? "commercial",
+    nonce: payload.n,
   };
 }

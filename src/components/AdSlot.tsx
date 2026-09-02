@@ -297,42 +297,21 @@ export default function AdSlot({
     };
   }, [ads, currentIndex, categoryId, deviceType, entityId, entityType, locale, path, placement, resolvedCity, resolvedCountry, resolvedDistrict, resolvedLatitude, resolvedLongitude, resolvedRegion, tags]);
 
-  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!ad) return;
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    void fetch("/api/ads/click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        campaignId: ad.campaignId,
-        token: ad.trackingToken,
-        placement,
-        path,
-        countryCode: resolvedCountry,
-        regionId: resolvedRegion,
-        cityId: resolvedCity,
-        districtId: resolvedDistrict,
-        latitude: resolvedLatitude,
-        longitude: resolvedLongitude,
-        language: locale,
-        deviceType,
-        entityType,
-        entityId,
-        categoryId,
-        tags,
-        sessionId: sessionId.current,
-      }),
-      keepalive: true,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        window.location.href = typeof data.redirectUrl === "string" ? data.redirectUrl : ad.targetUrl;
-      })
-      .catch(() => {
-        window.location.href = ad.targetUrl;
-      });
-  };
+  /**
+   * Every ad links through the click tracker, which counts the click and then
+   * redirects to the advertiser.
+   *
+   * The slot used to preventDefault, POST, wait for the response and assign
+   * location.href. That forced external ads into the current tab even though
+   * the anchor carried target="_blank", made the visitor wait out a round trip
+   * before anything happened, and recorded nothing for a middle-click or a
+   * cmd-click, because the handler bailed on modifier keys and the href pointed
+   * straight at the advertiser. Letting the browser navigate to the tracker
+   * handles all of those the same way, with no JavaScript in the path.
+   */
+  const trackerHref = ad
+    ? `/api/ads/click?token=${encodeURIComponent(ad.trackingToken)}&locale=${encodeURIComponent(locale)}`
+    : "#";
 
   if (!ad && !loaded) {
     return <div className={`ad-slot ad-slot-${variant} ad-slot-skeleton${className ? ` ${className}` : ""}`} aria-hidden="true" />;
@@ -392,10 +371,9 @@ export default function AdSlot({
       <a
         key={`${ad.campaignId}:${ad.creativeId ?? "main"}`}
         className="ad-slot-link"
-        href={ad.targetUrl}
+        href={trackerHref}
         target={ad.targetUrl.startsWith("/") ? undefined : "_blank"}
-        rel="sponsored noopener"
-        onClick={handleClick}
+        rel="sponsored noopener noreferrer"
       >
         <span className="ad-slot-media">
           {ad.mediaType === "video" || isVideoAsset(ad.imageUrl)

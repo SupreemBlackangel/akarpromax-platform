@@ -12,6 +12,8 @@ export type TrackingPayload = {
   cr?: string;
   ch?: string;
   ic?: "commercial";
+  /** Single-use nonce. See lib/ads/nonce-ledger.ts. */
+  n?: string;
   ts: number;
 };
 
@@ -56,6 +58,9 @@ export async function signTrackingToken(
       cr: input.creativeId ?? undefined,
       ch: input.channel ?? undefined,
       ic: input.inventoryClass ?? undefined,
+      // Random per mint, so two viewers of the same creative hold different
+      // tokens and neither can spend the other's.
+      n: crypto.randomUUID(),
       ts: now.getTime(),
     }),
   );
@@ -63,7 +68,18 @@ export async function signTrackingToken(
   return `${payload}.${signature}`;
 }
 
-export async function verifyTrackingToken(token: string): Promise<TrackingPayload | null> {
+export type VerifiedToken = { payload: TrackingPayload; expired: boolean };
+
+/**
+ * Verify a token's signature and shape, reporting expiry separately.
+ *
+ * The two outcomes need different handling. A bad signature means the token was
+ * not minted here at all: reject it. An expired token was genuinely ours, so a
+ * click on a page that sat open overnight should still take the visitor to the
+ * advertiser -- it just must not be billed. Collapsing both into `null` sent
+ * those visitors to the homepage instead of the ad they clicked.
+ */
+export async function verifyTrackingTokenDetailed(token: string): Promise<VerifiedToken | null> {
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
   const expected = await sha256Hex(`${payload}.${getAdSecret()}`);
@@ -71,13 +87,19 @@ export async function verifyTrackingToken(token: string): Promise<TrackingPayloa
   try {
     const data = JSON.parse(base64UrlDecode(payload)) as TrackingPayload;
     if (typeof data.cid !== "string" || typeof data.pl !== "string" || typeof data.ts !== "number") return null;
-    if (Date.now() - data.ts > TOKEN_TTL_MS) return null;
     if (data.ic !== undefined && data.ic !== "commercial") return null;
     if (data.ch !== undefined && data.ch !== "website" && data.ch !== "office") return null;
-    return data;
+    if (data.n !== undefined && typeof data.n !== "string") return null;
+    return { payload: data, expired: Date.now() - data.ts > TOKEN_TTL_MS };
   } catch {
     return null;
   }
+}
+
+export async function verifyTrackingToken(token: string): Promise<TrackingPayload | null> {
+  const verified = await verifyTrackingTokenDetailed(token);
+  if (!verified || verified.expired) return null;
+  return verified.payload;
 }
 
 async function upsertDailyStat(db: D1Database, campaignId: string, date: string, delta: { impressions?: number; uniqueImpressions?: number; clicks?: number; uniqueClicks?: number; conversions?: number; spent?: number }) {

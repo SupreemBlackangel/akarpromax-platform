@@ -17,7 +17,9 @@ export type RateLimitOperation =
   | "office_pairing_complete"
   | "office_sync_push"
   | "ads_request"
-  | "ads_request_asset";
+  | "ads_request_asset"
+  | "ads_impression"
+  | "ads_click";
 
 export type RateLimitConfig = {
   limit: number;
@@ -30,6 +32,13 @@ export const RATE_LIMIT_CONFIGS: Record<RateLimitOperation, RateLimitConfig> = {
   // Public advertiser intake: unauthenticated writes, so keep them tight.
   ads_request: { limit: 5, windowMs: 300_000, cooldownMs: 600_000 },
   ads_request_asset: { limit: 10, windowMs: 300_000, cooldownMs: 600_000 },
+  // Tracking endpoints are unauthenticated and each accepted call spends an
+  // advertiser's money, so they need a ceiling even though the nonce ledger
+  // already makes any single token unrepeatable. The limits sit well above a
+  // real visitor: a page carries ~6 slots, each rotating up to 3 creatives,
+  // and an impression needs a full second of 50% visibility first.
+  ads_impression: { limit: 120, windowMs: 60_000, cooldownMs: 60_000 },
+  ads_click: { limit: 40, windowMs: 60_000, cooldownMs: 60_000 },
   register: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   verify_code: { limit: 15, windowMs: 60_000, cooldownMs: 60_000 },
   verify_email: { limit: 5, windowMs: 60_000, cooldownMs: 60_000 },
