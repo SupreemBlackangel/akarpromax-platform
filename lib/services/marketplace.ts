@@ -133,6 +133,16 @@ export async function upsertProviderProfile(input: ProviderProfileInput, actor?:
   const db = await getServicesDb();
   const existing = await getProviderProfileByUserId(input.user_id);
   const now = nowMySqlDateTime();
+  // The services domain stores country codes uppercase -- service_requests
+  // uppercases on insert, and the 48 categories and the marketplace settings
+  // rows are all uppercase. This was the one write that stored whatever the
+  // client sent, and the client sends the platform geo token, which
+  // normalizeGeoToken lowercases. So profiles landed as "om" while every
+  // request was "OM", and findCandidateProviders compares with a plain `=`
+  // against a C.UTF-8 column: verified on production, 'om' = 'OM' is false.
+  // Every published request therefore matched zero providers, no provider ever
+  // saw a request, and no offer, order or review could follow.
+  const countryCode = (input.countryCode ?? "OM").toLocaleUpperCase("en");
   if (existing) {
     await db
       .prepare(
@@ -149,7 +159,7 @@ export async function upsertProviderProfile(input: ProviderProfileInput, actor?:
       .bind(
         input.displayNameAr ?? null, input.displayNameEn ?? null, input.bioAr ?? null, input.bioEn ?? null,
         input.logoUrl ?? null, input.coverUrl ?? null, input.phone ?? null, input.whatsapp ?? null, input.email ?? null, input.website ?? null,
-        input.countryCode ?? "OM", input.cityId ?? null, input.districtId ?? null, input.governorate ?? null,
+        countryCode, input.cityId ?? null, input.districtId ?? null, input.governorate ?? null,
         input.latitude ?? null, input.longitude ?? null, input.serviceRadiusKm ?? 50,
         input.licensesText ?? null, input.insuranceText ?? null, input.foundedYear ?? null, input.teamSize ?? null,
         input.isBusiness ? 1 : 0, input.businessName ?? null, input.taxNumber ?? null, input.commercialRegistration ?? null,
@@ -173,7 +183,7 @@ export async function upsertProviderProfile(input: ProviderProfileInput, actor?:
       crypto.randomUUID(), input.user_id,
       input.displayNameAr ?? null, input.displayNameEn ?? null, input.bioAr ?? null, input.bioEn ?? null,
       input.logoUrl ?? null, input.coverUrl ?? null, input.phone ?? null, input.whatsapp ?? null, input.email ?? null, input.website ?? null,
-      input.countryCode ?? "OM", input.cityId ?? null, input.districtId ?? null, input.governorate ?? null,
+      countryCode, input.cityId ?? null, input.districtId ?? null, input.governorate ?? null,
       input.latitude ?? null, input.longitude ?? null, input.serviceRadiusKm ?? 50,
       input.licensesText ?? null, input.insuranceText ?? null, input.foundedYear ?? null, input.teamSize ?? null,
       input.isBusiness ? 1 : 0, input.businessName ?? null, input.taxNumber ?? null, input.commercialRegistration ?? null,

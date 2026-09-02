@@ -120,7 +120,11 @@ test("matching pipeline inserts qualified providers and notifies both sides", as
   assert.match(matching, /تمت مطابقة طلبك/);
   assert.match(matching, /function runMatching\(/);
   assert.match(matching, /findCandidateProviders\(/);
-  assert.match(matching, /status = 'approved' AND country_code = \?1/);
+  // Case-insensitive on purpose. This assertion used to pin `country_code = ?1`,
+  // which is what made every request match zero providers: the domain stores
+  // uppercase, the provider profile stored the lowercase platform geo token,
+  // and the column's C.UTF-8 collation makes `=` case-sensitive.
+  assert.match(matching, /status = 'approved' AND UPPER\(country_code\) = \?1/);
   assert.match(matching, /service_provider_categories WHERE provider_id = \?1 AND is_active = 1/);
   assert.match(score, /export function computeMatchScore/);
   assert.match(score, /coversCategory/);

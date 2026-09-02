@@ -4,9 +4,15 @@ import { computeMatchScore, type MatchProviderRow, type MatchRequestRow } from "
 
 export async function findCandidateProviders(request: MatchRequestRow): Promise<MatchProviderRow[]> {
   const db = await getServicesDb();
-  const country = String(request.country_code || "").toUpperCase();
+  // Compare case-insensitively rather than with a plain `=`. The write side now
+  // normalizes to uppercase, but the provider listing has always defended
+  // against mixed case here (it expands each token to both cases and uses IN),
+  // and the matcher did not: a single lowercase row -- from an older client, a
+  // hand-inserted record, an import -- silently matched nothing at all instead
+  // of failing loudly. The column is C.UTF-8, so `=` is case-sensitive.
+  const country = String(request.country_code || "").toLocaleUpperCase("en");
   const profiles = await db
-    .prepare("SELECT * FROM service_provider_profiles WHERE status = 'approved' AND country_code = ?1")
+    .prepare("SELECT * FROM service_provider_profiles WHERE status = 'approved' AND UPPER(country_code) = ?1")
     .bind(country)
     .all<Record<string, unknown>>();
 
