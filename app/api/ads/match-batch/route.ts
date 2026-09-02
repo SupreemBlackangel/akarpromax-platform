@@ -21,24 +21,33 @@ export async function POST(request: NextRequest) {
   // apply it to every context in the batch.
   const server = resolveServerAdContext(request, contexts[0]?.countryCode);
   const resolved = contexts.map((context) => buildContext(context, server));
-  for (const ctx of resolved) {
-    if (!isValidPlacement(ctx.placement)) {
-      return NextResponse.json({ error: "Every context requires a valid placement" }, { status: 400 });
-    }
+
+  // An unknown placement fails only its own slot. Rejecting the whole batch
+  // meant one typo in one new page family blanked every ad on that page —
+  // a page-wide outage caused by a single slot.
+  const servable = resolved.map((ctx) => isValidPlacement(ctx.placement));
+  if (!servable.some(Boolean)) {
+    return NextResponse.json({ error: "No context has a valid placement" }, { status: 400 });
   }
+
   try {
     const db = await getRuntimeDb();
-    const results: { placement: string; ads: AdMatchResult[] }[] = [];
-    const flat = await matchAdsBatch(db, resolved);
-    const byPlacement = new Map<string, AdMatchResult[]>();
-    for (const ad of flat) {
-      const list = byPlacement.get(ad.placement) ?? [];
-      list.push(ad);
-      byPlacement.set(ad.placement, list);
-    }
-    for (const ctx of resolved) {
-      results.push({ placement: ctx.placement, ads: byPlacement.get(ctx.placement) ?? [] });
-    }
+    // Aligned by index, not regrouped by placement: a page may legitimately
+    // render the same placement twice (a desktop rail and its mobile twin), and
+    // regrouping handed each occurrence the other's campaign too.
+    const servableIndexes = resolved.map((_, index) => index).filter((index) => servable[index]);
+    const matched = await matchAdsBatch(
+      db,
+      servableIndexes.map((index) => resolved[index]),
+      { counts: servableIndexes.map((index) => Number(contexts[index].count) || 1) },
+    );
+    const adsByIndex = new Map<number, AdMatchResult[]>();
+    servableIndexes.forEach((index, position) => adsByIndex.set(index, matched[position] ?? []));
+
+    const results = resolved.map((ctx, index) => ({
+      placement: ctx.placement,
+      ads: adsByIndex.get(index) ?? [],
+    }));
     const headers: Record<string, string> = { "Cache-Control": "no-store" };
     // First visit in this browser: hand back the signed session id so the next
     // request is recognised instead of counting as a brand-new "unique" user.

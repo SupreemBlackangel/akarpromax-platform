@@ -749,16 +749,36 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
   return results;
 }
 
-export async function matchAdsBatch(db: D1Database, contexts: ResolvedAdContext[], options: Omit<MatchOptions, "count"> = {}): Promise<AdMatchResult[]> {
+/**
+ * Match a batch of slots in one pass, returning ONE ARRAY PER CONTEXT, aligned
+ * by index.
+ *
+ * This used to return a flat array, which the route then regrouped by placement
+ * string. Two contexts asking for the same placement — the desktop rail and its
+ * mobile inline twin, or any page that renders a placement twice — collapsed
+ * into one bucket, so each slot received the other's campaign as well. Keying
+ * by index removes the ambiguity entirely: a placement may legitimately appear
+ * more than once and each occurrence keeps its own result.
+ *
+ * `counts` is aligned with `contexts`; a slot asking for 3 ads (the hero
+ * carousel) now actually receives up to 3 instead of the hardcoded 1 that made
+ * the rotation UI dead code.
+ */
+export async function matchAdsBatch(
+  db: D1Database,
+  contexts: ResolvedAdContext[],
+  options: Omit<MatchOptions, "count"> & { counts?: number[] } = {},
+): Promise<AdMatchResult[][]> {
   const now = options.now ?? new Date();
   const used = options.usedCampaignIds ?? new Set<string>();
   const ads = options.ads ?? (await loadActiveAds(db, now));
   const first = contexts[0];
   const stats = options.stats ?? (first ? await loadEngineStats(db, first, now) : undefined);
-  const results: AdMatchResult[] = [];
-  for (const ctx of contexts) {
-    const matched = await matchAds(db, ctx, { count: 1, usedCampaignIds: used, stats, ads, now });
-    results.push(...matched);
+
+  const results: AdMatchResult[][] = [];
+  for (const [index, ctx] of contexts.entries()) {
+    const count = Math.max(1, Math.min(6, options.counts?.[index] ?? 1));
+    results.push(await matchAds(db, ctx, { count, usedCampaignIds: used, stats, ads, now }));
   }
   return results;
 }
