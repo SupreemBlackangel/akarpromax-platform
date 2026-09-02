@@ -139,3 +139,45 @@ test("a line label still takes precedence", () => {
 test("a row with no identifier falls back to its position", () => {
   assert.equal(sourcePointLabel("no numbers here", 4), "P5");
 });
+
+// ---- which view opens first -------------------------------------------------
+
+import { readFile } from "node:fs/promises";
+const readSrc = (rel) => readFile(new URL(`../${rel}`, import.meta.url), "utf8");
+
+test("a document written in degrees opens on the converted view", async () => {
+  // A survey report is read to get working coordinates, and for a document in
+  // decimal degrees those are the projected ones -- nobody sets out a boundary
+  // from a decimal latitude.
+  const source = await readSrc("src/components/tools/FindMyLand.tsx");
+  assert.match(
+    source,
+    /if \(utmRows\.length > 0 && sourceProjectedRows\.length === 0\) return "utm";/,
+    "geographic document plus an available projection must open on UTM",
+  );
+});
+
+test("a document that already carries eastings stays on its own values", async () => {
+  // Those ARE the working coordinates. Converting them to show something
+  // "converted" would move the user further from the paper in their hand.
+  const source = await readSrc("src/components/tools/FindMyLand.tsx");
+  assert.match(source, /return "wgs84";/);
+  assert.match(source, /sourceProjectedRows\.length === 0/, "the projected case is excluded by condition, not by accident");
+});
+
+test("the choice is derived, not written from an effect", async () => {
+  // setState inside an effect re-renders the table twice per analysis and is
+  // the cascading-render pattern this file otherwise avoids.
+  const source = await readSrc("src/components/tools/FindMyLand.tsx");
+  assert.match(source, /const coordinateView: "wgs84" \| "utm" = useMemo/);
+  assert.doesNotMatch(source, /useEffect\([^)]*setCoordinateView/);
+});
+
+test("a click still pins the view, and the originals remain reachable", async () => {
+  // Provenance is the point of a survey tool: the document's own numbers must
+  // never become unreachable.
+  const source = await readSrc("src/components/tools/FindMyLand.tsx");
+  assert.match(source, /setCoordinateViewOverride\("wgs84"\)/);
+  assert.match(source, /setCoordinateViewOverride\("utm"\)/);
+  assert.match(source, /if \(coordinateViewOverride\) return coordinateViewOverride;/);
+});

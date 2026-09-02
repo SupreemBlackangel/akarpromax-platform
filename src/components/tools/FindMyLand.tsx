@@ -909,8 +909,15 @@ export function FindMyLand({ locale }: Props) {
   // full content width, and the page rails can be brought back with one click.
   const [focusMode, setFocusMode] = useState(true);
 
-  /** Coordinate table view: original document values or projected UTM. */
-  const [coordinateView, setCoordinateView] = useState<"wgs84" | "utm">("wgs84");
+  /**
+   * Coordinate table view: the document's own values, or projected UTM.
+   *
+   * Null means "whichever suits this document", and a click pins the choice.
+   * Deriving the default rather than storing it keeps the two in sync without a
+   * setState inside an effect, which would re-render the table twice on every
+   * analysis and is the cascading-render pattern this file otherwise avoids.
+   */
+  const [coordinateViewOverride, setCoordinateViewOverride] = useState<"wgs84" | "utm" | null>(null);
 
   /* ---- Manual Geometry Recovery state ---- */
   const [manualDraft, setManualDraft] = useState<ManualDraft | null>(null);
@@ -1403,6 +1410,27 @@ export function FindMyLand({ locale }: Props) {
     if (fromVertices.length > 0) return fromVertices;
     return parseProjectedSourceRows(coordinateRows.map(({ label, raw }) => ({ label, raw })));
   }, [analysis, coordinateRows]);
+
+  /**
+   * A survey report is read to get working coordinates, and for a document
+   * written in degrees those are the projected ones -- nobody sets out a
+   * boundary from a decimal latitude. So when the document is geographic and a
+   * projection is available, UTM opens first.
+   *
+   * A document that already carries eastings and northings is left on its own
+   * tab: those ARE the working coordinates, and converting them to show
+   * something "converted" would only move the user further from the paper in
+   * their hand.
+   *
+   * The original values never go away -- provenance is the point of a survey
+   * tool -- they are one click away, and any click pins the choice.
+   */
+  const coordinateView: "wgs84" | "utm" = useMemo(() => {
+    if (coordinateViewOverride) return coordinateViewOverride;
+    if (utmRows.length > 0 && sourceProjectedRows.length === 0) return "utm";
+    return "wgs84";
+  }, [coordinateViewOverride, sourceProjectedRows.length, utmRows.length]);
+
 
   const activeOmanZone = analysis?.result.crsSelection?.zone === 39 ? 39 : 40;
   const handleOmanZoneChange = useCallback((value: string) => {
@@ -2338,7 +2366,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "wgs84"}
                         className={`fml-tab${coordinateView === "wgs84" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateView("wgs84")}
+                        onClick={() => setCoordinateViewOverride("wgs84")}
                       >
                         {t("الأصلية", "Original", "Özgün")}
                       </button>
@@ -2347,7 +2375,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "utm"}
                         className={`fml-tab${coordinateView === "utm" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateView("utm")}
+                        onClick={() => setCoordinateViewOverride("utm")}
                       >
                         UTM
                       </button>
