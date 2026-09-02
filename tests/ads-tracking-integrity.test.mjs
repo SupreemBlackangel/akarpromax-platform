@@ -99,3 +99,34 @@ test("a dangerous or malformed target falls back to the site root", () => {
   assert.equal(safeRedirect(null, ORIGIN), ORIGIN);
   assert.equal(safeRedirect("not a url", ORIGIN), ORIGIN);
 });
+
+// ---- the origin a redirect is built on --------------------------------------
+
+import { publicOrigin } from "../lib/ads/click-target.ts";
+
+function req(headers, boundOrigin = "https://0.0.0.0:3010") {
+  return { headers: { get: (name) => headers[name.toLowerCase()] ?? null }, nextUrl: { origin: boundOrigin } };
+}
+
+test("redirects are built on the host the visitor used, not the one the server is bound to", () => {
+  // nextUrl.origin reports the bind address, so behind nginx every ad click
+  // redirected to https://0.0.0.0:3010 -- a host no browser can resolve.
+  assert.equal(
+    publicOrigin(req({ host: "akarpromax.com", "x-forwarded-proto": "https" })),
+    "https://akarpromax.com",
+  );
+  assert.equal(
+    publicOrigin(req({ host: "localhost:3010", "x-forwarded-proto": "http" })),
+    "http://localhost:3010",
+  );
+});
+
+test("a missing or malformed Host falls back rather than being trusted", () => {
+  assert.equal(publicOrigin(req({})), "https://0.0.0.0:3010");
+  assert.equal(publicOrigin(req({ host: "evil.example/path" })), "https://0.0.0.0:3010");
+  assert.equal(publicOrigin(req({ host: "0.0.0.0:3010" })), "https://0.0.0.0:3010");
+});
+
+test("an absent forwarded protocol defaults to https", () => {
+  assert.equal(publicOrigin(req({ host: "akarpromax.com" })), "https://akarpromax.com");
+});

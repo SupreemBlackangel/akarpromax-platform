@@ -6,7 +6,7 @@ import { buildContext, isValidPlacement } from "@/lib/ads/context";
 import { resolveServerAdContext } from "@/lib/ads/server-context";
 import { claimNonce } from "@/lib/ads/nonce-ledger";
 import { clientIp, enforceRateLimit } from "@/lib/security/rate-limit";
-import { safeRedirect } from "@/lib/ads/click-target";
+import { publicOrigin, safeRedirect } from "@/lib/ads/click-target";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const origin = request.nextUrl.origin;
+    const origin = publicOrigin(request);
     // A duplicate still gets the destination back -- the caller is navigating
     // somewhere and must not be stranded -- it just is not billed twice.
     const fresh = claimNonce("click", resolved.nonce);
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
  * the href went straight to the advertiser.
  */
 export async function GET(request: NextRequest) {
-  const origin = request.nextUrl.origin;
+  const origin = publicOrigin(request);
   const token = request.nextUrl.searchParams.get("token") ?? "";
   const verified = await verifyTrackingTokenDetailed(token);
   if (!verified) {
