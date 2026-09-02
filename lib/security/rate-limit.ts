@@ -19,7 +19,11 @@ export type RateLimitOperation =
   | "ads_request"
   | "ads_request_asset"
   | "ads_impression"
-  | "ads_click";
+  | "ads_click"
+  | "services_public_read"
+  | "services_write"
+  | "services_message"
+  | "services_report";
 
 export type RateLimitConfig = {
   limit: number;
@@ -39,6 +43,22 @@ export const RATE_LIMIT_CONFIGS: Record<RateLimitOperation, RateLimitConfig> = {
   // and an impression needs a full second of 50% visibility first.
   ads_impression: { limit: 120, windowMs: 60_000, cooldownMs: 60_000 },
   ads_click: { limit: 40, windowMs: 60_000, cooldownMs: 60_000 },
+  // The services marketplace had no limits at all on any of its 64 routes,
+  // while the advertising surface next door had them. The numbers below sit
+  // well above what a person browsing or working does, and well below what
+  // scraping the provider directory or flooding the request table looks like.
+  //
+  // Public reads are the loosest: a visitor legitimately pages through the
+  // directory, and the cost of being wrong is a slower page, not a lost record.
+  services_public_read: { limit: 120, windowMs: 60_000, cooldownMs: 60_000 },
+  // Writes create rows other people see. Nobody publishes a request, an offer
+  // or a provider profile thirty times a minute.
+  services_write: { limit: 30, windowMs: 60_000, cooldownMs: 120_000 },
+  // Messages are typed by hand, but a conversation is bursty.
+  services_message: { limit: 60, windowMs: 60_000, cooldownMs: 60_000 },
+  // Reports and disputes are rare, deliberate acts, and each one costs somebody
+  // moderation time.
+  services_report: { limit: 10, windowMs: 300_000, cooldownMs: 600_000 },
   register: { limit: 5, windowMs: 60_000, cooldownMs: 300_000 },
   verify_code: { limit: 15, windowMs: 60_000, cooldownMs: 60_000 },
   verify_email: { limit: 5, windowMs: 60_000, cooldownMs: 60_000 },

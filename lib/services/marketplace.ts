@@ -1380,13 +1380,49 @@ export async function listOffersForRequest(requestId: string): Promise<Array<Rec
     )
     .bind(requestId)
     .all<Record<string, unknown>>();
-  const offers = result.results ?? [];
+  return attachOfferRevisions(db, result.results ?? []);
+}
+
+/**
+ * Attach each offer's revision history, in one query for the whole set.
+ *
+ * Both offer listings did this inside their loop -- one on the screen where a
+ * customer compares the offers they received, one on the dashboard listing
+ * every offer a person is party to, which is capped at a hundred. So a hundred
+ * offers meant a hundred and one queries while somebody waited, and the cost
+ * grew with how busy they were.
+ *
+ * Shared rather than copied, because the duplicate is how the second one
+ * survived the first fix.
+ */
+async function attachOfferRevisions(db: D1Database, offers: Array<Record<string, unknown>>): Promise<Array<Record<string, unknown>>> {
+  if (offers.length === 0) {
+    return offers;
+  }
+  const offerIds = offers.map((offer) => String(offer.id));
+  // Placeholders generated from the ids, never interpolated: an offer id must
+  // not be able to reach the statement as SQL.
+  const placeholders = offerIds.map((_, index) => `?${index + 1}`).join(",");
+  const revisionRows = await db
+    .prepare(
+      `SELECT * FROM service_offer_revisions
+       WHERE offer_id IN (${placeholders})
+       ORDER BY offer_id, revision_number ASC`,
+    )
+    .bind(...(offerIds as [string, ...string[]]))
+    .all<Record<string, unknown>>();
+
+  const byOffer = new Map<string, Array<Record<string, unknown>>>();
+  for (const revision of revisionRows.results ?? []) {
+    const key = String(revision.offer_id);
+    const list = byOffer.get(key) ?? [];
+    list.push(revision);
+    byOffer.set(key, list);
+  }
   for (const offer of offers) {
-    const revisions = await db
-      .prepare("SELECT * FROM service_offer_revisions WHERE offer_id = ?1 ORDER BY revision_number ASC")
-      .bind(offer.id)
-      .all<Record<string, unknown>>();
-    offer.revisions = revisions.results ?? [];
+    // An offer never revised keeps an empty array, exactly as the per-offer
+    // query returned no rows for it.
+    offer.revisions = byOffer.get(String(offer.id)) ?? [];
   }
   return offers;
 }
@@ -1409,15 +1445,7 @@ export async function listOffersForParticipant(userId: string, query: { mine?: b
     )
     .bind(userId, limit)
     .all<Record<string, unknown>>();
-  const offers = result.results ?? [];
-  for (const offer of offers) {
-    const revisions = await db
-      .prepare("SELECT * FROM service_offer_revisions WHERE offer_id = ?1 ORDER BY revision_number ASC")
-      .bind(offer.id)
-      .all<Record<string, unknown>>();
-    offer.revisions = revisions.results ?? [];
-  }
-  return offers;
+  return attachOfferRevisions(db, result.results ?? []);
 }
 
 export async function reviseOffer(offerId: string, input: NewOfferFull, actor?: ActorContext): Promise<void> {

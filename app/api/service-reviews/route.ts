@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { listReviews } from "@services/marketplace";
 import { toPublicServiceReview } from "@services/public-dto";
+import { limitOr429 } from "@services/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  const limited = await limitOr429(request, "services_public_read");
+  if (limited) return limited;
   const searchParams = request.nextUrl.searchParams;
   const revieweeUserId = searchParams.get("revieweeUserId");
   const reviewerUserId = searchParams.get("reviewerUserId");

@@ -7,6 +7,7 @@ import { SERVICE_ERROR_CODES } from "@services/constants";
 import { toPublicProviderProfile } from "@services/public-dto";
 import { GeoService } from "@/lib/services/geo/geo.service";
 import { resolveGeoSelection } from "@/lib/services/geo/selection";
+import { limitOr429 } from "@services/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ function cleanNumber(value: unknown): number | null {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await limitOr429(request, "services_public_read");
+  if (limited) return limited;
   const q = request.nextUrl.searchParams;
   const admin = q.get("admin") === "1";
   const status = admin ? q.get("status") ?? undefined : "approved";
@@ -95,6 +98,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await limitOr429(request, "services_write");
+  if (limited) return limited;
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });

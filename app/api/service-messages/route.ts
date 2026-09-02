@@ -4,10 +4,13 @@ import { getSessionIdentity } from "@/lib/identity-auth";
 import { isThreadParticipant, resolveRecipientUserId, sendMessageFull } from "@services/marketplace";
 import { isMessageContext } from "@services/message-contexts";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { limitOr429 } from "@services/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const limited = await limitOr429(request, "services_message");
+  if (limited) return limited;
   const identity = await getSessionIdentity();
   if (!identity.authenticated || !identity.email) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.UNAUTHORIZED }, { status: 401 });
