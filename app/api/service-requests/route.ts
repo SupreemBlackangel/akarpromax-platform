@@ -9,6 +9,7 @@ import { geoAliases } from "@/lib/geo/platform-location";
 import { GeoService } from "@/lib/services/geo/geo.service";
 import { resolveGeoSelection } from "@/lib/services/geo/selection";
 import { limitOr429 } from "@services/rate-limit";
+import { boundedNumber, FILE_SIZE_BYTES, LATITUDE, LONGITUDE, MONEY } from "@/lib/services/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,6 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function cleanNumber(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
 
 function cleanAnswers(value: unknown): Array<{ key: string; label?: string | null; type?: string | null; value?: string | null }> {
   if (!Array.isArray(value)) return [];
@@ -125,12 +121,13 @@ export async function POST(request: NextRequest) {
       countryCode,
       cityId,
       districtId: clean(body.districtId, 100) || null,
-      latitude: cleanNumber(body.latitude),
-      longitude: cleanNumber(body.longitude),
+      // The other half of the distance the matcher computes.
+      latitude: boundedNumber(body.latitude, LATITUDE),
+      longitude: boundedNumber(body.longitude, LONGITUDE),
       title: clean(body.title, 300) || null,
       description: clean(body.description, 4000) || null,
-      budgetMin: cleanNumber(body.budgetMin),
-      budgetMax: cleanNumber(body.budgetMax),
+      budgetMin: boundedNumber(body.budgetMin, MONEY),
+      budgetMax: boundedNumber(body.budgetMax, MONEY),
       currency: currency.code,
       urgency: clean(body.urgency, 24) || null,
       preferredPeriod: clean(body.preferredPeriod, 200) || null,
@@ -150,7 +147,7 @@ export async function POST(request: NextRequest) {
         const attachment = item as Record<string, unknown>;
         const fileName = clean(attachment.fileName, 300);
         const fileUrl = clean(attachment.fileUrl, 800);
-        return fileName && fileUrl ? [{ fileName, fileUrl, fileSize: cleanNumber(attachment.fileSize) ?? 0, mimeType: clean(attachment.mimeType, 120) || null }] : [];
+        return fileName && fileUrl ? [{ fileName, fileUrl, fileSize: boundedNumber(attachment.fileSize, FILE_SIZE_BYTES) ?? 0, mimeType: clean(attachment.mimeType, 120) || null }] : [];
       }).slice(0, 20) : [],
     },
     { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },

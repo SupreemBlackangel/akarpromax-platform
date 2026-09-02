@@ -6,6 +6,7 @@ import { createOfferFull, listOffersForParticipant } from "@services/marketplace
 import { SERVICE_ERROR_CODES } from "@services/constants";
 import { resolveCurrencyCode } from "@services/currency-policy";
 import { limitOr429 } from "@services/rate-limit";
+import { boundedNumber, DURATION_DAYS, MONEY } from "@/lib/services/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +14,6 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function cleanNumber(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
 
 export async function GET(request: NextRequest) {
   const identity = await getSessionIdentity();
@@ -57,15 +53,15 @@ export async function POST(request: NextRequest) {
       {
         requestId,
         providerUserId: identity.email,
-        price: cleanNumber(body.price),
+        price: boundedNumber(body.price, MONEY),
         currency: currency.code,
-        durationDays: cleanNumber(body.durationDays),
+        durationDays: boundedNumber(body.durationDays, DURATION_DAYS),
         materialsIncluded: body.materialsIncluded === true,
-        materialCost: cleanNumber(body.materialCost),
-        laborCost: cleanNumber(body.laborCost),
-        visitFee: cleanNumber(body.visitFee),
-        taxAmount: cleanNumber(body.taxAmount),
-        totalPrice: cleanNumber(body.totalPrice),
+        materialCost: boundedNumber(body.materialCost, MONEY),
+        laborCost: boundedNumber(body.laborCost, MONEY),
+        visitFee: boundedNumber(body.visitFee, MONEY),
+        taxAmount: boundedNumber(body.taxAmount, MONEY),
+        totalPrice: boundedNumber(body.totalPrice, MONEY),
         durationText: clean(body.durationText, 200) || null,
         nearestDate: clean(body.nearestDate, 40) || null,
         offerNotes: clean(body.offerNotes, 2000) || null,

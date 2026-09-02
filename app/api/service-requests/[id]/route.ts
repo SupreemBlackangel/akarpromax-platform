@@ -4,6 +4,7 @@ import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getProviderProfileByUserId, getRequestDetail, getRequestFull, listRequestMatches, updateRequest } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
+import { boundedNumber, MONEY } from "@/lib/services/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +12,6 @@ function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function cleanNumber(value: unknown): number | null {
-  if (value == null || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -76,8 +72,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       {
         title: body.title === undefined ? undefined : clean(body.title, 300),
         description: body.description === undefined ? undefined : clean(body.description, 4000),
-        budgetMin: body.budgetMin === undefined ? undefined : cleanNumber(body.budgetMin),
-        budgetMax: body.budgetMax === undefined ? undefined : cleanNumber(body.budgetMax),
+        budgetMin: body.budgetMin === undefined ? undefined : boundedNumber(body.budgetMin, MONEY),
+        budgetMax: body.budgetMax === undefined ? undefined : boundedNumber(body.budgetMax, MONEY),
         urgency: body.urgency === undefined ? undefined : clean(body.urgency, 24),
         preferredPeriod: body.preferredPeriod === undefined ? undefined : clean(body.preferredPeriod, 200),
         needsVisit: body.needsVisit === undefined ? undefined : body.needsVisit === true,

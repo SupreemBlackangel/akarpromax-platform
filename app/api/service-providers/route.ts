@@ -8,6 +8,14 @@ import { toPublicProviderProfile } from "@services/public-dto";
 import { GeoService } from "@/lib/services/geo/geo.service";
 import { resolveGeoSelection } from "@/lib/services/geo/selection";
 import { limitOr429 } from "@services/rate-limit";
+import {
+  boundedNumber,
+  FOUNDED_YEAR,
+  LATITUDE,
+  LONGITUDE,
+  SERVICE_RADIUS_KM,
+  TEAM_SIZE,
+} from "@/lib/services/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -129,13 +137,15 @@ export async function POST(request: NextRequest) {
       cityId: clean(body.cityId, 100) || null,
       districtId: clean(body.districtId, 100) || null,
       governorate: clean(body.governorate, 200) || null,
-      latitude: cleanNumber(body.latitude),
-      longitude: cleanNumber(body.longitude),
-      serviceRadiusKm: cleanNumber(body.serviceRadiusKm) ?? 50,
+      latitude: boundedNumber(body.latitude, LATITUDE),
+      longitude: boundedNumber(body.longitude, LONGITUDE),
+      // An unbounded radius passed the distance check for every request in the
+      // country, so the profile matched all of them.
+      serviceRadiusKm: boundedNumber(body.serviceRadiusKm, SERVICE_RADIUS_KM) ?? 50,
       licensesText: clean(body.licensesText, 2000) || null,
       insuranceText: clean(body.insuranceText, 2000) || null,
-      foundedYear: cleanNumber(body.foundedYear),
-      teamSize: cleanNumber(body.teamSize),
+      foundedYear: boundedNumber(body.foundedYear, FOUNDED_YEAR),
+      teamSize: boundedNumber(body.teamSize, TEAM_SIZE),
       isBusiness: body.isBusiness === true,
       businessName: clean(body.businessName, 300) || null,
       taxNumber: clean(body.taxNumber, 100) || null,
