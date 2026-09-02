@@ -48,7 +48,7 @@ export const STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS = {
 
 /** Single source of truth for the eight canonical standard-shell slots. */
 export const STANDARD_PUBLIC_AD_SLOT_DEFINITIONS = {
-  hero: { canonical: "HERO", keySuffix: "HERO", placementSuffix: "hero", position: "hero", variant: "hero", shape: "horizontal", aspectRatio: "5:2", lazy: false, label: { ar: "هيرو", en: "Hero", tr: "Hero" } },
+  hero: { canonical: "HERO", keySuffix: "HERO", placementSuffix: "hero", position: "hero", variant: "hero", shape: "horizontal", aspectRatio: "3:2", lazy: false, label: { ar: "هيرو", en: "Hero", tr: "Hero" } },
   sideLeft01: { canonical: "LEFT_01", keySuffix: "SIDE_LEFT_01", placementSuffix: "side_left_01", position: "side-left-01", variant: "vertical", shape: "vertical", aspectRatio: "4:5", lazy: true, label: { ar: "يسار 1", en: "Left 01", tr: "Sol 01" } },
   sideLeft02: { canonical: "LEFT_02", keySuffix: "SIDE_LEFT_02", placementSuffix: "side_left_02", position: "side-left-02", variant: "vertical", shape: "vertical", aspectRatio: "4:5", lazy: true, label: { ar: "يسار 2", en: "Left 02", tr: "Sol 02" } },
   sideRight01: { canonical: "RIGHT_01", keySuffix: "SIDE_RIGHT_01", placementSuffix: "side_right_01", position: "side-right-01", variant: "vertical", shape: "vertical", aspectRatio: "4:5", lazy: true, label: { ar: "يمين 1", en: "Right 01", tr: "Sağ 01" } },

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES, visibleAdminPlacements } from "@/src/constants/advertising";
+import { checkCreativeFit, suggestedSize } from "@/lib/ads/creative-fit";
 
 type Identity = {
   authenticated: boolean;
@@ -1029,6 +1030,36 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <label>نسخة الهاتف<input dir="ltr" value={creative.mobileMediaUrl} onChange={(event) => updateCreative(index, "mobileMediaUrl", event.target.value)} /></label>
                   <label>نسخة اللوحي<input dir="ltr" value={creative.tabletMediaUrl} onChange={(event) => updateCreative(index, "tabletMediaUrl", event.target.value)} /></label>
                   <button type="button" onClick={() => removeCreative(index)}>إزالة</button>
+                  {creative.mediaWidth && creative.mediaHeight ? (
+                    <small style={{ gridColumn: "1 / -1", color: "var(--color-text-muted)" }}>
+                      المقاس: {creative.mediaWidth}×{creative.mediaHeight}
+                      {(() => {
+                        const issues = checkCreativeFit(creative.mediaWidth, creative.mediaHeight, form.placements);
+                        if (!issues.length) return " — مناسب لكل المواضع المختارة ✓";
+                        return null;
+                      })()}
+                    </small>
+                  ) : null}
+                  {creative.mediaWidth && creative.mediaHeight
+                    ? checkCreativeFit(creative.mediaWidth, creative.mediaHeight, form.placements).map((issue) => (
+                        <small
+                          key={issue.placement}
+                          style={{
+                            gridColumn: "1 / -1",
+                            color: issue.severity === "severe" ? "var(--color-danger)" : "var(--color-warning)",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {issue.severity === "severe" ? "⚠ " : "• "}
+                          «{issue.placementLabel}» يتوقع نسبة {issue.expected}
+                          {(() => {
+                            const size = suggestedSize(issue.expected);
+                            return size ? ` (مثال: ${size.width}×${size.height})` : "";
+                          })()}
+                          {" — "}الصورة الحالية تنحرف بنسبة {Math.round(issue.drift * 100)}٪ وسيُقتطع جزء منها.
+                        </small>
+                      ))
+                    : null}
                 </div>
               ))}
               <div><button type="button" disabled={form.creatives.length >= creativeLimit} onClick={addCreative}>إضافة وسيط</button><small>ترتيب القائمة هو ترتيب العرض (#1 يظهر أولاً) — استخدم ▲▼ لتغيير موضع الصورة. تُدوَّر الوسائط بالتساوي؛ كل حملة تُعرض مرة واحدة لكل جولة (حد أقصى 5 وسائط).</small></div>
