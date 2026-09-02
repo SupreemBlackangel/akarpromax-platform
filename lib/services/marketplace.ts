@@ -1931,7 +1931,13 @@ export async function getAdminMarketplaceSnapshot(): Promise<{
        ORDER BY r.created_at DESC LIMIT 20`,
     ).all<Record<string, unknown>>(),
     db.prepare(
-      `SELECT o.id, o.status, o.agreed_price, o.currency, o.scheduled_at, o.created_at,
+      // service_orders has `price` (and `price_snapshot`); there is no
+      // `agreed_price` column and there never was. Postgres rejects an unknown
+      // column at plan time, so this threw regardless of how many rows existed
+      // -- verified against production -- and it sits inside the Promise.all
+      // that builds the admin operations snapshot, taking the whole panel with
+      // it: recent providers, requests, orders and reports.
+      `SELECT o.id, o.status, o.price AS agreed_price, o.currency, o.scheduled_at, o.created_at,
               r.reference_number, r.title AS request_title
        FROM service_orders o LEFT JOIN service_requests r ON r.id = o.request_id
        ORDER BY o.created_at DESC LIMIT 20`,

@@ -77,3 +77,14 @@ test("matching is triggered when a request is published", async () => {
   const marketplace = await read("lib/services/marketplace.ts");
   assert.match(marketplace, /const matched = await runMatching\(requestId\)/, "publishing must fan the request out to providers");
 });
+
+test("the admin operations snapshot selects a column that exists", async () => {
+  // service_orders has `price`; there is no `agreed_price` column. Postgres
+  // rejects an unknown column at plan time, so this threw regardless of row
+  // count -- verified against production -- and it sits inside the Promise.all
+  // that builds the whole admin snapshot, taking recent providers, requests,
+  // orders and reports down with it.
+  const marketplace = await read("lib/services/marketplace.ts");
+  assert.doesNotMatch(marketplace, /SELECT o\.id, o\.status, o\.agreed_price/);
+  assert.match(marketplace, /o\.price AS agreed_price/, "aliased so the admin client keeps reading the same field name");
+});
