@@ -1,30 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+import { forwardToCanonical } from "@services/forward";
+// Same correction as the sibling route: the canonical path is service-jobs, and
+// /api/service-orders/[id]/review answered 500 in production because it was
+// proxying to something that does not exist.
+import { POST as canonicalPOST } from "@/app/api/service-jobs/[id]/review/route";
 
 export const dynamic = "force-dynamic";
 
-function proxyToCanonical(request: NextRequest, canonicalPath: string): Promise<NextResponse> {
-  const url = new URL(request.url);
-  url.pathname = canonicalPath;
-  const headers = new Headers(request.headers);
-  headers.set("x-forwarded-path", request.nextUrl.pathname);
-  return fetch(url.toString(), {
-    method: request.method,
-    headers,
-    body: request.method !== "GET" && request.method !== "HEAD" ? request.body : null,
-    redirect: "manual",
-  }).then((res) => new NextResponse(res.body, { status: res.status, statusText: res.statusText, headers: res.headers }));
-}
+type Params = { params: Promise<{ id: string }> };
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  return proxyToCanonical(request, `/api/service-orders/${id}/review`);
-}
-
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  return proxyToCanonical(request, `/api/service-orders/${id}/review`);
+export async function POST(request: NextRequest, context: Params) {
+  return forwardToCanonical(request, canonicalPOST, context);
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { headers: { Allow: "GET, POST, OPTIONS" } });
+  return new NextResponse(null, { headers: { Allow: "POST, OPTIONS" } });
 }

@@ -1,23 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+import { forwardToCanonical } from "@services/forward";
+// An "order" here is what the canonical API calls a job, and updating one means
+// moving its status. The previous target, /api/service-orders/[id], has never
+// existed: the proxy fetched it, got a 404 and answered 500 -- verified in
+// production. Importing the handler makes a wrong target a build error.
+import { PATCH as canonicalStatusPATCH } from "@/app/api/service-jobs/[id]/status/route";
 
 export const dynamic = "force-dynamic";
 
-function proxyToCanonical(request: NextRequest, canonicalPath: string): Promise<NextResponse> {
-  const url = new URL(request.url);
-  url.pathname = canonicalPath;
-  const headers = new Headers(request.headers);
-  headers.set("x-forwarded-path", request.nextUrl.pathname);
-  return fetch(url.toString(), {
-    method: request.method,
-    headers,
-    body: request.method !== "GET" && request.method !== "HEAD" ? request.body : null,
-    redirect: "manual",
-  }).then((res) => new NextResponse(res.body, { status: res.status, statusText: res.statusText, headers: res.headers }));
-}
+type Params = { params: Promise<{ id: string }> };
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  return proxyToCanonical(request, `/api/service-orders/${id}`);
+export async function PATCH(request: NextRequest, context: Params) {
+  return forwardToCanonical(request, canonicalStatusPATCH, context);
 }
 
 export async function OPTIONS() {

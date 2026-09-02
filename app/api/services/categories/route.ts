@@ -1,26 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+import { forwardToCanonical } from "@services/forward";
+import { GET as canonicalGET } from "@/app/api/service-categories/route";
+import { POST as canonicalPOST } from "@/app/api/service-categories/route";
 
 export const dynamic = "force-dynamic";
 
-function proxyToCanonical(request: NextRequest, canonicalPath: string): Promise<NextResponse> {
-  const url = new URL(request.url);
-  url.pathname = canonicalPath;
-  const headers = new Headers(request.headers);
-  headers.set("x-forwarded-path", request.nextUrl.pathname);
-  return fetch(url.toString(), {
-    method: request.method,
-    headers,
-    body: request.method !== "GET" && request.method !== "HEAD" ? request.body : null,
-    redirect: "manual",
-  }).then((res) => new NextResponse(res.body, { status: res.status, statusText: res.statusText, headers: res.headers }));
-}
-
 export async function GET(request: NextRequest) {
-  return proxyToCanonical(request, "/api/service-categories");
+  return forwardToCanonical(request, canonicalGET, undefined);
 }
 
 export async function POST(request: NextRequest) {
-  return proxyToCanonical(request, "/api/service-categories");
+  return forwardToCanonical(request, canonicalPOST, undefined);
 }
 
 export async function OPTIONS() {

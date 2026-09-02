@@ -399,8 +399,13 @@ export function GeoProvider({ children }: { children: ReactNode }) {
   }, [location]);
 
   useEffect(() => {
+    // The initial state must be SSR-safe, so the stored and URL-derived
+    // location can only be read once there is a browser to read it from. That
+    // makes one extra render on mount unavoidable rather than accidental: it is
+    // the price of not hydrating against markup the server could not produce.
     const resolved = resolveSync();
     locationRef.current = resolved;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocation(resolved);
   }, []);
 

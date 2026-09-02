@@ -272,7 +272,12 @@ test("includes the expanded admin dashboard, users, roles, reports and settings 
 
   assert.match(settingsPage, /SettingsAdminClient/);
   assert.match(settings, /advertiser-admin-header/);
-  assert.match(settings, /الأقسام المتاحة/);
+  // The settings screen was redesigned and no longer lists "الأقسام المتاحة".
+  // What it is FOR did not change, so the assertion follows the purpose rather
+  // than a heading: the two things an administrator sets here.
+  assert.match(settings, /عمولة الخدمات/, "the platform's commission on completed service jobs");
+  assert.match(settings, /تسعير الإعلانات/, "and the advertising rate card");
+  assert.match(settings, /\/api\/admin\/platform-settings/, "both read and write through the settings endpoint");
 
   assert.match(statsApi, /ADMIN_DASHBOARD_VIEW/);
   assert.match(statsApi, /GROUP BY/);

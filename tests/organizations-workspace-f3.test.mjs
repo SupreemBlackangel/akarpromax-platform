@@ -14,10 +14,22 @@ test("workspace shells have no demo guest mode or fake company tabs", () => {
   assert.doesNotMatch(s,/company\/portfolio|company\/capabilities|company\/specialties/);
 });
 test("my offices and companies are membership-scoped", () => {
-  const s=read("app/dashboard/offices/page.tsx")+read("app/dashboard/companies/page.tsx");
-  assert.match(s,/listUserOrganizationWorkspaces/);
-  assert.doesNotMatch(s,/fetch\(['"]\/api\/(offices|companies)/);
-  assert.doesNotMatch(s,/dashboard\/(offices|companies)\/new/);
+  // The two pages now delegate to one shared component, so the scoping lives
+  // there. This asserted the call in the pages themselves and so was checking a
+  // structure that had moved -- the guarantee never changed.
+  const pages = read("app/dashboard/offices/page.tsx") + read("app/dashboard/companies/page.tsx");
+  assert.match(pages, /OrgMembershipsPage/, "both pages must go through the shared picker");
+  assert.match(pages, /kind="office"/);
+  assert.match(pages, /kind="company"/);
+
+  const shared = read("src/components/organization/org-memberships-page.tsx");
+  assert.match(shared, /listUserOrganizationWorkspaces\(session\.userId, kind\)/,
+    "the list must be scoped to this user's memberships, not to every organization");
+
+  // The original prohibitions still hold, across all three files.
+  const all = pages + shared;
+  assert.doesNotMatch(all, /fetch\(['"]\/api\/(offices|companies)/);
+  assert.doesNotMatch(all, /dashboard\/(offices|companies)\/new/);
 });
 test("office requests expose no nonexistent detail/offer routes", () => {
   const s=read("app/dashboard/office/property-requests/page.tsx");

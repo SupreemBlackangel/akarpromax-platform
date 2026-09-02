@@ -68,7 +68,13 @@ function SearchPageInner() {
 
   // Initial load, re-run when the platform location resolves or changes —
   // other filters only apply on the explicit search action, as before.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  //
+  // performSearch sets `loading` before it awaits, which is what shows the
+  // spinner; the rule flags that as a synchronous setState in an effect. It is
+  // the intended behaviour here rather than a cascade: `loading` already starts
+  // as true, so the mount pass changes nothing, and a later country or city
+  // change genuinely is a new load the user should see.
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   useEffect(() => { void performSearch(1); }, [country, city]);
 
   const updateUrl = useCallback(() => {
