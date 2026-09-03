@@ -48,6 +48,10 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { key: "terms", labelKey: "navTerms", href: "/terms" },
       { key: "privacy", labelKey: "navPrivacy", href: "/privacy" },
+      // Facebook's App Review checks that a deletion route is reachable by a
+      // user, not merely that the page exists, so it is linked here rather than
+      // only registered in the app's settings.
+      { key: "data-deletion", labelKey: "navDataDeletion", href: "/data-deletion" },
     ],
   },
 ];

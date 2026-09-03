@@ -96,6 +96,7 @@ export type Translation = {
   navContact: string;
   navTerms: string;
   navPrivacy: string;
+  navDataDeletion: string;
   navFindMyLand: string;
   navWorkspace: string;
   navMyRequests: string;
