@@ -36,7 +36,12 @@ export const PUBLIC_BOTTOM_AD: PublicAdSlotConfig = {
 export const AD_PLACEMENT_REGISTRY: Record<string, PublicAdSlotConfig> = {
   PUBLIC_TOP: PUBLIC_TOP_AD,
   PUBLIC_BOTTOM: PUBLIC_BOTTOM_AD,
-  HOME_HERO: { key: "HOME_HERO", placement: "", variant: "horizontal", lazy: false, used: false },
+  // Was placement: "". A slot config whose placement is the empty string is a
+  // trap: isValidPlacement("") is false, so the moment somebody flips used to
+  // true the slot renders, calls the API, is refused, and shows nothing --
+  // with no error anywhere to say why. web_home_hero is the placement the home
+  // hero actually uses, and is the one live campaigns target.
+  HOME_HERO: { key: "HOME_HERO", placement: "web_home_hero", variant: "hero", lazy: false, used: false, canonical: "HERO" },
   PUBLIC_INLINE_1: { key: "PUBLIC_INLINE_1", placement: "between_sections", variant: "horizontal", lazy: true, used: false },
   PUBLIC_INLINE_2: { key: "PUBLIC_INLINE_2", placement: "between_sections", variant: "horizontal", lazy: true, used: false },
   PUBLIC_SIDEBAR: { key: "PUBLIC_SIDEBAR", placement: "listing_sidebar", variant: "vertical", lazy: true, used: false },

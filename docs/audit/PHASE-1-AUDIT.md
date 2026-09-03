@@ -105,7 +105,37 @@ Different response envelope (`{success, data}`) from the `/api/ads/*` family.
 | API | `/api/ads/match`, `/impression`, `/click` | `/api/advertising/match`, `/track` |
 | Used by | public shell, standard layout | `app/companies/[id]`, `app/offices/[id]`, `app/tools/*` |
 
-### 3.2 Four placement registries
+### 3.2 Placement definitions in four files
+
+**Corrected after PHASE 3 looked properly.** These are not four competing
+registries, which is how this section first read. They are layers, and the
+layering is defensible:
+
+| File | Role |
+|---|---|
+| `src/constants/advertising.ts` | `AD_PLACEMENTS` — the vocabulary the engine validates. The only source of truth |
+| `standard-public-ad-registry.ts` | families x slots, which **generate** part of that vocabulary |
+| `standard-public-ad-layout.ts` | which slots appear on which page |
+| `src/config/ad-placements.ts` | shell slot configs, each naming a placement from the vocabulary |
+
+What was missing was anything checking that the layers agree. Two real
+consequences followed, both now fixed and guarded by
+`tests/ads-placement-registry.test.mjs`:
+
+* `AD_PLACEMENT_REGISTRY.HOME_HERO` named the **empty string**. `isValidPlacement("")`
+  is false, so flipping its `used` flag would have rendered a slot that calls the
+  API, is refused, and shows nothing with no error saying why.
+* The legacy components pass `left_01`, `right_01`, `bottom_01` — **none of which
+  are valid placements**. They work only because `/api/advertising/match`
+  translates them using the page name. Every current caller resolves correctly
+  (verified: `company-detail`, `office-detail`, `tools` are all known families),
+  so **nothing is broken today**; the mapping was simply implicit and unchecked,
+  and a page whose name is not a known family would render a slot that can never
+  fill, silently.
+
+The original wording of this section is left below for the record.
+
+### 3.2b Original wording: four placement registries
 
 1. `src/config/standard-public-ad-registry.ts` — 22 families × 8 slots
 2. `src/config/standard-public-ad-layout.ts` — the cross-product
