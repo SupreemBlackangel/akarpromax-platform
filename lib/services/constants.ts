@@ -109,6 +109,44 @@ export const ORDER_STATUS = {
 
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 
+/**
+ * Every status on `service_orders` that means work is under way.
+ *
+ * That one column holds values from TWO vocabularies, because direct bookings
+ * and quoted orders share the table:
+ *
+ *   direct booking only:  pending_provider  confirmed  declined
+ *   order only:           created  accepted  waiting_customer_confirmation
+ *                         delivered  disputed
+ *   shared:               scheduled  in_progress  completed  cancelled
+ *
+ * Two queries counted "active jobs" with an inline list drawn from the order
+ * vocabulary alone, so every direct booking awaiting or accepted by a provider
+ * was missing from both -- the admin dashboard AND the customer's and
+ * provider's own dashboard, which is the worse of the two: a provider with
+ * three bookings in progress was shown zero.
+ *
+ * Written as literals rather than composed from the two enums to avoid an
+ * import cycle (booking.ts already imports this file). `tests/services-active-
+ * statuses.test.mjs` asserts the list stays complete against both vocabularies,
+ * so it cannot silently fall behind either.
+ */
+export const ACTIVE_JOB_STATUSES = [
+  // orders
+  "accepted",
+  "waiting_customer_confirmation",
+  "delivered",
+  // direct bookings
+  "pending_provider",
+  "confirmed",
+  // shared
+  "scheduled",
+  "in_progress",
+] as const;
+
+/** The same list as a SQL literal, so the two queries cannot drift apart. */
+export const ACTIVE_JOB_STATUS_SQL = ACTIVE_JOB_STATUSES.map((status) => `'${status}'`).join(",");
+
 export const ORDER_FLOW: Record<string, OrderStatus[]> = {
   [ORDER_STATUS.CREATED]: [ORDER_STATUS.ACCEPTED, ORDER_STATUS.CANCELLED],
   [ORDER_STATUS.ACCEPTED]: [ORDER_STATUS.SCHEDULED, ORDER_STATUS.IN_PROGRESS, ORDER_STATUS.CANCELLED],

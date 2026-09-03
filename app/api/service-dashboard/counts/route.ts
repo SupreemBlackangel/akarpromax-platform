@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity } from "@/lib/sponsor-auth";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import { ACTIVE_JOB_STATUS_SQL } from "@services/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,10 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) AS count FROM service_requests WHERE customer_user_id = ?1").bind(email).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) AS count FROM service_request_matches m JOIN service_requests r ON r.id = m.request_id JOIN service_provider_profiles p ON p.id = m.provider_id WHERE p.user_id = ?1 AND m.provider_ignored = 0 AND r.status IN ('published','receiving_offers')").bind(email).first<{ count: number }>(),
-      db.prepare("SELECT COUNT(*) AS count FROM service_orders WHERE (customer_user_id = ?1 OR provider_user_id = ?1) AND status IN ('accepted','scheduled','in_progress','waiting_customer_confirmation','delivered')").bind(email, email).first<{ count: number }>(),
+      // The same list the admin tile uses. This one is the worse of the two to
+      // get wrong: a provider with three direct bookings in progress was shown
+      // zero on their own dashboard.
+      db.prepare(`SELECT COUNT(*) AS count FROM service_orders WHERE (customer_user_id = ?1 OR provider_user_id = ?1) AND status IN (${ACTIVE_JOB_STATUS_SQL})`).bind(email, email).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) AS count FROM service_offers WHERE provider_user_id = ?1 AND status = 'sent'").bind(email).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) AS count FROM service_notifications WHERE user_id = ?1").bind(email).first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) AS count FROM service_notifications WHERE user_id = ?1 AND is_read = 0").bind(email).first<{ count: number }>(),

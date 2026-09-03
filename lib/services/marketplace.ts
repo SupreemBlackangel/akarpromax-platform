@@ -18,6 +18,7 @@ import {
   canTransition,
   canTransitionProvider,
   type OrderStatus,
+  ACTIVE_JOB_STATUS_SQL,
 } from "@services/constants";
 import { assessVerification, providerKind } from "@/lib/services/verification/requirements";
 
@@ -1943,7 +1944,10 @@ export async function getAdminOverview(): Promise<{
     count("SELECT COUNT(*) AS count FROM service_provider_profiles WHERE status = 'approved'"),
     count("SELECT COUNT(*) AS count FROM service_requests WHERE status NOT IN ('draft','cancelled','expired')"),
     count("SELECT COUNT(*) AS count FROM service_offers WHERE status = 'sent'"),
-    count("SELECT COUNT(*) AS count FROM service_orders WHERE status IN ('accepted','scheduled','in_progress','waiting_customer_confirmation','delivered')"),
+    // Covers direct bookings as well as quoted orders. The inline list here
+    // held only the order vocabulary, so every booking awaiting or accepted by
+    // a provider was missing from this tile.
+    count(`SELECT COUNT(*) AS count FROM service_orders WHERE status IN (${ACTIVE_JOB_STATUS_SQL})`),
     count("SELECT COUNT(*) AS count FROM service_reports WHERE status IN ('open','in_review')"),
     count("SELECT COUNT(*) AS count FROM service_requests"),
     count("SELECT COUNT(*) AS count FROM service_offers"),
