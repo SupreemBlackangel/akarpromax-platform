@@ -549,6 +549,57 @@ function eligibilityChecks(stats: EngineStats | undefined): EligibilityChecks {
 
 type ScoredAd = { ad: ParsedAd; score: number };
 
+/**
+ * Why a campaign is not being served.
+ *
+ * Walks exactly the gates <see cref="scoreAd"/> walks, in the same order, and
+ * names the first one that refuses. It exists because "the ad does not appear"
+ * was, until now, unanswerable: fourteen checks each returning a bare false,
+ * behind a route that turned every outcome into an empty list.
+ *
+ * Kept beside scoreAd deliberately. Two copies of this order would drift, and a
+ * diagnostic that disagrees with the matcher is worse than none -- it sends the
+ * reader to fix something that was never wrong.
+ */
+export type AdRejection = { ok: boolean; failed: string | null; detail?: string };
+
+export function explainAdMatch(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?: EngineStats): AdRejection {
+  if (!ad.isActive) return { ok: false, failed: "is_active", detail: "is_active = 0" };
+  if (ad.approvalStatus !== "approved") return { ok: false, failed: "approval_status", detail: ad.approvalStatus };
+  if (!isChannelMatch(ad, ctx)) {
+    return { ok: false, failed: "channel", detail: `campaign ${JSON.stringify(ad.channels)} vs context ${ctx.channel}` };
+  }
+  if (!isTimeMatch(ad, now, ctx)) return { ok: false, failed: "schedule" };
+  if (!isOsMatch(ad, ctx)) {
+    return { ok: false, failed: "operating_system", detail: `campaign ${JSON.stringify(ad.operatingSystems)} vs ${ctx.operatingSystem ?? "(none)"}` };
+  }
+  if (!isBudgetEligible(ad, stats)) return { ok: false, failed: "budget" };
+
+  if (!isSectionMatch(ad, ctx).ok) {
+    return { ok: false, failed: "section", detail: `campaign ${JSON.stringify(ad.sectionScopes)} vs ${ctx.section}` };
+  }
+  if (!isPlacementMatch(ad, ctx).ok) {
+    return { ok: false, failed: "placement", detail: `campaign ${JSON.stringify(ad.placements)} vs ${ctx.placement}` };
+  }
+  if (!isDomainMatch(ad, ctx).ok) return { ok: false, failed: "domain" };
+  if (!isPageTypeMatch(ad, ctx).ok) {
+    return { ok: false, failed: "page_type", detail: `campaign ${JSON.stringify(ad.pageTypes)} vs ${ctx.pageType}` };
+  }
+  if (!isDeviceMatch(ad, ctx).ok) {
+    return { ok: false, failed: "device", detail: `campaign ${JSON.stringify(ad.devices)} vs ${ctx.deviceType}` };
+  }
+  if (!isLanguageMatch(ad, ctx).ok) {
+    return { ok: false, failed: "language", detail: `campaign ${JSON.stringify(ad.languages)} vs ${ctx.language}` };
+  }
+  if (!isGeoMatch(ad, ctx).ok) {
+    return { ok: false, failed: "geo", detail: `campaign ${JSON.stringify(ad.countries)} allCountries=${ad.targetAllCountries} vs ${ctx.countryCode ?? "(none)"}` };
+  }
+  if (!isEntityMatch(ad, ctx).ok) return { ok: false, failed: "entity" };
+  if (!isCategoryMatch(ad, ctx).ok) return { ok: false, failed: "category" };
+
+  return { ok: true, failed: null };
+}
+
 export function scoreAd(ad: ParsedAd, ctx: ResolvedAdContext, now: Date, stats?: EngineStats): number | null {
   if (!ad.isActive) return null;
   if (ad.approvalStatus !== "approved") return null;
