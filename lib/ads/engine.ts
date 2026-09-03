@@ -218,6 +218,19 @@ async function queryActiveAds(db: D1Database, now: Date): Promise<ParsedAd[]> {
   return ads;
 }
 
+/**
+ * Drop the servable-ads cache.
+ *
+ * Called after any moderation decision -- approve, reject, pause, unpublish --
+ * because the person who made it then looks at the site. Without this they wait
+ * up to ACTIVE_ADS_CACHE_TTL_MS wondering whether it worked, and, worse, a
+ * campaign that was just rejected keeps being served for that long.
+ */
+export function invalidateActiveAdsCache(): void {
+  activeAdsCache = null;
+  activeAdsPromise = null;
+}
+
 export async function loadActiveAds(db: D1Database, now = new Date()): Promise<ParsedAd[]> {
   const timestamp = Date.now();
   if (activeAdsCache && activeAdsCache.expiresAt > timestamp) return activeAdsCache.value;

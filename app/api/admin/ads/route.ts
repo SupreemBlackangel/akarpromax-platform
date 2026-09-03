@@ -213,13 +213,25 @@ export async function PATCH(request: NextRequest) {
   if (!id || !validateCampaignPayload(payload) || !canManageTargets(identity, payload.countries)) {
     return NextResponse.json({ error: "Invalid campaign data or targeting scope" }, { status: 400 });
   }
+  const db = await getRuntimeDb();
+  const existing = await db.prepare("SELECT id, countries, approval_status, status FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
+    .bind(id).first<{ id: string; countries: string; approval_status: string; status: string }>();
+
+  // Without the publish permission the lifecycle status is not this editor's to
+  // change AT ALL -- in either direction.
+  //
+  // It used to be forced to "draft" whenever they submitted "active", which
+  // reads as "you may not publish" but also silently UNPUBLISHED a campaign
+  // that was already live: an editor fixing a typo on an approved, running
+  // campaign took it off the site without being told. Keeping the stored value
+  // refuses the promotion and leaves everything else alone.
   let status = payload.status;
-  if (status === "active" && !hasSponsorPermission(identity, PERMISSIONS.ADS_PUBLISH)) {
+  const canPublish = hasSponsorPermission(identity, PERMISSIONS.ADS_PUBLISH);
+  if (!canPublish && existing && status !== existing.status) {
+    status = existing.status;
+  } else if (!canPublish && status === "active") {
     status = "draft";
   }
-  const db = await getRuntimeDb();
-  const existing = await db.prepare("SELECT id, countries, approval_status FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
-    .bind(id).first<{ id: string; countries: string; approval_status: string }>();
   if (!existing) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   const existingCountries = parseList(existing.countries);
   if (!canManageTargets(identity, existingCountries) && identity.role !== "super_admin" && identity.role !== "ad_manager") {

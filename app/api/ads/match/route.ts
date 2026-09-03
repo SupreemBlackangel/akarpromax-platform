@@ -19,10 +19,23 @@ export async function POST(request: NextRequest) {
     const db = await getRuntimeDb();
     const count = Math.max(1, Math.min(6, Number(body.count) || 1));
     const ads = await cached(
+      // Every field the matching depends on must be in the key. It previously
+      // omitted pageType, channel, deviceType and operatingSystem while
+      // isPageTypeMatch, isChannelMatch, isDeviceMatch and isOsMatch all read
+      // them -- so a desktop-only campaign cached for one visitor was served to
+      // a phone, and a phone's empty result was served to every desktop for the
+      // next thirty seconds.
       cacheKey([
         "ads",
         ctx.placement,
         ctx.section,
+        ctx.pageType,
+        ctx.channel,
+        ctx.deviceType,
+        ctx.operatingSystem,
+        ctx.entityType,
+        ctx.entityId,
+        ctx.categoryId,
         ctx.countryCode,
         ctx.regionId,
         ctx.cityId,
@@ -36,7 +49,21 @@ export async function POST(request: NextRequest) {
       () => matchAds(db, ctx, { count }),
     );
     return NextResponse.json({ ads }, { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=60" } });
-  } catch {
+  } catch (error) {
+    // The empty list stays -- a page must not break because an ad could not be
+    // chosen -- but the reason is no longer thrown away.
+    //
+    // This swallowed every failure as a successful "no ads", which is why
+    // "approved ads are not appearing" could not be diagnosed from the outside:
+    // a broken query, a schema drift and a genuinely empty match all produced
+    // the same 200 with the same body.
+    console.error("[ads/match] failed", {
+      placement: ctx.placement,
+      section: ctx.section,
+      pageType: ctx.pageType,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json({ ads: [] }, { status: 200, headers: { "Cache-Control": "public, max-age=10" } });
   }
 }

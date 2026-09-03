@@ -3,6 +3,7 @@ import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { canManageTargets } from "@/lib/ads/admin";
+import { invalidateActiveAdsCache } from "@/lib/ads/engine";
 import { emailService } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -41,21 +42,45 @@ export async function POST(request: NextRequest) {
   const isRequest = existing.campaign_type === "request";
   const shouldActivate = approvalStatus === "approved" && isRequest && ["draft", "pending", "paused"].includes(existing.status);
 
+  // The status is decided here and bound as a plain string, rather than chosen
+  // inside the statement with `CASE WHEN ? THEN 'active' ELSE status END`.
+  //
+  // That construct is why approved campaigns were not appearing. Postgres
+  // requires the CASE condition to be a boolean, and a bound 1/0 is not one:
+  //
+  //   ERROR: argument of CASE/WHEN must be type boolean, not type integer
+  //   ERROR: parameter $4 of type integer cannot be coerced to expected type boolean
+  //
+  // Both reproduced against the live database. Campaigns came out of approval
+  // with approval_status = 'approved' and is_active = 1 but status still
+  // 'draft', while the audit log recorded autoActivated: true -- the code
+  // believed it had activated them. The serving query requires status =
+  // 'active', so they were approved and invisible.
+  //
+  // Deciding it in TypeScript removes the dialect-sensitive construct entirely
+  // and makes the value one a test can assert on.
+  const nextStatus = shouldActivate ? "active" : existing.status;
+
   await db
     .prepare(
       `UPDATE ad_campaigns
        SET approval_status = ?, approved_by = ?, is_active = ?,
-           status = CASE WHEN ? THEN 'active' ELSE status END,
+           status = ?,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
     )
-    .bind(approvalStatus, identity.email, approvalStatus === "approved" ? 1 : 0, shouldActivate ? 1 : 0, id)
+    .bind(approvalStatus, identity.email, approvalStatus === "approved" ? 1 : 0, nextStatus, id)
     .run();
+
+  // The engine caches servable campaigns for thirty seconds. Approval is done
+  // by a person who then looks at the site, so the cache is dropped here rather
+  // than leaving them to wonder for half a minute whether it worked.
+  invalidateActiveAdsCache();
   try {
     await db.prepare(
       `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
        VALUES (?1, ?2, ?3, 'ad_campaign', ?4, ?5)`,
-    ).bind(crypto.randomUUID(), identity.email, "ad.approval", id, JSON.stringify({ approvalStatus, autoActivated: shouldActivate })).run();
+    ).bind(crypto.randomUUID(), identity.email, "ad.approval", id, JSON.stringify({ approvalStatus, autoActivated: shouldActivate, statusAfter: nextStatus })).run();
   } catch {
     // audit best-effort
   }
