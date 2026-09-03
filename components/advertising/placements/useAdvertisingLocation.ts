@@ -24,6 +24,14 @@ export type LegacyAdvertisingCreative = {
   imageUrl?: string | null;
   imageAlt?: string | null;
   videoUrl?: string | null;
+  /**
+   * The token the engine minted for this impression.
+   *
+   * The server has always sent it -- toLegacyAdvertisingResult includes it --
+   * but the type did not declare it, so no component could reach it and none
+   * of them counted anything.
+   */
+  trackingToken?: string | null;
 };
 
 export type LegacyAdvertisingAd = {

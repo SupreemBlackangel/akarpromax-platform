@@ -62,16 +62,17 @@ test("legacy advertising endpoint delegates ad selection to canonical engine", (
   assert.match(route, /toLegacyAdvertisingResult/);
 });
 
-test("all five advertising callers remain wired to the compatibility endpoint", () => {
-  const files = [
-    "components/advertising/placements/NewsTicker.tsx",
-    "components/advertising/placements/FeaturedProperties.tsx",
-    "components/advertising/placements/AdSidebar.tsx",
-    "components/advertising/placements/AdHero.tsx",
-    "components/advertising/placements/AdBottom.tsx",
-  ];
-  for (const file of files) assert.match(read(file), /\/api\/advertising\/match/);
-  assert.equal(files.length, 5);
+test("every advertising component remains wired to the compatibility endpoint", () => {
+  // Swept rather than listed with a count. Naming five files and asserting
+  // "five" froze the directory: it made deleting a dead component a test
+  // failure, and said nothing about a sixth being added.
+  const dir = "components/advertising/placements";
+  const files = fs.readdirSync(dir)
+    .filter((name) => name.endsWith(".tsx"))
+    .map((name) => `${dir}/${name}`);
+
+  assert.ok(files.length >= 3, `expected the advertising components, found ${files.length}`);
+  for (const file of files) assert.match(read(file), /\/api\/advertising\/match/, file);
 });
 
 test("canonical forward stream contains the PASS C.1 lifecycle baseline", () => {

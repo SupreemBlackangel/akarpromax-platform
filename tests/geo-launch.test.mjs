@@ -164,8 +164,16 @@ test("all advertising consumers and public services use the central geo contract
   const root = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
   assert.match(root, /<GeoProvider>/);
 
-  for (const name of ["AdHero", "AdSidebar", "AdBottom", "NewsTicker", "FeaturedProperties"]) {
-    const source = await readFile(new URL(`../components/advertising/placements/${name}.tsx`, import.meta.url), "utf8");
+  // Swept rather than listed. The list used to name five components, which
+  // froze the directory: deleting a dead one broke a test that was never about
+  // that file, and adding one was covered by nobody.
+  const { readdir } = await import("node:fs/promises");
+  const dir = new URL("../components/advertising/placements/", import.meta.url);
+  const components = (await readdir(dir)).filter((name) => name.endsWith(".tsx"));
+  assert.ok(components.length >= 3, `expected the advertising components, found ${components.length}`);
+
+  for (const name of components) {
+    const source = await readFile(new URL(name, dir), "utf8");
     assert.match(source, /useAdvertisingLocation/, name);
     assert.match(source, /appendAdvertisingLocation/, name);
   }
