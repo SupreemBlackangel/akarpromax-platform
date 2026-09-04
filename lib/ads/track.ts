@@ -23,6 +23,20 @@ export async function resolveTrackRequest(body: TrackRequest, server?: ServerAdC
   if (payload.sec) ctx.section = payload.sec;
   if (payload.pg) ctx.pageType = payload.pg;
   if (isAdChannel(payload.ch)) ctx.channel = payload.ch;
+
+  // Geography comes from the token, not the body, exactly like placement and
+  // channel above. Before this, a visitor could match with one location and
+  // report the impression with another -- and the match itself accepted
+  // "countryCode: eg, cityId: jeddah", so the advertiser paying for Jeddah was
+  // billed for it. See lib/ads/geo-authority.ts for the other half.
+  //
+  // Tokens minted before this field existed carry none, and those keep the
+  // body's values: they expire on their own, and refusing them would drop
+  // every impression in flight at deploy time.
+  if (payload.co) ctx.countryCode = payload.co;
+  if (payload.rg) ctx.regionId = payload.rg;
+  if (payload.ci) ctx.cityId = payload.ci;
+  if (payload.di) ctx.districtId = payload.di;
   return {
     ok: true,
     ctx,

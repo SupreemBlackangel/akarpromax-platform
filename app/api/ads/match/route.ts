@@ -3,6 +3,7 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 import { matchAds } from "@/lib/ads/engine";
 import { buildContext, isValidPlacement, type MatchRequest } from "@/lib/ads/context";
 import { cached, cacheKey } from "@/lib/cache";
+import { resolveClaimedGeo } from "@/lib/ads/geo-authority";
 
 export const dynamic = "force-dynamic";
 
@@ -11,12 +12,27 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  const ctx = buildContext(body);
-  if (!isValidPlacement(ctx.placement)) {
+  // Built from the raw body so the placement can be validated and so the catch
+  // below still has something to name when the failure happens before the
+  // registry has been consulted.
+  const claimed = buildContext(body);
+  if (!isValidPlacement(claimed.placement)) {
     return NextResponse.json({ error: "A valid placement is required" }, { status: 400 });
   }
   try {
     const db = await getRuntimeDb();
+
+    // The registry decides where the visitor is, not the request body. A
+    // campaign targeting only Jeddah was served -- and billed -- to a body
+    // claiming countryCode "eg" with cityId "jeddah", and to one claiming no
+    // country at all. See lib/ads/geo-authority.ts.
+    const geo = await resolveClaimedGeo(db, {
+      countryCode: body.countryCode,
+      regionId: body.regionId == null ? undefined : String(body.regionId),
+      cityId: body.cityId == null ? undefined : String(body.cityId),
+      districtId: body.districtId == null ? undefined : String(body.districtId),
+    });
+    const ctx = buildContext({ ...body, ...geo });
     const count = Math.max(1, Math.min(6, Number(body.count) || 1));
     const ads = await cached(
       // Every field the matching depends on must be in the key. It previously
@@ -58,9 +74,9 @@ export async function POST(request: NextRequest) {
     // a broken query, a schema drift and a genuinely empty match all produced
     // the same 200 with the same body.
     console.error("[ads/match] failed", {
-      placement: ctx.placement,
-      section: ctx.section,
-      pageType: ctx.pageType,
+      placement: claimed.placement,
+      section: claimed.section,
+      pageType: claimed.pageType,
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

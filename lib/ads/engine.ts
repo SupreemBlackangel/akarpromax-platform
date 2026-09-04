@@ -804,7 +804,16 @@ export async function matchAds(db: D1Database, ctx: ResolvedAdContext, options: 
       creativeCount,
       durationSeconds,
       trackingToken: await signTrackingToken(
-        { campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType, creativeId: creative?.id ?? null, channel, inventoryClass: "commercial" },
+        {
+          campaignId: ad.id, placement: ctx.placement, section: ctx.section, pageType: ctx.pageType,
+          creativeId: creative?.id ?? null, channel, inventoryClass: "commercial",
+          // The context this ad was matched against, sealed so the impression
+          // is reported for the same place the decision was made in.
+          countryCode: ctx.countryCode ?? undefined,
+          regionId: ctx.regionId == null ? undefined : String(ctx.regionId),
+          cityId: ctx.cityId == null ? undefined : String(ctx.cityId),
+          districtId: ctx.districtId == null ? undefined : String(ctx.districtId),
+        },
         now,
       ),
     });

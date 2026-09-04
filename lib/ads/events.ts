@@ -12,6 +12,15 @@ export type TrackingPayload = {
   cr?: string;
   ch?: string;
   ic?: "commercial";
+  /**
+   * Where the match decided the visitor was, after the location registry
+   * corrected the claim. Optional because tokens minted before this field
+   * existed are still in flight and must keep working until they expire.
+   */
+  co?: string;
+  rg?: string;
+  ci?: string;
+  di?: string;
   /** Single-use nonce. See lib/ads/nonce-ledger.ts. */
   n?: string;
   ts: number;
@@ -46,7 +55,15 @@ function base64UrlDecode(value: string): string {
 }
 
 export async function signTrackingToken(
-  input: { campaignId: string; placement: string; section: string; pageType: string; creativeId?: string | null; channel?: string; inventoryClass?: "commercial" },
+  input: {
+    campaignId: string; placement: string; section: string; pageType: string;
+    creativeId?: string | null; channel?: string; inventoryClass?: "commercial";
+    // Where the MATCH decided the visitor was, after the location registry had
+    // its say. Sealed in here for the same reason placement and channel are:
+    // the tracking body is the visitor's, and an impression is what an
+    // advertiser pays for.
+    countryCode?: string; regionId?: string; cityId?: string; districtId?: string;
+  },
   now = new Date(),
 ): Promise<string> {
   const payload = base64UrlEncode(
@@ -58,6 +75,10 @@ export async function signTrackingToken(
       cr: input.creativeId ?? undefined,
       ch: input.channel ?? undefined,
       ic: input.inventoryClass ?? undefined,
+      co: input.countryCode || undefined,
+      rg: input.regionId || undefined,
+      ci: input.cityId || undefined,
+      di: input.districtId || undefined,
       // Random per mint, so two viewers of the same creative hold different
       // tokens and neither can spend the other's.
       n: crypto.randomUUID(),

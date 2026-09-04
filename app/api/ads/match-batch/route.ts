@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { matchAdsBatch } from "@/lib/ads/engine";
 import { buildContext, isValidPlacement, type MatchRequest } from "@/lib/ads/context";
+import { resolveClaimedGeo } from "@/lib/ads/geo-authority";
 import type { AdMatchResult } from "@/lib/ads/types";
 import { resolveServerAdContext } from "@/lib/ads/server-context";
 
@@ -20,7 +21,18 @@ export async function POST(request: NextRequest) {
   // Derive what the request proves (device, host, signed session) once, then
   // apply it to every context in the batch.
   const server = resolveServerAdContext(request, contexts[0]?.countryCode);
-  const resolved = contexts.map((context) => buildContext(context, server));
+
+  // The location registry corrects the claim before anything is matched, the
+  // same as /api/ads/match. Every slot on a page carries the same location, so
+  // this is one lookup for the batch rather than one per slot.
+  const db = await getRuntimeDb().catch(() => null);
+  const geo = await resolveClaimedGeo(db, {
+    countryCode: contexts[0]?.countryCode,
+    regionId: contexts[0]?.regionId == null ? undefined : String(contexts[0].regionId),
+    cityId: contexts[0]?.cityId == null ? undefined : String(contexts[0].cityId),
+    districtId: contexts[0]?.districtId == null ? undefined : String(contexts[0].districtId),
+  });
+  const resolved = contexts.map((context) => buildContext({ ...context, ...geo }, server));
 
   // An unknown placement fails only its own slot. Rejecting the whole batch
   // meant one typo in one new page family blanked every ad on that page —
