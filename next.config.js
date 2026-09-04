@@ -5,6 +5,43 @@ const nextConfig = {
   // Lets a verification build run while another server still holds `.next`,
   // which Windows locks. Defaults to the standard directory.
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // Standalone traces the project directory, and this repository holds several
+  // large things that have nothing to do with the web server. Measured before
+  // this exclusion: 539 MB, of which 161 MB was the DevExpress component
+  // library (a licensed desktop product), 86 MB the compiled desktop app
+  // including its two local SQLite databases, and 45 MB a stale `dist`.
+  //
+  // None of it was ever reachable over HTTP -- verified against production,
+  // every path answered 404 -- so this is not a disclosure fix. It is 300 MB
+  // uploaded on every deploy, which is why deploys were taking over ten
+  // minutes.
+  // The worst of it was `.git`: 106 MB of full repository history, deployed to
+  // the production host and readable there with `git log`. It was never served
+  // over HTTP -- every path checked answered 404 -- and no .env was ever
+  // committed, so this is not an active disclosure. But the entire source and
+  // its history sitting on a public-facing server turns any file-read into a
+  // total one, and a past credential exposure is already documented in
+  // docs/security/. It has no business being there.
+  outputFileTracingExcludes: {
+    '*': [
+      './.git/**',
+      './.vs/**',
+      './devexpress/**',
+      './AkarApp_LIVE/**',
+      './dist/**',
+      './artifacts/**',
+      './docs/**',
+      './examples/**',
+      './tests/**',
+      './**/*.bundle',
+    ],
+    // NOT excluded, and both were on the first draft of this list:
+    //   tessdata/          — lib/land/ocr/tessdata.ts resolves it from
+    //                        process.cwd() at runtime, so OCR would start
+    //                        failing on the server and nowhere else.
+    //   drizzle-pg-forward/ — FORWARD_MIGRATIONS_FOLDER; the migrator reads
+    //                        the .sql files from disk.
+  },
   serverExternalPackages: ['@napi-rs/canvas', 'tesseract.js', 'tesseract.js-core', 'wasm-feature-detect'],
   experimental: {
     serverActions: {
