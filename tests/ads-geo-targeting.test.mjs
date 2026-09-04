@@ -114,7 +114,7 @@ test("a saved value absent from the registry is shown as removable", async () =>
   // Opening an old campaign must neither silently drop its stored targeting nor
   // silently keep a value that can never match. It is displayed and removable.
   assert.match(picker, /strays/, "unknown saved values must be surfaced");
-  assert.match(picker, /!known\.has\(value\)/);
+  assert.match(picker, /!known\.has\(norm\(value\)\)/);
 });
 
 // ---- the catalogue itself ---------------------------------------------------
@@ -255,4 +255,31 @@ test("the seeder never deletes or updates", async () => {
   assert.doesNotMatch(seeder, /\bDROP\b/i);
   assert.match(seeder, /SELECT id FROM/, "it must look a row up before inserting it");
   assert.match(seeder, /ROLLBACK/, "a failure must leave nothing behind");
+});
+
+// ---- the case in the database is not the case in the registry ---------------
+
+test("a campaign storing JEDDAH shows Jeddah as selected, not as a stray", async () => {
+  const picker = code(await read("app/admin/ads/GeoTargetPicker.tsx"));
+
+  // The live campaign holds `["JEDDAH"]` -- entered before the registry codes
+  // were settled -- and app/api/admin/ads hands it back verbatim. isGeoMatch
+  // lowercases both sides, so the campaign works. A picker that compared
+  // "JEDDAH" with "jeddah" would show the box UNCHECKED and list JEDDAH under
+  // "not in the registry", and a moderator following that warning would strip
+  // the targeting off a running campaign.
+  assert.match(picker, /const norm = \(value: string\): string => value\.trim\(\)\.toLowerCase\(\)/);
+  assert.match(picker, /const has = \(list: string\[\], value: string\)/);
+
+  assert.match(picker, /checked=\{has\(selected, value\)\}/, "the checkbox must compare case-insensitively");
+  assert.match(picker, /!known\.has\(norm\(value\)\)/, "and so must the stray check");
+  assert.doesNotMatch(picker, /selected\.includes\(value\)/, "no case-sensitive comparison may remain");
+});
+
+test("removing a value matches it case-insensitively too", async () => {
+  const picker = code(await read("app/admin/ads/GeoTargetPicker.tsx"));
+
+  // Otherwise unticking Jeddah on a campaign that stored JEDDAH would append a
+  // second entry instead of removing the first.
+  assert.match(picker, /current\.filter\(\(item\) => norm\(item\) !== norm\(value\)\)/);
 });

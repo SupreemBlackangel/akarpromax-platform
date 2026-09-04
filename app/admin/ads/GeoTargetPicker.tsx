@@ -33,6 +33,19 @@ export function targetValue(row: GeoRow): string {
   return (row.code?.trim() || row.id).toLowerCase();
 }
 
+/**
+ * Compare the way the matcher does, which is case-insensitively.
+ *
+ * The database holds `["JEDDAH"]` -- entered before the registry codes were
+ * settled -- and the admin route hands it back verbatim. `isGeoMatch`
+ * lowercases both sides so the live campaign works, but a picker comparing
+ * `"JEDDAH"` with `"jeddah"` would show Jeddah UNCHECKED and list `JEDDAH`
+ * under "not in the registry". A moderator following that warning would strip
+ * the targeting off a running campaign.
+ */
+const norm = (value: string): string => value.trim().toLowerCase();
+const has = (list: string[], value: string): boolean => list.some((item) => norm(item) === norm(value));
+
 async function fetchGeo(type: "countries" | Level, parentId?: string): Promise<GeoRow[]> {
   // One request per list, shared with the public shell -- see geo-registry-cache.
   return fetchGeoLevel(type, parentId) as Promise<GeoRow[]>;
@@ -73,7 +86,7 @@ function LevelPicker({
                   const value = targetValue(row);
                   return (
                     <label key={row.id}>
-                      <input type="checkbox" checked={selected.includes(value)} onChange={() => onToggle(value)} />
+                      <input type="checkbox" checked={has(selected, value)} onChange={() => onToggle(value)} />
                       {row.nameAr}
                       <small dir="ltr"> {value}</small>
                     </label>
@@ -119,7 +132,7 @@ export default function GeoTargetPicker({
   // equal-but-new array does not refetch every level underneath it.
   const countryKey = countryCodes.join(",");
   const selectedCountries = useMemo(
-    () => countries.filter((row) => countryCodes.includes(targetValue(row))),
+    () => countries.filter((row) => has(countryCodes, targetValue(row))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [countries, countryKey],
   );
@@ -145,7 +158,7 @@ export default function GeoTargetPicker({
 
   const regionKey = regionIds.join(",");
   const selectedGovernorates = useMemo(
-    () => governorateGroups.flatMap((group) => group.rows).filter((row) => regionIds.includes(targetValue(row))),
+    () => governorateGroups.flatMap((group) => group.rows).filter((row) => has(regionIds, targetValue(row))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [governorateGroups, regionKey],
   );
@@ -168,7 +181,7 @@ export default function GeoTargetPicker({
 
   const cityKey = cities.join(",");
   const selectedCities = useMemo(
-    () => visibleCityGroups.flatMap((group) => group.rows).filter((row) => cities.includes(targetValue(row))),
+    () => visibleCityGroups.flatMap((group) => group.rows).filter((row) => has(cities, targetValue(row))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [visibleCityGroups, cityKey],
   );
@@ -191,7 +204,12 @@ export default function GeoTargetPicker({
 
   const toggle = useCallback(
     (field: "regionIds" | "cities" | "districtIds", current: string[], value: string) => {
-      onChange(field, current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+      onChange(
+        field,
+        has(current, value)
+          ? current.filter((item) => norm(item) !== norm(value))
+          : [...current, value],
+      );
     },
     [onChange],
   );
@@ -209,9 +227,9 @@ export default function GeoTargetPicker({
   }, [governorateGroups, visibleCityGroups, visibleDistrictGroups]);
 
   const strays = [
-    ...regionIds.filter((value) => !known.has(value)).map((value) => ({ field: "regionIds" as const, value })),
-    ...cities.filter((value) => !known.has(value)).map((value) => ({ field: "cities" as const, value })),
-    ...districtIds.filter((value) => !known.has(value)).map((value) => ({ field: "districtIds" as const, value })),
+    ...regionIds.filter((value) => !known.has(norm(value))).map((value) => ({ field: "regionIds" as const, value })),
+    ...cities.filter((value) => !known.has(norm(value))).map((value) => ({ field: "cities" as const, value })),
+    ...districtIds.filter((value) => !known.has(norm(value))).map((value) => ({ field: "districtIds" as const, value })),
   ];
 
   return (
