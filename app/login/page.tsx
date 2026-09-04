@@ -58,7 +58,15 @@ function LoginForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error === "account_blocked" ? t.error.mustVerify : t.error.invalidCredentials);
+        // Every non-2xx used to read "invalid credentials". A visitor on
+        // www.akarpromax.com gets 403 origin_rejected on every POST, and was
+        // told their password was wrong -- so they reset it, and it still
+        // "was wrong". Name the cause the way AccountDialog already does.
+        if (data.error === "account_blocked") setError(t.error.mustVerify);
+        else if (data.error === "origin_rejected") setError(t.error.originRejected);
+        else if (data.error === "rate_limited" || res.status === 429) setError(t.error.rateLimited);
+        else if (res.status >= 500) setError(t.error.serviceUnavailable);
+        else setError(t.error.invalidCredentials);
         return;
       }
       const user = data.user ?? {};

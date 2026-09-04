@@ -71,6 +71,8 @@ export type AuthLabels = {
     invalidCredentials: string;
     accountBlocked: string;
     rateLimited: string;
+    originRejected: string;
+    serviceUnavailable: string;
     invalidToken: string;
     invalidCode: string;
     tooManyAttempts: string;
@@ -154,6 +156,8 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
       invalidCredentials: "بيانات الاعتماد غير صحيحة",
       accountBlocked: "الحساب غير مفعّل",
       rateLimited: "طلباتك كثيرة، حاول لاحقاً",
+      originRejected: "تعذّر تسجيل الدخول من هذا العنوان. افتح الموقع من عنوانه الرسمي بدون www ثم حاول مجدداً.",
+      serviceUnavailable: "الخدمة غير متاحة مؤقتاً، والخطأ مسجَّل لدينا. حاول بعد قليل.",
       invalidToken: "رابط غير صالح أو منتهٍ",
       invalidCode: "رمز غير صحيح",
       tooManyAttempts: "محاولات كثيرة، حاول لاحقاً",
@@ -235,6 +239,8 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
       invalidCredentials: "Invalid credentials",
       accountBlocked: "Account is not active",
       rateLimited: "Too many requests, please try again later",
+      originRejected: "Sign-in is not accepted from this address. Open the site at its official address without www and try again.",
+      serviceUnavailable: "The service is temporarily unavailable and the error has been recorded. Please try again shortly.",
       invalidToken: "Invalid or expired link",
       invalidCode: "Incorrect code",
       tooManyAttempts: "Too many attempts, please try again later",
@@ -316,6 +322,8 @@ export const AUTH_LABELS: Record<Locale, AuthLabels> = {
       invalidCredentials: "Geçersiz kimlik bilgileri",
       accountBlocked: "Hesap etkin değil",
       rateLimited: "Çok fazla istek, lütfen daha sonra tekrar deneyin",
+      originRejected: "Bu adresten giriş kabul edilmiyor. Siteyi www olmadan resmi adresinden açıp tekrar deneyin.",
+      serviceUnavailable: "Hizmet geçici olarak kullanılamıyor, hata kaydedildi. Lütfen kısa süre sonra tekrar deneyin.",
       invalidToken: "Geçersiz veya süresi dolmuş bağlantı",
       invalidCode: "Hatalı kod",
       tooManyAttempts: "Çok fazla deneme, lütfen daha sonra tekrar deneyin",
