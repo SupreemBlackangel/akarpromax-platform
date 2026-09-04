@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/oauth";
 import { createSession } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { oauthCallbackErrorCode, recordOAuthCallbackFailure } from "@/lib/auth/oauth-callback";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,11 @@ export async function GET(request: NextRequest) {
     await createSession({ userId, role });
     return NextResponse.redirect(new URL("/", base));
   } catch (err) {
-    console.error("Facebook OAuth callback error:", err);
-    return NextResponse.redirect(new URL("/login?error=facebook_failed", base));
+    // Which of the three stages failed, in the security log where an operator
+    // will look, and in the redirect so the visitor is told something true.
+    recordOAuthCallbackFailure("facebook", err);
+    return NextResponse.redirect(
+      new URL(`/login?error=${oauthCallbackErrorCode("facebook", err)}`, base),
+    );
   }
 }

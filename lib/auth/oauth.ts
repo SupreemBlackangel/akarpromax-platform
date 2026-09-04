@@ -8,6 +8,37 @@ import { randomUUID } from "crypto";
 
 export type OAuthProvider = "google" | "facebook";
 
+/**
+ * Which of the three things a callback does actually failed.
+ *
+ * Both callbacks used to wrap the whole handshake in one catch and redirect to
+ * `?error=<provider>_failed`, with the reason going to console.error and
+ * nowhere else. Signing in with Facebook failed in production for an unknown
+ * length of time and the only visible evidence was that URL, which cannot
+ * distinguish "the provider rejected our credentials" from "the database has
+ * no user_oauth_accounts table" -- and it was the second one.
+ *
+ * Tagged at the throw site rather than guessed from the message afterwards.
+ */
+export type OAuthFailureStage = "token_exchange" | "user_info" | "account_link";
+
+export class OAuthStageError extends Error {
+  readonly stage: OAuthFailureStage;
+  readonly provider: OAuthProvider;
+
+  constructor(provider: OAuthProvider, stage: OAuthFailureStage, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "OAuthStageError";
+    this.provider = provider;
+    this.stage = stage;
+  }
+}
+
+/** The stage of any error a callback caught; unrecognised errors are ours. */
+export function oauthFailureStage(error: unknown): OAuthFailureStage {
+  return error instanceof OAuthStageError ? error.stage : "account_link";
+}
+
 export interface OAuthUserInfo {
   id: string;
   email: string;
@@ -105,7 +136,7 @@ export async function exchangeGoogleCode(code: string): Promise<{ accessToken: s
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Google token exchange failed: ${err}`);
+    throw new OAuthStageError("google", "token_exchange", `Google token exchange failed: ${err}`);
   }
   const data = await res.json();
   return {
@@ -121,7 +152,7 @@ export async function exchangeFacebookCode(code: string): Promise<{ accessToken:
   );
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Facebook token exchange failed: ${err}`);
+    throw new OAuthStageError("facebook", "token_exchange", `Facebook token exchange failed: ${err}`);
   }
   const data = await res.json();
   return { accessToken: data.access_token };
@@ -133,7 +164,7 @@ export async function fetchGoogleUserInfo(accessToken: string): Promise<OAuthUse
   const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch Google user info");
+  if (!res.ok) throw new OAuthStageError("google", "user_info", "Failed to fetch Google user info");
   const data = await res.json();
   return {
     id: data.id,
@@ -147,7 +178,7 @@ export async function fetchFacebookUserInfo(accessToken: string): Promise<OAuthU
   const res = await fetch(
     `https://graph.facebook.com/me?fields=id,email,name,picture.type(large)&access_token=${accessToken}`,
   );
-  if (!res.ok) throw new Error("Failed to fetch Facebook user info");
+  if (!res.ok) throw new OAuthStageError("facebook", "user_info", "Failed to fetch Facebook user info");
   const data = await res.json();
   return {
     id: data.id,

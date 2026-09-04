@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/errors/api-error";
 
 import { users } from "@/lib/db/schema";
 import { getDb } from "@/lib/db";
-import { verifyPassword } from "@/lib/auth/password";
+import { verifyAbsentUserPassword, verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { mapSessionRole, permissionsForSessionRole } from "@/lib/auth/identity-map";
 import { accountBlockReason, isAccountUsable } from "@/lib/auth/access-control";
@@ -108,6 +108,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (!user) {
+    // Spend what a real verification costs before answering. Without this the
+    // response time distinguishes a registered address from an unregistered
+    // one -- ~1.0s against ~0.5s, measured against production -- which is the
+    // question the identical `invalid_credentials` body exists to refuse.
+    await verifyAbsentUserPassword(password);
     logSecurityEvent("AUTH_LOGIN_FAILED", { requestId });
     void recordAuditEvent({
       eventType: "AUTH_LOGIN_FAILED",

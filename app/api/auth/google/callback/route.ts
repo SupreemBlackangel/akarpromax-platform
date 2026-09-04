@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/oauth";
 import { createSession } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { oauthCallbackErrorCode, recordOAuthCallbackFailure } from "@/lib/auth/oauth-callback";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,9 @@ export async function GET(request: NextRequest) {
     await createSession({ userId, role });
     return NextResponse.redirect(new URL("/", base));
   } catch (err) {
-    console.error("Google OAuth callback error:", err);
-    return NextResponse.redirect(new URL("/login?error=google_failed", base));
+    recordOAuthCallbackFailure("google", err);
+    return NextResponse.redirect(
+      new URL(`/login?error=${oauthCallbackErrorCode("google", err)}`, base),
+    );
   }
 }

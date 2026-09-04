@@ -25,13 +25,24 @@ function LoginForm() {
   const [oauthError] = useState(() => {
     if (typeof window === "undefined") return "";
     const err = new URLSearchParams(window.location.search).get("error");
+    if (!err) return "";
     if (err === "google_config_missing" || err === "facebook_config_missing") {
       return "تعذّر تسجيل الدخول عبر الحساب الاجتماعي: إعدادات المزوّد غير مكتملة. يرجى استخدام البريد وكلمة المرور.";
     }
-    if (err) {
-      return "تعذّر إتمام تسجيل الدخول عبر الحساب الاجتماعي. حاول مرة أخرى أو استخدم البريد وكلمة المرور.";
+    // The visitor cancelled at the provider. Nothing failed.
+    if (err.endsWith("_denied")) {
+      return "لم يكتمل تسجيل الدخول عبر الحساب الاجتماعي. يمكنك المحاولة مجدداً أو استخدام البريد وكلمة المرور.";
     }
-    return "";
+    // Our side. "حاول مرة أخرى" would be an instruction to repeat something
+    // that cannot succeed until the platform is fixed, so it is not offered.
+    if (err.endsWith("_account_error")) {
+      return "تعذّر إتمام تسجيل الدخول بسبب خلل في المنصة، وقد سُجّل الخطأ لدينا. يرجى استخدام البريد وكلمة المرور في الوقت الحالي.";
+    }
+    // The provider refused. Retrying is genuinely worth a try.
+    if (err.endsWith("_provider_error")) {
+      return "تعذّر التواصل مع مزوّد الحساب الاجتماعي. حاول مرة أخرى أو استخدم البريد وكلمة المرور.";
+    }
+    return "تعذّر إتمام تسجيل الدخول عبر الحساب الاجتماعي. حاول مرة أخرى أو استخدم البريد وكلمة المرور.";
   });
 
   async function handleSubmit(e: React.FormEvent) {
