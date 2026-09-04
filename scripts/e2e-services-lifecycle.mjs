@@ -163,12 +163,13 @@ async function main() {
   // capability is baked into the session at login, so approval only takes
   // effect on the next login.
   await sql`update service_provider_profiles set status='approved', updated_at=now() where user_id = ${provEmail}`;
-  const prov2 = makeClient();
-  const lp2 = await prov2("/api/auth/login", { method: "POST", body: { identifier: provEmail, password: PW } });
-  ok("approved provider can log in again", lp2.status === 200, `status ${lp2.status}`);
-  const me2 = await prov2("/api/auth/me");
-  const perms = me2.json?.user?.permissions ?? me2.json?.permissions ?? [];
-  ok("re-login grants the provider offer permission", Array.isArray(perms) && perms.some((p) => /offer/i.test(p)), `perms=${JSON.stringify(perms).slice(0,160)}`);
+  // getSessionIdentity re-derives the service capability from the DB on every
+  // request, so approval must take effect on the EXISTING session with no
+  // re-login. Prove it on the original client, not a fresh one.
+  const meSame = await prov("/api/auth/me");
+  const permsSame = meSame.json?.user?.permissions ?? meSame.json?.permissions ?? [];
+  ok("approval takes effect on the existing session (no re-login)", Array.isArray(permsSame) && permsSame.some((p) => /offer/i.test(p)), `perms=${JSON.stringify(permsSame).slice(0,160)}`);
+  const prov2 = prov; // continue on the same session
 
   // 9) PROVIDER OFFERS -------------------------------------------------------
   step("9) Approved provider submits an offer");
