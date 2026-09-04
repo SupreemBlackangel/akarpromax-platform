@@ -250,7 +250,23 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 .news-ticker.is-paused .ticker-marquee { transition: none; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .ticker-inner button { border: 0; background: transparent; color: #fff; font-size: 11px; cursor: pointer; }
-.ticker-nav, .ticker-pause { opacity: .8; transition: opacity .15s ease; }
+/* The ticker's three controls rendered 3x19 and 8x19 CSS pixels on a phone --
+   the glyph's own size, with nothing around it. A control that small cannot be
+   tapped: WCAG 2.5.8 sets 24x24 as the minimum and 2.5.5 asks for 44x44.
+
+   The hit area is grown with min-size and centring rather than by enlarging the
+   glyph, so the ticker looks exactly as it did and only becomes usable. */
+.ticker-nav, .ticker-pause {
+  opacity: .8;
+  transition: opacity .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 32px;
+  min-block-size: 32px;
+  /* Logical properties, not left/right: this bar is mirrored in Arabic. */
+  padding-inline: var(--space-1, 4px);
+}
 .ticker-nav:hover, .ticker-pause:hover { opacity: 1; }
 .ticker-nav:focus-visible, .ticker-pause:focus-visible { outline: 2px solid rgba(255,255,255,.8); outline-offset: 2px; }
 
