@@ -1215,6 +1215,186 @@
       .catch(function () { return false; });
   }
 
+  // ---- office ad banner ---------------------------------------------------
+  //
+  // Five `office_*` placements have been selectable and targetable in the admin
+  // since the ad engine was built, and no desktop app has ever received one.
+  // The C# DesktopAdService asks for
+  // https://akarpromax.com/api/desktop/ads/placement/desktop_portal_bottom_banner,
+  // and that whole route family answers 404 -- verified against production. It
+  // also types its ad id as an int while campaign ids are UUIDs, so it was
+  // written against an API that predates this platform entirely. The shipped
+  // SPA renders no ads either.
+  //
+  // This file is fetched from the platform on every launch, so putting the
+  // banner here reaches every installed office immediately, with no reinstall
+  // and no new Setup.exe.
+  //
+  // It uses the SAME engine and the SAME tracking contract as the website: one
+  // signed, campaign-bound, single-use token per impression, obtained from the
+  // match response and handed back. It does not invent a second way to bill.
+
+  var AD_PLACEMENT = "office_dashboard_hero";
+  var AD_REFRESH_MS = 5 * 60 * 1000;
+  var AD_DISMISS_KEY = "akar_office_ad_dismissed";
+  var _adState = { current: null, reported: {} };
+
+  function adGeoFromProfile(profile) {
+    // The office told us where it is when it filled in its profile, and those
+    // selects are populated from /api/geo -- so `country`, `governorate` and
+    // `city` already hold the exact registry codes the matcher compares. No
+    // IP lookup, no third-party call, and more accurate than either.
+    profile = profile || {};
+    return {
+      countryCode: profile.country || "",
+      regionId: profile.governorate || "",
+      cityId: profile.city || "",
+    };
+  }
+
+  function adContext(profile) {
+    var geo = adGeoFromProfile(profile);
+    return {
+      placement: AD_PLACEMENT,
+      pageType: "dashboard",
+      section: "office",
+      channel: "office",
+      deviceType: "desktop",
+      language: "ar",
+      path: "/office",
+      countryCode: geo.countryCode,
+      regionId: geo.regionId,
+      cityId: geo.cityId,
+    };
+  }
+
+  function injectAdStyles() {
+    if (document.getElementById("akar-ad-styles")) return;
+    var css = document.createElement("style");
+    css.id = "akar-ad-styles";
+    css.textContent =
+      ".akar-ad{position:fixed;inset-inline:0;bottom:0;z-index:2147483000;display:flex;align-items:center;gap:12px;"
+      + "padding:8px 12px;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -2px 12px rgba(11,33,76,.08);"
+      + "font-family:Tajawal,system-ui,sans-serif;direction:rtl}"
+      + ".akar-ad img{height:64px;width:auto;max-width:40%;object-fit:contain;border-radius:6px;cursor:pointer}"
+      + ".akar-ad-body{flex:1;min-width:0;cursor:pointer}"
+      + ".akar-ad-body b{display:block;font-size:14px;color:#0b214c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + ".akar-ad-body span{display:block;font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+      + ".akar-ad-tag{flex:none;font-size:10px;color:#94a3b8;border:1px solid #e2e8f0;border-radius:4px;padding:1px 5px}"
+      // 32px, like the ticker controls on the website: a close button that a
+      // finger or an imprecise mouse cannot hit is a close button that traps
+      // an advertisement across the bottom of the screen.
+      + ".akar-ad-x{flex:none;min-inline-size:32px;min-block-size:32px;display:inline-flex;align-items:center;"
+      + "justify-content:center;border:0;background:transparent;color:#64748b;font-size:18px;cursor:pointer;border-radius:6px}"
+      + ".akar-ad-x:hover{background:#f1f5f9;color:#0b214c}";
+    document.head.appendChild(css);
+  }
+
+  function reportAd(kind, ad, ctx) {
+    // Impression is reported once per minted token. The endpoint enforces that
+    // too -- a nonce ledger -- so this is politeness, not the control.
+    if (kind === "impression") {
+      if (_adState.reported[ad.trackingToken]) return;
+      _adState.reported[ad.trackingToken] = true;
+    }
+    var body = {};
+    for (var k in ctx) if (Object.prototype.hasOwnProperty.call(ctx, k)) body[k] = ctx[k];
+    body.campaignId = ad.campaignId;
+    body.token = ad.trackingToken;
+    try {
+      fetch(PLATFORM + "/api/ads/" + kind, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function renderAd(ad, ctx) {
+    injectAdStyles();
+    var host = document.getElementById("akar-ad");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "akar-ad";
+      host.className = "akar-ad";
+      document.body.appendChild(host);
+    }
+
+    var img = ad.imageUrl
+      ? '<img src="' + String(ad.imageUrl).replace(/"/g, "&quot;") + '" alt="" />'
+      : "";
+    host.innerHTML =
+      img
+      + '<div class="akar-ad-body">'
+      + "<b></b><span></span>"
+      + "</div>"
+      + '<span class="akar-ad-tag">إعلان</span>'
+      + '<button type="button" class="akar-ad-x" aria-label="إغلاق الإعلان">&times;</button>';
+
+    // textContent, not innerHTML: the title and description are advertiser
+    // copy, and it goes nowhere near the parser.
+    host.querySelector(".akar-ad-body b").textContent = ad.title || ad.advertiserName || "";
+    host.querySelector(".akar-ad-body span").textContent = ad.description || "";
+
+    function click() {
+      reportAd("click", ad, ctx);
+      var url = ad.targetUrl || "";
+      if (!url) return;
+      if (url.indexOf("http") !== 0) url = PLATFORM + (url.charAt(0) === "/" ? "" : "/") + url;
+      // https opens in the system browser: NewWindowRequested is handled by the
+      // host window and ShouldOpenExternally allows http/https only.
+      try { window.open(url, "_blank"); } catch (e) {}
+    }
+    var body = host.querySelector(".akar-ad-body");
+    if (body) body.addEventListener("click", click);
+    var image = host.querySelector("img");
+    if (image) image.addEventListener("click", click);
+
+    host.querySelector(".akar-ad-x").addEventListener("click", function () {
+      host.remove();
+      // Dismissed for this session only. A permanent dismissal in localStorage
+      // would quietly end the office channel for that installation forever.
+      try { window.sessionStorage.setItem(AD_DISMISS_KEY, "1"); } catch (e) {}
+    });
+
+    reportAd("impression", ad, ctx);
+  }
+
+  function loadOfficeAd(profile) {
+    try { if (window.sessionStorage.getItem(AD_DISMISS_KEY)) return; } catch (e) {}
+    var ctx = adContext(profile);
+    fetch(PLATFORM + "/api/ads/match", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(ctx),
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var ads = (data && Array.isArray(data.ads)) ? data.ads : [];
+        if (!ads.length) {
+          // No ad is the normal case, not a failure. Leave the bottom of the
+          // window to the application.
+          var host = document.getElementById("akar-ad");
+          if (host) host.remove();
+          _adState.current = null;
+          return;
+        }
+        var ad = ads[0];
+        if (_adState.current && _adState.current.campaignId === ad.campaignId) return;
+        _adState.current = ad;
+        renderAd(ad, ctx);
+      })
+      .catch(function () {});
+  }
+
+  function startOfficeAds() {
+    fetchProfile().then(function (profile) {
+      loadOfficeAd(profile);
+      window.setInterval(function () { loadOfficeAd(profile); }, AD_REFRESH_MS);
+    });
+  }
+
   function boot() {
     // Clear seeded demo listings before anything renders. If rows were removed
     // and the bundle has already painted them this session, reload once so the
@@ -1237,6 +1417,8 @@
         // Register this machine with the platform and keep it "online".
         registerDevice();
         startDeviceHeartbeat();
+        // The office channel's five placements finally have a consumer.
+        startOfficeAds();
         // Pull the office's published properties down so they show in the
         // portal. One guarded reload lets the list re-read them this session.
         syncPlatformProperties().then(function (changed) {

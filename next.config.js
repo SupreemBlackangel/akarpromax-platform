@@ -93,6 +93,33 @@ const nextConfig = {
         source: "/downloads/:path*",
         headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
       },
+      {
+        // Ad serving and its tracking, for the office channel.
+        //
+        // Five `office_*` placements have been selectable and targetable in the
+        // admin all along, and the desktop app could never receive one of them.
+        // Its own DesktopAdService points at /api/desktop/ads/... -- a route
+        // family that does not exist, confirmed 404 against production -- and
+        // types its ad id as an int while campaign ids are UUIDs, so it was
+        // written for an API that predates this platform.
+        //
+        // bootstrap.js runs on https://akarapp.local and is served from here,
+        // so it can carry the office banner without reinstalling anything. It
+        // needs these three paths cross-origin to do it.
+        //
+        // `*` is correct rather than lax: none of these routes reads a cookie
+        // or a session. Match is public data. Impression and click authorise on
+        // a signed, campaign-bound, single-use token in the BODY, which a
+        // wildcard origin does nothing to hand out -- and both were already
+        // reachable from any server-side client, where CORS never applied.
+        source: "/api/ads/:path(match|impression|click)",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "POST, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type" },
+          { key: "Access-Control-Max-Age", value: "86400" },
+        ],
+      },
     ];
   },
 };
