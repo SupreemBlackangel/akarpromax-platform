@@ -221,7 +221,12 @@ export default function FloatingAdSlotActions({
               padding: "12px 16px",
               borderRadius: 8,
               boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-              background: toast.type === "success" ? "#0b214c" : "#c0392b",
+              // Was #0b214c for success and #c0392b for failure. The first is the
+              // dark navy used for body text, not a success colour, and the
+              // second is a shade of red the palette does not contain -- so a
+              // toast reporting success looked like a heading, and one
+              // reporting failure did not match any other error on the site.
+              background: toast.type === "success" ? "var(--color-success)" : "var(--color-danger)",
               color: "#fff",
               fontSize: 13,
               fontWeight: 500,

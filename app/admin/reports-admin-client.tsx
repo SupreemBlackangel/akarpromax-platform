@@ -77,7 +77,7 @@ export default function ReportsAdminClient() {
         {error && <div className="admin-message" role="status">{error}</div>}
 
         {!data ? (
-          <div className="admin-panel" style={{ textAlign: "center", color: "#6b7b93" }}>
+          <div className="admin-panel" style={{ textAlign: "center", color: "var(--color-text-muted)" }}>
             <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>⏳</div>
             <p>جارٍ تحميل التقارير...</p>
           </div>

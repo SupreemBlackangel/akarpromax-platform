@@ -102,7 +102,7 @@ export default function DownloadOfficeAppPage() {
                 <li key={title} className="flex gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                   <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white">
                     <Icon className="h-5 w-5" aria-hidden="true" />
-                    <span className="absolute -top-2 -start-2 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-accent,#eab308)] text-[11px] font-black text-[var(--color-text-primary)]">{index + 1}</span>
+                    <span className="absolute -top-2 -start-2 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-accent)] text-[11px] font-black text-[var(--color-text-primary)]">{index + 1}</span>
                   </span>
                   <div className="min-w-0">
                     <h3 className="font-black text-[var(--color-text-primary)]">{title}</h3>

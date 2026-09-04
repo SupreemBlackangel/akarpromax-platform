@@ -376,7 +376,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                 </Link>
 
                 <div className="mt-5 overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-                  <div className="relative h-40 bg-gradient-to-l from-[color:var(--color-primary)] via-[color:var(--color-primary-hover)] to-[#0a3c8f]">
+                  <div className="relative h-40 bg-gradient-to-l from-[color:var(--color-primary)] via-[color:var(--color-primary-hover)] to-[color:var(--color-primary-active)]">
                     <div className="absolute bottom-0 left-0 right-0 flex items-end gap-4 p-4">
                       <div className="grid h-20 w-20 place-items-center rounded-full border-4 border-white bg-[var(--color-surface)]/20 text-4xl font-black text-white">
                         {displayName ? displayName.slice(0, 1) : '👤'}

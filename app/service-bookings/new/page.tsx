@@ -107,7 +107,7 @@ export default function NewDirectBookingPage() {
     <>
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath="/service-bookings/new" adLayout={{ mode: "standard", family: "services" }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <main dir={dir} className="space-y-5 pb-12 pt-6">
-          <section className="rounded-3xl bg-gradient-to-l from-[#08265b] to-[#1672e8] p-6 text-white md:p-8">
+          <section className="rounded-3xl bg-gradient-to-l from-[color:var(--brand-navy)] to-[color:var(--color-primary)] p-6 text-white md:p-8">
             <div className="flex items-center gap-2 text-sm font-black text-blue-100"><CalendarClock className="h-5 w-5" />{isArabic ? "الحجز المباشر" : "Direct booking"}</div>
             <h1 className="mt-3 text-2xl font-black md:text-3xl">{isArabic ? `احجز موعدًا مع ${providerName}` : `Book an appointment with ${providerName}`}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-blue-100">{isArabic ? "اختر الموعد والموقع، وسيُثبت السعر الظاهر الآن داخل الحجز حتى لو تغيّر سعر الخدمة لاحقًا." : "Choose a time and location. The current price is captured and will not change later."}</p>

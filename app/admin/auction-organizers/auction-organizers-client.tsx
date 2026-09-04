@@ -150,7 +150,7 @@ export default function AuctionOrganizersClient() {
               type="checkbox"
               checked={showRevoked}
               onChange={(e) => setShowRevoked(e.target.checked)}
-              className="w-4 h-4 accent-[#1672e8]"
+              className="w-4 h-4 accent-[color:var(--color-primary)]"
             />
             عرض الملغاة
           </label>
