@@ -222,8 +222,18 @@ Notably: **no `TODO` markers anywhere** under `app/`, `src/`, `components/`.
 
 ## 6. Validation and authorization posture
 
-* **No schema validation anywhere.** Not one zod schema in the ads or services
-  routes; every body is hand-narrowed. The mandate asks for zod; this is the gap.
+* ~~**No schema validation anywhere.**~~ **Corrected in PHASE 7.** Two things
+  were wrong with this line. zod IS used — across every auth route
+  (`change-email`, `change-password`, `forgot-password`, `register`,
+  `reset-password`). And the hand-rolled normalisation on the ads payload turns
+  out to bound every numeric field it takes: `priority` to 1–999, `weight` to
+  1–100, `budget` to 0–10^10, `radiusKm` to 1–20000, coordinates to the world.
+  `/api/ads/request` — public and unauthenticated — inserts `status = "draft"`,
+  which the serving query can never select.
+
+  So the finding did not survive being looked at, and PHASE 7 found less than
+  this predicted. What was genuinely missing is anything asserting that those
+  properties stay true; `tests/ads-write-paths.test.mjs` now does.
 * Authorization is genuinely server-side in the `/api/service-*` and
   `/api/admin/ads*` families — permissions are checked in the route, not by
   hiding buttons. That part is sound.
