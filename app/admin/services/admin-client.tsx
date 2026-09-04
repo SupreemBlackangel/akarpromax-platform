@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   BarChart3, ClipboardList, ExternalLink, LayoutDashboard, Save, Settings2,
@@ -39,6 +40,18 @@ type CategoryForm = {
 };
 type Tab = "overview" | "content" | "categories" | "providers" | "operations" | "reports";
 
+const TABS: readonly Tab[] = ["overview", "content", "categories", "providers", "operations", "reports"] as const;
+
+/**
+ * Whether a value from the query string names a real tab.
+ *
+ * Narrowed rather than cast: `?tab=` is written by anyone, and a value that is
+ * not a tab must fall back to the overview rather than render nothing.
+ */
+function isTab(value: string | null): value is Tab {
+  return value != null && (TABS as readonly string[]).includes(value);
+}
+
 const EMPTY_CATEGORY: CategoryForm = { code: "", parentId: "", nameAr: "", nameEn: "", descriptionAr: "", icon: "Wrench", bookingMode: "quotes", badgeAr: "", requiresLicense: false, requiresVisit: false, isFeatured: false, isActive: true, priceMin: "", priceMax: "", sortOrder: "0" };
 const STATUS_LABELS: Record<string, string> = { draft: "مسودة", submitted: "مُرسل", under_review: "قيد المراجعة", approved: "معتمد", rejected: "مرفوض", suspended: "موقوف" };
 
@@ -54,7 +67,14 @@ function currencyLabel(value: unknown): string {
 }
 export default function ServicesAdminClient() {
   const { locale, setLocale, dir, AccountDialog } = useServicesPage();
-  const [tab, setTab] = useState<Tab>("overview");
+  // The tab is readable from the URL so a link can land on one. It used to be
+  // local state only, which is why the sidebar offered eight links to pages
+  // that were never built: there was no way to point at a tab.
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTab] = useState<Tab>(
+    isTab(requestedTab) ? requestedTab : "overview",
+  );
   const [overview, setOverview] = useState<Overview | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot>({ recentProviders: [], recentRequests: [], recentOrders: [], recentReports: [] });
   const [settings, setSettings] = useState<MarketSettings | null>(null);

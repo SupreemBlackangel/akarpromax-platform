@@ -100,15 +100,15 @@ export const adminSidebarConfig: SidebarConfig = {
       icon: "services",
       requiredPermission: [PERMISSIONS.SERVICE_CATEGORIES_MANAGE, PERMISSIONS.SERVICE_REPORTS_MANAGE, PERMISSIONS.SERVICE_PROVIDERS_REVIEW],
       children: [
+        // Every entry lands on a tab that exists. This list previously named
+        // eight pages, seven of which were never built -- so an administrator
+        // opening the services menu met seven 404s. The admin screen has six
+        // tabs; these are the five that have a label and a clear destination.
         { key: "services-overview", labelKey: "admin.services.overview", href: "/admin/services", icon: "analytics" },
-        { key: "services-requests", labelKey: "admin.services.requests", href: "/admin/services/requests", icon: "list" },
-        { key: "services-categories", labelKey: "admin.services.categories", href: "/admin/services/categories", icon: "categories" },
-        { key: "services-providers", labelKey: "admin.services.providers", href: "/admin/services/providers", icon: "providers" },
-        { key: "services-verifications", labelKey: "admin.services.verifications", href: "/admin/services/verifications", icon: "documents" },
-        { key: "services-offers", labelKey: "admin.services.offers", href: "/admin/services/offers", icon: "offers" },
-        { key: "services-reviews", labelKey: "admin.services.reviews", href: "/admin/services/reviews", icon: "reviews" },
-        { key: "services-disputes", labelKey: "admin.services.disputes", href: "/admin/services/disputes", icon: "disputes" },
-        { key: "services-settings", labelKey: "admin.services.settings", href: "/admin/services/settings", icon: "settings" },
+        { key: "services-requests", labelKey: "admin.services.requests", href: "/admin/services?tab=operations", icon: "list" },
+        { key: "services-categories", labelKey: "admin.services.categories", href: "/admin/services?tab=categories", icon: "categories" },
+        { key: "services-providers", labelKey: "admin.services.providers", href: "/admin/services?tab=providers", icon: "providers" },
+        { key: "services-settings", labelKey: "admin.services.settings", href: "/admin/services?tab=content", icon: "settings" },
       ],
     },
     { key: "advertisers", labelKey: "admin.advertisers", href: "/admin/advertisers", icon: "advertisers", requiredPermission: PERMISSIONS.ADVERTISERS_VIEW },
