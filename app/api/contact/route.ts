@@ -49,6 +49,31 @@ export async function POST(request: NextRequest) {
       data: lead,
       message: 'تم إرسال رسالتك بنجاح، سنتواصل معك قريباً',
     });
+  } catch (error) {
+    // There was no catch here at all. The `leads` table did not exist in
+    // production -- defined in lib/db/schemas, created only by the abandoned
+    // drizzle-pg lineage, never by a forward migration -- so every submission
+    // threw and Next answered 500 with an EMPTY BODY. The visitor saw a
+    // failure with no explanation, the message was lost, and the only trace
+    // was a line in the server log that nobody was reading.
+    //
+    // The table now exists (0008_leads_baseline.sql). This is here so the next
+    // failure is legible rather than silent: the reason is logged with the
+    // contact details still attached, and the visitor is told plainly that it
+    // did not send, instead of being left to guess.
+    console.error('[contact] could not record the enquiry', {
+      email,
+      subject,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      {
+        error:
+          'تعذّر إرسال رسالتك بسبب خطأ فني. يرجى المحاولة مرة أخرى، أو مراسلتنا مباشرةً على info@akarpromax.com',
+      },
+      { status: 500 },
+    );
   } finally {
     await end();
   }
