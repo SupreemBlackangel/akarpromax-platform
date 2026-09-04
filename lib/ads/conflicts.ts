@@ -34,6 +34,59 @@ function label(ad: ParsedAd): string {
   return ad.internalName || ad.advertiserName || ad.id;
 }
 
+/**
+ * Does `winner` serve everywhere `loser` could?
+ *
+ * Grouping by placement alone was wrong in two directions, and seeding the
+ * location catalogue for 22 countries made both of them common:
+ *
+ *   - A Cairo campaign and a Riyadh campaign on the same placement were
+ *     reported as "Cairo will never appear", at severity "blocked". They never
+ *     compete for a single impression. A panel full of false alarms teaches an
+ *     operator to stop reading it, and the genuine case then hides among them.
+ *
+ *   - A Saudi-wide campaign outranked by a Jeddah campaign was reported as
+ *     starved. It is not: it serves everywhere in Saudi Arabia except Jeddah.
+ *
+ * A campaign is genuinely starved only when every context it could match is
+ * also matched by something that outranks it -- that is, when its targeting is
+ * a SUBSET of the winner's. Targeting nothing on a dimension means everything,
+ * so an empty list (or the matching "target all" flag) covers any list.
+ */
+function covers(winner: ParsedAd, loser: ParsedAd): boolean {
+  const dimension = (winnerList: string[], loserList: string[], winnerAll: boolean): boolean => {
+    if (winnerAll || winnerList.length === 0) return true;
+    if (loserList.length === 0) return false; // the loser is broader, so it escapes
+    const set = new Set(winnerList.map((item) => item.toLowerCase()));
+    return loserList.every((item) => set.has(item.toLowerCase()));
+  };
+
+  return (
+    dimension(winner.countries, loser.countries, winner.targetAllCountries) &&
+    dimension(winner.regionIds, loser.regionIds, winner.targetAllRegions) &&
+    dimension(winner.cities, loser.cities, winner.targetAllCities) &&
+    dimension(winner.districtIds, loser.districtIds, winner.targetAllDistricts) &&
+    dimension(winner.languages, loser.languages, false) &&
+    dimension(winner.devices, loser.devices, false) &&
+    dimension(winner.channels, loser.channels, false) &&
+    dimension(winner.pageTypes, loser.pageTypes, false) &&
+    dimension(winner.sectionScopes, loser.sectionScopes, false) &&
+    coversInTime(winner, loser)
+  );
+}
+
+/** A campaign that has already ended cannot starve one that runs after it. */
+function coversInTime(winner: ParsedAd, loser: ParsedAd): boolean {
+  const winnerEnd = winner.endAt ? Date.parse(winner.endAt) : Infinity;
+  const loserEnd = loser.endAt ? Date.parse(loser.endAt) : Infinity;
+  const winnerStart = winner.startAt ? Date.parse(winner.startAt) : -Infinity;
+  const loserStart = loser.startAt ? Date.parse(loser.startAt) : -Infinity;
+  if (Number.isNaN(winnerEnd) || Number.isNaN(loserEnd) || Number.isNaN(winnerStart) || Number.isNaN(loserStart)) {
+    return true; // an unparseable date is not evidence of anything
+  }
+  return winnerStart <= loserStart && winnerEnd >= loserEnd;
+}
+
 export function detectCampaignConflicts(ads: ParsedAd[]): CampaignConflict[] {
   const conflicts: CampaignConflict[] = [];
   const servable = ads.filter((ad) => ad.isActive && ad.approvalStatus === "approved");
@@ -55,17 +108,25 @@ export function detectCampaignConflicts(ads: ParsedAd[]): CampaignConflict[] {
 
     const highest = Math.max(...group.map((ad) => ad.priority));
     const winners = group.filter((ad) => ad.priority === highest);
-    const starved = group.filter((ad) => ad.priority < highest);
 
-    if (starved.length > 0) {
+    // Starved means every impression it could win is taken by something that
+    // outranks it -- not merely that a higher priority exists somewhere in the
+    // placement. A campaign whose targeting reaches beyond its rival's still
+    // serves there, and one that never overlaps at all was never in the race.
+    for (const ad of group) {
+      const suppressors = group.filter(
+        (rival) => rival.id !== ad.id && rival.priority > ad.priority && covers(rival, ad),
+      );
+      if (suppressors.length === 0) continue;
+
       conflicts.push({
         type: "starved_by_priority",
         severity: "blocked",
         placement,
-        campaignIds: starved.map((ad) => ad.id),
+        campaignIds: [ad.id],
         message: {
-          ar: `${starved.map(label).join("، ")} لن تظهر إطلاقاً في «${placement}»: ${winners.map(label).join("، ")} تفوقها في الأولوية (${highest}) وتأخذ كل الظهور.`,
-          en: `${starved.map(label).join(", ")} will never appear in "${placement}": ${winners.map(label).join(", ")} outranks it on priority (${highest}) and takes every impression.`,
+          ar: `${label(ad)} لن تظهر إطلاقاً في «${placement}»: ${suppressors.map(label).join("، ")} تغطي كامل استهدافها وتتفوق عليها في الأولوية، فتأخذ كل الظهور.`,
+          en: `${label(ad)} will never appear in "${placement}": ${suppressors.map(label).join(", ")} covers all of its targeting and outranks it, taking every impression.`,
         },
       });
     }
