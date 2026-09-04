@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { storePropertyImage } from "@/lib/properties/image-processing";
+import { matchesFileSignature } from "@/lib/security/file-signatures";
 
 /**
  * Shared logic for the desktop property-publish bridge
@@ -110,10 +111,16 @@ const MAX_IMAGES = 20;
 const DATA_URL_RE = /^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/i;
 const EXT_BY_MIME: Record<string, string> = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
 
+/**
+ * Whether the bytes match the declared mime.
+ *
+ * Delegates to lib/security/file-signatures.ts. The copy that was here checked
+ * only the first FOUR bytes of the PNG signature; the remaining four exist to
+ * catch a file mangled by a text-mode transfer, so dropping them threw away the
+ * part that detects corruption.
+ */
 function signatureMatches(bytes: Uint8Array, mime: string): boolean {
-  if (mime === "png") return bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-  if (mime === "webp") return bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
-  return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff; // jpeg/jpg
+  return matchesFileSignature(bytes, mime);
 }
 
 async function saveDataUrlImage(dataUrl: string): Promise<string | null> {

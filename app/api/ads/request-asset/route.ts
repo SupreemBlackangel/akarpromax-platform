@@ -3,16 +3,20 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
 import { processAdImage } from "@/lib/ads/image-processing";
 import { maybePruneAdRequestAssets } from "@/lib/ads/asset-retention";
+import { matchesFileSignature } from "@/lib/security/file-signatures";
 
 export const dynamic = "force-dynamic";
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * Whether the bytes match the declared type.
+ *
+ * Delegates to lib/security/file-signatures.ts. The copy that was here checked
+ * only PNG's first four bytes.
+ */
 function hasValidSignature(bytes: Uint8Array, type: string) {
-  if (type === "image/png") return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-  if (type === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (type === "image/webp") return String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
-  return false;
+  return matchesFileSignature(bytes, type);
 }
 
 async function ensureTable() {

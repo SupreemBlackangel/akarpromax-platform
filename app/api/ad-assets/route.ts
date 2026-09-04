@@ -4,6 +4,7 @@ import { getSponsorAssetsBucket } from "@/lib/runtime-assets";
 import { getRuntimeDb } from "@/lib/runtime-db";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { processAdImage } from "@/lib/ads/image-processing";
+import { matchesFileSignature } from "@/lib/security/file-signatures";
 
 export const dynamic = "force-dynamic";
 
@@ -43,28 +44,15 @@ function resolveContentType(file: File): SupportedContentType | null {
   return extension ? byExtension[extension] ?? null : null;
 }
 
+/**
+ * Whether the bytes match the declared type.
+ *
+ * Delegates to lib/security/file-signatures.ts. This was the most complete of
+ * the five copies -- it was the only one that knew the video containers -- and
+ * its format list is what the shared one was built from.
+ */
 function signatureMatches(bytes: Uint8Array, contentType: SupportedContentType) {
-  if (contentType === "image/png") {
-    return bytes.length >= 8 &&
-      bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
-      bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a;
-  }
-  if (contentType === "image/jpeg") {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  }
-  if (contentType === "image/webp") {
-    return bytes.length >= 12 &&
-      bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
-  }
-  if (contentType === "video/mp4") {
-    return bytes.length >= 12 &&
-      bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
-  }
-  if (contentType === "video/webm") {
-    return bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
-  }
-  return bytes.length >= 4 && bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53;
+  return matchesFileSignature(bytes, contentType);
 }
 
 function validKey(key: string) {

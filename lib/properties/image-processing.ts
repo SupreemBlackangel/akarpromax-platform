@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { matchesFileSignature } from "@/lib/security/file-signatures";
 
 /**
  * One pipeline for every property image the platform stores: validate the
@@ -13,10 +14,18 @@ export const MAX_PROPERTY_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const EXT_BY_MIME: Record<string, string> = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
 
+/**
+ * Whether the bytes match a declared image type.
+ *
+ * Delegates to lib/security/file-signatures.ts. This used to carry its own
+ * copy, in which the final `return` was the JPEG test AND the fallback for any
+ * type it did not recognise -- so it answered "yes, that is a valid X" for
+ * types it had never heard of. It also required eight bytes for PNG while
+ * testing only four of them.
+ */
 export function imageSignatureMatches(bytes: Uint8Array, mime: string): boolean {
-  if (mime === "png") return bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-  if (mime === "webp") return bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
-  return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff; // jpeg/jpg
+  const declared = mime.startsWith("image/") ? mime : `image/${mime === "jpg" ? "jpeg" : mime}`;
+  return matchesFileSignature(bytes, declared);
 }
 
 export function detectImageMime(bytes: Uint8Array): "png" | "jpeg" | "webp" | null {

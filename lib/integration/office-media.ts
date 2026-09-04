@@ -1,6 +1,7 @@
 import { getIntegrationDb } from "@/lib/integration/db";
 import { getOfficeMediaBucket } from "@/lib/integration/office-media-store";
 import { getOfficePropertyLink } from "@/lib/integration/office-property";
+import { matchesFileSignature } from "@/lib/security/file-signatures";
 
 /**
  * Office → website property media.
@@ -111,18 +112,14 @@ export function resolveContentType(declared: unknown, fileName: unknown): Office
  * Magic-byte check. This is what stops a script or executable renamed to .jpg
  * from being stored and then served back as an image.
  */
+/**
+ * Whether the bytes match the declared type.
+ *
+ * Delegates to lib/security/file-signatures.ts, which is the one place this
+ * check lives. It was implemented separately here.
+ */
 export function signatureMatches(bytes: Uint8Array, contentType: OfficeMediaContentType): boolean {
-  if (contentType === "image/png") {
-    return bytes.length >= 8 &&
-      bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
-      bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a;
-  }
-  if (contentType === "image/jpeg") {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  }
-  return bytes.length >= 12 &&
-    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+  return matchesFileSignature(bytes, contentType);
 }
 
 async function sha256Hex(bytes: ArrayBuffer): Promise<string> {

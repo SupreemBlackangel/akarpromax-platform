@@ -11,6 +11,7 @@
  * Optimization never blocks an upload: if sharp is unavailable the original
  * bytes are returned unchanged, with dimensions read from the file header.
  */
+import { detectFileType } from "@/lib/security/file-signatures";
 
 /** Wide enough for a full-bleed hero on a 2x desktop display. */
 export const MAX_AD_IMAGE_WIDTH = 1920;
@@ -33,14 +34,18 @@ type SharpLike = {
   toBuffer(options: { resolveWithObject: true }): Promise<{ data: Buffer; info: { width: number; height: number } }>;
 };
 
+/**
+ * The image format these bytes really are.
+ *
+ * Delegates to lib/security/file-signatures.ts, narrowed to the three formats
+ * this pipeline processes so a valid video is not mistaken for an image it can
+ * resize.
+ */
 function detectFormat(bytes: Uint8Array): "png" | "jpeg" | "webp" | null {
-  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "png";
-  if (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
-  ) return "webp";
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpeg";
+  const type = detectFileType(bytes, ["image/png", "image/jpeg", "image/webp"]);
+  if (type === "image/png") return "png";
+  if (type === "image/jpeg") return "jpeg";
+  if (type === "image/webp") return "webp";
   return null;
 }
 
