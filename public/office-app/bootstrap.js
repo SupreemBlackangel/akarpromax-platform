@@ -1464,8 +1464,11 @@
         // Register this machine with the platform and keep it "online".
         registerDevice();
         startDeviceHeartbeat();
-        // The office channel's five placements finally have a consumer.
-        startOfficeAds();
+        // The office channel's five placements finally have a consumer --
+        // unless the application draws its own slots (webui 3.x sets this
+        // flag), in which case a second strip here would show the same
+        // campaign twice and bill two impressions for one view.
+        if (!window.__AKAR_NATIVE_ADS__) startOfficeAds();
         // Pull the office's published properties down so they show in the
         // portal. One guarded reload lets the list re-read them this session.
         syncPlatformProperties().then(function (changed) {
