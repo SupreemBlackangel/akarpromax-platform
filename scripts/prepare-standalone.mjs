@@ -14,7 +14,7 @@
  * meant to be copied/archived/shipped, so real secrets belong only in the
  * runtime process environment, never inside it.
  */
-import { existsSync, cpSync, rmSync, readdirSync } from "node:fs";
+import { existsSync, cpSync, rmSync, readdirSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -47,6 +47,58 @@ const nodemailerDest = join(STANDALONE_DIR, "node_modules", "nodemailer");
 if (existsSync(nodemailerSrc) && !existsSync(nodemailerDest)) {
   cpSync(nodemailerSrc, nodemailerDest, { recursive: true });
   console.log(`[prepare-standalone] copied nodemailer -> ${nodemailerDest}`);
+}
+
+// The Next standalone tree ships its own trimmed copy of `next`, and this
+// version of `next build` leaves the compiled server runtimes out of it. Of
+// the thirteen `*.runtime.prod.js` files the full package carries, the traced
+// copy kept three -- the page runtimes -- and dropped the rest, INCLUDING
+// `app-route.runtime.prod.js` and `app-route-turbo.runtime.prod.js`, which are
+// the runtime for every API route handler.
+//
+// On the production host it did not fail loudly, because pm2 runs the app from
+// the project root, above a full node_modules, and Node resolves `next/...`
+// upward into it. So the ROUTE handler loaded from the outer copy of next while
+// the bundled app chunks loaded `work-unit-async-storage.external.js` from the
+// standalone copy -- two different modules, two different request AsyncLocal-
+// Storage instances. A handler that only READS a cookie was unaffected
+// (/api/auth/me answered cleanly), but the moment one WROTE a session cookie --
+// createSession() on a successful login, and both OAuth callbacks -- cookies()
+// reached into the other storage instance, found no active request, and threw
+// "`cookies` was called outside a request scope." The login answered 500 to the
+// correct password and 401 to the wrong one, and no one ever completed a login.
+//
+// Copying the prod runtimes in makes the standalone `next` self-contained, so
+// every `next/...` specifier resolves inside the one tree and there is one
+// storage instance again. Dropping the outer node_modules can no longer take
+// the site down either. Modelled on the nodemailer copy above: the same class
+// of bug, a file the tracer did not follow.
+const nextRuntimeSrc = join(ROOT, "node_modules", "next", "dist", "compiled", "next-server");
+const nextRuntimeDest = join(STANDALONE_DIR, "node_modules", "next", "dist", "compiled", "next-server");
+if (existsSync(nextRuntimeSrc) && existsSync(nextRuntimeDest)) {
+  let copied = 0;
+  for (const entry of readdirSync(nextRuntimeSrc)) {
+    // Only the production runtimes the server actually loads; the dev and
+    // experimental variants are dead weight in a deployed bundle.
+    if (!entry.endsWith(".runtime.prod.js")) continue;
+    const dest = join(nextRuntimeDest, entry);
+    if (existsSync(dest)) continue;
+    copyFileSync(join(nextRuntimeSrc, entry), dest);
+    copied++;
+  }
+  console.log(`[prepare-standalone] copied ${copied} missing next server runtime file(s) -> ${nextRuntimeDest}`);
+
+  // The one whose absence took logins down. If a future Next changes these
+  // filenames, fail the build here rather than discover it as a 500 in prod.
+  const required = "app-route-turbo.runtime.prod.js";
+  if (!existsSync(join(nextRuntimeDest, required))) {
+    console.error(
+      `[prepare-standalone] ${required} is missing from the bundle and was not found at ` +
+        `${nextRuntimeSrc}. The API route handler runtime would resolve to an outer node_modules ` +
+        `at runtime, splitting the request context and breaking every cookie-writing route.`,
+    );
+    process.exit(1);
+  }
 }
 
 let removedSecrets = 0;

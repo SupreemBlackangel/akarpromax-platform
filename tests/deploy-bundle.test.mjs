@@ -69,3 +69,54 @@ test("the exclusion list is explained where it is written", () => {
   assert.match(section, /tessdata/);
   assert.match(section, /drizzle-pg-forward/);
 });
+
+// ---- the standalone bundle must carry its own server runtime ----------------
+
+import { existsSync, readdirSync } from "node:fs";
+
+/**
+ * `next build` traced only three of the thirteen `*.runtime.prod.js` files into
+ * the standalone copy of `next`, dropping the API route-handler runtime
+ * (`app-route*.runtime.prod.js`) among others.
+ *
+ * On production it did not fail loudly: pm2 runs from the project root above a
+ * full node_modules, so the route handler resolved `next/...` upward into the
+ * outer copy while the bundled chunks used the standalone copy's
+ * `work-unit-async-storage.external.js`. Two copies of next, two request
+ * AsyncLocalStorage instances. Reading a cookie was fine; WRITING one --
+ * createSession() on a successful login, and both OAuth callbacks -- called
+ * cookies() against the wrong storage and threw "called outside a request
+ * scope". Login answered 500 to the correct password and 401 to the wrong one,
+ * and AUTH_LOGIN_SUCCESS never once appeared in the production log.
+ *
+ * scripts/prepare-standalone.mjs copies the prod runtimes in so the bundle is
+ * self-contained. These tests fail if that step is removed or a rename slips
+ * past it.
+ */
+
+const prep = await readFile(path.join(ROOT, "scripts/prepare-standalone.mjs"), "utf8");
+
+test("prepare-standalone copies the compiled next server runtimes into the bundle", () => {
+  assert.match(prep, /compiled["'\s,)]+.*next-server|next-server/, "must reach into next/dist/compiled/next-server");
+  assert.match(prep, /\.runtime\.prod\.js/, "must copy the prod runtimes");
+  // The specific file whose absence took logins down, named so a rename fails
+  // the build rather than production.
+  assert.match(prep, /app-route-turbo\.runtime\.prod\.js/);
+  assert.match(prep, /process\.exit\(1\)/, "a missing route runtime must fail the build");
+});
+
+// Only meaningful once a build exists; skipped on a clean checkout.
+const STANDALONE_NEXT_SERVER = path.join(
+  ROOT,
+  ".next/standalone/node_modules/next/dist/compiled/next-server",
+);
+
+test("the built bundle contains the API route handler runtime", { skip: !existsSync(STANDALONE_NEXT_SERVER) }, () => {
+  const files = readdirSync(STANDALONE_NEXT_SERVER);
+  // The handler runtime for every route under app/api. Without it, Node walks
+  // up to an outer node_modules and the request context splits.
+  assert.ok(
+    files.some((f) => /^app-route(-turbo)?\.runtime\.prod\.js$/.test(f)),
+    `no app-route runtime in the bundle; found: ${files.join(", ")}`,
+  );
+});
