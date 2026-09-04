@@ -94,3 +94,51 @@ sudo -u postgres dropdb akarpromax_e2e
 Kept rather than removed because the environment is what made phase 11 possible,
 and the alternative — testing against production — is the thing it exists to
 avoid.
+
+## The standalone bundle is not standalone
+
+Found while refreshing this instance, 2026-09-04. The copy started answering
+500 on every API route, with:
+
+```
+Failed to load external module next/dist/compiled/next-server/app-route-turbo.runtime.prod.js
+```
+
+That file — the runtime for **API route handlers** — is not in the standalone
+bundle's own `node_modules`. It is not in production's copy of it either.
+
+Production works anyway, for one reason:
+
+| process | cwd |
+|---|---|
+| `akar-v2` | `/var/www/akarpromax-v2` — the project root |
+| `akar-e2e` | `/var/www/akar-e2e/standalone` |
+
+Node resolves `next/...` upward from the working directory. Production's cwd is
+the project root, which holds a **full 500 MB `node_modules`** outside the
+deploy, and that is where the file is found. The test instance has no parent
+`node_modules`, so it has nothing to fall back to.
+
+**Production therefore depends on a directory that no deploy writes and nothing
+verifies.** Removing `/var/www/akarpromax-v2/node_modules` — an obvious thing
+to do when reclaiming disk — would take every API route down while the pages
+kept rendering, which is close to the worst shape a failure can have.
+
+It is recorded rather than fixed because fixing it properly means finding out
+why `next build` leaves that file out, and doing that during an unrelated piece
+of work is how a working deploy gets broken. The check to run first:
+
+```bash
+ls /var/www/akarpromax-v2/.next/standalone/node_modules/next/dist/compiled/next-server/
+# app-route-turbo.runtime.prod.js must be there. Today it is not.
+```
+
+The test instance was repaired by copying the missing files across:
+
+```bash
+cp -n /var/www/akarpromax-v2/node_modules/next/dist/compiled/next-server/*.js \
+      /var/www/akar-e2e/standalone/node_modules/next/dist/compiled/next-server/
+pm2 restart akar-e2e --update-env
+```
+
+After which the lifecycle passed 31/31 again.
