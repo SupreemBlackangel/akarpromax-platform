@@ -25,7 +25,8 @@
     "seed:news": "tsx scripts/seed-news.ts",
     "seed:services": "tsx scripts/seed-services.ts",
     "seed:services:marketplace": "tsx scripts/seed-services-marketplace.ts",
-    "seed:auth:admin": "tsx scripts/seed-auth-admin.ts",
+    "seed:auth:admin": "node --env-file=.env --import tsx scripts/seed-auth-admin.ts",
+    "diagnose:admin": "node --env-file=.env --import tsx scripts/diagnose-admin-login.ts",
     "email:check": "node --env-file=.env --import tsx scripts/email-provider-check.ts",
     "test:e2e:production-runtime": "node --import tsx --test tests/e2e/production-runtime.test.mjs"
   },
