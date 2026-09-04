@@ -1156,14 +1156,56 @@
       '</div>';
     document.body.appendChild(gate);
 
+    // If this same update was already downloaded in an earlier session and the
+    // installed version has not moved, the update did not take. The most likely
+    // cause is an installer whose payload declares an older version than the
+    // manifest -- the packaged webui sets window.__AKAR_APP_VERSION__, and it
+    // is a separate artefact from the installer's own ProductVersion, so the
+    // two can disagree without anything failing loudly.
+    //
+    // Without this the office sees the identical modal every launch, forever,
+    // with no way past it and nothing suggesting the problem is not on their
+    // end. It does not open the gate -- a mandatory update is mandatory -- it
+    // stops the app from implying they simply never clicked the button.
+    var attempted = readUpdateAttempt();
+    if (attempted && attempted.version === info.version) {
+      var stuck = document.createElement("div");
+      stuck.className = "akar-update-notes akar-update-stuck";
+      stuck.textContent =
+        "نزّلت هذا التحديث سابقًا ولم تتغيّر نسخة البرنامج (" + INSTALLED_VERSION + "). "
+        + "قد تكون حزمة التثبيت لا تحتوي التحديث فعلياً. "
+        + "شغّل ملف التثبيت بصلاحيات مسؤول، وإن تكرر الأمر فتواصل مع الدعم وأبلغهم بهذين الرقمين: "
+        + INSTALLED_VERSION + " و " + info.version + ".";
+      var card = gate.querySelector(".akar-update-card");
+      if (card) card.appendChild(stuck);
+    }
+
     document.getElementById("akar-update-now").addEventListener("click", function () {
       triggerSetupDownload(setupUrl);
+      writeUpdateAttempt(info.version);
       var btn = document.getElementById("akar-update-now");
       if (btn) {
         btn.disabled = true;
         btn.innerHTML = UPDATE_SVG.spinner + '<span>جارٍ التنزيل... شغّل ملف التثبيت بعد اكتماله</span>';
       }
     });
+  }
+
+  // Which update this installation has already tried to apply. Survives the
+  // restart, which is the whole point: the loop is only visible across launches.
+  var UPDATE_ATTEMPT_KEY = "akar_update_attempted";
+
+  function readUpdateAttempt() {
+    try {
+      var raw = ls("get", UPDATE_ATTEMPT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function writeUpdateAttempt(version) {
+    try {
+      ls("set", UPDATE_ATTEMPT_KEY, JSON.stringify({ version: version, at: Date.now() }));
+    } catch (e) {}
   }
 
   // Optional update: dismissible top bar; the app keeps working.
@@ -1203,7 +1245,12 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (info) {
         if (!info || !info.version) return false;
-        if (cmpVersion(info.version, INSTALLED_VERSION) <= 0) return false; // up to date
+        if (cmpVersion(info.version, INSTALLED_VERSION) <= 0) {
+          // Up to date. Clear any record of a previous struggle so a future
+          // update is not branded as stuck the first time it is offered.
+          try { ls("del", UPDATE_ATTEMPT_KEY); } catch (e) {}
+          return false;
+        }
         if (info.mandatory) {
           showUpdateGate(info);
           return true;
