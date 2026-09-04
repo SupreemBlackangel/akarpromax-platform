@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { geoAliases, matchesGeoAlias, normalizeGeoToken } from "@/lib/geo/platform-location";
 import { useGeo } from "@/src/contexts/GeoContext";
+import { fetchGeoLevel } from "@/src/lib/geo-registry-cache";
 
 type GeoOption = {
   id: string;
@@ -26,11 +27,8 @@ function selectedOption(options: GeoOption[], value: string): GeoOption | null {
 }
 
 async function fetchGeo(type: "governorates" | "cities" | "districts", parentId: string): Promise<GeoOption[]> {
-  const query = new URLSearchParams({ type, parentId });
-  const response = await fetch(`/api/geo?${query.toString()}`, { cache: "no-store" });
-  if (!response.ok) return [];
-  const body = await response.json();
-  return Array.isArray(body.data) ? body.data : [];
+  // One request per list, shared with GeoContext -- see geo-registry-cache.
+  return fetchGeoLevel(type, parentId) as Promise<GeoOption[]>;
 }
 
 function currentPosition(): Promise<GeolocationPosition> {

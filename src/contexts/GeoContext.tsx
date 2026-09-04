@@ -20,6 +20,7 @@ import {
   type PlatformLocationSignal,
   type PlatformLocationSource,
 } from "@/lib/geo/platform-location";
+import { fetchGeoLevel } from "@/src/lib/geo-registry-cache";
 
 export type CountryConfig = {
   id: string;
@@ -253,15 +254,10 @@ type GeoRegistryRow = {
 };
 
 async function fetchGeoRows(type: "governorates" | "cities" | "districts", parentId: string): Promise<GeoRegistryRow[]> {
-  try {
-    const query = new URLSearchParams({ type, parentId });
-    const response = await fetch(`/api/geo?${query.toString()}`, { cache: "no-store" });
-    if (!response.ok) return [];
-    const body = await response.json();
-    return Array.isArray(body.data) ? body.data : [];
-  } catch {
-    return [];
-  }
+  // Shared with LocationCluster, which asks for the same lists to fill its
+  // dropdown while this asks for them to normalise a detected name. Two
+  // requests for one list was measured on the live home page.
+  return fetchGeoLevel(type, parentId);
 }
 
 function rowValue(row: GeoRegistryRow): string {

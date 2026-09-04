@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PERMISSIONS } from "@/src/constants/permissions";
+import GeoTargetPicker from "./GeoTargetPicker";
 import SimulatorPanel from "./simulator-panel";
 import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES, visibleAdminPlacements } from "@/src/constants/advertising";
 import { checkCreativeFit, suggestedSize } from "@/lib/ads/creative-fit";
@@ -1098,11 +1099,15 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <fieldset className="ads-choice-fieldset"><legend>الأجهزة</legend><div>{DEVICE_TYPES.map((device) => <label key={device}><input type="checkbox" checked={form.devices.includes(device)} onChange={() => toggleList("devices", device)} />{deviceLabels[device]}</label>)}</div></fieldset>
               <fieldset className="ads-choice-fieldset"><legend>أنظمة التشغيل (اختياري)</legend><div>{["android", "ios", "windows", "macos", "linux"].map((os) => <label key={os}><input type="checkbox" checked={form.operatingSystems.includes(os)} onChange={() => toggleList("operatingSystems", os)} />{os}</label>)}</div></fieldset>
             </div>
-            <label className="ads-wide-field">المدن (اختياري — معرّفات مفصولة بفاصلة)<input dir="ltr" placeholder="om-muscat, sa-riyadh" value={form.cities.join(", ")} onChange={(event) => setField("cities", event.target.value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))} /></label>
+            <GeoTargetPicker
+              countryCodes={form.countries}
+              regionIds={form.regionIds}
+              cities={form.cities}
+              districtIds={form.districtIds}
+              onChange={(field, next) => setField(field, next)}
+            />
             <details className="ads-target-details"><summary className="ads-details-summary">الموقع الجغرافي والتجزئة ▼</summary>
               <div className="ads-target-grid">
-                <label className="ads-wide-field">المناطق (فاصلة)<input dir="ltr" placeholder="om-muscat-governorate" value={form.regionIds.join(", ")} onChange={(event) => setField("regionIds", event.target.value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))} /></label>
-                <label className="ads-wide-field">الأحياء/المناطق الفرعية (فاصلة)<input dir="ltr" placeholder="al-khuwair" value={form.districtIds.join(", ")} onChange={(event) => setField("districtIds", event.target.value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean))} /></label>
                 <label>خط العرض (اختياري)<input dir="ltr" type="number" step="any" value={form.latitude} onChange={(event) => setField("latitude", event.target.value)} /></label>
                 <label>خط الطول (اختياري)<input dir="ltr" type="number" step="any" value={form.longitude} onChange={(event) => setField("longitude", event.target.value)} /></label>
                 <label>نصف القطر (كم)<input dir="ltr" type="number" min="1" value={form.radiusKm} onChange={(event) => setField("radiusKm", event.target.value)} /></label>
