@@ -28,6 +28,152 @@
 
 /** @type {Record<string, Governorate[]>} */
 export const CATALOGUE = {
+  // Saudi Arabia keeps BARE codes -- `JEDDAH`, not `SA-JEDDAH`. Eleven cities
+  // and thirteen governorates were entered by hand long ago, live campaigns
+  // target those exact strings, and rewriting them would break the thing this
+  // work exists to protect. New cities follow the same convention so the
+  // country stays internally consistent.
+  //
+  // Eight of the thirteen governorates had NO cities at all: Asir, Qassim,
+  // Tabuk, Hail, Jazan, Najran, Baha, Jouf and the Northern Borders. Abha,
+  // Khamis Mushait and Buraidah could not be targeted by any advertiser, in
+  // the platform's primary market. The seeder inserts only what is missing, so
+  // the eleven existing cities are found by code and left exactly as they are.
+  SA: [
+    { code: "RIYADH", ar: "الرياض", en: "Riyadh", cities: [
+      { code: "RIYADH", ar: "الرياض", en: "Riyadh" },
+      { code: "DIRIYAH", ar: "الدرعية", en: "Diriyah" },
+      { code: "KHARJ", ar: "الخرج", en: "Al Kharj" },
+      { code: "DUWADIMI", ar: "الدوادمي", en: "Dawadmi" },
+      { code: "MAJMAAH", ar: "المجمعة", en: "Al Majmaah" },
+      { code: "ZULFI", ar: "الزلفي", en: "Az Zulfi" },
+      { code: "QUWAYIYAH", ar: "القويعية", en: "Al Quwayiyah" },
+      { code: "AFIF", ar: "عفيف", en: "Afif" },
+      { code: "WADIDAWASIR", ar: "وادي الدواسر", en: "Wadi ad-Dawasir" },
+      { code: "SHAQRA", ar: "شقراء", en: "Shaqra" },
+      { code: "HURAYMILA", ar: "حريملاء", en: "Huraymila" },
+      { code: "MUZAHIMIYAH", ar: "المزاحمية", en: "Al Muzahimiyah" },
+      { code: "DHURMA", ar: "ضرما", en: "Dhurma" },
+      { code: "SULAYYIL", ar: "السليل", en: "As Sulayyil" },
+      { code: "HOTATBANITAMIM", ar: "حوطة بني تميم", en: "Hotat Bani Tamim" },
+      { code: "AFLAJ", ar: "الأفلاج", en: "Al Aflaj" },
+      { code: "THADIQ", ar: "ثادق", en: "Thadiq" },
+      { code: "RUMAH", ar: "رماح", en: "Rumah" },
+    ] },
+    { code: "MAKKAH", ar: "مكة المكرمة", en: "Makkah", cities: [
+      { code: "MAKKAH", ar: "مكة المكرمة", en: "Makkah" },
+      { code: "JEDDAH", ar: "جدة", en: "Jeddah" },
+      { code: "TAIF", ar: "الطائف", en: "Taif" },
+      { code: "RABIGH", ar: "رابغ", en: "Rabigh" },
+      { code: "QUNFUDHAH", ar: "القنفذة", en: "Al Qunfudhah" },
+      { code: "LITH", ar: "الليث", en: "Al Lith" },
+      { code: "KHULAIS", ar: "خليص", en: "Khulais" },
+      { code: "JUMUM", ar: "الجموم", en: "Al Jumum" },
+      { code: "TURUBAH", ar: "تربة", en: "Turubah" },
+      { code: "RANYAH", ar: "رنية", en: "Ranyah" },
+      { code: "KHURMAH", ar: "الخرمة", en: "Al Khurmah" },
+      { code: "ADHAM", ar: "أضم", en: "Adham" },
+    ] },
+    { code: "MADINAH", ar: "المدينة المنورة", en: "Madinah", cities: [
+      { code: "MADINAH", ar: "المدينة المنورة", en: "Madinah" },
+      { code: "YANBU", ar: "ينبع", en: "Yanbu" },
+      { code: "ALULA", ar: "العلا", en: "AlUla" },
+      { code: "BADR", ar: "بدر", en: "Badr" },
+      { code: "KHAYBAR", ar: "خيبر", en: "Khaybar" },
+      { code: "MAHDDHAHAB", ar: "مهد الذهب", en: "Mahd adh Dhahab" },
+      { code: "HENAKIYAH", ar: "الحناكية", en: "Al Henakiyah" },
+    ] },
+    { code: "EASTERN", ar: "الشرقية", en: "Eastern Province", cities: [
+      { code: "DAMMAM", ar: "الدمام", en: "Dammam" },
+      { code: "KHOBAR", ar: "الخبر", en: "Khobar" },
+      { code: "DHAHRAN", ar: "الظهران", en: "Dhahran" },
+      { code: "JUBAIL", ar: "الجبيل", en: "Jubail" },
+      { code: "QATIF", ar: "القطيف", en: "Qatif" },
+      { code: "HOFUF", ar: "الهفوف", en: "Hofuf" },
+      { code: "AHSA", ar: "الأحساء", en: "Al Ahsa" },
+      { code: "HAFRALBATIN", ar: "حفر الباطن", en: "Hafar Al-Batin" },
+      { code: "KHAFJI", ar: "الخفجي", en: "Khafji" },
+      { code: "RASTANURA", ar: "رأس تنورة", en: "Ras Tanura" },
+      { code: "BUQAYQ", ar: "بقيق", en: "Abqaiq" },
+      { code: "NAIRYAH", ar: "النعيرية", en: "An Nairyah" },
+      { code: "SAFWA", ar: "صفوى", en: "Safwa" },
+      { code: "SAIHAT", ar: "سيهات", en: "Saihat" },
+    ] },
+    { code: "ASIR", ar: "عسير", en: "Asir", cities: [
+      { code: "ABHA", ar: "أبها", en: "Abha" },
+      { code: "KHAMISMUSHAIT", ar: "خميس مشيط", en: "Khamis Mushait" },
+      { code: "BISHA", ar: "بيشة", en: "Bisha" },
+      { code: "MUHAYIL", ar: "محايل عسير", en: "Muhayil" },
+      { code: "NAMAS", ar: "النماص", en: "An Namas" },
+      { code: "SARATABIDAH", ar: "سراة عبيدة", en: "Sarat Abidah" },
+      { code: "RIJALALMAA", ar: "رجال ألمع", en: "Rijal Almaa" },
+      { code: "TATHLITH", ar: "تثليث", en: "Tathlith" },
+      { code: "AHADRAFIDAH", ar: "أحد رفيدة", en: "Ahad Rafidah" },
+      { code: "BALQARN", ar: "بلقرن", en: "Balqarn" },
+    ] },
+    { code: "QASSIM", ar: "القصيم", en: "Qassim", cities: [
+      { code: "BURAIDAH", ar: "بريدة", en: "Buraidah" },
+      { code: "UNAIZAH", ar: "عنيزة", en: "Unaizah" },
+      { code: "RASS", ar: "الرس", en: "Ar Rass" },
+      { code: "BUKAYRIYAH", ar: "البكيرية", en: "Al Bukayriyah" },
+      { code: "MITHNAB", ar: "المذنب", en: "Al Mithnab" },
+      { code: "BADAYEA", ar: "البدائع", en: "Al Badayea" },
+      { code: "RIYADHALKHABRA", ar: "رياض الخبراء", en: "Riyadh Al Khabra" },
+      { code: "UYUNALJIWA", ar: "عيون الجواء", en: "Uyun Al Jiwa" },
+    ] },
+    { code: "TABUK", ar: "تبوك", en: "Tabuk", cities: [
+      { code: "TABUK", ar: "تبوك", en: "Tabuk" },
+      { code: "DUBA", ar: "ضباء", en: "Duba" },
+      { code: "HAQL", ar: "حقل", en: "Haql" },
+      { code: "UMLUJ", ar: "أملج", en: "Umluj" },
+      { code: "WAJH", ar: "الوجه", en: "Al Wajh" },
+      { code: "TAYMA", ar: "تيماء", en: "Tayma" },
+      { code: "NEOM", ar: "نيوم", en: "NEOM" },
+    ] },
+    { code: "HAIL", ar: "حائل", en: "Hail", cities: [
+      { code: "HAIL", ar: "حائل", en: "Hail" },
+      { code: "BAQAA", ar: "بقعاء", en: "Baqaa" },
+      { code: "SHINAN", ar: "الشنان", en: "Ash Shinan" },
+      { code: "GHAZALAH", ar: "الغزالة", en: "Al Ghazalah" },
+      { code: "MAWQAQ", ar: "موقق", en: "Mawqaq" },
+    ] },
+    { code: "NORTHERN", ar: "الحدود الشمالية", en: "Northern Borders", cities: [
+      { code: "ARAR", ar: "عرعر", en: "Arar" },
+      { code: "RAFHA", ar: "رفحاء", en: "Rafha" },
+      { code: "TURAIF", ar: "طريف", en: "Turaif" },
+    ] },
+    { code: "JAZAN", ar: "جازان", en: "Jazan", cities: [
+      { code: "JAZAN", ar: "جازان", en: "Jazan" },
+      { code: "SABYA", ar: "صبيا", en: "Sabya" },
+      { code: "ABUARISH", ar: "أبو عريش", en: "Abu Arish" },
+      { code: "SAMTAH", ar: "صامطة", en: "Samtah" },
+      { code: "AHADMASARIHAH", ar: "أحد المسارحة", en: "Ahad Al Masarihah" },
+      { code: "FARASAN", ar: "فرسان", en: "Farasan" },
+      { code: "BAISH", ar: "بيش", en: "Baish" },
+    ] },
+    { code: "NAJRAN", ar: "نجران", en: "Najran", cities: [
+      { code: "NAJRAN", ar: "نجران", en: "Najran" },
+      { code: "SHARURAH", ar: "شرورة", en: "Sharurah" },
+      { code: "HABUNA", ar: "حبونا", en: "Habuna" },
+      { code: "BADRJANOUB", ar: "بدر الجنوب", en: "Badr Al Janoub" },
+      { code: "YADAMAH", ar: "يدمة", en: "Yadamah" },
+    ] },
+    { code: "BAHA", ar: "الباحة", en: "Al Bahah", cities: [
+      { code: "BAHA", ar: "الباحة", en: "Al Bahah" },
+      { code: "BALJURASHI", ar: "بلجرشي", en: "Baljurashi" },
+      { code: "MANDAQ", ar: "المندق", en: "Al Mandaq" },
+      { code: "QILWAH", ar: "قلوة", en: "Qilwah" },
+      { code: "AQIQ", ar: "العقيق", en: "Al Aqiq" },
+      { code: "MAKHWAH", ar: "المخواة", en: "Al Makhwah" },
+    ] },
+    { code: "JOUF", ar: "الجوف", en: "Al Jawf", cities: [
+      { code: "SAKAKA", ar: "سكاكا", en: "Sakaka" },
+      { code: "QURAYYAT", ar: "القريات", en: "Qurayyat" },
+      { code: "DUMATALJANDAL", ar: "دومة الجندل", en: "Dumat Al Jandal" },
+      { code: "TABARJAL", ar: "طبرجل", en: "Tabarjal" },
+    ] },
+  ],
+
   EG: [
     { code: "EG-C", ar: "القاهرة", en: "Cairo", cities: [
       { code: "EG-CAIRO", ar: "القاهرة", en: "Cairo" },
@@ -559,5 +705,14 @@ export const CATALOGUE = {
   ],
 };
 
-/** Countries whose catalogue is deliberately left untouched. */
-export const SKIP = new Set(["SA"]);
+/**
+ * Countries the seeder must not touch.
+ *
+ * Empty. Saudi Arabia was excluded on the first pass out of caution, and that
+ * caution turned out to be misplaced in one direction and costly in the other:
+ * the seeder only ever INSERTS what is missing, so its existing thirteen
+ * governorates and eleven cities are found by code and left alone -- while
+ * eight of its governorates sat with no cities at all, in the one country the
+ * platform actually serves.
+ */
+export const SKIP = new Set([]);

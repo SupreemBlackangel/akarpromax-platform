@@ -119,33 +119,39 @@ test("a saved value absent from the registry is shown as removable", async () =>
 
 // ---- the catalogue itself ---------------------------------------------------
 
-test("no two places in the catalogue share a code", async () => {
+test("no two places at the same level share a code", async () => {
   const { CATALOGUE } = await import("../scripts/geo-catalogue.mjs");
 
-  // isGeoMatch compares a bare lowercased string with no country in scope. Two
-  // places sharing a code would target each other, and Tripoli is in both
-  // Lebanon and Libya -- which is precisely why these codes carry the country.
-  const seen = new Map();
+  // Uniqueness is per LEVEL, not global. `isGeoMatch` compares ad.regionIds
+  // against ctx.regionId and ad.cities against ctx.cityId -- separate fields
+  // that are never compared with each other, so Saudi Arabia having both a
+  // MAKKAH governorate and a MAKKAH city is correct and long-standing.
+  //
+  // Two CITIES sharing a code is the real hazard: they would target each
+  // other, and Tripoli is in both Lebanon and Libya. That is why every code
+  // outside Saudi Arabia carries its country.
   const clashes = [];
-  const claim = (code, where) => {
-    const key = code.toLowerCase();
-    if (seen.has(key)) clashes.push(`${code}: ${seen.get(key)} and ${where}`);
-    else seen.set(key, where);
-  };
-
-  for (const [country, governorates] of Object.entries(CATALOGUE)) {
-    for (const governorate of governorates) {
-      claim(governorate.code, `${country}/${governorate.en}`);
-      for (const city of governorate.cities ?? []) {
-        claim(city.code, `${country}/${governorate.en}/${city.en}`);
-        for (const district of city.districts ?? []) {
-          claim(district.code, `${country}/${governorate.en}/${city.en}/${district.en}`);
+  for (const level of ["governorates", "cities", "districts"]) {
+    const seen = new Map();
+    const claim = (code, where) => {
+      const key = code.toLowerCase();
+      if (seen.has(key)) clashes.push(`${level} ${code}: ${seen.get(key)} and ${where}`);
+      else seen.set(key, where);
+    };
+    for (const [country, governorates] of Object.entries(CATALOGUE)) {
+      for (const governorate of governorates) {
+        if (level === "governorates") claim(governorate.code, `${country}/${governorate.en}`);
+        for (const city of governorate.cities ?? []) {
+          if (level === "cities") claim(city.code, `${country}/${governorate.en}/${city.en}`);
+          for (const district of city.districts ?? []) {
+            if (level === "districts") claim(district.code, `${country}/${city.en}/${district.en}`);
+          }
         }
       }
     }
   }
 
-  assert.deepEqual(clashes, [], `codes are reused:\n  ${clashes.join("\n  ")}`);
+  assert.deepEqual(clashes, [], `codes are reused within a level: ${clashes.join(" | ")}`);
 });
 
 test("every catalogue entry carries a code and both names", async () => {
@@ -168,18 +174,63 @@ test("every catalogue entry carries a code and both names", async () => {
   assert.deepEqual(bad, []);
 });
 
-test("the catalogue covers the countries the platform lists, and leaves Saudi Arabia alone", async () => {
+test("the catalogue covers every country the platform lists", async () => {
   const { CATALOGUE, SKIP } = await import("../scripts/geo-catalogue.mjs");
 
-  // Saudi Arabia's codes are bare (`JEDDAH`) and live campaigns already target
-  // them. Rewriting them would break exactly what this work protects.
-  assert.ok(SKIP.has("SA"), "Saudi Arabia must be excluded from seeding");
-  assert.ok(!("SA" in CATALOGUE), "and must not appear in the catalogue at all");
-
-  const listed = ["AE", "QA", "KW", "BH", "OM", "IQ", "JO", "LB", "PS", "SY", "YE", "EG",
-                  "LY", "TN", "DZ", "MA", "MR", "SD", "SO", "DJ", "KM", "TR"];
+  const listed = ["SA", "AE", "QA", "KW", "BH", "OM", "IQ", "JO", "LB", "PS", "SY", "YE",
+                  "EG", "LY", "TN", "DZ", "MA", "MR", "SD", "SO", "DJ", "KM", "TR"];
   const missing = listed.filter((code) => !(code in CATALOGUE));
-  assert.deepEqual(missing, [], `these countries are selectable but have no catalogue: ${missing.join(", ")}`);
+  assert.deepEqual(missing, [], `selectable but with no catalogue: ${missing.join(", ")}`);
+  assert.equal(SKIP.size, 0, "nothing is excluded; the seeder only inserts what is missing");
+});
+
+test("Saudi Arabia keeps its bare codes, because live campaigns target them", async () => {
+  const { CATALOGUE } = await import("../scripts/geo-catalogue.mjs");
+
+  // A campaign in production targets `jeddah`. Renaming it to `sa-jeddah`
+  // would make that campaign invisible -- the exact failure this work fixed.
+  const prefixed = [];
+  for (const governorate of CATALOGUE.SA) {
+    if (/^SA-/i.test(governorate.code)) prefixed.push(governorate.code);
+    for (const city of governorate.cities ?? []) {
+      if (/^SA-/i.test(city.code)) prefixed.push(city.code);
+    }
+  }
+  assert.deepEqual(prefixed, [], "Saudi codes must stay bare");
+
+  const makkah = CATALOGUE.SA.find((g) => g.code === "MAKKAH");
+  assert.ok(makkah?.cities?.some((c) => c.code === "JEDDAH"), "JEDDAH must still be exactly that");
+});
+
+test("every country outside Saudi Arabia carries its country in the code", async () => {
+  const { CATALOGUE } = await import("../scripts/geo-catalogue.mjs");
+  const bare = [];
+  for (const [country, governorates] of Object.entries(CATALOGUE)) {
+    if (country === "SA") continue;
+    for (const governorate of governorates) {
+      for (const city of governorate.cities ?? []) {
+        if (!city.code.toUpperCase().startsWith(`${country}-`)) bare.push(`${country}: ${city.code}`);
+      }
+    }
+  }
+  assert.deepEqual(bare, [], `city codes must be country-prefixed outside Saudi Arabia`);
+});
+
+test("the eight empty Saudi governorates now have cities", async () => {
+  const { CATALOGUE } = await import("../scripts/geo-catalogue.mjs");
+
+  // Measured against production before this: Asir, Qassim, Tabuk, Hail, Jazan,
+  // Najran, Baha, Jouf and the Northern Borders held not one city, so Abha,
+  // Khamis Mushait and Buraidah could not be targeted at all.
+  for (const code of ["ASIR", "QASSIM", "TABUK", "HAIL", "JAZAN", "NAJRAN", "BAHA", "JOUF", "NORTHERN"]) {
+    const governorate = CATALOGUE.SA.find((g) => g.code === code);
+    assert.ok(governorate, `${code} must be in the catalogue`);
+    assert.ok((governorate.cities ?? []).length > 0, `${code} must no longer be empty`);
+  }
+
+  const asir = CATALOGUE.SA.find((g) => g.code === "ASIR");
+  assert.ok(asir.cities.some((c) => c.code === "ABHA"));
+  assert.ok(asir.cities.some((c) => c.code === "KHAMISMUSHAIT"));
 });
 
 test("Manbij and Cairo are reachable, since they are the ones that were asked for", async () => {
