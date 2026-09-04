@@ -78,6 +78,16 @@ const nextConfig = {
         // release notes, served to an app that has not signed in yet. There is
         // nothing here to protect with an origin restriction, and the desktop
         // host is not a fixed origin we could name anyway.
+        // The public news feed the office application's ticker reads. Same
+        // reasoning as the manifest below: published headlines, GET only, read
+        // by a desktop host whose origin (file://, i.e. "null") cannot be named.
+        source: "/api/news/feed",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+        ],
+      },
+      {
         source: "/office-app/:path*",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
