@@ -41,15 +41,25 @@ async function forwardSql() {
   return { files, sql: parts.join("\n") };
 }
 
-/** Table names a `pgTable('name', ...)` call declares, across lib/db/schemas. */
+/**
+ * Table names a `pgTable('name', ...)` call declares.
+ *
+ * lib/db/schema.ts is read alongside lib/db/schemas/. The first version of
+ * this walked only the directory, and `user_oauth_accounts` -- declared in the
+ * single file, queried by both social logins -- was invisible to it. It was
+ * missing from production the whole time this test was passing.
+ */
 async function declaredTables() {
   const dir = path.join(ROOT, "lib/db/schemas");
-  const files = (await readdir(dir)).filter((f) => f.endsWith(".ts"));
+  const sources = [
+    ...(await readdir(dir)).filter((f) => f.endsWith(".ts")).map((f) => ["schemas/" + f, path.join(dir, f)]),
+    ["schema.ts", path.join(ROOT, "lib/db/schema.ts")],
+  ];
   const found = new Map();
-  for (const file of files) {
-    const source = await readFile(path.join(dir, file), "utf8");
+  for (const [label, file] of sources) {
+    const source = await readFile(file, "utf8");
     for (const match of source.matchAll(/pgTable\(\s*['"]([a-z0-9_]+)['"]/g)) {
-      if (!found.has(match[1])) found.set(match[1], file);
+      if (!found.has(match[1])) found.set(match[1], label);
     }
   }
   return found;
@@ -73,7 +83,31 @@ async function declaredTables() {
  * something calls the table -- which is what happened, twice, and cost every
  * message the contact form ever received.
  */
-const UNMIGRATED_BASELINE = 27;
+const UNMIGRATED_BASELINE = 23;
+
+/**
+ * Tables the IDENTITY lineage owns, not this one.
+ *
+ * lib/db/pg-identity-schema.ts creates these and /api/health/ready asserts all
+ * eleven on every probe, so they are covered -- by a different mechanism, on
+ * purpose. They are excluded here rather than counted as gaps.
+ *
+ * The exclusion is this narrow list and nothing wider. `user_oauth_accounts`
+ * sits in the same schema file as `users` and looked, to a reader, equally
+ * covered. It was not: no lineage created it, the identity probe never asked
+ * for it, and both social logins failed on it in production.
+ */
+async function identityOwnedTables() {
+  // Read out of the source rather than imported: pg-identity-schema.ts resolves
+  // `@/` aliases that this plain .mjs test has no loader for, and reading the
+  // text keeps the list coupled to the one definition either way.
+  const source = await readFile(path.join(ROOT, "lib/db/pg-identity-schema.ts"), "utf8");
+  const block = source.slice(
+    source.indexOf("PG_IDENTITY_REQUIRED_TABLES = ["),
+    source.indexOf("] as const;"),
+  );
+  return new Set([...block.matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]));
+}
 
 test("the deployed migration lineage is drizzle-pg-forward", async () => {
   const migrations = await readFile(path.join(ROOT, "lib/db/forward-migrations.ts"), "utf8");
@@ -106,7 +140,10 @@ test("the query that was failing in production has an index that fits it", async
 test("the new migrations create and never destroy", async () => {
   // They run against a database holding real data. A DROP or a TRUNCATE in a
   // forward migration is not a thing to discover afterwards.
-  for (const file of ["0008_leads_baseline.sql", "0009_direct_messaging_baseline.sql"]) {
+  const added = (await readdir(path.join(ROOT, FORWARD)))
+    .filter((f) => f.endsWith(".sql") && Number(f.slice(0, 4)) >= 8)
+    .sort();
+  for (const file of added) {
     const sql = (await readFile(path.join(ROOT, FORWARD, file), "utf8"))
       .split(/\r?\n/)
       .filter((line) => !line.trimStart().startsWith("--"))
@@ -124,10 +161,12 @@ test("the new migrations create and never destroy", async () => {
 
 test("no new table reaches a schema file without a forward migration", async () => {
   const declared = await declaredTables();
+  const identityOwned = await identityOwnedTables();
   const { sql } = await forwardSql();
 
   const missing = [];
   for (const [table, file] of declared) {
+    if (identityOwned.has(table)) continue;
     const created = new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?"?${table}"?\\b`, "i");
     if (!created.test(sql)) missing.push(`${table} (${file})`);
   }
@@ -157,4 +196,96 @@ test("the contact route explains a failure instead of returning an empty 500", a
   const catchBlock = route.slice(route.indexOf("catch (error)"), route.indexOf("} finally {"));
   assert.doesNotMatch(catchBlock, /success: true/);
   assert.match(catchBlock, /status: 500/);
+});
+
+// ---- the ledger, not the folder, is what actually runs ----------------------
+
+/**
+ * drizzle-orm's migrator does not read the folder. It reads
+ * meta/_journal.json and opens exactly the files listed there:
+ *
+ *   for (const journalEntry of journal.entries) {
+ *     readFileSync(`${migrationFolderTo}/${journalEntry.tag}.sql`)
+ *
+ * A .sql file the journal does not name is never executed, never recorded,
+ * and never reported -- `npm run db:migrate:forward` exits 0 having done
+ * nothing. 0008 and 0009 were written, reviewed, committed and deployed in
+ * that state: the journal stopped at 0007, so the two migrations that were
+ * supposed to fix the lost contact-form submissions never ran.
+ *
+ * Being absent from the journal is indistinguishable, from the outside, from
+ * having been applied. That is why this test exists.
+ */
+test("every forward migration file is listed in the journal", async () => {
+  const files = (await readdir(path.join(ROOT, FORWARD)))
+    .filter((f) => f.endsWith(".sql"))
+    .map((f) => f.replace(/\.sql$/, ""))
+    .sort();
+  const journal = JSON.parse(
+    await readFile(path.join(ROOT, FORWARD, "meta/_journal.json"), "utf8"),
+  );
+  const listed = new Set(journal.entries.map((e) => e.tag));
+
+  const unlisted = files.filter((f) => !listed.has(f));
+  assert.deepEqual(
+    unlisted,
+    [],
+    "these migrations exist on disk and will never run:\n  " + unlisted.join("\n  "),
+  );
+});
+
+test("every journal entry has a file, in order, with no gaps", async () => {
+  const journal = JSON.parse(
+    await readFile(path.join(ROOT, FORWARD, "meta/_journal.json"), "utf8"),
+  );
+  const files = new Set(await readdir(path.join(ROOT, FORWARD)));
+
+  journal.entries.forEach((entry, i) => {
+    // The migrator throws on a missing file, taking the whole deploy with it.
+    assert.ok(files.has(`${entry.tag}.sql`), `journal names ${entry.tag}.sql, which does not exist`);
+    assert.equal(entry.idx, i, `journal idx must be sequential; entry ${i} says ${entry.idx}`);
+  });
+
+  // `when` orders execution. Two migrations sharing a timestamp apply in an
+  // order nothing guarantees, and 0010 creates the table 0011 would reference.
+  const whens = journal.entries.map((e) => e.when);
+  for (let i = 1; i < whens.length; i++) {
+    assert.ok(whens[i] > whens[i - 1], `${journal.entries[i].tag} does not sort after its predecessor`);
+  }
+});
+
+// ---- the two features that were failing in production ----------------------
+
+test("the land registry tables are created by a forward migration", async () => {
+  // GET /api/land/search answered 500 on every call, filtered or not:
+  //   Failed query: select count(*)::int from "land_parcels" ...
+  const { sql } = await forwardSql();
+  for (const table of ["land_parcels", "land_documents", "land_valuations", "land_favorites"]) {
+    assert.ok(
+      sql.includes(`CREATE TABLE IF NOT EXISTS ${table} (`),
+      `${table} is queried by /land and must exist`,
+    );
+  }
+  // The column the failing query filtered on, and the one every search uses.
+  assert.match(sql, /ON land_parcels \(status\)/);
+  assert.match(sql, /ON land_parcels \(country, governorate, city\)/);
+});
+
+test("user_oauth_accounts is created by a forward migration, not a hand-run script", async () => {
+  // Signing in with Facebook redirected to /login?error=facebook_failed. The
+  // provider handshake was fine; findOrCreateOAuthUser threw on this table.
+  // Its only creator was scripts/apply-oauth-schema.ts, run by hand.
+  const { sql } = await forwardSql();
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS user_oauth_accounts\b/);
+  assert.match(sql, /ON user_oauth_accounts \(provider, provider_user_id\)/);
+});
+
+test("the identity lineage is excluded by name, not by which file declares a table", async () => {
+  // The exclusion must stay the eleven tables /api/health/ready actually
+  // probes. Widening it to "anything in lib/db/schema.ts" is how
+  // user_oauth_accounts would go missing a second time.
+  const identityOwned = await identityOwnedTables();
+  assert.equal(identityOwned.size, 11);
+  assert.ok(identityOwned.has("users"));
+  assert.ok(!identityOwned.has("user_oauth_accounts"));
 });
