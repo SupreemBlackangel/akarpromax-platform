@@ -337,11 +337,14 @@ describe("Land Quote Request", () => {
     assert.equal(result.error, "INVALID_QUOTE_SERVICE");
   });
 
-  it("Find My Land posts a valid quote service understood by the API", async () => {
-    const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
-    assert.match(source, /service:\s*"boundary_survey"/);
-    assert.doesNotMatch(source, /service:\s*"land-survey"/);
-  });
+  // There was a test here requiring the Find My Land screen to post a quote
+  // request with service "boundary_survey". The owner decided on 2026-09-06
+  // that the tool is not to ask for a surveyor's quote at all — it reads a deed
+  // and shows what it read, and that is the whole of it. The quote engine below
+  // (createQuoteRequest, isValidQuoteService, the /api/land/[id]/surveyors/quote
+  // route) is still tested and still correct; nothing in the tool calls it.
+  // A test demanding a screen nobody wants is a permanent red light that
+  // teaches everyone to ignore red, so it is gone rather than skipped.
 
   it("Find My Land launch UI keeps upload, timeout, CRS choice, RTL, and explicit verdict safeguards", async () => {
     const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
