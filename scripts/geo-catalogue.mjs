@@ -708,11 +708,18 @@ export const CATALOGUE = {
 /**
  * Countries the seeder must not touch.
  *
- * Empty. Saudi Arabia was excluded on the first pass out of caution, and that
- * caution turned out to be misplaced in one direction and costly in the other:
- * the seeder only ever INSERTS what is missing, so its existing thirteen
- * governorates and eleven cities are found by code and left alone -- while
- * eight of its governorates sat with no cities at all, in the one country the
- * platform actually serves.
+ * Oman, and only Oman. Its eleven governorates were seeded by
+ * seed-oman-launch-data.mjs under a different code scheme (MCT, DHO, BAN...)
+ * than this catalogue's (OM-MU, OM-ZU, OM-BJ...). The seeder matches an
+ * existing row by (parent, code), so it would not recognise them: it would
+ * insert a SECOND set of eleven governorates and hang 33 cities off those,
+ * while every live listing and office profile still points at the first set.
+ * Oman is already complete (11 governorates, 61 cities, 51 districts) — it
+ * needs nothing from here.
+ *
+ * Saudi Arabia was excluded on the first pass out of caution. That caution was
+ * costly: prod has 23 countries and location rows for Oman alone, so the
+ * country/governorate/city selects on /dashboard/properties/new are empty for
+ * every other country, SA included.
  */
-export const SKIP = new Set([]);
+export const SKIP = new Set(["OM"]);
