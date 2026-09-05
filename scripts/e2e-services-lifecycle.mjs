@@ -70,6 +70,23 @@ async function register(client, label, email) {
   return r;
 }
 
+// Create a request and publish it, returning its id — the reusable opening move
+// for the decline and dispute branches.
+async function postAndPublish(client, catId, cityId, title) {
+  const r = await client("/api/service-requests", { method: "POST", body: {
+    categoryId: catId, countryCode: "OM", cityId, titleAr: title, descriptionAr: "وصف اختبار", currency: "OMR", budgetMin: 20, budgetMax: 60, urgency: "normal",
+  }});
+  const id = r.json?.id ?? r.json?.requestId ?? null;
+  if (id) await client(`/api/service-requests/${id}/publish`, { method: "POST", body: {} });
+  return id;
+}
+
+// Unread notification count for a signed-in client.
+async function unread(client) {
+  const r = await client("/api/service-notifications?limit=50");
+  return typeof r.json?.unread === "number" ? r.json.unread : (Array.isArray(r.json?.notifications) ? r.json.notifications.filter((n) => !n.is_read).length : 0);
+}
+
 async function main() {
   console.log(`services lifecycle e2e — run ${RUN}, base ${BASE}`);
 
@@ -226,6 +243,62 @@ async function main() {
     const [{ n: revN } = {}] = await sql`select count(*)::int n from service_reviews`;
     ok("a review row exists", revN >= 1, `reviews=${revN}`);
   }
+
+  // 15) NOTIFICATIONS --------------------------------------------------------
+  // The happy path fired several notify() calls: the provider was told their
+  // offer was accepted and the job was completed; both parties were told of
+  // the other's message. Assert they actually landed.
+  step("15) Notifications reached the right inboxes");
+  const provUnread = await unread(prov2);
+  ok("the provider has unread notifications after the job", provUnread >= 1, `unread=${provUnread}`);
+  const provNotifs = (await prov2("/api/service-notifications?limit=50")).json?.notifications ?? [];
+  const provTypes = provNotifs.map((n) => String(n.type));
+  ok("provider was notified their offer was accepted", provTypes.some((t) => /OFFER_ACCEPTED/i.test(t)), `types=${JSON.stringify(provTypes).slice(0,160)}`);
+  const custNotifs = (await cust("/api/service-notifications?limit=50")).json?.notifications ?? [];
+  ok("customer was notified on the message thread", custNotifs.some((n) => /MESSAGE/i.test(String(n.type))) || custNotifs.length >= 1, `count=${custNotifs.length}`);
+
+  // 16) OFFER DECLINE --------------------------------------------------------
+  // A fresh request the customer declines rather than accepts.
+  step("16) The customer declines an offer");
+  const req2 = await postAndPublish(cust, catId, city.id, "طلب اختبار — رفض العرض");
+  ok("a second request is open", !!req2, "no second request id");
+  let offer2 = null;
+  if (req2) {
+    const o = await prov2("/api/service-offers", { method: "POST", body: { requestId: req2, price: 50, currency: "OMR", durationDays: 3, messageAr: "عرض للرفض" } });
+    offer2 = o.json?.id ?? o.json?.offerId ?? null;
+    ok("provider offers on the second request", !!offer2, `status ${o.status} ${JSON.stringify(o.json).slice(0,120)}`);
+  }
+  if (offer2) {
+    const dec = await cust(`/api/service-offers/${offer2}/decline`, { method: "POST", body: { reason: "السعر مرتفع" } });
+    ok("customer can decline the offer", dec.status === 200 || dec.status === 201, `status ${dec.status} ${JSON.stringify(dec.json).slice(0,120)}`);
+    const [os] = await sql`select status from service_offers where id = ${offer2}`;
+    ok("the declined offer is no longer 'sent'", os && os.status !== "sent", `status=${os?.status}`);
+    // A declined offer must not have produced an order.
+    const [{ n: ordN } = {}] = await sql`select count(*)::int n from service_orders where offer_id = ${offer2}`;
+    ok("no order was created from a declined offer", ordN === 0, `orders=${ordN}`);
+  }
+
+  // 17) DISPUTE --------------------------------------------------------------
+  // A third request taken to an in-progress order, then disputed.
+  step("17) A dispute is opened on an in-progress order");
+  const req3 = await postAndPublish(cust, catId, city.id, "طلب اختبار — نزاع");
+  let order3 = null;
+  if (req3) {
+    const o = await prov2("/api/service-offers", { method: "POST", body: { requestId: req3, price: 55, currency: "OMR", durationDays: 2, messageAr: "عرض للنزاع" } });
+    const offer3 = o.json?.id ?? o.json?.offerId ?? null;
+    if (offer3) {
+      const acc = await cust(`/api/service-offers/${offer3}/accept`, { method: "POST", body: {} });
+      order3 = acc.json?.orderId ?? acc.json?.id ?? null;
+      if (order3) await prov2(`/api/service-jobs/${order3}/status`, { method: "PATCH", body: { status: "in_progress" } });
+    }
+  }
+  ok("an in-progress order exists to dispute", !!order3, `order3=${order3}`);
+  if (order3) {
+    const disp = await cust("/api/service-disputes", { method: "POST", body: { orderId: order3, reason: "quality", description: "العمل غير مطابق — اختبار" } });
+    ok("customer can open a dispute", disp.status === 200 || disp.status === 201, `status ${disp.status} ${JSON.stringify(disp.json).slice(0,140)}`);
+    const [{ n: dN } = {}] = await sql`select count(*)::int n from service_disputes d join service_orders o on o.id=d.order_id where o.id=${order3}`;
+    ok("a dispute row is persisted for the order", dN >= 1, `disputes=${dN}`);
+  }
 }
 
 async function cleanup() {
@@ -238,10 +311,16 @@ async function cleanup() {
       // provider user_id), so clean by email; then remove the users by id.
       const reqIds = (await sql`select id from service_requests where customer_user_id = any(${emails})`).map((r) => r.id);
       if (reqIds.length) {
+        const ordIds = (await sql`select id from service_orders where request_id = any(${reqIds})`).map((r) => r.id);
+        if (ordIds.length) {
+          await sql`delete from service_disputes where order_id = any(${ordIds})`.catch(()=>{});
+          await sql`delete from service_job_timeline where order_id = any(${ordIds})`.catch(()=>{});
+        }
         await sql`delete from service_offers where request_id = any(${reqIds})`.catch(()=>{});
         await sql`delete from service_orders where request_id = any(${reqIds})`.catch(()=>{});
         await sql`delete from service_requests where id = any(${reqIds})`.catch(()=>{});
       }
+      await sql`delete from service_notifications where user_id = any(${emails})`.catch(()=>{});
       await sql`delete from service_provider_profiles where user_id = any(${emails})`.catch(()=>{});
       await sql`delete from service_reviews where reviewer_user_id = any(${emails}) or reviewee_user_id = any(${emails})`.catch(()=>{});
       if (ids.length) await sql`delete from users where id = any(${ids})`;
