@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateDesktop, publishDesktopProperty, listDesktopProperties, CORS_HEADERS, type DesktopPropertyBody } from "@/lib/integration/desktop-property-publish";
+import { ensureOfficeOrganizationForUser } from "@/lib/integration/office-organization";
 
 export const dynamic = "force-dynamic";
 
@@ -43,5 +44,17 @@ export async function POST(request: Request) {
   }
 
   const result = await publishDesktopProperty(identity.userId, body, null);
+
+  // A newly published listing belongs to this office; make sure the office
+  // exists as an organization and that the listing points at it. Best-effort:
+  // the publish already succeeded and must not be undone by a linking hiccup.
+  if (result.status >= 200 && result.status < 300) {
+    try {
+      await ensureOfficeOrganizationForUser(identity.userId);
+    } catch (error) {
+      console.error("[program/properties] office linking failed:", error);
+    }
+  }
+
   return json(result.body, result.status);
 }

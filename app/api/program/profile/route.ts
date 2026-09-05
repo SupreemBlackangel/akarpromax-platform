@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
+import { ensureOfficeOrganizationForUser } from "@/lib/integration/office-organization";
 
 export const dynamic = "force-dynamic";
 
@@ -138,8 +139,28 @@ export async function POST(request: Request) {
         country = EXCLUDED.country, governorate = EXCLUDED.governorate, city = EXCLUDED.city,
         address = EXCLUDED.address, updated_at = now()
     `);
-    return json({ success: true }, 200);
   } finally {
     await end();
   }
+
+  // Uploading office details is the moment the office becomes a real platform
+  // entity: ensure it has an organization and that its listings point at it.
+  // Best-effort — a hiccup here must not fail the profile save the desktop
+  // just made.
+  let office: Awaited<ReturnType<typeof ensureOfficeOrganizationForUser>> = null;
+  try {
+    office = await ensureOfficeOrganizationForUser(identity.userId);
+  } catch (error) {
+    console.error("[program/profile] office auto-registration failed:", error);
+  }
+
+  return json(
+    {
+      success: true,
+      organizationId: office?.organizationId ?? null,
+      registered: office?.created ?? false,
+      linkedProperties: office?.linkedProperties ?? 0,
+    },
+    200,
+  );
 }
