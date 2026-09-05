@@ -1,38 +1,38 @@
 'use client';
 
-import { useEffect } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import dynamic from 'next/dynamic';
+import GoogleLocationMap from '@/src/components/maps/GoogleLocationMap';
+import { useGoogleMaps } from '@/src/components/maps/useGoogleMaps';
 
-const markerIcon = L.divIcon({
-  className: 'custom-div-icon',
-  html: `<div style="background-color:#2563eb;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.45);"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-});
+const PropertyDetailMapLeaflet = dynamic(() => import('./PropertyDetailMapLeaflet'), { ssr: false });
+
+const FRAME = 'w-full overflow-hidden rounded-2xl border border-[color:var(--color-border)]';
 
 /**
- * Read-only property location map for the public detail page.
+ * The property's location on the public detail page — read-only: no click to
+ * pick, no draggable pin. Google Maps where a key is configured, OpenStreetMap
+ * otherwise (see PropertyLocationMap for why the fallback exists).
+ *
  * Must be loaded with next/dynamic({ ssr: false }).
  */
 export default function PropertyDetailMap({ latitude, longitude }: { latitude: number; longitude: number }) {
-  useEffect(() => {
-    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
-  }, []);
+  const maps = useGoogleMaps();
 
-  return (
-    <MapContainer
-      center={[latitude, longitude]}
-      zoom={14}
-      style={{ height: 300, width: '100%', borderRadius: 16, zIndex: 0 }}
-      scrollWheelZoom={false}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  if (maps.status === 'loading') {
+    return <div className={`${FRAME} h-[300px] animate-pulse bg-[color:var(--color-surface-muted)]`} aria-busy="true" aria-label="جارٍ تحميل الخريطة" />;
+  }
+
+  if (maps.status === 'ready') {
+    return (
+      <GoogleLocationMap
+        latitude={latitude}
+        longitude={longitude}
+        center={{ lat: latitude, lng: longitude, zoom: 15 }}
+        className={FRAME}
+        style={{ height: 300 }}
       />
-      <Marker position={[latitude, longitude]} icon={markerIcon} />
-    </MapContainer>
-  );
+    );
+  }
+
+  return <PropertyDetailMapLeaflet latitude={latitude} longitude={longitude} />;
 }
