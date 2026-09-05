@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { properties, propertyMedia, propertyFavorites, propertyViews } from '@/lib/db/schemas/properties-schema';
+import { formatZodError, isZodError, validationErrorBody, VALIDATION_ERROR_STATUS } from '@/lib/validation/formatZodError';
+import { normalizePropertyMedia } from '@/lib/media/property-media';
 import { propertyOffers } from '@/lib/db/schemas/offer-types-schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
@@ -211,16 +213,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (validated.media !== undefined) {
         await tx.delete(propertyMedia).where(eq(propertyMedia.propertyId, id));
-        if (validated.media.length > 0) {
+        // Same normaliser as the create route and the office bridge.
+        const media = normalizePropertyMedia(validated.media);
+        if (media.length > 0) {
           await tx.insert(propertyMedia).values(
-            validated.media.map((media, index) => ({
-              propertyId: id,
-              url: media.url,
-              type: media.type,
-              order: index,
-              isFeatured: index === 0,
-              altText: media.altText || '',
-            }))
+            media.map((item) => ({ propertyId: id, ...item }))
           );
         }
       }
@@ -235,6 +232,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
   } catch (error) {
     console.error('[Property PATCH] Error:', error);
+    if (isZodError(error)) {
+      return NextResponse.json(validationErrorBody(formatZodError(error)), { status: VALIDATION_ERROR_STATUS });
+    }
     if (error instanceof Error) {
       return NextResponse.json(
         { success: false, error: error.message },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticateDesktop, publishDesktopProperty, deleteDesktopProperty, CORS_HEADERS, type DesktopPropertyBody } from "@/lib/integration/desktop-property-publish";
+import { formatZodError, isZodError, validationErrorBody, VALIDATION_ERROR_STATUS } from "@/lib/validation/formatZodError";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +26,13 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return json({ ok: false, message: "بيانات غير صالحة" }, 400);
   }
 
-  const result = await publishDesktopProperty(identity.userId, body, id);
-  return json(result.body, result.status);
+  try {
+    const result = await publishDesktopProperty(identity.userId, body, id);
+    return json(result.body, result.status);
+  } catch (error) {
+    if (isZodError(error)) return json(validationErrorBody(formatZodError(error)), VALIDATION_ERROR_STATUS);
+    throw error;
+  }
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {

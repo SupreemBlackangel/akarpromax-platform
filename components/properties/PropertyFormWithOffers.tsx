@@ -7,6 +7,9 @@ import Card from '@/src/components/ui/Card';
 import { CardContent, CardHeader, CardTitle } from '@/src/components/ui/Card';
 import GeoAddressPicker from '@/components/properties/GeoAddressPicker';
 import { CURRENCY_REGISTRY } from '@/lib/market/currency-registry';
+import { createPropertySchema } from '@/lib/validators/property-validators';
+import { formatZodError, type ValidationError } from '@/lib/validation/formatZodError';
+import { MAX_PROPERTY_IMAGES } from '@/lib/media/limits';
 
 interface OfferType {
   id: string;
@@ -70,7 +73,9 @@ interface PropertyFormWithOffersProps {
   initialData?: PropertyFormData;
   propertyId?: string;
   onSuccess?: () => void;
-  onValidationError?: (errors: Record<string, string>) => void;
+  onValidationError?: (errors: ValidationError[]) => void;
+  /** The page's "next" button validates the step it is leaving through this. */
+  stepValidatorRef?: React.MutableRefObject<((step: number) => ValidationError[]) | null>;
 }
 
 const defaultOffer: Offer = {
@@ -202,7 +207,40 @@ function mapInitialData(initialData?: PropertyFormData): PropertyFormData {
   };
 }
 
-export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onValidationError }: PropertyFormWithOffersProps) {
+
+/**
+ * The wizard's error keys.
+ *
+ * The JSX reads `errors.titleAr` and `errors.offer_0_price`; the schema
+ * reports `titleAr` and `offers.0.price`. This is the one place the two
+ * spellings meet, so the field markup did not have to be rewritten.
+ */
+const OFFER_FIELD_KEY: Record<string, string> = {
+  offerTypeId: 'type', price: 'price', currency: 'currency', auctionType: 'auction',
+};
+
+function errorKey(error: ValidationError): string {
+  const parts = error.path.split('.');
+  if (parts[0] === 'offers' && parts.length === 3) {
+    const suffix = OFFER_FIELD_KEY[parts[2]] ?? parts[2];
+    return `offer_${parts[1]}_${suffix}`;
+  }
+  return error.path;
+}
+
+/** Field key -> Arabic message, for the inputs; the list itself drives the summary. */
+function toErrorMap(list: ValidationError[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const error of list) {
+    const key = errorKey(error);
+    if (!map[key]) map[key] = error.message;
+    // `media.0.url` also marks the media section as a whole.
+    if (error.path.startsWith('media')) map.media ??= error.message;
+  }
+  return map;
+}
+
+export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onValidationError, stepValidatorRef }: PropertyFormWithOffersProps) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
@@ -258,7 +296,11 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
     setUploadingImage(true);
     try {
       const uploaded: Array<{ url: string; type: 'image' }> = [];
-      for (const file of Array.from(files).slice(0, 10)) {
+      // The shared cap, not an arbitrary ten: the office application enforces
+      // the same number, so a listing cannot carry images on one side that the
+      // other would refuse.
+      const room = Math.max(0, MAX_PROPERTY_IMAGES - formData.media.filter((m) => m.url && m.type === 'image').length);
+      for (const file of Array.from(files).slice(0, room)) {
         const body = new FormData();
         body.append('file', file);
         const response = await fetch('/api/properties/upload-image', { method: 'POST', body });
@@ -274,85 +316,106 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
   };
 
 
+  /**
+   * The request body, built the same way for a real submit and for the
+   * per-step check — the same object the server validates, so a step can be
+   * checked against the very rules that will judge it later.
+   */
+  const buildPayload = useCallback(() => {
+    const primaryOffer = formData.offers.find(o => o.offerTypeId) || formData.offers[0];
+    const primaryType = offerTypes.find(t => t.id === primaryOffer?.offerTypeId);
+    const rentFamily = new Set(['RENT', 'TAQBEEL', 'USUFRUCT', 'LEASE_TO_OWN']);
+    const dealType = primaryType && rentFamily.has(primaryType.code) ? 'rent' : 'sale';
+    return {
+      titleAr: formData.titleAr,
+      titleEn: formData.titleEn,
+      descriptionAr: formData.descriptionAr,
+      descriptionEn: formData.descriptionEn,
+      dealType,
+      category: formData.category,
+      propertyType: formData.propertyType,
+      country: formData.country,
+      governorate: formData.governorate,
+      city: formData.city,
+      district: formData.district,
+      address: formData.address,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      price: primaryOffer?.price || 0,
+      currency: primaryOffer?.currency || '',
+      area: Number(formData.area),
+      bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
+      bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
+      floor: formData.floor ? Number(formData.floor) : undefined,
+      totalFloors: formData.totalFloors ? Number(formData.totalFloors) : undefined,
+      yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
+      facade: formData.facade,
+      direction: formData.direction,
+      referenceNumber: formData.referenceNumber,
+      advertisingLicense: formData.advertisingLicense,
+      // A row the user added and never filled is not an error — the server's
+      // normaliser drops it too, so the two agree on what the listing holds.
+      media: formData.media
+        .filter((m) => m.url.trim())
+        .map((m) => ({ url: m.url.trim(), type: m.type, isFeatured: m.isFeatured })),
+      offers: formData.offers.map((offer) => ({
+        id: offer.id,
+        offerTypeId: offer.offerTypeId || undefined,
+        marketingMethod: offer.marketingMethod,
+        auctionType: offer.marketingMethod === 'auction' ? offer.auctionType : undefined,
+        price: Number(offer.price),
+        currency: offer.currency,
+        negotiable: offer.negotiable,
+        isActive: offer.isActive,
+        details: offer.details,
+      })),
+    };
+  }, [formData, offerTypes]);
+
+  /**
+   * The errors that belong to one step, judged by the shared schema.
+   *
+   * The whole payload is parsed and the issues are filtered by step, because a
+   * step cannot be checked in isolation: `superRefine` on an offer compares two
+   * of its fields, and `schema.pick` would drop that. Issues from steps the
+   * user has not reached yet are simply not this step's business.
+   */
+  const validateStep = useCallback((step: number): ValidationError[] => {
+    const result = createPropertySchema.safeParse(buildPayload());
+    if (result.success) return [];
+    return formatZodError(result.error).filter((issue) => issue.step === step);
+  }, [buildPayload]);
+
+  useEffect(() => {
+    if (!stepValidatorRef) return;
+    stepValidatorRef.current = validateStep;
+    return () => { stepValidatorRef.current = null; };
+  }, [stepValidatorRef, validateStep]);
+
+  /** Show a list of errors and hand it to the wizard, which opens the right step. */
+  const reportErrors = useCallback((list: ValidationError[]) => {
+    setErrors(toErrorMap(list));
+    onValidationError?.(list);
+  }, [onValidationError]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
 
     try {
-      const newErrors: Record<string, string> = {};
-      if (!formData.titleAr.trim()) newErrors.titleAr = 'العنوان مطلوب';
-      if (!formData.descriptionAr.trim()) newErrors.descriptionAr = 'الوصف مطلوب';
-      if (!formData.category) newErrors.category = 'الفئة مطلوبة';
-      if (!formData.propertyType) newErrors.propertyType = 'نوع العقار مطلوب';
-      if (!formData.country) newErrors.country = 'الدولة مطلوبة';
-      if (!formData.governorate) newErrors.governorate = 'المنطقة مطلوبة';
-      if (!formData.city) newErrors.city = 'المدينة مطلوبة';
-      if (!formData.area || formData.area <= 0) newErrors.area = 'المساحة مطلوبة';
+      const payload = buildPayload();
 
-      const validOffers = formData.offers.filter(o => o.offerTypeId);
-      for (let i = 0; i < formData.offers.length; i++) {
-        const offer = formData.offers[i];
-        if (!offer.offerTypeId) newErrors[`offer_${i}_type`] = 'نوع العرض مطلوب';
-        if (!offer.price || offer.price <= 0) newErrors[`offer_${i}_price`] = 'السعر مطلوب';
-        if (!offer.currency) newErrors[`offer_${i}_currency`] = 'العملة مطلوبة';
-      }
-
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        setLoading(false);
-        onValidationError?.(newErrors);
+      // The same schema the server runs, so the common case never needs a
+      // round trip to be told the title is too short.
+      const parsed = createPropertySchema.safeParse(payload);
+      if (!parsed.success) {
+        reportErrors(formatZodError(parsed.error));
         return;
       }
 
       const url = propertyId ? `/api/properties/${propertyId}` : '/api/properties';
       const method = propertyId ? 'PATCH' : 'POST';
-
-      const primaryOffer = formData.offers.find(o => o.offerTypeId) || formData.offers[0];
-      const primaryType = offerTypes.find(t => t.id === primaryOffer?.offerTypeId);
-      const rentFamily = new Set(['RENT', 'TAQBEEL', 'USUFRUCT', 'LEASE_TO_OWN']);
-      const dealType = primaryType && rentFamily.has(primaryType.code) ? 'rent' : 'sale';
-
-      const payload = {
-        titleAr: formData.titleAr,
-        titleEn: formData.titleEn,
-        descriptionAr: formData.descriptionAr,
-        descriptionEn: formData.descriptionEn,
-        dealType,
-        category: formData.category,
-        propertyType: formData.propertyType,
-        country: formData.country,
-        governorate: formData.governorate,
-        city: formData.city,
-        district: formData.district,
-        address: formData.address,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        price: primaryOffer?.price || 0,
-        currency: primaryOffer?.currency || '',
-        area: Number(formData.area),
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
-        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
-        floor: formData.floor ? Number(formData.floor) : undefined,
-        totalFloors: formData.totalFloors ? Number(formData.totalFloors) : undefined,
-        yearBuilt: formData.yearBuilt ? Number(formData.yearBuilt) : undefined,
-        facade: formData.facade,
-        direction: formData.direction,
-        referenceNumber: formData.referenceNumber,
-        advertisingLicense: formData.advertisingLicense,
-        media: formData.media.map((m) => ({ url: m.url, type: m.type })),
-        offers: formData.offers.map((offer) => ({
-          id: offer.id,
-          offerTypeId: offer.offerTypeId || undefined,
-          marketingMethod: offer.marketingMethod,
-          auctionType: offer.marketingMethod === 'auction' ? offer.auctionType : undefined,
-          price: Number(offer.price),
-          currency: offer.currency,
-          negotiable: offer.negotiable,
-          isActive: offer.isActive,
-          details: offer.details,
-        })),
-      };
 
       const res = await fetch(url, {
         method,
@@ -360,9 +423,14 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setErrors({ general: data.error || 'حدث خطأ' });
+        // A validation failure arrives per field, in Arabic, with its step.
+        if (Array.isArray(data?.errors) && data.errors.length > 0) {
+          reportErrors(data.errors as ValidationError[]);
+        } else {
+          setErrors({ general: data?.error || 'حدث خطأ' });
+        }
         return;
       }
 
@@ -376,7 +444,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
     } finally {
       setLoading(false);
     }
-  }, [formData, propertyId, offerTypes, router, onSuccess]);
+  }, [buildPayload, propertyId, router, onSuccess, reportErrors]);
 
   const selectedType = (id: string) => offerTypes.find(t => t.id === id);
 

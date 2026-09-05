@@ -181,7 +181,14 @@ test("the catalogue covers every country the platform lists", async () => {
                   "EG", "LY", "TN", "DZ", "MA", "MR", "SD", "SO", "DJ", "KM", "TR"];
   const missing = listed.filter((code) => !(code in CATALOGUE));
   assert.deepEqual(missing, [], `selectable but with no catalogue: ${missing.join(", ")}`);
-  assert.equal(SKIP.size, 0, "nothing is excluded; the seeder only inserts what is missing");
+
+  // Oman, and only Oman, is skipped. Its eleven governorates were seeded by
+  // seed-oman-launch-data.mjs under a different code scheme (MCT, DHO, BAN...)
+  // than this catalogue's (OM-MU, OM-ZU...). The seeder matches an existing row
+  // by (parent, code), so it would not recognise them: it would insert a SECOND
+  // set of eleven and hang cities off those, while every live listing and office
+  // profile still points at the first set. Oman is already complete.
+  assert.deepEqual([...SKIP], ["OM"], "only Oman is excluded, and only because its live codes differ");
 });
 
 test("Saudi Arabia keeps its bare codes, because live campaigns target them", async () => {

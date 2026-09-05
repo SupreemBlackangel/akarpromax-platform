@@ -65,16 +65,16 @@ const ALLOWED = new Map([
     "Map overlay colours passed to the drawing layer, which takes strings.",
   ],
   [
-    "components/properties/PropertyDetailMap.tsx",
+    "components/properties/PropertyDetailMapLeaflet.tsx",
     "Marker and polygon colours handed to the map layer, which takes a colour " +
       "string and cannot resolve a CSS variable.",
   ],
   [
-    "components/properties/PropertyLocationMap.tsx",
+    "components/properties/PropertyLocationMapLeaflet.tsx",
     "Marker colours handed to the map layer, which takes a colour string.",
   ],
   [
-    "src/components/services/ServiceLocationPicker.tsx",
+    "src/components/services/ServiceLocationPickerLeaflet.tsx",
     "Marker colours handed to the map layer, which takes a colour string.",
   ],
   [

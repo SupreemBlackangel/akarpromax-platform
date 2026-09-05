@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileText, MapPin, Ruler, Tag, Image as ImageIcon, CheckCircle2,
-  ArrowLeft, Sparkles, ShieldCheck, Info, ChevronLeft, ChevronRight,
+  ArrowLeft, Sparkles, ShieldCheck, Info, ChevronLeft, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 
 import { PropertyFormWithOffers } from '@/components/properties/PropertyFormWithOffers';
 import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
+import type { ValidationError } from '@/lib/validation/formatZodError';
 
 type StepDef = {
   id: string;
@@ -80,6 +81,8 @@ const stepTips: Record<number, string[]> = {
 
 export default function NewPropertyPage() {
   const [wizardStep, setWizardStep] = useState(1);
+  const [issues, setIssues] = useState<ValidationError[]>([]);
+  const stepValidatorRef = useRef<((step: number) => ValidationError[]) | null>(null);
   const [progress, setProgress] = useState(0);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -103,22 +106,27 @@ export default function NewPropertyPage() {
     }
   };
 
-  const handleValidationError = (errors: Record<string, string>) => {
-    const errorFields = Object.keys(errors);
-    if (errorFields.length === 0) return;
-    const field = errorFields[0];
-    const stepMap: Record<string, number> = {
-      titleAr: 1, titleEn: 1, descriptionAr: 1, descriptionEn: 1, category: 1, propertyType: 1, referenceNumber: 1,
-      country: 2, governorate: 2, city: 2, district: 2, address: 2, latitude: 2, longitude: 2,
-      area: 3, yearBuilt: 3, facade: 3, bedrooms: 3, bathrooms: 3, floor: 3, totalFloors: 3, direction: 3, advertisingLicense: 3,
-    };
-    let targetStep = 1;
-    if (field.startsWith('offer_')) {
-      targetStep = 4;
-    } else if (stepMap[field]) {
-      targetStep = stepMap[field];
-    }
-    goToStep(targetStep);
+  /**
+   * Every error carries the step it belongs to (the server works it out from
+   * the shared field map), so the wizard opens the first step that needs work
+   * and marks the others. Before this it guessed from a 22-field lookup that
+   * had no entry for media, price or currency — all of which fell back to
+   * step 1 — and it only ever looked at the first error.
+   */
+  const handleValidationError = (errors: ValidationError[]) => {
+    setIssues(errors);
+    if (errors.length === 0) return;
+    goToStep(Math.min(...errors.map((issue) => issue.step)));
+  };
+
+  const stepsWithIssues = useMemo(() => new Set<number>(issues.map((issue) => issue.step)), [issues]);
+
+  /** Refuse "next" while the step being left has an error the server would reject. */
+  const handleNext = () => {
+    const failing = stepValidatorRef.current?.(wizardStep) ?? [];
+    setIssues((previous) => [...previous.filter((issue) => issue.step !== wizardStep), ...failing]);
+    if (failing.length > 0) return;
+    goToStep(wizardStep + 1);
   };
 
   return (
@@ -177,6 +185,7 @@ export default function NewPropertyPage() {
               const Icon = step.icon;
               const isActive = wizardStep === stepNum;
               const isCompleted = completedSteps.has(stepNum);
+              const hasIssue = stepsWithIssues.has(stepNum);
               const isLast = index === steps.length - 1;
 
               return (
@@ -204,6 +213,15 @@ export default function NewPropertyPage() {
                         <CheckCircle2 className="w-5 h-5" />
                       ) : (
                         <Icon className="w-4 h-4" />
+                      )}
+                      {hasIssue && (
+                        <span
+                          className="absolute -top-1 -end-1 grid h-4 w-4 place-items-center rounded-full bg-[var(--color-danger)] text-white"
+                          title="هذه الخطوة تحتوي حقولاً غير مكتملة"
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                          <span className="sr-only">حقول غير مكتملة</span>
+                        </span>
                       )}
                     </div>
                     <div className="hidden sm:block text-right">
@@ -243,7 +261,7 @@ export default function NewPropertyPage() {
               className={`wizard-container wizard-step-${wizardStep}`}
               data-step={wizardStep}
             >
-              <PropertyFormWithOffers onValidationError={handleValidationError} />
+              <PropertyFormWithOffers onValidationError={handleValidationError} stepValidatorRef={stepValidatorRef} />
             </div>
 
             {/* Wizard Navigation */}
@@ -264,7 +282,7 @@ export default function NewPropertyPage() {
               {wizardStep < steps.length ? (
                 <button
                   type="button"
-                  onClick={() => goToStep(wizardStep + 1)}
+                  onClick={handleNext}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white shadow-md hover:shadow-lg transition"
                   style={{ background: 'var(--brand-gradient)' }}
                 >

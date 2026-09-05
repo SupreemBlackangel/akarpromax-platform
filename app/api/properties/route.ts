@@ -8,6 +8,8 @@ import { createPropertySchema, propertySearchSchema } from '@/lib/validators/pro
 import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
 import { GeoService } from '@/lib/services/geo/geo.service';
 import { resolveGeoSelection } from '@/lib/services/geo/selection';
+import { formatZodError, isZodError, validationErrorBody, VALIDATION_ERROR_STATUS } from '@/lib/validation/formatZodError';
+import { normalizePropertyMedia } from '@/lib/media/property-media';
 
 // Fields safe to expose on the PUBLIC feed. Everything else (owner/admin user
 // ids, moderation fields, internal auction bid mechanics, winner/organizer ids,
@@ -298,16 +300,12 @@ export async function POST(request: NextRequest) {
 
       if (!created) throw new Error('فشل في إنشاء العقار');
 
-      if (validated.media && validated.media.length > 0) {
+      // The same normaliser the office bridge uses, so a listing added here and
+      // one published from the desktop produce identical property_media rows.
+      const media = normalizePropertyMedia(validated.media);
+      if (media.length > 0) {
         await tx.insert(propertyMedia).values(
-          validated.media.map((media, index) => ({
-            propertyId: created.id,
-            url: media.url,
-            type: media.type,
-            order: index,
-            isFeatured: index === 0,
-            altText: media.altText || '',
-          }))
+          media.map((item) => ({ propertyId: created.id, ...item }))
         );
       }
 
@@ -337,6 +335,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[Properties POST] Error:', error);
+    // A ZodError IS an Error, and its `.message` is the JSON dump of `.issues`
+    // — answering with it printed that JSON into the user's red alert. Zod
+    // failures are answered in Arabic, per field, with the step to fix them on.
+    if (isZodError(error)) {
+      return NextResponse.json(validationErrorBody(formatZodError(error)), { status: VALIDATION_ERROR_STATUS });
+    }
     if (error instanceof Error) {
       return NextResponse.json(
         { success: false, error: error.message },

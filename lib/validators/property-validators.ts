@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ACCEPTED_PROPERTY_CATEGORIES, isAcceptedPropertyType } from '@/lib/taxonomy/property-taxonomy';
+import { MAX_PROPERTY_MEDIA, isAcceptedMediaUrl } from '@/lib/media/limits';
 
 export const propertyDealTypeSchema = z.enum(['sale', 'rent']);
 
@@ -78,11 +79,18 @@ export const createPropertySchema = z.object({
   referenceNumber: z.string().max(50).optional(),
   advertisingLicense: z.string().max(50).optional(),
   officeId: z.string().uuid().optional(),
+  // A media URL is what property_media actually stores: a site-relative
+  // /uploads/properties/... path for a file this platform holds, or an
+  // absolute http(s) URL for media hosted elsewhere. `z.string().url()`
+  // rejected the first form — which is what /api/properties/upload-image
+  // returns — so every image uploaded through the web form failed validation
+  // on submit. See docs/contracts/PROPERTY_MEDIA_CONTRACT.md.
   media: z.array(z.object({
-    url: z.string().url(),
+    url: z.string().refine(isAcceptedMediaUrl, { message: 'رابط الوسيط غير صالح' }),
     type: z.enum(['image', 'video']),
     altText: z.string().max(200).optional(),
-  })).max(20).optional(),
+    isFeatured: z.boolean().optional(),
+  })).max(MAX_PROPERTY_MEDIA).optional(),
   offers: z.array(propertyOfferInputSchema).max(11).optional(),
 });
 

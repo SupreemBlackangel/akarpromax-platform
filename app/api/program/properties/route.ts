@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateDesktop, publishDesktopProperty, listDesktopProperties, CORS_HEADERS, type DesktopPropertyBody } from "@/lib/integration/desktop-property-publish";
 import { ensureOfficeOrganizationForUser } from "@/lib/integration/office-organization";
+import { formatZodError, isZodError, validationErrorBody, VALIDATION_ERROR_STATUS } from "@/lib/validation/formatZodError";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,15 @@ export async function POST(request: Request) {
     return json({ ok: false, message: "بيانات غير صالحة" }, 400);
   }
 
-  const result = await publishDesktopProperty(identity.userId, body, null);
+  let result;
+  try {
+    result = await publishDesktopProperty(identity.userId, body, null);
+  } catch (error) {
+    // The office application reads the same {code, errors[]} shape the web form
+    // does, so a rejected publish names the field and its step there too.
+    if (isZodError(error)) return json(validationErrorBody(formatZodError(error)), VALIDATION_ERROR_STATUS);
+    throw error;
+  }
 
   // A newly published listing belongs to this office; make sure the office
   // exists as an organization and that the listing points at it. Best-effort:

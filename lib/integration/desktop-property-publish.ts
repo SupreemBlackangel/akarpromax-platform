@@ -1,6 +1,4 @@
-import { and, eq, ne, sql, desc } from "drizzle-orm";
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { and, asc, eq, inArray, ne, sql, desc } from "drizzle-orm";
 import { properties, propertyMedia } from "@/lib/db/schemas/properties-schema";
 import { propertyOffers, propertyOfferTypes } from "@/lib/db/schemas/offer-types-schema";
 import { getDb } from "@/lib/db";
@@ -9,6 +7,8 @@ import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { storePropertyImage } from "@/lib/properties/image-processing";
 import { matchesFileSignature } from "@/lib/security/file-signatures";
 import { canonicalPropertyType, categoryForPropertyType } from "@/lib/taxonomy/property-taxonomy";
+import { MAX_PROPERTY_IMAGE_BYTES, MAX_PROPERTY_IMAGES } from "@/lib/media/limits";
+import { mediaFromDesktopPayload, normalizePropertyMedia, type NormalizedMedia } from "@/lib/media/property-media";
 
 /**
  * Shared logic for the desktop property-publish bridge
@@ -99,11 +99,11 @@ function num(value: unknown, fallback = 0): number {
 // The desktop app sends images picked via FileReader.readAsDataURL(), i.e.
 // base64 data URLs, not remote URLs — decode and store them locally, served
 // by nginx from PROPERTY_UPLOAD_DIR under /uploads/properties/.
-const UPLOAD_DIR = process.env.PROPERTY_UPLOAD_DIR || "/var/www/uploads/properties";
-const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
-const MAX_IMAGES = 20;
+// The size and count caps come from lib/media/limits.ts, shared with the web
+// form and its upload route — they used to be 6 MB here and 8 MB there, so a
+// 7 MB photo the web accepted was silently dropped when the same listing was
+// published from the office application.
 const DATA_URL_RE = /^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/i;
-const EXT_BY_MIME: Record<string, string> = { png: "png", jpeg: "jpg", jpg: "jpg", webp: "webp" };
 
 /**
  * Whether the bytes match the declared mime.
@@ -122,7 +122,7 @@ async function saveDataUrlImage(dataUrl: string): Promise<string | null> {
   if (!match) return null;
   const mime = match[1].toLowerCase();
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) return null;
+  if (buffer.byteLength === 0 || buffer.byteLength > MAX_PROPERTY_IMAGE_BYTES) return null;
   if (!signatureMatches(buffer, mime)) return null;
   // Unified pipeline: WebP-optimized, resized, stored under PROPERTY_UPLOAD_DIR.
   return storePropertyImage(buffer, mime);
@@ -131,7 +131,7 @@ async function saveDataUrlImage(dataUrl: string): Promise<string | null> {
 async function resolveImages(rawImages: unknown): Promise<string[]> {
   if (!Array.isArray(rawImages)) return [];
   const urls: string[] = [];
-  for (const v of rawImages.slice(0, MAX_IMAGES)) {
+  for (const v of rawImages.slice(0, MAX_PROPERTY_IMAGES)) {
     if (typeof v !== "string") continue;
     if (/^https?:\/\//i.test(v)) {
       urls.push(v);
@@ -197,7 +197,46 @@ export async function listDesktopProperties(userId: string): Promise<{ total: nu
       .where(eq(properties.userId, userId))
       .orderBy(desc(properties.createdAt))
       .limit(500);
-    return { total: rows.length, properties: rows };
+
+    // Media, attached per listing. The pull used to answer without it, so a
+    // listing added on the website came back to the office application with no
+    // images at all — and re-publishing it from there would have wiped them.
+    // Additive and optional: a client that ignores `media` reads this response
+    // exactly as it did before.
+    const ids = rows.map((row) => row.id);
+    const mediaByProperty = new Map<string, Array<{ url: string; type: string; order: number; isFeatured: boolean }>>();
+    if (ids.length > 0) {
+      const mediaRows = await db
+        .select({
+          propertyId: propertyMedia.propertyId,
+          url: propertyMedia.url,
+          type: propertyMedia.type,
+          order: propertyMedia.order,
+          isFeatured: propertyMedia.isFeatured,
+        })
+        .from(propertyMedia)
+        .where(inArray(propertyMedia.propertyId, ids))
+        .orderBy(asc(propertyMedia.order));
+      for (const row of mediaRows) {
+        if (!row.propertyId) continue;
+        const list = mediaByProperty.get(row.propertyId) ?? [];
+        list.push({ url: row.url, type: row.type, order: row.order ?? list.length, isFeatured: row.isFeatured === true });
+        mediaByProperty.set(row.propertyId, list);
+      }
+    }
+
+    const withMedia = rows.map((row) => {
+      const media = mediaByProperty.get(row.id) ?? [];
+      return {
+        ...row,
+        media,
+        // The office record's own shape, so a pulled listing maps straight onto
+        // it: images[] plus one videoUrl, in the contract's order.
+        images: media.filter((item) => item.type === "image").map((item) => item.url),
+        videoUrl: media.find((item) => item.type === "video")?.url ?? "",
+      };
+    });
+    return { total: withMedia.length, properties: withMedia };
   } finally {
     await end();
   }
@@ -286,6 +325,10 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   const agentName = text(body.agentName, 200) || null;
   const images = await resolveImages(body.images);
   const videoUrl = text(body.videoUrl, 500);
+  // One canonical media list, through the same normaliser the web form uses.
+  // The hand-rolled inserts this replaces left `is_featured` false on every row
+  // of a listing whose only medium was a video, so it had no cover anywhere.
+  const media: NormalizedMedia[] = normalizePropertyMedia(mediaFromDesktopPayload(images, videoUrl));
   // Both proven present and in range above.
   const latitude = String(Number(body.lat));
   const longitude = String(Number(body.lng));
@@ -351,23 +394,9 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
       if (!updated) return { status: 404, body: { ok: false, message: "العقار غير موجود" } };
       await syncPropertyOffer(updated.id);
 
-      if (images.length > 0 || videoUrl) {
+      if (media.length > 0) {
         await db.delete(propertyMedia).where(eq(propertyMedia.propertyId, updated.id));
-        if (images.length > 0) {
-          await db.insert(propertyMedia).values(
-            images.map((url, index) => ({
-              propertyId: updated.id,
-              url,
-              type: "image" as const,
-              order: index,
-              isFeatured: index === 0,
-              altText: "",
-            })),
-          );
-        }
-        if (videoUrl) {
-          await db.insert(propertyMedia).values([{ propertyId: updated.id, url: videoUrl, type: "video" as const, order: images.length, isFeatured: false, altText: "" }]);
-        }
+        await db.insert(propertyMedia).values(media.map((item) => ({ propertyId: updated.id, ...item })));
       }
       return { status: 200, body: { ok: true, id: updated.id, message: "تم التحديث بنجاح" } };
     }
@@ -389,20 +418,8 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
     if (!created) return { status: 500, body: { ok: false, message: "تعذّر إنشاء العقار" } };
     await syncPropertyOffer(created.id);
 
-    if (images.length > 0) {
-      await db.insert(propertyMedia).values(
-        images.map((url, index) => ({
-          propertyId: created.id,
-          url,
-          type: "image" as const,
-          order: index,
-          isFeatured: index === 0,
-          altText: "",
-        })),
-      );
-    }
-    if (videoUrl) {
-      await db.insert(propertyMedia).values([{ propertyId: created.id, url: videoUrl, type: "video" as const, order: images.length, isFeatured: false, altText: "" }]);
+    if (media.length > 0) {
+      await db.insert(propertyMedia).values(media.map((item) => ({ propertyId: created.id, ...item })));
     }
 
     return { status: 200, body: { ok: true, id: created.id, message: "تم النشر بنجاح" } };
