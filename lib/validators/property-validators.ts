@@ -1,12 +1,18 @@
 import { z } from 'zod';
+import { ACCEPTED_PROPERTY_CATEGORIES, isAcceptedPropertyType } from '@/lib/taxonomy/property-taxonomy';
 
 export const propertyDealTypeSchema = z.enum(['sale', 'rent']);
-export const propertyCategorySchema = z.enum(['residential', 'commercial', 'industrial', 'land', 'agricultural']);
-export const propertyTypeSchema = z.enum([
-  'villa', 'apartment', 'townhouse', 'duplex', 'penthouse',
-  'shop', 'warehouse', 'office', 'building', 'factory',
-  'land', 'farm', 'ranch', 'hotel', 'resort', 'restaurant'
-]);
+
+// Categories and types come from the one taxonomy the platform and the office
+// application share (lib/taxonomy/property-taxonomy.ts). The lists that used to
+// be spelled out here accepted sixteen types where the office offered
+// twenty-seven; every code they accepted is still accepted, as a legacy alias.
+export const propertyCategorySchema = z
+  .string()
+  .refine((value) => ACCEPTED_PROPERTY_CATEGORIES.includes(value), { message: 'فئة عقارية غير معروفة' });
+export const propertyTypeSchema = z
+  .string()
+  .refine((value) => isAcceptedPropertyType(value), { message: 'نوع عقار غير معروف' });
 export const propertyStatusSchema = z.enum([
   'draft', 'pending_review', 'approved', 'rejected', 'sold', 'rented', 'archived'
 ]);

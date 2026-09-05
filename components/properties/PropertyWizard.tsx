@@ -1,4 +1,5 @@
 'use client';
+import { selectableCategories, propertyTypesForCategory, PROPERTY_DIRECTIONS } from '@/lib/taxonomy/property-taxonomy';
 import { useState } from 'react';
 import { PropertyForm } from './PropertyForm';
 
@@ -76,35 +77,19 @@ const INITIAL_FORM: PropertyWizardFormData = {
   media: [] as Array<{ url: string; type: string; altText?: string }>,
 };
 
-const CATEGORIES = [
-  { value: 'residential', label: 'سكني' },
-  { value: 'commercial', label: 'تجاري' },
-  { value: 'industrial', label: 'صناعي' },
-  { value: 'land', label: 'أرض' },
-  { value: 'agricultural', label: 'زراعي' },
-];
+// The categories and types come from the single taxonomy
+// (lib/taxonomy/property-taxonomy.ts) that the platform and the office
+// application share. The lists spelled out here offered 5 categories and 15
+// types; the office offered 27 types, and a listing published from it arrived
+// under a type this wizard could not name.
+const CATEGORIES = selectableCategories().map((category) => ({ value: category.id, label: category.label.ar }));
 
-const PROPERTY_TYPES: Record<string, Array<{ value: string; label: string }>> = {
-  residential: [
-    { value: 'villa', label: 'فيلا' },
-    { value: 'apartment', label: 'شقة' },
-    { value: 'townhouse', label: 'تاون هاوس' },
-    { value: 'duplex', label: 'دوبلكس' },
-    { value: 'penthouse', label: 'بنتهاوس' },
-  ],
-  commercial: [
-    { value: 'shop', label: 'محل' },
-    { value: 'office', label: 'مكتب' },
-    { value: 'building', label: 'مبنى' },
-    { value: 'warehouse', label: 'مستودع' },
-  ],
-  industrial: [
-    { value: 'factory', label: 'مصنع' },
-    { value: 'warehouse', label: 'مستودع' },
-  ],
-  land: [{ value: 'land', label: 'أرض' }],
-  agricultural: [{ value: 'farm', label: 'مزرعة' }],
-};
+const PROPERTY_TYPES: Record<string, Array<{ value: string; label: string }>> = Object.fromEntries(
+  CATEGORIES.map((category) => [
+    category.value,
+    propertyTypesForCategory(category.value).map((type) => ({ value: type.id, label: type.label.ar })),
+  ]),
+);
 
 const GOVERNORATES = ['الرياض', 'مكة المكرمة', 'المدينة المنورة', 'الشرقية', 'عسير', 'تبوك', 'حائل', 'الحدود الشمالية', 'جازان', 'نجران', 'الباحة', 'الجوف', 'القصيم'];
 
@@ -241,11 +226,17 @@ export function PropertyWizard({ onSuccess, propertyId, initialData }: PropertyW
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">الواجهة</label>
-                <input type="text" value={formData.facade} onChange={(e) => updateField('facade', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" />
+                <select value={formData.facade} onChange={(e) => updateField('facade', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                  <option value="">اختر</option>
+                  {PROPERTY_DIRECTIONS.map((option) => (<option key={option.id} value={option.id}>{option.label.ar}</option>))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">الاتجاه</label>
-                <input type="text" value={formData.direction} onChange={(e) => updateField('direction', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" />
+                <select value={formData.direction} onChange={(e) => updateField('direction', e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
+                  <option value="">اختر</option>
+                  {PROPERTY_DIRECTIONS.map((option) => (<option key={option.id} value={option.id}>{option.label.ar}</option>))}
+                </select>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { storePropertyImage } from "@/lib/properties/image-processing";
 import { matchesFileSignature } from "@/lib/security/file-signatures";
+import { canonicalPropertyType, categoryForPropertyType } from "@/lib/taxonomy/property-taxonomy";
 
 /**
  * Shared logic for the desktop property-publish bridge
@@ -32,19 +33,12 @@ export async function authenticateDesktop(request: Request): Promise<{ userId: s
   return { userId: payload.userId };
 }
 
-// Desktop's "category" field is actually the granular property type.
-// Canonical `category` (residential/commercial/industrial/land/agricultural)
-// is derived from it.
-const PROPERTY_TYPE_TO_CATEGORY: Record<string, string> = {
-  villa: "residential", apartment: "residential", townhouse: "residential",
-  duplex: "residential", penthouse: "residential", building: "residential",
-  shop: "commercial", office: "commercial", hotel: "commercial",
-  resort: "commercial", restaurant: "commercial",
-  warehouse: "industrial", factory: "industrial",
-  land: "land", ranch: "land",
-  farm: "agricultural",
-};
-const KNOWN_PROPERTY_TYPES = new Set(Object.keys(PROPERTY_TYPE_TO_CATEGORY));
+// Desktop's "category" field is actually the granular property type; the
+// canonical `category` is derived from it. Both come from the taxonomy the
+// platform and the office application share
+// (lib/taxonomy/property-taxonomy.ts). The table that used to live here knew
+// sixteen types and mapped the office's twenty-seven onto them, so a palace, a
+// rest house and a traditional house all arrived as "apartment".
 
 // The desktop's `type` accepts the full offer-type taxonomy (property_offer_types
 // codes, case-insensitive) as well as the legacy sale/rent values. The canonical
@@ -273,9 +267,8 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
 
   const offerCode = resolveOfferCode(text(body.offerType, 30) || text(body.type, 30));
   const dealType = OFFER_CODE_TO_DEAL_TYPE[offerCode];
-  const rawPropertyType = text(body.category, 30).toLowerCase();
-  const propertyType = KNOWN_PROPERTY_TYPES.has(rawPropertyType) ? rawPropertyType : "apartment";
-  const category = PROPERTY_TYPE_TO_CATEGORY[propertyType] ?? "residential";
+  const propertyType = canonicalPropertyType(text(body.category, 40)) ?? "apartment";
+  const category = categoryForPropertyType(propertyType) ?? "residential";
 
   // The canonical city column is matched against the geo registry's codes by
   // every listing filter, so it must come from the office profile (whose

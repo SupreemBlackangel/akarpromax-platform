@@ -1,4 +1,22 @@
-﻿export type LocalizedLabel = { ar: string; en: string; tr: string };
+/**
+ * Property categories and types for the marketing pages.
+ *
+ * This file used to carry its own list of 4 categories and 13 types — one of
+ * four such lists in the codebase, each disagreeing with the others. It is now
+ * a view onto the single taxonomy in lib/taxonomy/property-taxonomy.ts, kept
+ * for the shape its callers expect (`label` as a localised record, the
+ * showInSearch / showInAddProperty flags).
+ */
+
+import {
+  PROPERTY_CATEGORIES as TAXONOMY_CATEGORIES,
+  PROPERTY_TYPES as TAXONOMY_TYPES,
+  propertyTypesForCategory,
+  selectableCategories,
+  type LocalizedLabel,
+} from "@/lib/taxonomy/property-taxonomy";
+
+export type { LocalizedLabel };
 
 export type PropertyCategory = {
   id: string;
@@ -19,28 +37,41 @@ export type PropertyType = {
   showInAddProperty: boolean;
 };
 
-export const PROPERTY_CATEGORIES: PropertyCategory[] = [
-  { id: "residential", label: { ar: "سكني", en: "Residential", tr: "Konut" }, icon: "🏠", isActive: true, sortOrder: 1 },
-  { id: "commercial", label: { ar: "تجاري", en: "Commercial", tr: "Ticari" }, icon: "🏪", isActive: true, sortOrder: 2 },
-  { id: "land", label: { ar: "أراضي", en: "Land", tr: "Arsa" }, icon: "📐", isActive: true, sortOrder: 3 },
-  { id: "industrial", label: { ar: "صناعي", en: "Industrial", tr: "Endustriyel" }, icon: "🏭", isActive: true, sortOrder: 4 },
-];
+const CATEGORY_ICONS: Record<string, string> = {
+  residential: "🏠",
+  commercial: "🏪",
+  industrial: "🏭",
+  agricultural: "🌾",
+  land: "📐",
+  residential_commercial: "🏙️",
+  administrative: "🏛️",
+};
 
-export const PROPERTY_TYPES: PropertyType[] = [
-  { id: "villa", categoryId: "residential", label: { ar: "فيلا", en: "Villa", tr: "Villa" }, icon: "🏡", isActive: true, sortOrder: 1, showInSearch: true, showInAddProperty: true },
-  { id: "apartment", categoryId: "residential", label: { ar: "شقة", en: "Apartment", tr: "Daire" }, icon: "🏢", isActive: true, sortOrder: 2, showInSearch: true, showInAddProperty: true },
-  { id: "townhouse", categoryId: "residential", label: { ar: "تاون هاوس", en: "Townhouse", tr: "Kasaba Evi" }, icon: "🏘️", isActive: true, sortOrder: 3, showInSearch: true, showInAddProperty: true },
-  { id: "compound", categoryId: "residential", label: { ar: "كمبوند", en: "Compound", tr: "Kompleks" }, icon: "🏘️", isActive: true, sortOrder: 4, showInSearch: true, showInAddProperty: true },
-  { id: "office", categoryId: "commercial", label: { ar: "مكتب", en: "Office", tr: "Ofis" }, icon: "🏛️", isActive: true, sortOrder: 1, showInSearch: true, showInAddProperty: true },
-  { id: "shop", categoryId: "commercial", label: { ar: "محل تجاري", en: "Shop", tr: "Dukkan" }, icon: "🏬", isActive: true, sortOrder: 2, showInSearch: true, showInAddProperty: true },
-  { id: "warehouse", categoryId: "commercial", label: { ar: "مستودع", en: "Warehouse", tr: "Depo" }, icon: "📦", isActive: true, sortOrder: 3, showInSearch: true, showInAddProperty: true },
-  { id: "building", categoryId: "commercial", label: { ar: "مبنى", en: "Building", tr: "Bina" }, icon: "🏗️", isActive: true, sortOrder: 4, showInSearch: true, showInAddProperty: true },
-  { id: "residential-land", categoryId: "land", label: { ar: "أرض سكنية", en: "Residential Land", tr: "Konut Arazisi" }, icon: "📐", isActive: true, sortOrder: 1, showInSearch: true, showInAddProperty: true },
-  { id: "commercial-land", categoryId: "land", label: { ar: "أرض تجارية", en: "Commercial Land", tr: "Ticari Arsa" }, icon: "📐", isActive: true, sortOrder: 2, showInSearch: true, showInAddProperty: true },
-  { id: "agricultural-land", categoryId: "land", label: { ar: "أرض زراعية", en: "Agricultural Land", tr: "Tarim Arazisi" }, icon: "🌾", isActive: true, sortOrder: 3, showInSearch: true, showInAddProperty: true },
-  { id: "factory", categoryId: "industrial", label: { ar: "مصنع", en: "Factory", tr: "Fabrika" }, icon: "🏭", isActive: true, sortOrder: 1, showInSearch: true, showInAddProperty: true },
-  { id: "workshop", categoryId: "industrial", label: { ar: "ورشة", en: "Workshop", tr: "Atolye" }, icon: "🔧", isActive: true, sortOrder: 2, showInSearch: true, showInAddProperty: true },
-];
+const TYPE_ICONS: Record<string, string> = {
+  villa: "🏡", apartment: "🏢", townhouse: "🏘️", palace: "🏰", studio: "🛏️",
+  shop: "🏬", commercial_office: "🏛️", warehouse: "📦", factory: "🏭",
+  farm: "🌾", orchard: "🌳",
+};
+
+export const PROPERTY_CATEGORIES: PropertyCategory[] = TAXONOMY_CATEGORIES.map((category) => ({
+  id: category.id,
+  label: category.label,
+  icon: CATEGORY_ICONS[category.id],
+  // A legacy category is still a valid stored value, but it is not offered.
+  isActive: !category.legacy,
+  sortOrder: category.sortOrder,
+}));
+
+export const PROPERTY_TYPES: PropertyType[] = TAXONOMY_TYPES.map((type) => ({
+  id: type.id,
+  categoryId: type.categoryId,
+  label: type.label,
+  icon: TYPE_ICONS[type.id],
+  isActive: true,
+  sortOrder: type.sortOrder,
+  showInSearch: true,
+  showInAddProperty: true,
+}));
 
 export const LISTING_TYPES = [
   { id: "for-sale", label: { ar: "للبيع", en: "For Sale", tr: "Satilik" } },
@@ -50,25 +81,27 @@ export const LISTING_TYPES = [
 export type ListingTypeId = typeof LISTING_TYPES[number]["id"];
 
 export function getPropertyCategoryById(id: string): PropertyCategory | undefined {
-  return PROPERTY_CATEGORIES.find((c) => c.id === id);
+  return PROPERTY_CATEGORIES.find((category) => category.id === id);
 }
 
 export function getPropertyTypesForCategory(categoryId: string): PropertyType[] {
-  return PROPERTY_TYPES.filter((t) => t.categoryId === categoryId && t.isActive);
+  const ids = new Set(propertyTypesForCategory(categoryId).map((type) => type.id));
+  return PROPERTY_TYPES.filter((type) => ids.has(type.id));
 }
 
 export function getPropertyTypeById(id: string): PropertyType | undefined {
-  return PROPERTY_TYPES.find((t) => t.id === id);
+  return PROPERTY_TYPES.find((type) => type.id === id);
 }
 
 export function getActivePropertyCategories(): PropertyCategory[] {
-  return PROPERTY_CATEGORIES.filter((c) => c.isActive);
+  const offered = new Set(selectableCategories().map((category) => category.id));
+  return PROPERTY_CATEGORIES.filter((category) => offered.has(category.id));
 }
 
 export function getSearchablePropertyTypes(): PropertyType[] {
-  return PROPERTY_TYPES.filter((t) => t.isActive && t.showInSearch);
+  return PROPERTY_TYPES.filter((type) => type.isActive && type.showInSearch);
 }
 
 export function getAddablePropertyTypes(): PropertyType[] {
-  return PROPERTY_TYPES.filter((t) => t.isActive && t.showInAddProperty);
+  return PROPERTY_TYPES.filter((type) => type.isActive && type.showInAddProperty);
 }

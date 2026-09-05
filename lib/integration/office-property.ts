@@ -1,4 +1,5 @@
 import { getIntegrationDb } from "@/lib/integration/db";
+import { ACCEPTED_PROPERTY_CATEGORIES, ACCEPTED_PROPERTY_TYPES } from "@/lib/taxonomy/property-taxonomy";
 
 /**
  * Office → website property publishing.
@@ -14,14 +15,16 @@ import { getIntegrationDb } from "@/lib/integration/db";
  * device can only ever reach its own sponsor's rows.
  */
 
-/** Canonical enums, mirrored from lib/validators/property-validators.ts. */
+/**
+ * Canonical enums. The categories and types come from
+ * lib/taxonomy/property-taxonomy.ts — the one list the office application and
+ * the platform now share — rather than from a copy kept in step by hand. The
+ * copy that used to live here accepted sixteen types where the office offered
+ * twenty-seven.
+ */
 export const OFFICE_PROPERTY_DEAL_TYPES = ["sale", "rent"] as const;
-export const OFFICE_PROPERTY_CATEGORIES = ["residential", "commercial", "industrial", "land", "agricultural"] as const;
-export const OFFICE_PROPERTY_TYPES = [
-  "villa", "apartment", "townhouse", "duplex", "penthouse",
-  "shop", "warehouse", "office", "building", "factory",
-  "land", "farm", "ranch", "hotel", "resort", "restaurant",
-] as const;
+export const OFFICE_PROPERTY_CATEGORIES: readonly string[] = ACCEPTED_PROPERTY_CATEGORIES;
+export const OFFICE_PROPERTY_TYPES: readonly string[] = ACCEPTED_PROPERTY_TYPES;
 
 /** Status an Office publish lands in. Office never writes `approved`. */
 export const OFFICE_PROPERTY_REVIEW_STATUS = "pending_review";
