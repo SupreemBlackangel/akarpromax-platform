@@ -1,6 +1,6 @@
 {
   "version": "3.0.1",
   "setupUrl": "/downloads/AkarProMaxOffice-Setup.exe",
-  "mandatory": false,
+  "mandatory": true,
   "notes": "نقل القائمة الجانبية إلى اليمين (دعم كامل للعربية)، أيقونة عقار بروماكس للتطبيق، وفي العقود يُختار المالك ووكيله تلقائيًا عند اختيار العقار."
 }
