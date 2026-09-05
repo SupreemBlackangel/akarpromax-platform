@@ -40,19 +40,52 @@ test("both artifacts exist in the canonical forward-migration folder", async () 
   assert.match(await read(GEO_LAUNCH), /AKARPROMAX FORWARD MIGRATION 0007/);
 });
 
+/**
+ * The canonical stream, through 0007. It is a PREFIX, not the whole journal:
+ * migrations are added after it as the platform grows (0008 leads, 0009 direct
+ * messaging, 0010 land registry, 0011 oauth accounts, 0012 service timestamps
+ * are all applied in production).
+ *
+ * This assertion used to be a deepEqual against exactly these eight, which is
+ * the one thing a migration journal may never be — frozen. It went red the day
+ * 0008 was journalled and stayed red, hiding whatever it was meant to catch.
+ * What it is meant to catch is a canonical migration being renamed, reordered
+ * or dropped, and that is what it checks now. That the journal matches the
+ * files on disk is guarded by tests/schema-lineage.test.mjs.
+ */
+const CANONICAL_STREAM = [
+  "0000_l1a_global_market_foundation",
+  "0001_l1b_identity_registration",
+  "0002_l1a_currency_registry_ils",
+  "0003_l1c_services_baseline",
+  "0004_l1c_services_demo_cleanup",
+  "0005_pass_c1_runtime_lifecycle_baseline",
+  "0006_pass_cs1b_direct_booking",
+  "0007_geo_hierarchy_launch",
+];
+
 test("the forward journal includes the canonical Services and runtime migrations", async () => {
   const journal = JSON.parse(await read("drizzle-pg-forward/meta/_journal.json"));
   const tags = journal.entries.map((e) => e.tag);
-  assert.deepEqual(tags, [
-    "0000_l1a_global_market_foundation",
-    "0001_l1b_identity_registration",
-    "0002_l1a_currency_registry_ils",
-    "0003_l1c_services_baseline",
-    "0004_l1c_services_demo_cleanup",
-    "0005_pass_c1_runtime_lifecycle_baseline",
-    "0006_pass_cs1b_direct_booking",
-    "0007_geo_hierarchy_launch",
-  ], "the canonical forward stream must remain complete and ordered through 0007");
+
+  assert.deepEqual(
+    tags.slice(0, CANONICAL_STREAM.length),
+    CANONICAL_STREAM,
+    "the canonical forward stream must open the journal, complete and in order",
+  );
+
+  // Whatever came later must still be an ordered, contiguous, unique stream:
+  // the migrator runs the journal top to bottom and records each tag once.
+  assert.equal(new Set(tags).size, tags.length, "a tag is journalled twice");
+  journal.entries.forEach((entry, position) => {
+    assert.equal(entry.idx, position, `entry ${entry.tag} is out of order`);
+    assert.match(entry.tag, /^\d{4}_/, `entry ${entry.tag} is not numbered`);
+    assert.equal(
+      entry.tag.slice(0, 4),
+      String(position).padStart(4, "0"),
+      `entry ${entry.tag} does not carry its own index`,
+    );
+  });
 });
 
 test("the baseline creates exactly the 25 canonical Services tables", async () => {
