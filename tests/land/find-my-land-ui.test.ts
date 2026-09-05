@@ -89,7 +89,13 @@ describe("Find My Land launch visuals", () => {
   it("switches the coordinate table between WGS84 and UTM instead of stacking both", async () => {
     const source = await readComponent();
     assert.match(source, /coordinateView === "wgs84"/);
-    assert.match(source, /setCoordinateView\("utm"\)/);
+    // The setter is setCoordinateViewOverride: the state is the reader's
+    // override, and coordinateView is derived from it and the document. This
+    // assertion asked for setCoordinateView and was red from the day it was
+    // written, while tests/fml-projected-order.test.mjs asserted the real name
+    // and was green — two tests, one file, opposite spellings. The code keeps
+    // the name it has always had.
+    assert.match(source, /setCoordinateViewOverride\("utm"\)/);
     assert.match(source, /role="tablist"/);
   });
 

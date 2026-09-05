@@ -920,7 +920,7 @@ export function FindMyLand({ locale }: Props) {
    * analysis and is the cascading-render pattern this file otherwise avoids.
    */
   // null = follow whatever the document gave us; a value = the reader chose a view.
-  const [coordinateViewOverride, setCoordinateView] = useState<"wgs84" | "utm" | null>(null);
+  const [coordinateViewOverride, setCoordinateViewOverride] = useState<"wgs84" | "utm" | null>(null);
 
   /* ---- Manual Geometry Recovery state ---- */
   const [manualDraft, setManualDraft] = useState<ManualDraft | null>(null);
@@ -2370,7 +2370,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "wgs84"}
                         className={`fml-tab${coordinateView === "wgs84" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateView("wgs84")}
+                        onClick={() => setCoordinateViewOverride("wgs84")}
                       >
                         {t("الأصلية", "Original", "Özgün")}
                       </button>
@@ -2379,7 +2379,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "utm"}
                         className={`fml-tab${coordinateView === "utm" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateView("utm")}
+                        onClick={() => setCoordinateViewOverride("utm")}
                       >
                         UTM
                       </button>
