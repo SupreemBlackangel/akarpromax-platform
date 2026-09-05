@@ -27,6 +27,6 @@ test("the detail route strips ownerName for anyone but the owner or an admin", a
 
 test("the search route drops ownerName from every row before responding", async () => {
   const source = await read("app/api/properties/search/route.ts");
-  assert.match(source, /rows\.map\(\(row\) => \{[^}]*delete copy\.ownerName;/);
+  assert.match(source, /rows\.map\(\(row\) => \{[\s\S]*?delete copy\.ownerName;/);
   assert.doesNotMatch(source, /data: rows,/);
 });
