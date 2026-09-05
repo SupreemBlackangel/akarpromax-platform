@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import OfficeSubscriptionsPanel from "./office-subscriptions-panel";
+import OfficeNotificationsPanel from "./office-notifications-panel";
 
 type AggregatedRow = Record<string, unknown>;
 
@@ -60,6 +61,8 @@ export default function AdminIntegrationClient() {
       </div>
 
       <OfficeSubscriptionsPanel />
+
+      <OfficeNotificationsPanel />
 
       <section className="admin-panel">
         <div className="admin-panel-head">

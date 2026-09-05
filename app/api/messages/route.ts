@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { messageThreads, messageParticipants, messages } from '@/lib/db/schemas/messages-schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
+import { users } from '@/lib/db/schema';
+import { notifyOffice } from '@/lib/integration/office-notify';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +66,23 @@ export async function POST(request: NextRequest) {
 
     if (body.content) {
       await db.insert(messages).values({ threadId: thread.id, senderId: session.userId, content: body.content });
+    }
+
+    // The recipient may be an office running the desktop application: ring its bell.
+    if (body.recipientId) {
+      void (async () => {
+        const rows = await db.select({ email: users.email }).from(users).where(eq(users.id, body.recipientId)).limit(1);
+        const email = rows[0]?.email;
+        if (!email) return;
+        await notifyOffice({
+          sponsorEmail: email,
+          eventType: 'message.new',
+          eventId: `thread:${thread.id}`,
+          title: 'رسالة جديدة من الموقع',
+          body: String(body.title || body.content || 'استفسار جديد من زائر').slice(0, 300),
+          link: 'app://messages',
+        });
+      })().catch(() => undefined);
     }
 
     return NextResponse.json({ success: true, data: thread });

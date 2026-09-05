@@ -5,6 +5,7 @@ import { getRuntimeDb } from "@/lib/runtime-db";
 import { canManageTargets } from "@/lib/ads/admin";
 import { invalidateActiveAdsCache } from "@/lib/ads/engine";
 import { emailService } from "@/lib/email";
+import { notifyOffice } from "@/lib/integration/office-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,15 @@ export async function POST(request: NextRequest) {
       : `نأسف — لم يُعتمد طلب الإعلان «${campaignName}» في صورته الحالية. يمكنك تقديم طلب جديد بعد تعديل التصميم أو المحتوى، أو التواصل معنا للتفاصيل.`;
     const html = `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;background:#f4f7fd;padding:24px"><div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;padding:28px;border:1px solid #e2e9f5"><h2 style="margin:0 0 12px;color:#0b214c">${approved ? "تم اعتماد إعلانك ✓" : "تحديث بشأن طلب إعلانك"}</h2><p style="margin:0 0 18px;color:#33507d;line-height:1.9">${bodyText}</p><a href="https://akarpromax.com" style="display:inline-block;background:#1769ff;color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700">زيارة المنصة</a><p style="margin:20px 0 0;font-size:12px;color:#8b98ad">عقار بروماكس — akarpromax.com</p></div></div>`;
     void emailService.getTransport().send({ to: advertiserEmail, subject, html, text: bodyText }).catch(() => undefined);
+    // The same outcome on the desktop application's bell, if the advertiser is an office that runs it.
+    void notifyOffice({
+      sponsorEmail: advertiserEmail,
+      eventType: approved ? "ad.approved" : "ad.rejected",
+      eventId: `ad:${id}:${approvalStatus}`,
+      title: approved ? "تم اعتماد إعلانك" : "لم يُعتمد طلب الإعلان",
+      body: bodyText,
+      link: "/advertise",
+    });
   }
 
   return NextResponse.json({ ok: true, approvalStatus, autoActivated: shouldActivate });

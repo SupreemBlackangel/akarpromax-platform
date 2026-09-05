@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSponsorIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { logSecurityEvent } from "@/lib/security/audit";
+import { notifyOffice } from "@/lib/integration/office-notify";
+
+const STATUS_WORDS: Record<string, string> = { trial: "تجريبي", active: "فعال", expired: "منتهي", suspended: "معلّق", cancelled: "ملغى" };
+
+/** Tells the office what its subscription became. Fire-and-forget. */
+function announceSubscription(sub: { sponsorId: string; status: string; endDate: string | null; updatedAt?: string | null; id: string }): void {
+  const word = STATUS_WORDS[sub.status] ?? sub.status;
+  const until = sub.endDate ? ` حتى ${sub.endDate}` : "";
+  void notifyOffice({
+    sponsorEmail: sub.sponsorId,
+    eventType: "subscription.updated",
+    eventId: `subscription:${sub.id}:${sub.status}:${sub.endDate ?? ""}`,
+    title: "تحديث اشتراك المكتب",
+    body: `حالة اشتراك مكتبك على عقار بروماكس الآن: ${word}${until}.`,
+    link: "/dashboard/office",
+  });
+}
 import {
   OFFICE_SUBSCRIPTION_STATUSES,
   SubscriptionWriteError,
@@ -83,6 +100,7 @@ export async function POST(req: NextRequest) {
       endDate: subscription.endDate,
       by: identity.email ?? null,
     });
+    announceSubscription(subscription);
     return NextResponse.json({ subscription }, { status: 201 });
   } catch (error) {
     return writeError(error);
@@ -115,6 +133,7 @@ export async function PATCH(req: NextRequest) {
       endDate: subscription.endDate,
       by: identity.email ?? null,
     });
+    announceSubscription(subscription);
     return NextResponse.json({ subscription });
   } catch (error) {
     return writeError(error);

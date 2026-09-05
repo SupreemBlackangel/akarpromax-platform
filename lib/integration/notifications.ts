@@ -253,6 +253,25 @@ export async function markOfficeNotificationRead(deliveryId: string, sponsorId: 
   return true;
 }
 
+/** Marks every unread delivery of one sponsor read; returns how many changed. */
+export async function markAllOfficeNotificationsRead(sponsorId: string): Promise<number> {
+  if (!sponsorId) return 0;
+  const db = await getIntegrationDb();
+  const now = nowIso();
+  const pending = await db
+    .prepare("SELECT id FROM office_notification_deliveries WHERE sponsor_id = ?1 AND status IN ('queued', 'deferred')")
+    .bind(sponsorId)
+    .all<{ id: string }>();
+  const ids = (pending.results ?? []).map((r) => r.id);
+  for (const id of ids) {
+    await db
+      .prepare("UPDATE office_notification_deliveries SET status = 'delivered', delivered_at = ?1 WHERE id = ?2 AND sponsor_id = ?3")
+      .bind(now, id, sponsorId)
+      .run();
+  }
+  return ids.length;
+}
+
 export async function listNotificationRules(sponsorId?: string): Promise<Array<Record<string, unknown>>> {
   const db = await getIntegrationDb();
   const rows = sponsorId
