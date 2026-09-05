@@ -35,6 +35,7 @@ export type OfficeNotificationDeliveryStatus = (typeof OFFICE_NOTIFICATION_DELIV
 export const OFFICE_AD_PLACEMENTS = [
   "office_dashboard_hero",
   "office_dashboard_sidebar",
+  "office_bottom_strip",
   "office_news_inline",
   "office_properties_inline",
   "office_services_inline",
