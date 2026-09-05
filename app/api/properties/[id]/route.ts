@@ -73,6 +73,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // detail page needs it as the "contact advertiser" messaging recipient.
     const isOwnerOrAdmin = property.userId === session?.userId || session?.role === 'super_admin';
     const INTERNAL_FIELDS = [
+      // Whose property it is: the office's record, never the advertisement's.
+      'ownerName',
       'approvedBy', 'approvedAt', 'rejectedReason',
       'auctionMinBid', 'auctionMaxBid', 'auctionBidIncrement',
       'auctionOrganizerOrganizationId', 'auctionCreatedByUserId',

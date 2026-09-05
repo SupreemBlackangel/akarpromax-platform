@@ -97,8 +97,10 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     const where = and(...conditions);
 
-    const results = await db.select().from(properties).where(where).orderBy(order).limit(limit).offset(offset);
+    const rows = await db.select().from(properties).where(where).orderBy(order).limit(limit).offset(offset);
     const totalResult = await db.select({ count: sql<number>`count(*)` }).from(properties).where(where);
+    // Public search: the owner's name is the office's private record, not the advertisement's.
+    const results = rows.map((row) => { const copy: Record<string, unknown> = { ...row }; delete copy.ownerName; return copy; });
 
     return NextResponse.json({
       success: true,

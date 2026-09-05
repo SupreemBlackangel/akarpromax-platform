@@ -12,14 +12,15 @@ import { resolveGeoSelection } from '@/lib/services/geo/selection';
 // Fields safe to expose on the PUBLIC feed. Everything else (owner/admin user
 // ids, moderation fields, internal auction bid mechanics, winner/organizer ids,
 // contract urls) is withheld — only the property's own owner sees the full row
-// via ?mine=1.
+// via ?mine=1. The owner's name is the office's private record of whose
+// property it is, not part of the advertisement: it stays off the feed.
 const PUBLIC_PROPERTY_FIELDS = [
   "id", "titleAr", "titleEn", "descriptionAr", "descriptionEn",
   "dealType", "category", "propertyType",
   "country", "governorate", "city", "district", "latitude", "longitude", "address",
   "price", "currency", "area", "bedrooms", "bathrooms", "floor", "totalFloors",
   "yearBuilt", "facade", "direction", "referenceNumber", "advertisingLicense",
-  "ownerName", "agentName", "officeId",
+  "agentName", "officeId",
   "status", "isFeatured", "isVerified", "views",
   // Auction — public-facing bidding surface only (no internal bid mechanics/ids)
   "isAuction", "auctionType", "auctionStatus", "auctionStartPrice",
