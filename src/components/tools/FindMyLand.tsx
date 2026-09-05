@@ -897,6 +897,8 @@ export function FindMyLand({ locale }: Props) {
   const [progress, setProgress] = useState(0);
   const [errorCode, setErrorCode] = useState("");
   const [analysis, setAnalysis] = useState<AnalysisPayload | null>(null);
+  /** When the reading finished — stamped on the result, not shouted in a banner. */
+  const [analysedAt, setAnalysedAt] = useState<string | null>(null);
   // Per-page text from the first pass, kept so a re-analysis keeps each piece
   // of evidence tied to its page instead of collapsing the document to one.
   const [documentPages, setDocumentPages] = useState<string[]>([]);
@@ -917,7 +919,8 @@ export function FindMyLand({ locale }: Props) {
    * setState inside an effect, which would re-render the table twice on every
    * analysis and is the cascading-render pattern this file otherwise avoids.
    */
-  const [coordinateViewOverride, setCoordinateViewOverride] = useState<"wgs84" | "utm" | null>(null);
+  // null = follow whatever the document gave us; a value = the reader chose a view.
+  const [coordinateViewOverride, setCoordinateView] = useState<"wgs84" | "utm" | null>(null);
 
   /* ---- Manual Geometry Recovery state ---- */
   const [manualDraft, setManualDraft] = useState<ManualDraft | null>(null);
@@ -1193,6 +1196,7 @@ export function FindMyLand({ locale }: Props) {
       if (!response.ok) throw new Error(result.error || `HTTP_${response.status}`);
       if (analysisExpired) throw new Error("ANALYSIS_TIMEOUT");
 
+      setAnalysedAt(new Date().toISOString());
       setAnalysis({
         result,
         extractedText,
@@ -2366,7 +2370,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "wgs84"}
                         className={`fml-tab${coordinateView === "wgs84" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateViewOverride("wgs84")}
+                        onClick={() => setCoordinateView("wgs84")}
                       >
                         {t("الأصلية", "Original", "Özgün")}
                       </button>
@@ -2375,7 +2379,7 @@ export function FindMyLand({ locale }: Props) {
                         role="tab"
                         aria-selected={coordinateView === "utm"}
                         className={`fml-tab${coordinateView === "utm" ? " fml-tab--active" : ""}`}
-                        onClick={() => setCoordinateViewOverride("utm")}
+                        onClick={() => setCoordinateView("utm")}
                       >
                         UTM
                       </button>
@@ -2463,6 +2467,101 @@ export function FindMyLand({ locale }: Props) {
               </section>
             )}
 
+            {/* Every edge, measured against the document.
+                The server already computes documentLengthMeters and
+                deviationMeters for each segment (lib/land/boundary/parcel-boundary.ts)
+                — the reason to check a صك at all — and the result panel used to
+                throw them away, carrying them only into the JSON export. */}
+            {(analysis?.result.parcel?.boundary.segments.length ?? 0) > 0 && (
+              <section className="fml-section" data-segment-table>
+                <h3 className="fml-section-title">
+                  {t("الأضلاع: المقيس مقابل الموثّق", "Edges: measured against the document", "Kenarlar: ölçülen ve belgelenen")}
+                </h3>
+                <div className="fml-table-wrap">
+                  <table className="fml-table">
+                    <thead>
+                      <tr>
+                        <th>{t("الضلع", "Edge", "Kenar")}</th>
+                        <th>{t("المقيس (م)", "Measured (m)", "Ölçülen (m)")}</th>
+                        <th>{t("الموثّق (م)", "Documented (m)", "Belgelenen (m)")}</th>
+                        <th>{t("الفرق (م)", "Deviation (m)", "Fark (m)")}</th>
+                        <th>{t("الاتجاه", "Bearing", "Yön")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis?.result.parcel?.boundary.segments.map((segment) => {
+                        const documented = segment.documentLengthMeters;
+                        const deviation = segment.deviationMeters;
+                        // Half a metre is the tolerance the side-length check
+                        // already treats as agreement; anything more is worth a look.
+                        const withinTolerance = deviation !== undefined && deviation <= 0.5;
+                        return (
+                          <tr key={`${segment.fromIndex}-${segment.toIndex}`}>
+                            <td className="fml-cell-label" dir="ltr">{segment.fromLabel} → {segment.toLabel}</td>
+                            <td dir="ltr">{segment.lengthMeters.toFixed(2)}</td>
+                            <td dir="ltr">{documented === undefined ? "—" : documented.toFixed(2)}</td>
+                            <td dir="ltr">
+                              {deviation === undefined ? (
+                                <span className="fml-segment-deviation">—</span>
+                              ) : (
+                                <span className={`fml-segment-deviation${withinTolerance ? " fml-segment-deviation--ok" : " fml-segment-deviation--off"}`}>
+                                  {deviation.toFixed(2)}
+                                </span>
+                              )}
+                            </td>
+                            <td dir="ltr">{segment.bearingDegrees.toFixed(1)}°</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="fml-hint">
+                  {t(
+                    "الفرق هو ما بين الطول المحسوب من الإحداثيات والطول المكتوب في الوثيقة. الأخضر ضمن نصف متر.",
+                    "The deviation is the computed length against the one written in the document. Green is within half a metre.",
+                    "Fark, koordinatlardan hesaplanan uzunluk ile belgede yazan uzunluk arasındadır. Yeşil, yarım metre içindedir.",
+                  )}
+                </p>
+              </section>
+            )}
+
+            {/* What the extraction actually read, per point: which page, which
+                row, the raw text and how sure it was. Folded away, because it is
+                the answer to "where did this number come from" and not part of
+                the everyday reading. */}
+            {(analysis?.result.parcel?.vertices.length ?? 0) > 0 && (
+              <details className="fml-advanced" data-evidence-inspector>
+                <summary>{t("تفاصيل الاستخراج", "Extraction details", "Çıkarım ayrıntıları")}</summary>
+                <div className="fml-advanced-body">
+                  <div className="fml-table-wrap">
+                    <table className="fml-table">
+                      <thead>
+                        <tr>
+                          <th>{t("النقطة", "Point", "Nokta")}</th>
+                          <th>{t("الصفحة", "Page", "Sayfa")}</th>
+                          <th>{t("السطر", "Row", "Satır")}</th>
+                          <th>{t("النص المقروء", "Source text", "Okunan metin")}</th>
+                          <th>{t("الثقة", "Confidence", "Güven")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analysis?.result.parcel?.vertices.map((vertex) => (
+                          <tr key={`${vertex.index}-${vertex.label}`}>
+                            <td className="fml-cell-label" dir="ltr">{vertex.pointNumber ?? vertex.label}</td>
+                            <td dir="ltr">{vertex.page ?? "—"}</td>
+                            <td dir="ltr">{vertex.rowIndex ?? "—"}</td>
+                            <td className="fml-cell-source select-all" dir="ltr">{vertex.sourceText}</td>
+                            <td dir="ltr">{Math.round(vertex.confidence * 100)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
+            )}
+
             {coordinateRows.length > 0 && (
               <div className="fml-actions">
                 {googleMapsUrl && (
@@ -2498,6 +2597,23 @@ export function FindMyLand({ locale }: Props) {
                   {copiedTarget === "export" ? t("تم النسخ", "Copied", "Kopyalandı") : t("تصدير البيانات", "Export data", "Verileri dışa aktar")}
                 </button>
               </div>
+            )}
+
+            {/* What a printed reading needs and a banner cannot give: when it
+                was read, and that it does not stand in for the deed. Quiet, at
+                the foot of the result, where a footnote belongs. */}
+            {analysedAt && coordinateRows.length > 0 && (
+              <p className="fml-footnote">
+                <time dateTime={analysedAt}>
+                  {new Date(analysedAt).toLocaleString(locale === "ar" ? "ar" : locale === "tr" ? "tr" : "en-GB")}
+                </time>
+                {" — "}
+                {t(
+                  "تحليل آلي للمراجعة — لا يحل محل الوثيقة الرسمية.",
+                  "Automated reading, for review — it does not replace the official document.",
+                  "İnceleme için otomatik okuma — resmî belgenin yerini tutmaz.",
+                )}
+              </p>
             )}
             {actionError && !crsSelectionRequired && (
               <p className="fml-error-text" role="alert">{actionError}</p>

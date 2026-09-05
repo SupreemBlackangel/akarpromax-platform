@@ -855,6 +855,15 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   font-weight: 800;
 }
 
+/* The raw line the reader was taken from: long, latin, and not worth wrapping
+   the whole table for — it scrolls with its own cell. */
+.fml-cell-source {
+  max-width: 22rem;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 /* ---- Summary cards ---- */
 .fml-summary {
   display: grid;
