@@ -227,14 +227,49 @@ export async function deleteDesktopProperty(userId: string, propertyId: string):
   }
 }
 
+/** What the platform demands of a listing before it files it, and the message that names what is missing. */
+export type DesktopPropertyRequirement = "title" | "description" | "price" | "area" | "owner" | "location";
+
+const REQUIREMENT_LABEL: Record<DesktopPropertyRequirement, string> = {
+  title: "العنوان", description: "الوصف", price: "السعر", area: "المساحة", owner: "اسم المالك", location: "الموقع الجغرافي",
+};
+
+/**
+ * The fields a listing cannot be filed without. A property with no owner is
+ * a property the office cannot contract on, and one with no coordinates
+ * cannot be placed on the map, searched by radius or matched to a land
+ * request — so neither is accepted as "to be completed later". A zero
+ * coordinate pair is the map's "nothing chosen", not a place.
+ */
+export function missingDesktopPropertyFields(body: DesktopPropertyBody): DesktopPropertyRequirement[] {
+  const missing: DesktopPropertyRequirement[] = [];
+  if (!(text(body.titleAr, 200) || text(body.title, 200))) missing.push("title");
+  if (!(text(body.descriptionAr, 5000) || text(body.description, 5000))) missing.push("description");
+  if (num(body.price, 0) <= 0) missing.push("price");
+  if (num(body.area, 0) <= 0) missing.push("area");
+  if (!text(body.ownerName, 200)) missing.push("owner");
+  // Number(null) and Number("") are 0, which would read "absent" as "the equator".
+  const coord = (v: unknown) => (v == null || v === "" ? NaN : Number(v));
+  const lat = coord(body.lat);
+  const lng = coord(body.lng);
+  const placed = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
+  if (!placed) missing.push("location");
+  return missing;
+}
+
+export function missingFieldsMessage(missing: DesktopPropertyRequirement[]): string {
+  return `لا يُقبل العقار بدون: ${missing.map((m) => REQUIREMENT_LABEL[m]).join("، ")}`;
+}
+
 export async function publishDesktopProperty(userId: string, body: DesktopPropertyBody, existingId: string | null): Promise<PublishResult> {
+  const missing = missingDesktopPropertyFields(body);
+  if (missing.length > 0) {
+    return { status: 400, body: { ok: false, message: missingFieldsMessage(missing) } };
+  }
   const titleAr = text(body.titleAr, 200) || text(body.title, 200);
   const descriptionAr = text(body.descriptionAr, 5000) || text(body.description, 5000);
   const price = num(body.price, 0);
   const area = num(body.area, 0);
-  if (!titleAr || !descriptionAr || price <= 0 || area <= 0) {
-    return { status: 400, body: { ok: false, message: "العنوان والوصف والسعر والمساحة مطلوبة" } };
-  }
 
   const offerCode = resolveOfferCode(text(body.offerType, 30) || text(body.type, 30));
   const dealType = OFFER_CODE_TO_DEAL_TYPE[offerCode];
@@ -254,12 +289,13 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   }
   const address = text(body.city, 100);
 
-  const ownerName = text(body.ownerName, 200) || null;
+  const ownerName = text(body.ownerName, 200);
   const agentName = text(body.agentName, 200) || null;
   const images = await resolveImages(body.images);
   const videoUrl = text(body.videoUrl, 500);
-  const latitude = Number.isFinite(Number(body.lat)) && Number(body.lat) !== 0 ? String(Number(body.lat)) : null;
-  const longitude = Number.isFinite(Number(body.lng)) && Number(body.lng) !== 0 ? String(Number(body.lng)) : null;
+  // Both proven present and in range above.
+  const latitude = String(Number(body.lat));
+  const longitude = String(Number(body.lng));
 
   const { db, end } = getDb();
 
