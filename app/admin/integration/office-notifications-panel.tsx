@@ -87,29 +87,30 @@ export default function OfficeNotificationsPanel() {
         <p>يصل الإشعار إلى جرس التطبيق المكتبي لدى المكتب المختار، أو لدى كل المكاتب التي لها جهاز نشط.</p>
       </div>
 
-      <div className="admin-row-actions" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "start" }}>
-        <label style={{ display: "grid", gap: 4 }}>
-          <span>المكتب</span>
+      <div className="admin-form-grid" style={{ marginBottom: 18 }}>
+        <label>
+          المكتب
           <select value={draft.sponsorId} onChange={(e) => setDraft({ ...draft, sponsorId: e.target.value })}>
             <option value="">كل المكاتب ({sponsors.length})</option>
             {sponsors.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
-        <label style={{ display: "grid", gap: 4 }}>
-          <span>رابط (اختياري)</span>
-          <input dir="ltr" placeholder="/advertise أو app://messages" value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} />
-        </label>
-        <label style={{ display: "grid", gap: 4, gridColumn: "1 / -1" }}>
-          <span>العنوان</span>
+        <label style={{ gridColumn: "span 2" }}>
+          العنوان
           <input maxLength={160} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
         </label>
-        <label style={{ display: "grid", gap: 4, gridColumn: "1 / -1" }}>
-          <span>النص</span>
+        <label style={{ gridColumn: "1 / -1" }}>
+          النص
           <textarea rows={3} maxLength={1000} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
         </label>
-        <div style={{ gridColumn: "1 / -1", display: "flex", gap: 10, alignItems: "center" }}>
+        <label>
+          رابط (اختياري)
+          <input dir="ltr" placeholder="/advertise" value={draft.link} onChange={(e) => setDraft({ ...draft, link: e.target.value })} />
+          <small>مسار في الموقع مثل /advertise، أو app://messages لفتح شاشة داخل التطبيق</small>
+        </label>
+        <div className="admin-row-actions" style={{ gridColumn: "span 2", alignItems: "flex-end", flexWrap: "wrap" }}>
           <button type="button" disabled={busy} onClick={() => void send()}>{busy ? "جارٍ الإرسال…" : "إرسال الإشعار"}</button>
-          {message && <span className="admin-message">{message}</span>}
+          {message && <span style={{ fontSize: 12, fontWeight: 800, color: "var(--color-primary)", alignSelf: "center" }}>{message}</span>}
         </div>
       </div>
 

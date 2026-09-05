@@ -192,13 +192,15 @@ export async function registerOrTouchDevice(input: DeviceRegistrationInput): Pro
            last_ip = COALESCE(?7, last_ip),
            last_seen_at = ?8,
            status = ?9,
-           updated_at = ?8
+           updated_at = ?11
          WHERE id = ?10`,
       )
+      // last_seen_at is TEXT and updated_at a TIMESTAMP: Postgres infers one
+      // type per parameter, so the same value is bound twice (42P08 otherwise).
       .bind(
         s(input.deviceName, 120), s(input.model, 120), s(input.os, 64), s(input.osVersion, 64),
         s(input.appVersion, 30), Number(input.protocolVersion) || OFFICE_PROTOCOL_VERSION,
-        s(input.lastIp, 45), now, nextStatus, existing.id,
+        s(input.lastIp, 45), now, nextStatus, existing.id, now,
       )
       .run();
     return { deviceId: existing.id, status: nextStatus, created: false, lastSeenAt: now };
@@ -210,13 +212,15 @@ export async function registerOrTouchDevice(input: DeviceRegistrationInput): Pro
       `INSERT INTO office_devices
          (id, sponsor_id, office_id, device_name, model, os, os_version, app_version,
           protocol_version, installation_id, status, last_seen_at, last_ip, created_by, created_at, updated_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'active', ?11, ?12, ?13, ?11, ?11)`,
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'active', ?11, ?12, ?13, ?14, ?14)`,
     )
+    // ?11 feeds the TEXT last_seen_at, ?14 the TIMESTAMP created_at/updated_at;
+    // one parameter for both is 42P08 "inconsistent types" on Postgres.
     .bind(
       deviceId, input.sponsorId.slice(0, 80), s(input.officeId, 80), s(input.deviceName, 120),
       s(input.model, 120), s(input.os, 64), s(input.osVersion, 64), s(input.appVersion, 30),
       Number(input.protocolVersion) || OFFICE_PROTOCOL_VERSION, input.installationId.slice(0, 120),
-      now, s(input.lastIp, 45), s(input.createdBy, 255),
+      now, s(input.lastIp, 45), s(input.createdBy, 255), now,
     )
     .run();
   return { deviceId, status: "active", created: true, lastSeenAt: now };
