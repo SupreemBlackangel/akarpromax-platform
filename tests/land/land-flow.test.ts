@@ -15,15 +15,7 @@ import {
   DEFAULT_SURVEYOR_QUERY,
   reputationRank,
 } from "@/lib/land/surveyor-discovery";
-import {
-  createQuoteRequest,
-  getQuote,
-  updateQuoteStatus,
-  clearQuotes,
-  QUOTE_SERVICE_LABELS,
-  isValidQuoteService,
-} from "@/lib/land/quote";
-import { runLandFlow, requestSurveyorQuote, buildLandFlow } from "@/lib/land/flow";
+import { runLandFlow, buildLandFlow } from "@/lib/land/flow";
 import { SurveyorCandidate, SaveLandInput } from "@/lib/land/contracts";
 
 const RIYADH = { lat: 24.7136, lon: 46.6753 };
@@ -272,80 +264,7 @@ describe("Land Surveyor Discovery", () => {
   });
 });
 
-describe("Land Quote Request", () => {
-  beforeEach(() => {
-    clearQuotes();
-  });
-
-  it("creates a pending quote", () => {
-    const land = saveLand(sampleLandInput());
-    const quote = createQuoteRequest({
-      landId: land.id,
-      surveyorId: "s1",
-      requesterId: "user_123",
-      service: "boundary_survey",
-    });
-    assert.equal(quote.status, "pending");
-    assert.equal(quote.currency, "SAR");
-    assert.equal(quote.service, "boundary_survey");
-  });
-
-  it("fetches a quote by id", () => {
-    const land = saveLand(sampleLandInput());
-    const quote = createQuoteRequest({ landId: land.id, surveyorId: "s1", requesterId: "u" });
-    assert.ok(getQuote(quote.id));
-  });
-
-  it("update status requires the surveyor", () => {
-    const land = saveLand(sampleLandInput());
-    const quote = createQuoteRequest({ landId: land.id, surveyorId: "s1", requesterId: "u" });
-    assert.equal(updateQuoteStatus(quote.id, "accepted", "other"), null);
-    const updated = updateQuoteStatus(quote.id, "accepted", "s1");
-    assert.equal(updated!.status, "accepted");
-  });
-
-  it("validates quote services", () => {
-    assert.equal(isValidQuoteService("measurement"), true);
-    assert.equal(isValidQuoteService("nope"), false);
-    assert.equal(isValidQuoteService(undefined), true);
-  });
-
-  it("provides Arabic service labels", () => {
-    assert.equal(QUOTE_SERVICE_LABELS.measurement, "قياس المساحة");
-    assert.equal(QUOTE_SERVICE_LABELS.boundary_survey, "مسح الحدود");
-  });
-
-  it("requestSurveyorQuote rejects missing land", () => {
-    const result = requestSurveyorQuote({
-      landId: "land_nope",
-      surveyorId: "s1",
-      requesterId: "u",
-    });
-    assert.equal(result.ok, false);
-    assert.equal(result.error, "LAND_NOT_FOUND");
-  });
-
-  it("requestSurveyorQuote rejects invalid service", () => {
-    const land = saveLand(sampleLandInput());
-    const result = requestSurveyorQuote({
-      landId: land.id,
-      surveyorId: "s1",
-      requesterId: "u",
-      service: "bogus",
-    });
-    assert.equal(result.ok, false);
-    assert.equal(result.error, "INVALID_QUOTE_SERVICE");
-  });
-
-  // There was a test here requiring the Find My Land screen to post a quote
-  // request with service "boundary_survey". The owner decided on 2026-09-06
-  // that the tool is not to ask for a surveyor's quote at all — it reads a deed
-  // and shows what it read, and that is the whole of it. The quote engine below
-  // (createQuoteRequest, isValidQuoteService, the /api/land/[id]/surveyors/quote
-  // route) is still tested and still correct; nothing in the tool calls it.
-  // A test demanding a screen nobody wants is a permanent red light that
-  // teaches everyone to ignore red, so it is gone rather than skipped.
-
+describe("Find My Land launch safeguards", () => {
   it("Find My Land launch UI keeps upload, timeout, CRS choice, RTL, and explicit verdict safeguards", async () => {
     const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
     assert.match(source, /MAX_FILE_SIZE\s*=\s*20\s*\*\s*1024\s*\*\s*1024/);
@@ -360,19 +279,6 @@ describe("Land Quote Request", () => {
     assert.match(source, /تم التحليل بنجاح/);
     assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
     assert.match(source, /تعذر استخراج إحداثيات صالحة/);
-  });
-
-  it("requestSurveyorQuote rejects invalid budget", () => {
-    const land = saveLand(sampleLandInput());
-    const result = requestSurveyorQuote({
-      landId: land.id,
-      surveyorId: "s1",
-      requesterId: "u",
-      budgetMin: 5000,
-      budgetMax: 1000,
-    });
-    assert.equal(result.ok, false);
-    assert.equal(result.error, "INVALID_BUDGET");
   });
 });
 
@@ -415,17 +321,4 @@ describe("Land Flow Orchestration", () => {
     assert.equal(result.surveyors[0].id, "near-verified");
   });
 
-  it("quote follows surveyor discovery in flow", () => {
-    const land = saveLand(sampleLandInput());
-    const quoteRes = requestSurveyorQuote({
-      landId: land.id,
-      surveyorId: "s1",
-      requesterId: "user_123",
-      service: "valuation",
-      budgetMin: 500,
-      budgetMax: 1500,
-    });
-    assert.equal(quoteRes.ok, true);
-    assert.equal(quoteRes.quote!.service, "valuation");
-  });
 });

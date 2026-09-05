@@ -104,35 +104,7 @@ export interface SurveyorSearchResult {
   query: SurveyorQuery;
 }
 
-export interface QuoteRequestInput {
-  landId: string;
-  surveyorId: string;
-  requesterId: string;
-  service?: string;
-  budgetMin?: number;
-  budgetMax?: number;
-  currency?: string;
-  preferredDate?: string;
-  notes?: string;
-}
-
-export interface QuoteRequest {
-  id: string;
-  landId: string;
-  surveyorId: string;
-  requesterId: string;
-  service: string;
-  budgetMin?: number;
-  budgetMax?: number;
-  currency: string;
-  preferredDate?: string;
-  notes?: string;
-  status: "pending" | "accepted" | "declined" | "expired";
-  createdAt: number;
-}
-
 export interface SurveyorDiscovery {
   land: SavedLand;
   results: SurveyorSearchResult;
-  quote?: QuoteRequest;
 }

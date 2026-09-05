@@ -8,8 +8,7 @@ import {
   createSharePayload,
 } from "./share";
 import { findSurveyors, DEFAULT_SURVEYOR_QUERY } from "./surveyor-discovery";
-import { createQuoteRequest, isValidQuoteService } from "./quote";
-import { QuoteRequest, QuoteRequestInput, SurveyorCandidate, SurveyorQuery } from "./contracts";
+import { SurveyorCandidate, SurveyorQuery } from "./contracts";
 
 export interface LandFlowResult {
   land: SavedLand;
@@ -19,7 +18,6 @@ export interface LandFlowResult {
   directionsUrl: string;
   listingDraft: ReturnType<typeof buildListingDraft>;
   surveyors: SurveyorCandidate[];
-  quote?: QuoteRequest;
 }
 
 export interface LandFlowConfig {
@@ -69,22 +67,4 @@ export function buildLandFlow(
     listingDraft,
     surveyors,
   };
-}
-
-export function requestSurveyorQuote(
-  input: QuoteRequestInput,
-): { ok: boolean; quote?: QuoteRequest; error?: string } {
-  const land = getLand(input.landId);
-  if (!land) return { ok: false, error: "LAND_NOT_FOUND" };
-
-  if (!isValidQuoteService(input.service)) {
-    return { ok: false, error: "INVALID_QUOTE_SERVICE" };
-  }
-
-  if (input.budgetMin !== undefined && input.budgetMax !== undefined && input.budgetMin > input.budgetMax) {
-    return { ok: false, error: "INVALID_BUDGET" };
-  }
-
-  const quote = createQuoteRequest(input);
-  return { ok: true, quote };
 }
