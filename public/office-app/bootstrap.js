@@ -1458,6 +1458,10 @@
     }
     checkForUpdate().then(function (gated) {
       if (gated) return; // mandatory update: the gate replaces the app
+      // webui 3.x signs in, registers the device, syncs listings and answers
+      // messages itself. Two chips, two heartbeats and two login screens for
+      // one office is what this flag prevents; the update gate above stays.
+      if (window.__AKAR_NATIVE_PLATFORM__) return;
       if (isLoggedIn()) {
         mountChip();
         ensureProfile();
