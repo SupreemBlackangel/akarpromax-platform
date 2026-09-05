@@ -85,6 +85,13 @@
       "when": 1787788801000,
       "tag": "0011_oauth_accounts_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787788802000,
+      "tag": "0012_service_timestamps_baseline",
+      "breakpoints": true
     }
   ]
 }

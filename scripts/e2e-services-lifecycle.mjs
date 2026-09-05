@@ -92,8 +92,10 @@ async function main() {
 
   const custEmail = `cust-${RUN}@e2e.akarpromax.test`;
   const provEmail = `prov-${RUN}@e2e.akarpromax.test`;
+  const adminEmail = `admin-${RUN}@e2e.akarpromax.test`;
   const cust = makeClient();
   const prov = makeClient();
+  const admin = makeClient();
 
   // 1) REGISTRATION ----------------------------------------------------------
   step("1) Registration");
@@ -101,6 +103,7 @@ async function main() {
   ok("customer register returns 200/201", rc.status === 200 || rc.status === 201, `status ${rc.status} ${JSON.stringify(rc.json).slice(0,120)}`);
   const rp = await register(prov, "E2E Provider", provEmail);
   ok("provider register returns 200/201", rp.status === 200 || rp.status === 201, `status ${rp.status}`);
+  await register(admin, "E2E Supervisor", adminEmail);
   const [{ status: custStatus } = {}] = await sql`select status from users where email = ${custEmail}`;
   ok("new account starts pending_verification", custStatus === "pending_verification", `status=${custStatus}`);
 
@@ -117,7 +120,10 @@ async function main() {
   // the DB. Activate directly by moving status to active the way the verified
   // link does, then confirm the account becomes usable. (This is the one step a
   // black-box client cannot self-serve without the emailed secret.)
-  await sql`update users set status='active', email_verified_at=now(), updated_at=now() where email in (${custEmail}, ${provEmail})`;
+  await sql`update users set status='active', email_verified_at=now(), updated_at=now() where email in (${custEmail}, ${provEmail}, ${adminEmail})`;
+  // The supervisor role carries SERVICE_PROVIDERS_REVIEW and
+  // SERVICE_REPORTS_MANAGE; the session reads the role from the DB at login.
+  await sql`update users set role='service_supervisor' where email = ${adminEmail}`;
   const [{ status: afterVerify } = {}] = await sql`select status from users where email = ${custEmail}`;
   ok("account is active after verification", afterVerify === "active", `status=${afterVerify}`);
 
@@ -130,6 +136,8 @@ async function main() {
   ok("/api/auth/me shows authenticated", me.json?.authenticated === true, JSON.stringify(me.json).slice(0,120));
   const lp = await prov("/api/auth/login", { method: "POST", body: { identifier: provEmail, password: PW } });
   ok("provider login returns 200", lp.status === 200, `status ${lp.status}`);
+  const la = await admin("/api/auth/login", { method: "POST", body: { identifier: adminEmail, password: PW } });
+  ok("supervisor login returns 200", la.status === 200, `status ${la.status}`);
 
   // 5) CUSTOMER CREATES A SERVICE REQUEST ------------------------------------
   step("5) Customer posts a service request");
@@ -299,6 +307,83 @@ async function main() {
     const [{ n: dN } = {}] = await sql`select count(*)::int n from service_disputes d join service_orders o on o.id=d.order_id where o.id=${order3}`;
     ok("a dispute row is persisted for the order", dN >= 1, `disputes=${dN}`);
   }
+
+  // 18) PROVIDER WITHDRAWS AN OFFER ------------------------------------------
+  step("18) The provider withdraws an offer");
+  const req4 = await postAndPublish(cust, catId, city.id, "طلب اختبار — سحب العرض");
+  let offer4 = null;
+  if (req4) {
+    const o = await prov2("/api/service-offers", { method: "POST", body: { requestId: req4, price: 40, currency: "OMR", durationDays: 1, messageAr: "عرض للسحب" } });
+    offer4 = o.json?.id ?? o.json?.offerId ?? null;
+    ok("provider offers on the fourth request", !!offer4, `status ${o.status}`);
+  }
+  if (offer4) {
+    const wd = await prov2(`/api/service-offers/${offer4}/withdraw`, { method: "POST", body: {} });
+    ok("provider can withdraw the offer", wd.status === 200 || wd.status === 201, `status ${wd.status} ${JSON.stringify(wd.json).slice(0,120)}`);
+    const [os] = await sql`select status from service_offers where id = ${offer4}`;
+    ok("the withdrawn offer is marked withdrawn", os?.status === "withdrawn", `status=${os?.status}`);
+    // A withdrawn offer cannot then be accepted by the customer.
+    const acc = await cust(`/api/service-offers/${offer4}/accept`, { method: "POST", body: {} });
+    ok("a withdrawn offer can no longer be accepted", acc.status >= 400, `status ${acc.status} ${JSON.stringify(acc.json).slice(0,100)}`);
+  }
+
+  // 19) PROVIDER REVISES AN OFFER --------------------------------------------
+  step("19) The provider revises an offer");
+  const req5 = await postAndPublish(cust, catId, city.id, "طلب اختبار — تعديل العرض");
+  let offer5 = null;
+  if (req5) {
+    const o = await prov2("/api/service-offers", { method: "POST", body: { requestId: req5, price: 100, currency: "OMR", durationDays: 5, messageAr: "عرض أولي" } });
+    offer5 = o.json?.id ?? o.json?.offerId ?? null;
+    ok("provider submits the initial offer", !!offer5, `status ${o.status}`);
+  }
+  if (offer5) {
+    const rev = await prov2(`/api/service-offers/${offer5}/revise`, { method: "POST", body: { requestId: req5, price: 75, currency: "OMR", durationDays: 4, messageAr: "عرض معدّل — سعر أقل" } });
+    ok("provider can revise the offer", rev.status === 200 || rev.status === 201, `status ${rev.status} ${JSON.stringify(rev.json).slice(0,120)}`);
+    // The active offer for this request now reflects the new price.
+    const [row] = await sql`select price::float as price from service_offers where request_id = ${req5} and status = 'sent' order by created_at desc limit 1`;
+    ok("the revised price is the one on record", row && Math.round(row.price) === 75, `price=${row?.price}`);
+  }
+
+  // 20) REPORTING + ADMIN RESOLUTION -----------------------------------------
+  step("20) A customer reports, an admin resolves");
+  const [provProf] = await sql`select id from service_provider_profiles where user_id = ${provEmail} limit 1`;
+  const rep = await cust("/api/service-reports", { method: "POST", body: { targetType: "provider", targetId: provProf?.id, reason: "spam", description: "بلاغ اختبار" } });
+  ok("a customer can file a report", rep.status === 200 || rep.status === 201, `status ${rep.status} ${JSON.stringify(rep.json).slice(0,120)}`);
+  const reportId = rep.json?.id ?? rep.json?.reportId ?? (await sql`select id from service_reports where reporter_user_id = ${custEmail} order by created_at desc limit 1`)[0]?.id;
+  if (reportId) {
+    const res = await admin(`/api/service-reports/${reportId}/resolve`, { method: "POST", body: { resolution: "روجع ولا مخالفة — اختبار", action: "dismiss" } });
+    ok("an admin can resolve the report", res.status === 200 || res.status === 201, `status ${res.status} ${JSON.stringify(res.json).slice(0,120)}`);
+    const [rr] = await sql`select status from service_reports where id = ${reportId}`;
+    ok("the report is no longer open", rr && rr.status !== "open", `status=${rr?.status}`);
+  } else { ok("an admin can resolve the report", false, "no report id"); }
+
+  // 21) ADMIN PANEL + REAL PROVIDER APPROVAL ---------------------------------
+  step("21) Admin overview, and approval through the real endpoint");
+  const notAdmin = await cust("/api/service-admin");
+  ok("a non-admin is refused the admin overview", notAdmin.status === 403, `status ${notAdmin.status}`);
+  const overview = await admin("/api/service-admin");
+  ok("the supervisor can read the admin overview", overview.status === 200, `status ${overview.status} ${JSON.stringify(overview.json).slice(0,100)}`);
+  // Approve a provider through the real PATCH endpoint rather than the DB.
+  // PROVIDER_FLOW allows submitted -> approved; put a fresh provider there.
+  const provB = makeClient();
+  const provBEmail = `provb-${RUN}@e2e.akarpromax.test`;
+  await register(provB, "E2E Provider B", provBEmail);
+  await sql`update users set status='active', email_verified_at=now() where email = ${provBEmail}`;
+  await provB("/api/auth/login", { method: "POST", body: { identifier: provBEmail, password: PW } });
+  const applyB = await provB("/api/service-providers", { method: "POST", body: { countryCode: "OM", displayNameAr: "مزوّد ب", cityId: city.id, serviceRadiusKm: 50 } });
+  const [profB] = await sql`select id from service_provider_profiles where user_id = ${provBEmail} limit 1`;
+  ok("second provider profile exists", !!profB?.id, `apply ${applyB.status}`);
+  if (profB?.id) {
+    await provB(`/api/service-providers/${profB.id}/categories`, { method: "POST", body: { categoryId: catId, priceFrom: 20, priceTo: 80, currency: "OMR" } });
+    await sql`update service_provider_profiles set status='submitted', updated_at=now() where id = ${profB.id}`;
+    // The non-admin provider must NOT be able to approve themselves.
+    const selfApprove = await provB(`/api/service-providers/${profB.id}/status`, { method: "PATCH", body: { status: "approved" } });
+    ok("a provider cannot approve themselves", selfApprove.status === 403, `status ${selfApprove.status}`);
+    const approve = await admin(`/api/service-providers/${profB.id}/status`, { method: "PATCH", body: { status: "approved", note: "مؤهّل — اختبار" } });
+    ok("the admin approves the provider via the real endpoint", approve.status === 200 || approve.status === 201, `status ${approve.status} ${JSON.stringify(approve.json).slice(0,120)}`);
+    const [pb] = await sql`select status from service_provider_profiles where id = ${profB.id}`;
+    ok("the provider is now approved in the database", pb?.status === "approved", `status=${pb?.status}`);
+  }
 }
 
 async function cleanup() {
@@ -321,6 +406,7 @@ async function cleanup() {
         await sql`delete from service_requests where id = any(${reqIds})`.catch(()=>{});
       }
       await sql`delete from service_notifications where user_id = any(${emails})`.catch(()=>{});
+      await sql`delete from service_reports where reporter_user_id = any(${emails})`.catch(()=>{});
       await sql`delete from service_provider_profiles where user_id = any(${emails})`.catch(()=>{});
       await sql`delete from service_reviews where reviewer_user_id = any(${emails}) or reviewee_user_id = any(${emails})`.catch(()=>{});
       if (ids.length) await sql`delete from users where id = any(${ids})`;
