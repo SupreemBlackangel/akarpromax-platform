@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
@@ -76,6 +76,14 @@ export default function CategoryDetailPage() {
     return () => controller.abort();
   }, [city, code, country, district, governorate, isGlobal, latitude, longitude]);
 
+  // The card resolves a request's category through this; this page shows one
+  // category, so that is the whole map it needs. Without it the card had
+  // nothing to print but the raw id.
+  const categoryMap = useMemo(
+    () => (category ? new Map<string, CategoryRow>([[category.id, category]]) : new Map<string, CategoryRow>()),
+    [category],
+  );
+
   const name = category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, code) : code;
   const description = category ? nameFor(locale, category.description_ar, category.description_en, category.description_tr, "") : "";
 
@@ -130,7 +138,7 @@ export default function CategoryDetailPage() {
         <section className="mt-10">
           <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.requests") ?? "الطلبات المنشورة"}</h2>
           <Grid columns={3}>
-            {requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
+            {requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} categoryMap={categoryMap} />)}
             {!loading && requests.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-8">{t("services.empty") ?? "لا توجد نتائج"}</p>
             )}

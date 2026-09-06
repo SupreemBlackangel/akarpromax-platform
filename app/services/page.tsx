@@ -66,6 +66,9 @@ export default function ServicesHubPage() {
       .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)),
     [categories],
   );
+  // The card resolves a request's category through this. Without it the card
+  // has nothing to print but the raw id.
+  const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   const selectedGroupId = activeGroup ?? groups[0]?.id ?? null;
   const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const professions = useMemo(
@@ -75,21 +78,35 @@ export default function ServicesHubPage() {
     [categories, selectedGroupId],
   );
 
-  const heroKicker = locale === "ar" ? "سوق الخدمات" : locale === "tr" ? "Hizmet Pazarı" : "Services Market";
-  const heroTitle = locale === "ar" ? "اختر خدمة أو اطلبها بسهولة" : locale === "tr" ? "Bir hizmet seçin veya kolayca talep edin" : "Choose a service or request one easily";
-  const heroSubtitle = locale === "ar" ? "استعرض مقدمي الخدمات الموثوقين، أو انشر طلبك واستقبل عروضاً مخصصة." : locale === "tr" ? "Güvenilir hizmet sağlayıcılarını keşfedin, talebinizi yayınlayın ve size özel teklifler alın." : "Browse trusted service providers, post your request, and receive tailored offers.";
+  // One line per idea. The hero used to carry three — a pill saying "سوق
+  // الخدمات" above a heading saying the same, above a sentence saying it a
+  // third time — and each section below repeated its own heading as a kicker.
+  const heroTitle = locale === "ar" ? "اختر خدمة أو اطلبها" : locale === "tr" ? "Bir hizmet seçin veya talep edin" : "Choose a service, or ask for one";
+  const heroSubtitle = locale === "ar" ? "تصفّح المزوّدين، أو انشر طلبك واستقبل العروض." : locale === "tr" ? "Sağlayıcılara göz atın veya talebinizi yayınlayıp teklif alın." : "Browse providers, or post a request and receive offers.";
   const postRequestLabel = locale === "ar" ? "انشر طلباً" : locale === "tr" ? "Talep Yayınla" : "Post a Request";
   const becomeProviderLabel = locale === "ar" ? "انضم كمقدم خدمة" : locale === "tr" ? "Hizmet Sağlayıcı Ol" : "Become a Provider";
-  const categoriesLabel = locale === "ar" ? "التصنيفات" : locale === "tr" ? "Kategoriler" : "Categories";
-  const browseByCategoryLabel = locale === "ar" ? "تصفح حسب التصنيف" : locale === "tr" ? "Kategoriye Göz At" : "Browse by Category";
+  const browseByCategoryLabel = locale === "ar" ? "تصفّح حسب التصنيف" : locale === "tr" ? "Kategoriye göz at" : "Browse by category";
   const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
-  const providersLabel = locale === "ar" ? "مقدمو الخدمات" : locale === "tr" ? "Hizmet Sağlayıcıları" : "Service Providers";
-  const featuredProvidersLabel = locale === "ar" ? "مقدمو خدمات موثوقون" : locale === "tr" ? "Güvenilir Hizmet Sağlayıcıları" : "Trusted Service Providers";
-  const recentRequestsLabel = locale === "ar" ? "أحدث الطلبات" : locale === "tr" ? "Son Talepler" : "Recent Requests";
+  const featuredProvidersLabel = locale === "ar" ? "مزوّدون موثوقون" : locale === "tr" ? "Güvenilir sağlayıcılar" : "Trusted providers";
+  const recentRequestsLabel = locale === "ar" ? "أحدث الطلبات" : locale === "tr" ? "Son talepler" : "Recent requests";
   const providerCtaLabel = locale === "ar" ? "هل أنت مقدم خدمة محترف؟" : locale === "tr" ? "Profesyonel bir hizmet sağlayıcı mısınız?" : "Are you a professional service provider?";
-  const providerCtaSubLabel = locale === "ar" ? "أنشئ ملفك الشخصي، واستقبل طلبات مناسبة لمنطقتك، وواصل النمو مع عقار بروماكس." : locale === "tr" ? "Profilinizi oluşturun, bölgenize uygun talepleri alın ve AkarPromax ile büyümeye devam edin." : "Create your profile, receive requests suited to your area, and keep growing with AkarPromax.";
+  const providerCtaSubLabel = locale === "ar" ? "أنشئ ملفك واستقبل طلبات منطقتك." : locale === "tr" ? "Profilinizi oluşturun, bölgenizdeki talepleri alın." : "Create your profile and receive requests from your area.";
   const applyNowLabel = locale === "ar" ? "قدم الآن" : locale === "tr" ? "Şimdi Başvur" : "Apply Now";
-  const emptyLabel = locale === "ar" ? "لا توجد بيانات للعرض حالياً." : locale === "tr" ? "Şu anda gösterilecek veri yok." : "Nothing to show yet.";
+  const emptyLabel = locale === "ar" ? "لا شيء هنا بعد." : locale === "tr" ? "Burada henüz bir şey yok." : "Nothing here yet.";
+
+  /**
+   * Arabic counts a thing in five shapes, and "6 مهنة متاحة" is none of them.
+   * The other two locales need only one plural each.
+   */
+  const professionCount = (n: number): string => {
+    if (locale === "tr") return `${n} meslek`;
+    if (locale !== "ar") return n === 1 ? "1 profession" : `${n} professions`;
+    if (n === 0) return "لا مهن";
+    if (n === 1) return "مهنة واحدة";
+    if (n === 2) return "مهنتان";
+    if (n <= 10) return `${n} مهن`;
+    return `${n} مهنة`;
+  };
 
   return (
     <PublicPageShell
@@ -106,32 +123,26 @@ export default function ServicesHubPage() {
       <PageContainer className="py-8" dir={dir}>
         {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
-        <section className="rounded-2xl border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-50 via-white to-emerald-50 dark:from-blue-950/40 dark:via-gray-900 dark:to-emerald-950/30 p-8 md:p-12 text-center">
-          <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-bold">
-            ✨ {heroKicker}
-          </p>
-          <h1 className="mt-4 text-3xl md:text-4xl font-black text-gray-900 dark:text-white">{heroTitle}</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+        {/* A quiet header: the page's own colours, no gradient, no pill, no
+            emoji on the buttons. The two things a visitor came to do are the
+            only two things offered. */}
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-10 text-center md:px-12 md:py-14">
+          <h1 className="text-3xl font-black text-[var(--color-text-primary)] md:text-4xl">{heroTitle}</h1>
+          <p className="mx-auto mt-3 max-w-md text-sm text-[var(--color-text-secondary)]">
             {heroSubtitle}
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/service-requests/new" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition">
-              ➕ {postRequestLabel}
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link href="/service-requests/new" className="rounded-xl bg-[var(--color-primary)] px-6 py-3 text-sm font-bold text-[var(--color-primary-foreground)] transition hover:bg-[var(--color-primary-hover)]">
+              {postRequestLabel}
             </Link>
-            <Link href="/providers/apply" className="px-6 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold transition hover:border-blue-300">
-              👨‍🔧 {becomeProviderLabel}
+            <Link href="/providers/apply" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-3 text-sm font-bold text-[var(--color-text-primary)] transition hover:border-[var(--color-border-strong)]">
+              {becomeProviderLabel}
             </Link>
           </div>
         </section>
 
         <section className="mt-10">
-          <div className="text-center mb-8">
-            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wider">{categoriesLabel}</p>
-            <h2 className="mt-1 text-2xl md:text-3xl font-black text-gray-900 dark:text-white">{browseByCategoryLabel}</h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              {locale === "ar" ? "اختر نوع الخدمة لعرض المهن المتاحة فيه" : locale === "tr" ? "Mevcut meslekleri görmek için bir hizmet türü seçin" : "Pick a service type to see its professions"}
-            </p>
-          </div>
+          <h2 className="mb-7 text-center text-2xl font-black text-[var(--color-text-primary)] md:text-3xl">{browseByCategoryLabel}</h2>
 
           {dataLoading ? (
             <div className="flex flex-wrap justify-center gap-4">
@@ -184,7 +195,7 @@ export default function ServicesHubPage() {
                         {selectedGroup ? nameFor(locale, selectedGroup.name_ar, selectedGroup.name_en, selectedGroup.name_tr, selectedGroup.code) : ""}
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {locale === "ar" ? `${professions.length} مهنة متاحة` : locale === "tr" ? `${professions.length} meslek mevcut` : `${professions.length} professions available`}
+                        {professionCount(professions.length)}
                       </p>
                     </div>
                   </div>
@@ -221,10 +232,7 @@ export default function ServicesHubPage() {
 
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
-            <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{providersLabel}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{featuredProvidersLabel}</h2>
-            </div>
+            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">{featuredProvidersLabel}</h2>
             <Link href="/providers" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
               {viewAllLabel} ←
             </Link>
@@ -241,10 +249,7 @@ export default function ServicesHubPage() {
 
         <section className="mt-10">
           <div className="flex items-end justify-between gap-4 mb-4">
-            <div>
-              <p className="text-xs font-bold text-blue-600 dark:text-blue-400">{locale === "ar" ? "الطلبات" : locale === "tr" ? "Talepler" : "Requests"}</p>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white">{recentRequestsLabel}</h2>
-            </div>
+            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">{recentRequestsLabel}</h2>
             <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
               {viewAllLabel} ←
             </Link>
@@ -252,7 +257,7 @@ export default function ServicesHubPage() {
           <Grid columns={3}>
             {dataLoading
               ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
-              : requests.slice(0, 6).map((request) => <RequestCard key={request.id} request={request} locale={locale} />)}
+              : requests.slice(0, 6).map((request) => <RequestCard key={request.id} request={request} locale={locale} categoryMap={categoryMap} />)}
             {!dataLoading && requests.length === 0 && (
               <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
             )}

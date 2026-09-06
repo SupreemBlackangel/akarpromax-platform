@@ -218,7 +218,14 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
 
 export function RequestCard({ request, locale, categoryMap }: { request: RequestRow; locale: Locale; categoryMap?: Map<string, CategoryRow> }) {
   const category = request.category ?? (categoryMap ? categoryMap.get(request.category_id) : undefined);
-  const categoryName = category ? nameFor(locale, (category as CategoryRow).name_ar, (category as CategoryRow).name_en, (category as CategoryRow).name_tr, String(request.category_id).slice(0, 6)) : String(request.category_id).slice(0, 6);
+  // A caller that cannot resolve the category gets a word, not a database id.
+  // The fallback used to be `category_id.slice(0, 6)`, which put "svc-SA" on
+  // the card of every request on the services hub — the one page that had the
+  // categories loaded and simply never passed the map.
+  const unnamed = locale === "ar" ? "خدمة" : locale === "tr" ? "Hizmet" : "Service";
+  const categoryName = category
+    ? nameFor(locale, (category as CategoryRow).name_ar, (category as CategoryRow).name_en, (category as CategoryRow).name_tr, unnamed)
+    : unnamed;
   const answers = parseJsonArray(request.answers);
   const answersSummary = answers.slice(0, 2).map((a) => `${String(a.label ?? a.key)}: ${String(a.value ?? "")}`).join(" • ");
   return (
