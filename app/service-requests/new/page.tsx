@@ -11,7 +11,6 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
 import type { CategoryRow } from "@services-ui/ServiceCards";
-import { CURRENCY_REGISTRY } from "@/lib/market/currency-registry";
 
 const ServiceLocationPicker = dynamic(() => import("@services-ui/ServiceLocationPicker"), {
   ssr: false,
@@ -28,34 +27,17 @@ type DynamicField = Record<string, unknown> & {
   options?: Array<string | { value?: string; label?: string }>;
 };
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
-const STEP_LABELS: Record<WizardStep, string> = {
-  1: "التصنيف",
-  2: "التفاصيل",
-  3: "الموقع",
-  4: "المرفقات",
-  5: "الجدولة",
-  6: "الميزانية",
-  7: "التواصل",
-  8: "مراجعة",
-};
-
-const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
-  1: "اختر نوع الخدمة المطلوبة",
-  2: "صف المشكلة أو العمل المطلوب",
-  3: "حدد الموقع بدقة",
-  4: "أضف صوراً أو مستندات",
-  5: "اختر الموعد المناسب",
-  6: "حدد نطاق الميزانية",
-  7: "كيف يفضل التواصل معك؟",
-  8: "تأكد من البيانات وأرسل",
-};
+/**
+ * The form's sections, in the order they are read. A validation problem names
+ * the one it belongs to, so the page can scroll there — the page shows every
+ * section at once, and there is no "current step" to fall back on. Each id is
+ * the DOM id of its <section>.
+ */
+type SectionId = "category" | "details" | "location" | "attachments" | "schedule" | "contact";
 
 const DRAFT_KEY = "service_request_draft_v1";
 
 type DraftData = {
-  step: WizardStep;
   countryCode: string;
   categoryId: string;
   cityId: string;
@@ -71,9 +53,6 @@ type DraftData = {
   needsVisit: boolean;
   accessNotes: string;
   shortAddress: string;
-  budgetMin: string;
-  budgetMax: string;
-  currency: string;
   urgency: string;
   answers: Record<string, string>;
   contactPhone: string;
@@ -84,7 +63,6 @@ type DraftData = {
 };
 
 const INITIAL_DRAFT: DraftData = {
-  step: 1,
   countryCode: "",
   categoryId: "",
   cityId: "",
@@ -100,9 +78,6 @@ const INITIAL_DRAFT: DraftData = {
   needsVisit: false,
   accessNotes: "",
   shortAddress: "",
-  budgetMin: "",
-  budgetMax: "",
-  currency: "",
   urgency: "normal",
   answers: {},
   contactPhone: "",
@@ -174,20 +149,18 @@ export default function NewServiceRequestPage() {
         longitude: countryChanged ? (longitude == null ? "" : String(longitude)) : current.longitude || (longitude == null ? "" : String(longitude)),
         // Suggested from the country, same as location — the requester can
         // still change it (e.g. Syria/Lebanon commonly quote in USD).
-        currency: countryChanged ? (countryConfig?.currencyCode || current.currency) : current.currency || countryConfig?.currencyCode || "",
       };
     });
   }, [city, country, countryConfig, district, isGlobal, latitude, longitude]);
 
-  const saveDraft = useCallback((step: WizardStep) => {
-    const updated = { ...draft, step, updatedAt: Date.now() };
-    setDraft(updated);
+  const saveDraft = useCallback(() => {
+    const updated = { ...draft, updatedAt: Date.now() };
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(updated));
       setDraftSaved(true);
-      setTimeout(() => setDraftSaved(false), 2000);
+      window.setTimeout(() => setDraftSaved(false), 1500);
     } catch {
-      /* ignore */
+      /* a full or blocked store is not worth an error in the user's face */
     }
   }, [draft]);
 
@@ -225,67 +198,40 @@ export default function NewServiceRequestPage() {
     );
   };
 
-  const validateStep = (step: WizardStep): string => {
-    switch (step) {
-      case 1:
-        if (!draft.categoryId) return t("services.categoryRequired") ?? "يجب اختيار التصنيف";
-        return "";
-      case 2:
-        if (draft.title.trim().length < 5) return t("services.titleRequired") ?? "العنوان مطلوب (5 أحرف على الأقل)";
-        for (const field of dynamicFields) {
-          if (field.required && !draft.answers[field.key]?.trim()) return `${field.label || field.key} مطلوب`;
-        }
-        return "";
-      case 3:
-        if (!draft.cityId.trim()) return t("services.cityRequired") ?? "المدينة مطلوبة";
-        if (!draft.latitude || !draft.longitude) return "حدّد موقع الخدمة على الخريطة أو استخدم موقعك الحالي";
-        return "";
-      case 4:
-        return "";
-      case 5:
-        return "";
-      case 6:
-        if (draft.budgetMin && draft.budgetMax && Number(draft.budgetMax) < Number(draft.budgetMin)) return t("services.budgetInvalid") ?? "الميزانية القصوى أقل من الدنيا";
-        return "";
-      case 7:
-        if ((draft.contactPreference === "phone" || draft.contactPreference === "whatsapp") && !draft.contactPhone.trim()) return "رقم الهاتف مطلوب";
-        if (draft.contactPreference === "email" && !draft.contactEmail.trim()) return "البريد الإلكتروني مطلوب";
-        return "";
-      case 8:
-        return "";
-      default:
-        return "";
+  /**
+   * Everything the form still needs, in reading order. The page shows all of
+   * it at once, so a problem must say which section to look in — there is no
+   * "current step" to fall back on.
+   */
+  const problems = (): { id: SectionId; message: string }[] => {
+    const found: { id: SectionId; message: string }[] = [];
+    if (!draft.categoryId) found.push({ id: "category", message: t("services.categoryRequired") ?? "يجب اختيار التصنيف" });
+    if (draft.title.trim().length < 5) found.push({ id: "details", message: t("services.titleRequired") ?? "العنوان مطلوب (5 أحرف على الأقل)" });
+    for (const field of dynamicFields) {
+      if (field.required && !draft.answers[field.key]?.trim()) {
+        found.push({ id: "details", message: `${field.label || field.key} مطلوب` });
+      }
     }
-  };
-
-  const handleNext = () => {
-    const invalid = validateStep(draft.step);
-    if (invalid) {
-      setError(invalid);
-      return;
+    if (!draft.cityId.trim()) found.push({ id: "location", message: t("services.cityRequired") ?? "المدينة مطلوبة" });
+    if (!draft.latitude || !draft.longitude) found.push({ id: "location", message: "حدّد موقع الخدمة على الخريطة أو استخدم موقعك الحالي" });
+    if ((draft.contactPreference === "phone" || draft.contactPreference === "whatsapp") && !draft.contactPhone.trim()) {
+      found.push({ id: "contact", message: "رقم الهاتف مطلوب" });
     }
-    setError("");
-    saveDraft(draft.step);
-    if (draft.step < 8) {
-      setDraft((prev) => ({ ...prev, step: (prev.step + 1) as WizardStep }));
+    if (draft.contactPreference === "email" && !draft.contactEmail.trim()) {
+      found.push({ id: "contact", message: "البريد الإلكتروني مطلوب" });
     }
-  };
-
-  const handleBack = () => {
-    setError("");
-    if (draft.step > 1) {
-      setDraft((prev) => ({ ...prev, step: (prev.step - 1) as WizardStep }));
-    }
+    return found;
   };
 
   const submit = async () => {
-    const invalid = validateStep(8);
-    if (invalid) {
-      setError(invalid);
+    const found = problems();
+    if (found.length > 0) {
+      setError(found[0].message);
+      document.getElementById(`section-${found[0].id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     if (!viewer.authenticated) {
-      saveDraft(8);
+      saveDraft();
       setError("طلبك محفوظ. سجّل الدخول أو أنشئ حسابًا لإرساله دون فقدان البيانات.");
       openLogin("register");
       return;
@@ -311,9 +257,11 @@ export default function NewServiceRequestPage() {
           longitude: draft.longitude ? Number(draft.longitude) : null,
           title: draft.title.trim(),
           description: draft.description.trim() || null,
-          budgetMin: draft.budgetMin ? Number(draft.budgetMin) : null,
-          budgetMax: draft.budgetMax ? Number(draft.budgetMax) : null,
-          currency: draft.currency || null,
+          // No budget is asked for — a customer naming a figure only bids
+          // their own job down. The offers carry the price. The currency is
+          // still sent because the server denominates them in it, and the
+          // country's own is the only sensible answer.
+          currency: countryConfig?.currencyCode || null,
           urgency: draft.urgency,
           preferredPeriod: draft.preferredPeriod.trim() || null,
           preferredDate: draft.preferredDate || null,
@@ -351,9 +299,7 @@ export default function NewServiceRequestPage() {
     "w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-gray-400";
   const labelCls = "block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1";
 
-  const currentStep = draft.step;
-  const stepError = error;
-  const stepInvalid = validateStep(currentStep);
+  const openProblems = problems();
 
   return (
     <PublicPageShell
@@ -370,53 +316,24 @@ export default function NewServiceRequestPage() {
         <Link href="/services" className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
 
         <div className="mt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{STEP_DESCRIPTIONS[currentStep]}</p>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <span>{currentStep} / 8</span>
-              <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--color-primary)] transition-all duration-300" style={{ width: `${(currentStep / 8) * 100}%` }} />
-              </div>
-            </div>
-          </div>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">املأ ما ينطبق على طلبك. تُحفظ البيانات على جهازك أولاً بأول.</p>
         </div>
 
         {!viewer.authenticated && <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-4 py-3 text-sm text-blue-800 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-blue-200"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-black">أكمل الطلب الآن دون تسجيل</p><p className="mt-0.5 text-xs leading-5">سنحفظ كل ما تدخله على جهازك، ولن نطلب تسجيل الدخول إلا عند الإرسال النهائي.</p></div></div>}
 
-        {stepError && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{stepError}</div>}
+        {error && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
         {draftSaved && <div className="mt-4 px-4 py-3 bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)] rounded-lg text-sm">{t("services.draftSaved") ?? "تم حفظ المسودة تلقائياً"}</div>}
 
-        <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 md:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      i + 1 < currentStep
-                        ? "bg-[var(--color-primary)] text-white"
-                        : i + 1 === currentStep
-                        ? "bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:text-[var(--color-primary)]"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {i + 1 === currentStep ? STEP_LABELS[currentStep].charAt(0) : i + 1}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {currentStep < 8 && (
-              <Button variant="ghost" onClick={clearDraft} className="text-xs text-gray-500 hover:text-red-500">
-                {t("services.clearDraft") ?? "مسح المسودة"}
-              </Button>
-            )}
+        <div className="mt-6 space-y-6">
+          <div className="flex justify-end">
+            <Button variant="ghost" onClick={clearDraft} className="text-xs text-gray-500 hover:text-red-500">
+              {t("services.clearDraft") ?? "مسح المسودة"}
+            </Button>
           </div>
 
-          {currentStep === 1 && (
+          <section id="section-category" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"التصنيف"}</h2>
             <div className="space-y-5">
               <div>
                 <label className={labelCls}>{t("services.category") ?? "التصنيف"} *</label>
@@ -440,9 +357,10 @@ export default function NewServiceRequestPage() {
                 </div>
               )}
             </div>
-          )}
+          </section>
 
-          {currentStep === 2 && (
+          <section id="section-details" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"تفاصيل الطلب"}</h2>
             <div className="space-y-5">
               <div className="sm:col-span-2">
                 <label className={labelCls}>{t("services.title") ?? "عنوان الطلب"} *</label>
@@ -490,9 +408,10 @@ export default function NewServiceRequestPage() {
                 </div>
               )}
             </div>
-          )}
+          </section>
 
-          {currentStep === 3 && (
+          <section id="section-location" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"الموقع"}</h2>
             <div className="space-y-5">
               <div className="rounded-2xl border border-blue-100 bg-[var(--color-primary-soft)] p-4 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/30">
                 <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white"><MapPin className="h-5 w-5" /></span><div><p className="text-sm font-black text-blue-950 dark:text-[var(--color-primary)]/80">حدّد مكان تنفيذ الخدمة بدقة</p><p className="mt-0.5 text-xs leading-5 text-[var(--color-primary)] dark:text-[var(--color-primary)]">الموقع الدقيق يحسّن مطابقة الطلب مع الحرفيين القريبين. لا يظهر للعامة، بل للمحترفين المطابقين فقط.</p></div></div><button type="button" onClick={locateMe} className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-black text-[var(--color-primary)] shadow-sm hover:bg-[var(--color-primary-soft)] dark:bg-blue-950 dark:text-blue-200"><LocateFixed className="h-4 w-4" />استخدم موقعي</button></div>
@@ -518,9 +437,10 @@ export default function NewServiceRequestPage() {
               <div><label className={labelCls}>{t("services.accessNotes") ?? "ملاحظات الوصول"}</label><textarea value={draft.accessNotes} onChange={(e) => updateField("accessNotes", e.target.value)} rows={2} className={inputCls} placeholder="مثال: البوابة الثانية أو تعليمات الوقوف والدخول" /></div>
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200"><input type="checkbox" checked={draft.needsVisit} onChange={(e) => updateField("needsVisit", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />{t("services.needsVisit") ?? "يتطلب معاينة الموقع قبل التسعير"}</label>
             </div>
-          )}
+          </section>
 
-          {currentStep === 4 && (
+          <section id="section-attachments" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"المرفقات"}</h2>
             <div className="space-y-5">
               <div className="flex gap-2">
                 <input value={draft.attachmentUrl} onChange={(e) => updateField("attachmentUrl", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAttachment(); } }} className={inputCls} placeholder="https://example.com/photo.jpg" />
@@ -540,9 +460,10 @@ export default function NewServiceRequestPage() {
               )}
               <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.attachmentsHint") ?? "أضف روابط للصور أو المستندات المتعلقة بالطلب (حتى 20 مرفق)"}</p>
             </div>
-          )}
+          </section>
 
-          {currentStep === 5 && (
+          <section id="section-schedule" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"الموعد"}</h2>
             <Grid columns={2} className="space-y-5">
               <div>
                 <label className={labelCls}>{t("services.preferredDate") ?? "التاريخ المفضل"}</label>
@@ -552,28 +473,9 @@ export default function NewServiceRequestPage() {
                 <label className={labelCls}>{t("services.preferredPeriod") ?? "الفترة المفضلة"}</label>
                 <input value={draft.preferredPeriod} onChange={(e) => updateField("preferredPeriod", e.target.value)} className={inputCls} placeholder="مثال: أيام الأسبوع صباحاً" />
               </div>
-            </Grid>
-          )}
-
-          {currentStep === 6 && (
-            <Grid columns={2} className="space-y-5">
-              <div>
-                <label className={labelCls}>{t("services.budgetMin") ?? "الميزانية الدنيا"}</label>
-                <input type="number" min={0} value={draft.budgetMin} onChange={(e) => updateField("budgetMin", e.target.value)} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>{t("services.budgetMax") ?? "الميزانية القصوى"}</label>
-                <input type="number" min={0} value={draft.budgetMax} onChange={(e) => updateField("budgetMax", e.target.value)} className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>{t("services.currency") ?? "العملة"}</label>
-                <select value={draft.currency} onChange={(e) => updateField("currency", e.target.value)} className={inputCls}>
-                  <option value="" disabled>{t("services.currencySelect") ?? "اختر العملة"}</option>
-                  {CURRENCY_REGISTRY.map((c) => (
-                    <option key={c.code} value={c.code}>{`${c.nameAr} — ${c.code}`}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Urgency belongs with the timing. The budget fields that used
+                  to stand here are gone: a customer naming a figure only bids
+                  their own job down, and the offers are where a price belongs. */}
               <div>
                 <label className={labelCls}>{t("services.urgency") ?? "درجة الإلحاح"}</label>
                 <select value={draft.urgency} onChange={(e) => updateField("urgency", e.target.value as "urgent" | "normal" | "flexible")} className={inputCls}>
@@ -583,9 +485,10 @@ export default function NewServiceRequestPage() {
                 </select>
               </div>
             </Grid>
-          )}
+          </section>
 
-          {currentStep === 7 && (
+          <section id="section-contact" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"التواصل"}</h2>
             <div className="space-y-5">
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
                 <input type="radio" name="contactPreference" value="phone" checked={draft.contactPreference === "phone"} onChange={() => updateField("contactPreference", "phone")} className="h-4 w-4 text-[var(--color-primary)]" />
@@ -616,48 +519,39 @@ export default function NewServiceRequestPage() {
                 </div>
               )}
             </div>
-          )}
+          </section>
 
-          {currentStep === 8 && (
-            <div className="space-y-5">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5">
-                <h3 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-3">{t("services.reviewTitle") ?? "مراجعة الطلب"}</h3>
-                <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.category") ?? "التصنيف"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{category ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code) : draft.categoryId}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.title") ?? "العنوان"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.title || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.city") ?? "المدينة"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.cityId || "—"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموقع</dt><dd className="font-semibold text-[var(--color-success)] dark:text-[var(--color-success)]">{draft.latitude && draft.longitude ? "محدد بدقة" : "غير محدد"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">الموعد</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.preferredDate || "مرن"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.budgetRange") ?? "الميزانية"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{(draft.budgetMin ? `${draft.budgetMin} ${draft.currency}` : "—")} – {(draft.budgetMax ? `${draft.budgetMax} ${draft.currency}` : "—")}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.urgency") ?? "الإلحاح"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.urgency === "urgent" ? "عاجل" : draft.urgency === "flexible" ? "مرن" : "عادي"}</dd></div>
-                  <div className="flex justify-between"><dt className="text-gray-500 dark:text-gray-400">{t("services.attachments") ?? "المرفقات"}</dt><dd className="font-semibold text-gray-900 dark:text-[var(--color-text-primary)]">{draft.attachments.length} {t("services.files") ?? "ملفات"}</dd></div>
-                </dl>
-              </div>
-              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-                <input type="checkbox" checked={draft.publishNow} onChange={(e) => updateField("publishNow", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
-                {t("services.publishNow") ?? "نشر الطلب فوراً (سيتم عرضه لمقدمي الخدمات)"}
-              </label>
-            </div>
-          )}
+          {/* The whole form is on one page, so there is nothing left to
+              review on a page of its own — only the decision to publish, and
+              the button. Any problem names its section and scrolls there. */}
+          <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
+            <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+              <input type="checkbox" checked={draft.publishNow} onChange={(e) => updateField("publishNow", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+              {t("services.publishNow") ?? "نشر الطلب فوراً (سيتم عرضه لمقدمي الخدمات)"}
+            </label>
 
-          <div className="mt-8 flex items-center justify-between gap-4">
-            {currentStep > 1 && (
-              <Button variant="secondary" onClick={handleBack} disabled={submitting}>
-                ← {t("services.back") ?? "السابق"}
-              </Button>
+            {openProblems.length > 0 && (
+              <ul className="mt-4 space-y-1 text-xs font-semibold text-[var(--color-error)]" role="status">
+                {openProblems.map((problem) => (
+                  <li key={`${problem.id}-${problem.message}`}>
+                    <button
+                      type="button"
+                      className="underline underline-offset-2 hover:no-underline"
+                      onClick={() => document.getElementById(`section-${problem.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    >
+                      • {problem.message}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-            <div className="flex-1 flex justify-end gap-3">
-              {currentStep < 8 ? (
-                <Button variant="primary" onClick={handleNext} disabled={submitting || Boolean(stepInvalid)}>
-                  {t("services.next") ?? "التالي"} →
-                </Button>
-              ) : (
-                <Button variant="primary" onClick={() => void submit()} loading={submitting} disabled={submitting}>
-                  {submitting ? t("services.submitting") ?? "جارٍ الإرسال..." : draft.publishNow ? t("services.publish") ?? "نشر الطلب" : t("services.saveDraft") ?? "حفظ كمسودة"}
-                </Button>
-              )}
+
+            <div className="mt-6 flex justify-end">
+              <Button variant="primary" onClick={() => void submit()} loading={submitting} disabled={submitting}>
+                {submitting ? t("services.submitting") ?? "جارٍ الإرسال..." : draft.publishNow ? t("services.publish") ?? "نشر الطلب" : t("services.saveDraft") ?? "حفظ كمسودة"}
+              </Button>
             </div>
-          </div>
+          </section>
         </div>
       </PageContainer>
       {AccountDialog}

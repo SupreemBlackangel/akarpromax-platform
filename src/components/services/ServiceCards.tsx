@@ -270,9 +270,17 @@ export function RequestCard({ request, locale, categoryMap }: { request: Request
       {request.description && <p className="mt-2 text-sm text-[var(--color-text-secondary)] line-clamp-2">{request.description}</p>}
       {answersSummary && <p className="mt-2 text-xs text-[var(--color-text-secondary)] line-clamp-1">{answersSummary}</p>}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-blue-400">
-          {formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}
-        </span>
+        {/* Requests no longer state a budget — the offers carry the price —
+            but the ones filed before that do, and theirs is still shown. */}
+        {request.budget_min != null || request.budget_max != null ? (
+          <span className="text-sm font-semibold text-[var(--color-primary)] dark:text-blue-400">
+            {formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}
+          </span>
+        ) : (
+          <span className="text-xs font-semibold text-[var(--color-text-muted)]">
+            {locale === "ar" ? "بانتظار العروض" : locale === "tr" ? "Teklif bekleniyor" : "Awaiting offers"}
+          </span>
+        )}
         <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-secondary)]">{categoryName}</span>
       </div>
     </Link>

@@ -163,12 +163,18 @@ test("the request wizard suggests a currency instead of imposing one", async () 
   assert.deepEqual(MIGRATION_BOUND_EXCEPTIONS, [], "no Services file may hold a currency of its own any more");
   const wizard = await read("app/service-requests/new/page.tsx");
 
-  // Suggested from the platform's country configuration, and only suggested:
-  // the requester can change it, which is the whole point of the rule.
+  // Taken from the platform's country configuration, never inferred and never
+  // hard-coded — which is the rule this file exists to hold.
   assert.match(wizard, /countryConfig\?\.currencyCode/);
-  // A request with no budget carries no currency, rather than being silently
-  // denominated in one.
-  assert.match(wizard, /currency: draft\.currency \|\| null/);
+  // The form no longer asks for a budget at all (a customer naming a figure
+  // only bids their own job down), so there is no amount for the requester to
+  // denominate and no currency field to pick from. It used to assert
+  // `currency: draft.currency || null` — the shape of a form that had both.
+  assert.doesNotMatch(wizard, /services\.budgetMin|services\.budgetMax|CURRENCY_REGISTRY/);
+  assert.match(wizard, /currency: countryConfig\?\.currencyCode \|\| null/);
+  // NULL is where this is going: M3 makes service_requests.currency nullable
+  // and pairs it with the budget by CHECK. Until that migration runs, the
+  // public schema still has NOT NULL DEFAULT 'OMR', so a real code is sent.
 
   const plan = await read("docs/refactor/L1C05B_SERVICES_MIGRATION_PLAN.md");
   assert.match(plan, /budget_min IS NULL AND budget_max IS NULL/, "the M3 decision must stay recorded");
