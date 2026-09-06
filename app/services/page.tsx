@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { BadgePlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
-import { ProviderCard, RequestCard, ServiceCategoryIcon, type CategoryRow, type ProviderRow, type RequestRow } from "@services-ui/ServiceCards";
+import { ProviderCard, ServiceCategoryIcon, type CategoryRow, type ProviderRow } from "@services-ui/ServiceCards";
 import { apiFetch, nameFor } from "@services-client";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
@@ -17,27 +18,22 @@ export default function ServicesHubPage() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [providers, setProviders] = useState<ProviderRow[]>([]);
-  const [requests, setRequests] = useState<RequestRow[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    const providerParams = new URLSearchParams({ limit: "6", scope: isGlobal ? "global" : "local" });
-    const requestParams = new URLSearchParams({ status: "published", limit: "6", scope: isGlobal ? "global" : "local" });
+    const providerParams = new URLSearchParams({ limit: "9", scope: isGlobal ? "global" : "local" });
     if (!isGlobal) {
-      for (const params of [providerParams, requestParams]) params.set("country", country);
+      providerParams.set("country", country);
       if (governorate) {
         providerParams.set("governorate", governorate);
-        requestParams.set("governorate", governorate);
       }
       if (city) {
         providerParams.set("cityId", city);
-        requestParams.set("cityId", city);
       }
       if (district) {
         providerParams.set("districtId", district);
-        requestParams.set("districtId", district);
       }
     }
     // The taxonomy is per country: every country carries its own copy of the
@@ -49,13 +45,11 @@ export default function ServicesHubPage() {
     Promise.allSettled([
       apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${categorySuffix}`),
       apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?${providerParams.toString()}`),
-      apiFetch<{ requests: RequestRow[] }>(`/api/service-requests?${requestParams.toString()}`),
-    ]).then(([categoryResult, providerResult, requestResult]) => {
+    ]).then(([categoryResult, providerResult]) => {
       if (!active) return;
       if (categoryResult.status === "fulfilled") setCategories(categoryResult.value.categories ?? []);
       if (providerResult.status === "fulfilled") setProviders(providerResult.value.profiles ?? []);
-      if (requestResult.status === "fulfilled") setRequests(requestResult.value.requests ?? []);
-      if (categoryResult.status === "rejected" && providerResult.status === "rejected" && requestResult.status === "rejected") {
+      if (categoryResult.status === "rejected" && providerResult.status === "rejected") {
         setError(locale === "ar" ? "تعذر تحميل بيانات سوق الخدمات، حاول تحديث الصفحة." : locale === "tr" ? "Hizmet pazarı verileri yüklenemedi." : "Could not load the services market data.");
       }
       setDataLoading(false);
@@ -76,9 +70,6 @@ export default function ServicesHubPage() {
     }
     return [...byCode.values()].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
   }, [categories]);
-  // The card resolves a request's category through this. Without it the card
-  // has nothing to print but the raw id.
-  const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   const selectedGroupId = activeGroup ?? groups[0]?.id ?? null;
   const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const professions = useMemo(
@@ -90,12 +81,8 @@ export default function ServicesHubPage() {
 
   // One line per idea: each section used to repeat its own heading as a
   // kicker above itself.
+  const registerTradeLabel = locale === "ar" ? "سجّل مهنتك" : locale === "tr" ? "Mesleğinizi kaydedin" : "Register your trade";
   const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
-  const featuredProvidersLabel = locale === "ar" ? "مزوّدون موثوقون" : locale === "tr" ? "Güvenilir sağlayıcılar" : "Trusted providers";
-  const recentRequestsLabel = locale === "ar" ? "أحدث الطلبات" : locale === "tr" ? "Son talepler" : "Recent requests";
-  const providerCtaLabel = locale === "ar" ? "هل أنت مقدم خدمة محترف؟" : locale === "tr" ? "Profesyonel bir hizmet sağlayıcı mısınız?" : "Are you a professional service provider?";
-  const providerCtaSubLabel = locale === "ar" ? "أنشئ ملفك واستقبل طلبات منطقتك." : locale === "tr" ? "Profilinizi oluşturun, bölgenizdeki talepleri alın." : "Create your profile and receive requests from your area.";
-  const applyNowLabel = locale === "ar" ? "قدم الآن" : locale === "tr" ? "Şimdi Başvur" : "Apply Now";
   const emptyLabel = locale === "ar" ? "لا شيء هنا بعد." : locale === "tr" ? "Burada henüz bir şey yok." : "Nothing here yet.";
 
   /**
@@ -126,6 +113,17 @@ export default function ServicesHubPage() {
     >
       <PageContainer className="py-8" dir={dir}>
         {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
+
+        {/* One line, at the top, where a professional will look for it. */}
+        <div className="mb-6 flex justify-end">
+          <Link
+            href="/providers/apply"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+          >
+            <BadgePlus className="h-4 w-4" aria-hidden="true" />
+            {registerTradeLabel}
+          </Link>
+        </div>
 
         {/* The page opens on its categories.
 
@@ -225,48 +223,33 @@ export default function ServicesHubPage() {
           )}
         </section>
 
+        {/* The providers, with no heading over them. A row of provider cards
+            announces itself, the featured ones already wear a «مميّز» badge,
+            and the two sections that used to follow — "أحدث الطلبات" and a
+            navy block asking professionals to sign up — are gone: the requests
+            because nobody came here to read them, the block because a screen
+            of dark blue for one button is a screen not showing providers.
+            Signing up is a link at the top of the page instead. */}
         <section className="mt-10">
-          <div className="flex items-end justify-between gap-4 mb-4">
-            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">{featuredProvidersLabel}</h2>
-            <Link href="/providers" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {viewAllLabel} ←
-            </Link>
-          </div>
           <Grid columns={3}>
             {dataLoading
-              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
-              : providers.slice(0, 6).map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
+              ? Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="h-44 animate-pulse rounded-2xl bg-[var(--color-surface-muted)]" />
+                ))
+              : providers.slice(0, 9).map((provider, i) => (
+                  <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />
+                ))}
             {!dataLoading && providers.length === 0 && (
-              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
+              <p className="col-span-full py-10 text-center text-sm text-[var(--color-text-secondary)]">{emptyLabel}</p>
             )}
           </Grid>
-        </section>
-
-        <section className="mt-10">
-          <div className="flex items-end justify-between gap-4 mb-4">
-            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">{recentRequestsLabel}</h2>
-            <Link href="/service-requests" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
-              {viewAllLabel} ←
-            </Link>
-          </div>
-          <Grid columns={3}>
-            {dataLoading
-              ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-44 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)
-              : requests.slice(0, 6).map((request) => <RequestCard key={request.id} request={request} locale={locale} categoryMap={categoryMap} />)}
-            {!dataLoading && requests.length === 0 && (
-              <p className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
-            )}
-          </Grid>
-        </section>
-
-        <section className="mt-12 rounded-2xl bg-gray-900 dark:bg-gray-950 p-8 md:p-12 text-center text-white">
-          <h2 className="text-2xl md:text-3xl font-black">{providerCtaLabel}</h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-gray-300">
-            {providerCtaSubLabel}
-          </p>
-          <Link href="/providers/apply" className="mt-6 inline-block px-6 py-3 rounded-xl bg-white text-gray-900 text-sm font-bold transition hover:bg-amber-300">
-            {applyNowLabel}
-          </Link>
+          {!dataLoading && providers.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              <Link href="/providers" className="text-sm font-bold text-[var(--color-primary)] hover:underline">
+                {viewAllLabel} ←
+              </Link>
+            </div>
+          )}
         </section>
       </PageContainer>
       {AccountDialog}

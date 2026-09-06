@@ -19,7 +19,12 @@ test("the services marketplace ships public hub, catalog and provider profile pa
   // a category in a grid, which is what the export assertion below covers.
   assert.match(hub, /ServiceCategoryIcon/);
   assert.match(hub, /ProviderCard/);
-  assert.match(hub, /RequestCard/);
+  // The hub no longer lists requests. It carried an "أحدث الطلبات" grid that
+  // nobody came to the hub to read; requests have their own page, linked from
+  // the menu and from /service-requests. RequestCard is still used there and on
+  // the catalogue page, which the assertions below cover.
+  assert.doesNotMatch(hub, /RequestCard/);
+  assert.match(requests, /RequestCard/);
   // The taxonomy is NOT global: each country carries its own copy of the same
   // trades, keyed (country_code, code). This assertion required the hub to
   // fetch it unscoped, which was harmless while Oman had the only tree — and
