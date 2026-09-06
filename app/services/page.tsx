@@ -78,13 +78,8 @@ export default function ServicesHubPage() {
     [categories, selectedGroupId],
   );
 
-  // One line per idea. The hero used to carry three — a pill saying "سوق
-  // الخدمات" above a heading saying the same, above a sentence saying it a
-  // third time — and each section below repeated its own heading as a kicker.
-  const heroTitle = locale === "ar" ? "اختر خدمة أو اطلبها" : locale === "tr" ? "Bir hizmet seçin veya talep edin" : "Choose a service, or ask for one";
-  const heroSubtitle = locale === "ar" ? "تصفّح المزوّدين، أو انشر طلبك واستقبل العروض." : locale === "tr" ? "Sağlayıcılara göz atın veya talebinizi yayınlayıp teklif alın." : "Browse providers, or post a request and receive offers.";
-  const postRequestLabel = locale === "ar" ? "انشر طلباً" : locale === "tr" ? "Talep Yayınla" : "Post a Request";
-  const becomeProviderLabel = locale === "ar" ? "انضم كمقدم خدمة" : locale === "tr" ? "Hizmet Sağlayıcı Ol" : "Become a Provider";
+  // One line per idea: each section used to repeat its own heading as a
+  // kicker above itself.
   const browseByCategoryLabel = locale === "ar" ? "تصفّح حسب التصنيف" : locale === "tr" ? "Kategoriye göz at" : "Browse by category";
   const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
   const featuredProvidersLabel = locale === "ar" ? "مزوّدون موثوقون" : locale === "tr" ? "Güvenilir sağlayıcılar" : "Trusted providers";
@@ -123,25 +118,13 @@ export default function ServicesHubPage() {
       <PageContainer className="py-8" dir={dir}>
         {error && <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">{error}</div>}
 
-        {/* A quiet header: the page's own colours, no gradient, no pill, no
-            emoji on the buttons. The two things a visitor came to do are the
-            only two things offered. */}
-        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-10 text-center md:px-12 md:py-14">
-          <h1 className="text-3xl font-black text-[var(--color-text-primary)] md:text-4xl">{heroTitle}</h1>
-          <p className="mx-auto mt-3 max-w-md text-sm text-[var(--color-text-secondary)]">
-            {heroSubtitle}
-          </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/service-requests/new" className="rounded-xl bg-[var(--color-primary)] px-6 py-3 text-sm font-bold text-[var(--color-primary-foreground)] transition hover:bg-[var(--color-primary-hover)]">
-              {postRequestLabel}
-            </Link>
-            <Link href="/providers/apply" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-3 text-sm font-bold text-[var(--color-text-primary)] transition hover:border-[var(--color-border-strong)]">
-              {becomeProviderLabel}
-            </Link>
-          </div>
-        </section>
+        {/* The page opens on its categories.
 
-        <section className="mt-10">
+            There was a header block here — a heading, a line under it and two
+            buttons — filling the first screen with words that only named the
+            page the visitor had just chosen from the menu. It is gone; the
+            first thing on the page is now the thing the page is for. */}
+        <section>
           <h2 className="mb-7 text-center text-2xl font-black text-[var(--color-text-primary)] md:text-3xl">{browseByCategoryLabel}</h2>
 
           {dataLoading ? (
