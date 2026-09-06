@@ -90,7 +90,6 @@ export default function ServicesHubPage() {
 
   // One line per idea: each section used to repeat its own heading as a
   // kicker above itself.
-  const browseByCategoryLabel = locale === "ar" ? "تصفّح حسب التصنيف" : locale === "tr" ? "Kategoriye göz at" : "Browse by category";
   const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
   const featuredProvidersLabel = locale === "ar" ? "مزوّدون موثوقون" : locale === "tr" ? "Güvenilir sağlayıcılar" : "Trusted providers";
   const recentRequestsLabel = locale === "ar" ? "أحدث الطلبات" : locale === "tr" ? "Son talepler" : "Recent requests";
@@ -135,20 +134,23 @@ export default function ServicesHubPage() {
             page the visitor had just chosen from the menu. It is gone; the
             first thing on the page is now the thing the page is for. */}
         <section>
-          <h2 className="mb-7 text-center text-2xl font-black text-[var(--color-text-primary)] md:text-3xl">{browseByCategoryLabel}</h2>
 
           {dataLoading ? (
-            <div className="flex flex-wrap justify-center gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-24 w-24 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+              {/* The same footprint as a real tile, so the row does not jump. */}
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="h-20 w-20 animate-pulse rounded-[26px] bg-[var(--color-surface-muted)] md:h-24 md:w-24" />
               ))}
             </div>
           ) : groups.length === 0 ? (
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-10">{emptyLabel}</p>
           ) : (
             <>
-              {/* أيقونات أنواع الخدمات */}
-              <div className="flex gap-3 md:gap-4 overflow-x-auto pb-3 md:flex-wrap md:justify-center md:overflow-visible">
+              {/* The categories, and no heading above them: a row of trade
+                  icons needs no line explaining that it is a row of trade
+                  icons. Larger tiles, the page's own tokens, and one ring on
+                  the chosen one instead of a gradient and a shadow. */}
+              <div className="flex gap-4 overflow-x-auto pb-3 md:gap-6 md:flex-wrap md:justify-center md:overflow-visible">
                 {groups.map((group) => {
                   const active = group.id === selectedGroupId;
                   return (
@@ -157,18 +159,18 @@ export default function ServicesHubPage() {
                       type="button"
                       onClick={() => setActiveGroup(group.id)}
                       aria-pressed={active}
-                      className="group flex w-24 shrink-0 flex-col items-center gap-2 focus:outline-none"
+                      className="group flex w-28 shrink-0 flex-col items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)] md:w-32"
                     >
                       <span
-                        className={`grid h-16 w-16 place-items-center rounded-2xl border transition-all duration-200 ${
+                        className={`grid h-20 w-20 place-items-center rounded-[26px] border transition-all duration-200 md:h-24 md:w-24 ${
                           active
-                            ? "border-transparent bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/30 scale-105"
-                            : "border-gray-200 bg-white text-blue-600 shadow-sm group-hover:-translate-y-1 group-hover:border-blue-300 group-hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:text-blue-400"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
+                            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-primary)] group-hover:-translate-y-1 group-hover:border-[var(--color-primary)]"
                         }`}
                       >
-                        <ServiceCategoryIcon name={typeof group.icon === "string" ? group.icon : null} className="h-7 w-7" />
+                        <ServiceCategoryIcon name={typeof group.icon === "string" ? group.icon : null} className="h-9 w-9 md:h-11 md:w-11" />
                       </span>
-                      <span className={`text-center text-[11px] font-bold leading-4 ${active ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-300"}`}>
+                      <span className={`text-center text-xs font-bold leading-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}>
                         {nameFor(locale, group.name_ar, group.name_en, group.name_tr, group.code)}
                       </span>
                     </button>

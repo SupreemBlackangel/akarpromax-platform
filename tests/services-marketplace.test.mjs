@@ -20,9 +20,13 @@ test("the services marketplace ships public hub, catalog and provider profile pa
   assert.match(hub, /ServiceCategoryIcon/);
   assert.match(hub, /ProviderCard/);
   assert.match(hub, /RequestCard/);
-  // The professions taxonomy is global. Country scoping filters providers and
-  // requests only, so the categories fetch deliberately carries no country.
-  assert.match(hub, /apiFetch<\{ categories: CategoryRow\[\] \}>\(`\/api\/service-categories`\)/);
+  // The taxonomy is NOT global: each country carries its own copy of the same
+  // trades, keyed (country_code, code). This assertion required the hub to
+  // fetch it unscoped, which was harmless while Oman had the only tree — and
+  // the day Saudi Arabia's was seeded the hub listed all ten groups twice, once
+  // per country. The hub scopes by country now, like every other services page.
+  assert.match(hub, /api\/service-categories\$\{categorySuffix\}/);
+  assert.match(hub, /const categorySuffix = !isGlobal && country \? `\?country=/);
   assert.match(hub, /scope: isGlobal \? "global" : "local"/);
   assert.doesNotMatch(hub, /country=OM/);
   assert.match(hub, /adLayout=\{\{ mode: "standard", family: "services" \}\}/);
