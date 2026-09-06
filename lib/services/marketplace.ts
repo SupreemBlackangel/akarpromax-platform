@@ -2428,6 +2428,30 @@ export async function enqueueOutbox(eventType: string, payload: Record<string, u
 }
 
 /**
+ * How old an event may be and still be worth sending.
+ *
+ * A notification is news, and news has a shelf life: telling a craftsman about
+ * a job that was posted last week, or telling a customer their offer arrived
+ * days ago, is noise that costs the platform its credibility in the inbox.
+ *
+ * This also decides what happens to the backlog. Thirty-one events were queued
+ * before delivery existed at all; when the postman finally arrives, he must not
+ * empty two days of undelivered post onto real people at once. They are marked
+ * skipped, with the reason kept on the row, rather than sent or deleted — so
+ * the record of what was missed survives, and the owner can still choose to
+ * requeue any of them by hand.
+ */
+const OUTBOX_MAX_AGE_HOURS = Number(process.env.OUTBOX_MAX_AGE_HOURS ?? 24);
+
+/** Event timestamps are stored as "YYYY-MM-DD HH:MM:SS" in UTC. */
+export function outboxEventAgeHours(createdAt: unknown, now: Date = new Date()): number {
+  if (!createdAt) return 0;
+  const parsed = createdAt instanceof Date ? createdAt : new Date(String(createdAt).replace(" ", "T") + "Z");
+  if (Number.isNaN(parsed.getTime())) return 0;
+  return (now.getTime() - parsed.getTime()) / 3_600_000;
+}
+
+/**
  * Carry the queued events out of the platform, by email.
  *
  * This used to mark every event "processed" and send nothing — a letterbox
@@ -2454,6 +2478,13 @@ export async function processOutbox(limit = 50): Promise<number> {
   const events = result.results ?? [];
   for (const event of events) {
     try {
+      if (OUTBOX_MAX_AGE_HOURS > 0 && outboxEventAgeHours(event.created_at) > OUTBOX_MAX_AGE_HOURS) {
+        await db
+          .prepare("UPDATE service_outbox_events SET status = 'skipped', error = ?1 WHERE id = ?2")
+          .bind(`too old to send (over ${OUTBOX_MAX_AGE_HOURS}h); requeue by setting status back to pending`, event.id)
+          .run();
+        continue;
+      }
       await deliverOutboxEvent(event);
       await db
         .prepare("UPDATE service_outbox_events SET status = 'processed', processed_at = ?1, attempts = attempts + 1 WHERE id = ?2")

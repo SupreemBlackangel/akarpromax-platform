@@ -10,7 +10,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 import { renderEmail } from "../lib/email/templates.ts";
-import { outboxRecipient } from "../lib/services/marketplace.ts";
+import { outboxRecipient, outboxEventAgeHours } from "../lib/services/marketplace.ts";
 
 const read = (rel) => readFile(new URL(`../${rel}`, import.meta.url), "utf8");
 /** Assert on executable code, not on the prose that explains it. */
@@ -108,4 +108,26 @@ test("the drain endpoint is closed to everyone but an admin and the server's cro
   assert.match(source, /if \(!expected\) return false;/);
   // And the comparison must not leak the secret through its own timing.
   assert.match(source, /diff \|= expected\.charCodeAt\(i\) \^ given\.charCodeAt\(i\)/);
+});
+
+// ---- the shelf life ---------------------------------------------------------
+
+test("an event knows how old it is, from the timestamp the database stores", () => {
+  const now = new Date("2026-09-06T12:00:00Z");
+  assert.equal(outboxEventAgeHours("2026-09-06 09:00:00", now), 3);
+  assert.equal(outboxEventAgeHours("2026-09-04 12:00:00", now), 48);
+  // A missing or unreadable timestamp reads as brand new, so a bad row is
+  // delivered rather than silently dropped for being "old".
+  for (const value of [null, undefined, "", "not a date"]) {
+    assert.equal(outboxEventAgeHours(value, now), 0, String(value));
+  }
+});
+
+test("the drain skips what is too old instead of emptying the backlog on people", async () => {
+  const source = strip(await read("lib/services/marketplace.ts"));
+  // Skipped, not deleted: the row keeps its reason so the backlog stays legible.
+  assert.match(source, /SET status = 'skipped', error = \?1 WHERE id = \?2/);
+  assert.match(source, /outboxEventAgeHours\(event\.created_at\) > OUTBOX_MAX_AGE_HOURS/);
+  // And the cutoff is a setting, so it can be lifted without a deploy.
+  assert.match(source, /process\.env\.OUTBOX_MAX_AGE_HOURS/);
 });
