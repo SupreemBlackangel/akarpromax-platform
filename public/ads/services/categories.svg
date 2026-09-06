@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180" width="600" height="180" role="img" aria-label="عشرة تصنيفات: صيانة، تنظيف، نقل، بناء، تشطيبات وغيرها">
+  <!-- A rail banner. The frame shows this as a 180px-tall band and prints the
+       campaign's Arabic copy underneath, so the drawing carries no small text. -->
+  <rect width="600" height="180" fill="#0B214C"/>
+  <g fill="#FFFFFF" opacity="0.95">
+    <rect x="44"  y="34" width="96" height="52" rx="12"/>
+    <rect x="160" y="34" width="96" height="52" rx="12"/>
+    <rect x="276" y="34" width="96" height="52" rx="12"/>
+    <rect x="392" y="34" width="96" height="52" rx="12"/>
+    <rect x="44"  y="98" width="96" height="52" rx="12"/>
+    <rect x="160" y="98" width="96" height="52" rx="12"/>
+    <rect x="276" y="98" width="96" height="52" rx="12"/>
+    <rect x="392" y="98" width="96" height="52" rx="12"/>
+  </g>
+  <g stroke="#1769FF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M78 52 l14 14 -14 14 M106 52 l14 14 -14 14" opacity="0.9"/>
+    <path d="M196 74 h32 M212 58 v32"/>
+    <path d="M308 76 l14 -16 12 12 14 -18"/>
+    <path d="M424 60 h32 v28 h-32 z"/>
+    <path d="M78 138 h32 M78 122 h20"/>
+    <path d="M196 122 l16 30 16 -30 z"/>
+    <path d="M308 122 h32 v24 h-32 z M316 122 v-8 h16 v8"/>
+    <path d="M424 138 c 10 -20, 22 -20, 32 0"/>
+  </g>
+  <rect x="508" y="34" width="48" height="116" rx="12" fill="#D8AF55" opacity="0.9"/>
+  <g stroke="#0B214C" stroke-width="4" stroke-linecap="round">
+    <path d="M522 86 h20 M532 76 v20"/>
+  </g>
+</svg>

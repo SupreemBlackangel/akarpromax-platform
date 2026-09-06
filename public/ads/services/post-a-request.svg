@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180" width="600" height="180" role="img" aria-label="انشر طلبك في دقيقة ويصلك أكثر من عرض">
+  <!-- A rail banner. The frame shows this as a 180px-tall band and prints the
+       campaign's Arabic copy underneath, so the drawing carries no small text. -->
+  <rect width="600" height="180" fill="#0B214C"/>
+  <circle cx="130" cy="90" r="86" fill="#1769FF" opacity="0.16"/>
+  <g transform="translate(78,44)">
+    <rect width="104" height="92" rx="12" fill="#FFFFFF"/>
+    <rect x="16" y="18" width="56" height="9" rx="4.5" fill="#0B214C"/>
+    <rect x="16" y="37" width="72" height="7" rx="3.5" fill="#C7D3E6"/>
+    <rect x="16" y="52" width="60" height="7" rx="3.5" fill="#C7D3E6"/>
+    <rect x="16" y="70" width="42" height="12" rx="6" fill="#D8AF55"/>
+  </g>
+  <g stroke="#D8AF55" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M200 70 C 250 62, 268 62, 316 62"/>
+    <path d="M200 90 C 250 90, 268 90, 316 90"/>
+    <path d="M200 110 C 250 118, 268 118, 316 118"/>
+  </g>
+  <g fill="#FFFFFF">
+    <rect x="330" y="46" width="200" height="32" rx="9"/>
+    <rect x="330" y="90" width="200" height="32" rx="9"/>
+    <rect x="330" y="128" width="200" height="26" rx="9" opacity="0.55"/>
+  </g>
+  <g fill="#0B214C">
+    <rect x="346" y="58" width="70" height="8" rx="4"/>
+    <rect x="346" y="102" width="88" height="8" rx="4"/>
+  </g>
+  <g fill="#D8AF55">
+    <rect x="470" y="58" width="44" height="8" rx="4"/>
+    <rect x="470" y="102" width="44" height="8" rx="4"/>
+  </g>
+</svg>

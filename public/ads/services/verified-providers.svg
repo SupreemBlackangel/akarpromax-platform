@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180" width="600" height="180" role="img" aria-label="مزوّدون موثوقون: توثيق، تقييمات، ونسبة إنجاز">
+  <!-- A rail banner. The frame shows this as a 180px-tall band and prints the
+       campaign's Arabic copy underneath, so the drawing carries no small text. -->
+  <rect width="600" height="180" fill="#0B214C"/>
+  <circle cx="120" cy="90" r="58" fill="#1769FF" opacity="0.18"/>
+  <path d="M120 42 l42 18 v30 c0 30 -20 50 -42 58 c-22 -8 -42 -28 -42 -58 v-30 z" fill="#FFFFFF"/>
+  <path d="M100 92 l14 15 26 -30" stroke="#1769FF" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#D8AF55">
+    <path d="M232 66 l7 15 16 2 -12 11 3 16 -14 -8 -14 8 3 -16 -12 -11 16 -2 z"/>
+    <path d="M296 66 l7 15 16 2 -12 11 3 16 -14 -8 -14 8 3 -16 -12 -11 16 -2 z"/>
+    <path d="M360 66 l7 15 16 2 -12 11 3 16 -14 -8 -14 8 3 -16 -12 -11 16 -2 z"/>
+    <path d="M424 66 l7 15 16 2 -12 11 3 16 -14 -8 -14 8 3 -16 -12 -11 16 -2 z"/>
+    <path d="M488 66 l7 15 16 2 -12 11 3 16 -14 -8 -14 8 3 -16 -12 -11 16 -2 z" opacity="0.45"/>
+  </g>
+  <rect x="218" y="116" width="308" height="14" rx="7" fill="#FFFFFF" opacity="0.28"/>
+  <rect x="218" y="116" width="262" height="14" rx="7" fill="#D8AF55"/>
+</svg>

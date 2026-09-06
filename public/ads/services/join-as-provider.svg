@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180" width="600" height="180" role="img" aria-label="انضم كمزوّد خدمة واستقبل طلبات منطقتك">
+  <!-- A rail banner. The frame shows this as a 180px-tall band and prints the
+       campaign's Arabic copy underneath, so the drawing carries no small text. -->
+  <rect width="600" height="180" fill="#0B214C"/>
+  <circle cx="132" cy="90" r="76" fill="#D8AF55" opacity="0.20"/>
+  <circle cx="132" cy="70" r="26" fill="#FFFFFF"/>
+  <path d="M92 136 c 0 -26, 18 -40, 40 -40 s 40 14 40 40 z" fill="#FFFFFF"/>
+  <circle cx="166" cy="52" r="16" fill="#D8AF55"/>
+  <path d="M159 52 h14 M166 45 v14" stroke="#0B214C" stroke-width="3.5" stroke-linecap="round"/>
+  <g fill="#FFFFFF" opacity="0.95">
+    <rect x="238" y="42" width="290" height="30" rx="9"/>
+    <rect x="238" y="84" width="290" height="30" rx="9"/>
+    <rect x="238" y="126" width="200" height="24" rx="9" opacity="0.5"/>
+  </g>
+  <g fill="#0B214C">
+    <rect x="254" y="53" width="96" height="8" rx="4"/>
+    <rect x="254" y="95" width="120" height="8" rx="4"/>
+  </g>
+  <g fill="#1769FF">
+    <circle cx="500" cy="57" r="9"/>
+    <circle cx="500" cy="99" r="9"/>
+  </g>
+</svg>
