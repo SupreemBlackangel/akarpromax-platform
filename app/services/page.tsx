@@ -7,6 +7,7 @@ import PublicPageShell from "@/src/components/PublicPageShell";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { ProviderCard, ServiceCategoryIcon, type CategoryRow, type ProviderRow } from "@services-ui/ServiceCards";
 import { apiFetch, nameFor } from "@services-client";
+import Avatar from "@services-ui/Avatar";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 
@@ -23,7 +24,9 @@ export default function ServicesHubPage() {
 
   useEffect(() => {
     let active = true;
-    const providerParams = new URLSearchParams({ limit: "9", scope: isGlobal ? "global" : "local" });
+    // Ten, not nine: the featured one is lifted out of this list into the paid
+    // placement below the grid, and the grid still wants nine.
+    const providerParams = new URLSearchParams({ limit: "10", scope: isGlobal ? "global" : "local" });
     if (!isGlobal) {
       providerParams.set("country", country);
       if (governorate) {
@@ -70,6 +73,13 @@ export default function ServicesHubPage() {
     }
     return [...byCode.values()].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
   }, [categories]);
+  // The dark panel below the grid is a paid placement for one provider. The
+  // model already has the flag the admin sets to sell it — is_featured, ordered
+  // by featured_rank — so the sponsor is simply the first featured provider,
+  // and the grid shows everyone else.
+  const sponsoredProvider = providers.find((provider) => Number(provider.is_featured) === 1) ?? null;
+  const gridProviders = providers.filter((provider) => provider.id !== sponsoredProvider?.id);
+
   const selectedGroupId = activeGroup ?? groups[0]?.id ?? null;
   const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const professions = useMemo(
@@ -81,6 +91,11 @@ export default function ServicesHubPage() {
 
   // One line per idea: each section used to repeat its own heading as a
   // kicker above itself.
+  const adLabel = locale === "ar" ? "إعلان" : locale === "tr" ? "Reklam" : "Ad";
+  const viewProfileLabel = locale === "ar" ? "عرض الملف" : locale === "tr" ? "Profili gör" : "View profile";
+  const sponsorSlotLabel = locale === "ar" ? "هذه المساحة لمزوّد واحد" : locale === "tr" ? "Bu alan tek bir sağlayıcıya ait" : "This space is for one provider";
+  const sponsorSlotSubLabel = locale === "ar" ? "اعرض مهنتك أعلى صفحة السوق أمام كل من يبحث عن خدمة في منطقتك." : locale === "tr" ? "Mesleğinizi pazar sayfasının başında, bölgenizde hizmet arayan herkesin önünde gösterin." : "Put your trade at the head of the marketplace, in front of everyone looking for a service in your area.";
+  const sponsorSlotCtaLabel = locale === "ar" ? "احجز المساحة" : locale === "tr" ? "Alanı ayırt" : "Book the space";
   const registerTradeLabel = locale === "ar" ? "سجّل مهنتك" : locale === "tr" ? "Mesleğinizi kaydedin" : "Register your trade";
   const viewAllLabel = locale === "ar" ? "عرض الكل" : locale === "tr" ? "Tümünü Gör" : "View all";
   const emptyLabel = locale === "ar" ? "لا شيء هنا بعد." : locale === "tr" ? "Burada henüz bir şey yok." : "Nothing here yet.";
@@ -236,17 +251,59 @@ export default function ServicesHubPage() {
               ? Array.from({ length: 9 }).map((_, i) => (
                   <div key={i} className="h-44 animate-pulse rounded-2xl bg-[var(--color-surface-muted)]" />
                 ))
-              : providers.slice(0, 9).map((provider, i) => (
+              : gridProviders.slice(0, 9).map((provider, i) => (
                   <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />
                 ))}
-            {!dataLoading && providers.length === 0 && (
+            {!dataLoading && gridProviders.length === 0 && (
               <p className="col-span-full py-10 text-center text-sm text-[var(--color-text-secondary)]">{emptyLabel}</p>
             )}
           </Grid>
-          {!dataLoading && providers.length > 0 && (
+          {!dataLoading && gridProviders.length > 0 && (
             <div className="mt-6 flex justify-center">
               <Link href="/providers" className="text-sm font-bold text-[var(--color-primary)] hover:underline">
                 {viewAllLabel} ←
+              </Link>
+            </div>
+          )}
+        </section>
+
+        {/* The space a provider buys. Labelled «إعلان», because a paid placement
+            that looks like an editorial pick is a lie to the reader. With
+            nothing sold it carries the invitation to sign up, which is what
+            stood here before. */}
+        <section className="mt-12 overflow-hidden rounded-2xl bg-gray-900 dark:bg-gray-950">
+          {sponsoredProvider ? (
+            <Link href={`/providers/${sponsoredProvider.id}`} className="flex flex-col gap-5 p-8 text-white transition hover:bg-gray-800 md:flex-row md:items-center md:gap-8 md:p-10">
+              {/* The same avatar the cards use: it already carries the logo,
+                  the letter fallback and the broken-image case. */}
+              <Avatar
+                name={sponsoredProvider.business_name || nameFor(locale, sponsoredProvider.display_name_ar, sponsoredProvider.display_name_en, null, "مزوّد خدمة")}
+                src={sponsoredProvider.logo_url}
+                size="lg"
+              />
+              <div className="min-w-0 flex-1">
+                <span className="inline-block rounded-full border border-white/25 px-2 py-0.5 text-[10px] font-black text-white/70">{adLabel}</span>
+                <h2 className="mt-2 truncate text-2xl font-black md:text-3xl">
+                  {sponsoredProvider.business_name || nameFor(locale, sponsoredProvider.display_name_ar, sponsoredProvider.display_name_en, null, "مزوّد خدمة")}
+                </h2>
+                {nameFor(locale, sponsoredProvider.bio_ar, sponsoredProvider.bio_en, null, "") && (
+                  <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-gray-300">
+                    {nameFor(locale, sponsoredProvider.bio_ar, sponsoredProvider.bio_en, null, "")}
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-gray-400">
+                  {sponsoredProvider.governorate ? `${sponsoredProvider.governorate} · ` : ""}
+                  {sponsoredProvider.jobs_completed ?? 0} أعمال · {sponsoredProvider.completion_rate ?? 100}% إنجاز
+                </p>
+              </div>
+              <span className="shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-bold text-gray-900">{viewProfileLabel}</span>
+            </Link>
+          ) : (
+            <div className="p-8 text-center text-white md:p-12">
+              <h2 className="text-2xl font-black md:text-3xl">{sponsorSlotLabel}</h2>
+              <p className="mx-auto mt-3 max-w-lg text-sm text-gray-300">{sponsorSlotSubLabel}</p>
+              <Link href="/advertise" className="mt-6 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-amber-300">
+                {sponsorSlotCtaLabel}
               </Link>
             </div>
           )}
