@@ -72,7 +72,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 
 /**
  * Icon names as the taxonomy stores them, where Lucide spells them otherwise.
- * Everything else converts by shape: "hard-hat" -> "HardHat".
+ * Everything else is reached by shape: "hard-hat" matches "HardHat".
  */
 const ICON_ALIASES: Record<string, keyof typeof CATEGORY_ICONS> = {
   "paint-roller": "Paintbrush",
@@ -81,28 +81,26 @@ const ICON_ALIASES: Record<string, keyof typeof CATEGORY_ICONS> = {
 };
 
 /**
- * The map above is keyed by Lucide's own PascalCase component names, and the
- * database stores kebab-case ("wrench", "hard-hat", "paint-roller"). Every
- * lookup therefore missed and every category on the services hub drew the same
- * fallback wrench. Both spellings resolve now.
+ * Every icon, reachable by either spelling.
+ *
+ * CATEGORY_ICONS is keyed by Lucide's own PascalCase component names and the
+ * database stores kebab-case ("wrench", "hard-hat", "paint-roller"), so every
+ * lookup missed and every category on the services hub drew the same fallback
+ * wrench. Built once at module scope: the component below stays a plain index
+ * into a constant, which is what it looks like and what React needs it to be.
  */
-function iconFor(name?: string | null) {
-  if (!name) return Wrench;
-  const raw = name.trim();
-  if (CATEGORY_ICONS[raw]) return CATEGORY_ICONS[raw];
-  const aliased = ICON_ALIASES[raw.toLowerCase()];
-  if (aliased) return CATEGORY_ICONS[aliased];
-  const pascal = raw
-    .toLowerCase()
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join("");
-  return CATEGORY_ICONS[pascal] ?? Wrench;
-}
+const ICONS_BY_STORED_NAME: Record<string, LucideIcon> = (() => {
+  const out: Record<string, LucideIcon> = {};
+  for (const [pascal, Icon] of Object.entries(CATEGORY_ICONS)) {
+    out[pascal] = Icon;
+    out[pascal.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()] = Icon;
+  }
+  for (const [stored, pascal] of Object.entries(ICON_ALIASES)) out[stored] = CATEGORY_ICONS[pascal];
+  return out;
+})();
 
 export function ServiceCategoryIcon({ name, className = "h-6 w-6" }: { name?: string | null; className?: string }) {
-  const Icon = iconFor(name);
+  const Icon = ICONS_BY_STORED_NAME[(name ?? "").trim()] ?? ICONS_BY_STORED_NAME[(name ?? "").trim().toLowerCase()] ?? Wrench;
   return <Icon aria-hidden="true" className={className} strokeWidth={1.9} />;
 }
 

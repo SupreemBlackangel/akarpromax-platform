@@ -22,7 +22,7 @@ test("a category icon resolves from the name the database actually stores", asyn
   // stores kebab-case, so every lookup missed and every category drew the same
   // fallback wrench.
   const source = await read("src/components/services/ServiceCards.tsx");
-  assert.match(source, /function iconFor\(name\?: string \| null\)/);
+  assert.match(source, /const ICONS_BY_STORED_NAME: Record<string, LucideIcon>/);
   assert.match(source, /ICON_ALIASES/);
   for (const alias of ['"paint-roller": "Paintbrush"', 'building: "Building2"', 'briefcase: "BriefcaseBusiness"']) {
     assert.ok(source.includes(alias), `${alias} must be mapped`);
