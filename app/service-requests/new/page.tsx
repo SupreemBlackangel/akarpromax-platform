@@ -54,6 +54,8 @@ type DraftData = {
   accessNotes: string;
   shortAddress: string;
   urgency: string;
+  /** Which three craftsmen to send this to: nearest, best rated, most dependable. */
+  providerSort: "nearest" | "rating" | "trust";
   answers: Record<string, string>;
   contactPhone: string;
   contactEmail: string;
@@ -79,6 +81,7 @@ const INITIAL_DRAFT: DraftData = {
   accessNotes: "",
   shortAddress: "",
   urgency: "normal",
+  providerSort: "nearest",
   answers: {},
   contactPhone: "",
   contactEmail: "",
@@ -263,6 +266,7 @@ export default function NewServiceRequestPage() {
           // country's own is the only sensible answer.
           currency: countryConfig?.currencyCode || null,
           urgency: draft.urgency,
+          providerSort: draft.providerSort,
           preferredPeriod: draft.preferredPeriod.trim() || null,
           preferredDate: draft.preferredDate || null,
           needsVisit: draft.needsVisit,
@@ -483,6 +487,25 @@ export default function NewServiceRequestPage() {
                   <option value="normal">عادي</option>
                   <option value="flexible">مرن</option>
                 </select>
+              </div>
+              {/* The request goes to three craftsmen, not to everyone — this
+                  chooses which three. Saying so on the form is the point: a
+                  customer who knows only three were called understands why
+                  they should answer the phone. */}
+              <div>
+                <label className={labelCls}>{"من نرسل إليه طلبك"}</label>
+                <select
+                  value={draft.providerSort}
+                  onChange={(e) => updateField("providerSort", e.target.value as "nearest" | "rating" | "trust")}
+                  className={inputCls}
+                >
+                  <option value="nearest">الأقرب إليك</option>
+                  <option value="rating">الأعلى تقييماً</option>
+                  <option value="trust">الأكثر التزاماً بالمواعيد</option>
+                </select>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {"يصل طلبك إلى ثلاثة مزودين فقط ليتواصلوا معك. إن لم تتفق معهم، يمكنك طلب ثلاثة غيرهم."}
+                </p>
               </div>
             </Grid>
           </section>

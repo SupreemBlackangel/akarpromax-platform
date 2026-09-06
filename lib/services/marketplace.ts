@@ -2,6 +2,16 @@ import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
 import { insertRow, getServicesDb } from "@services/db";
 import { writeAudit } from "@services/audit";
 import { runMatching } from "@services/matching";
+import {
+  DEFAULT_WAVE_SETTINGS,
+  canRenew,
+  isProviderSort,
+  type ProviderSort,
+  blockedUntil,
+  isBlockActive,
+  type WaveMemberState,
+  type WaveSettings,
+} from "@services/request-waves";
 import { computeMatchScore, distanceKm } from "@services/match-score";
 import { requireCurrencyCode } from "@services/currency-policy";
 import {
@@ -722,6 +732,14 @@ export type ServiceMarketplaceSettings = {
   latestRequestLimit: number;
   allowPublicRequests: boolean;
   allowProviderRegistration: boolean;
+  /** How many craftsmen one wave notifies. The owner's rule is three. */
+  matchWaveSize: number;
+  /** How many times a requester may ask for others. Two, so nine in all. */
+  maxRequestRenewals: number;
+  /** How long a requester is barred once every wave is spent. */
+  requestBlockDays: number;
+  /** After this long unanswered, an offer is treated as expired. */
+  offerValidityHours: number;
 };
 
 export const DEFAULT_SERVICE_MARKETPLACE_SETTINGS: ServiceMarketplaceSettings = {
@@ -750,6 +768,10 @@ export const DEFAULT_SERVICE_MARKETPLACE_SETTINGS: ServiceMarketplaceSettings = 
   latestRequestLimit: 6,
   allowPublicRequests: true,
   allowProviderRegistration: true,
+  matchWaveSize: DEFAULT_WAVE_SETTINGS.waveSize,
+  maxRequestRenewals: DEFAULT_WAVE_SETTINGS.maxRenewals,
+  requestBlockDays: DEFAULT_WAVE_SETTINGS.blockDays,
+  offerValidityHours: DEFAULT_WAVE_SETTINGS.offerValidityHours,
 };
 
 function marketplaceSettingsFromRow(rowValue: Record<string, unknown> | null, countryCode: string): ServiceMarketplaceSettings {
@@ -787,6 +809,13 @@ function marketplaceSettingsFromRow(rowValue: Record<string, unknown> | null, co
     latestRequestLimit: intValue("latest_request_limit", fallback.latestRequestLimit),
     allowPublicRequests: boolValue("allow_public_requests", fallback.allowPublicRequests),
     allowProviderRegistration: boolValue("allow_provider_registration", fallback.allowProviderRegistration),
+    // These four arrived with migration 0013. `intValue` already answers with
+    // the default for a column that is not there, so a database that has not
+    // taken the migration yet reads the owner's numbers rather than zeroes.
+    matchWaveSize: intValue("match_wave_size", fallback.matchWaveSize),
+    maxRequestRenewals: intValue("max_request_renewals", fallback.maxRequestRenewals),
+    requestBlockDays: intValue("request_block_days", fallback.requestBlockDays),
+    offerValidityHours: intValue("offer_validity_hours", fallback.offerValidityHours),
   };
 }
 
@@ -849,8 +878,35 @@ export async function updateServiceMarketplaceSettings(
     next.allowPublicRequests ? 1 : 0, next.allowProviderRegistration ? 1 : 0,
     actor?.userId ?? null, nowMySqlDateTime(), next.countryCode,
   ).run();
+  // The four wave knobs are written on their own, and a failure here does not
+  // undo the save above. They are the newest columns in the table; on a host
+  // that has not run migration 0013 the statement has nowhere to land, and the
+  // rest of the settings page must keep working regardless.
+  try {
+    await db.prepare(
+      `UPDATE service_marketplace_settings SET
+         match_wave_size = ?1, max_request_renewals = ?2, request_block_days = ?3, offer_validity_hours = ?4
+       WHERE country_code = ?5`,
+    ).bind(
+      clampInt(next.matchWaveSize, 1, 20),
+      clampInt(next.maxRequestRenewals, 0, 10),
+      clampInt(next.requestBlockDays, 1, 365),
+      clampInt(next.offerValidityHours, 1, 720),
+      next.countryCode,
+    ).run();
+  } catch (error) {
+    console.warn("[services] wave settings not saved (is migration 0013 applied?):", error);
+  }
+
   await writeAudit({ action: "service_marketplace.settings.update", entityType: "service_marketplace_settings", entityId: next.countryCode, actorUserId: actor?.userId, ipAddress: actor?.ip });
   return next;
+}
+
+/** A knob an admin types into must not be able to mean "never" or "everyone". */
+function clampInt(value: unknown, min: number, max: number): number {
+  const number = Math.round(Number(value));
+  if (!Number.isFinite(number)) return min;
+  return Math.max(min, Math.min(max, number));
 }
 
 /* ============================================================
@@ -882,6 +938,8 @@ export type NewRequestFull = {
   contactPreference?: "platform" | "phone" | "whatsapp" | "email" | null;
   answers?: Array<{ key: string; label?: string | null; type?: string | null; value?: string | null }>;
   attachments?: Array<{ fileName: string; fileUrl: string; fileSize?: number; mimeType?: string | null }>;
+  /** How the customer wants the three chosen: nearest, best rated, most dependable. */
+  providerSort?: ProviderSort | null;
 };
 
 export async function createRequestFull(input: NewRequestFull, actor?: ActorContext): Promise<string> {
@@ -914,6 +972,18 @@ export async function createRequestFull(input: NewRequestFull, actor?: ActorCont
     ],
   );
 
+  // Written on its own rather than in the INSERT above: the column arrived
+  // with migration 0013, and a host that has not taken it must still be able
+  // to file a request. Losing the preference is a smaller harm than losing
+  // the request.
+  if (input.providerSort && isProviderSort(input.providerSort)) {
+    try {
+      await db.prepare("UPDATE service_requests SET provider_sort = ?1 WHERE id = ?2").bind(input.providerSort, id).run();
+    } catch (error) {
+      console.warn("[services] provider_sort not saved (is migration 0013 applied?):", error);
+    }
+  }
+
   await recordRequestHistory(id, null, REQUEST_STATUS.DRAFT, "تم إنشاء الطلب كمسودة", input.customerUserId);
   await addRequestAttachments(id, input.customerUserId, input.attachments ?? []);
   await writeAudit({ action: "service_request.create", entityType: "service_requests", entityId: id, metadata: { categoryId: input.categoryId, referenceNumber }, actorUserId: actor?.userId, ipAddress: actor?.ip });
@@ -944,6 +1014,196 @@ export async function publishRequest(requestId: string, actor?: ActorContext): P
   void processOutbox().catch((error) => {
     console.error("[services] outbox drain after publish failed:", error);
   });
+}
+
+/**
+ * Is this person allowed to open a service request at all?
+ *
+ * Someone who has been through nine craftsmen without agreeing with any of
+ * them has cost nine people a call and an estimate each. The block is how the
+ * marketplace protects the craftsmen's time, and it ends by itself — it is a
+ * row with a date on it, not a mark on the account.
+ */
+export async function requestBlockFor(userId: string): Promise<{ blockedUntil: string; reason: string | null } | null> {
+  const db = await getServicesDb();
+  try {
+    const blockRow = await db
+      .prepare("SELECT blocked_until, reason FROM service_request_blocks WHERE user_id = ?1 ORDER BY blocked_until DESC LIMIT 1")
+      .bind(userId)
+      .first<Record<string, unknown>>();
+    if (!blockRow) return null;
+    if (!isBlockActive(String(blockRow.blocked_until))) return null;
+    return { blockedUntil: String(blockRow.blocked_until), reason: blockRow.reason == null ? null : String(blockRow.reason) };
+  } catch {
+    // No such table yet (migration 0013). Nobody is blocked, which is the
+    // right answer: a missing table must never bar a customer by accident.
+    return null;
+  }
+}
+
+/** What each craftsman in the current wave has done with the request. */
+async function currentWaveStates(requestId: string, settings: WaveSettings): Promise<{ wave: number; states: WaveMemberState[] }> {
+  const db = await getServicesDb();
+  const matchRows = await db
+    .prepare(
+      `SELECT m.provider_id, m.wave, m.declined_at, m.provider_ignored, m.created_at, p.user_id AS provider_user_id
+       FROM service_request_matches m
+       LEFT JOIN service_provider_profiles p ON p.id = m.provider_id
+       WHERE m.request_id = ?1`,
+    )
+    .bind(requestId)
+    .all<Record<string, unknown>>()
+    .catch(() =>
+      db
+        .prepare(
+          `SELECT m.provider_id, m.provider_ignored, m.created_at, p.user_id AS provider_user_id
+           FROM service_request_matches m
+           LEFT JOIN service_provider_profiles p ON p.id = m.provider_id
+           WHERE m.request_id = ?1`,
+        )
+        .bind(requestId)
+        .all<Record<string, unknown>>(),
+    );
+
+  const matches = matchRows.results ?? [];
+  const wave = matches.reduce((highest, match) => Math.max(highest, Number(match.wave ?? 1)), 1);
+  const members = matches.filter((match) => Number(match.wave ?? 1) === wave);
+
+  const offerRows = await db
+    .prepare("SELECT provider_user_id, status, created_at FROM service_offers WHERE request_id = ?1")
+    .bind(requestId)
+    .all<Record<string, unknown>>();
+  const offers = new Map<string, Record<string, unknown>>();
+  for (const offer of offerRows.results ?? []) {
+    offers.set(String(offer.provider_user_id), offer);
+  }
+
+  const ageHours = (value: unknown) => {
+    if (!value) return 0;
+    const parsed = new Date(String(value).replace(" ", "T") + "Z");
+    return Number.isNaN(parsed.getTime()) ? 0 : (Date.now() - parsed.getTime()) / 3_600_000;
+  };
+
+  const states: WaveMemberState[] = members.map((match) => {
+    const offer = offers.get(String(match.provider_user_id ?? ""));
+    if (offer) {
+      const status = String(offer.status);
+      if (status === OFFER_STATUS.REJECTED || status === OFFER_STATUS.WITHDRAWN) return "declined";
+      if (status === OFFER_STATUS.SENT) {
+        // An offer nobody answered for two days is no longer on the table.
+        return ageHours(offer.created_at) > settings.offerValidityHours ? "expired" : "offered";
+      }
+    }
+    if (match.declined_at || Number(match.provider_ignored ?? 0) === 1) return "declined";
+    // Silence is an answer once it has lasted long enough; without this, one
+    // craftsman who never opens their mail would freeze the request forever.
+    if (ageHours(match.created_at) > settings.offerValidityHours) return "expired";
+    return "waiting";
+  });
+
+  return { wave, states };
+}
+
+export type RenewalResult =
+  | { ok: true; wave: number; notified: number }
+  | { ok: false; reason: "WAVE_STILL_OPEN" | "OFFER_ON_TABLE" | "RENEWALS_EXHAUSTED" | "REQUEST_STATUS_INVALID"; blockedUntil?: string };
+
+/**
+ * Send this request to three other craftsmen.
+ *
+ * Allowed only when the current three are finished with it — all declined, or
+ * their offers went stale. It is refused while someone is still deciding, and
+ * refused outright while an offer is sitting on the table: the answer to an
+ * offer you dislike is to decline it, not to call in three more people while
+ * the craftsman waits for a reply.
+ *
+ * On the last refusal the requester is blocked. Nine craftsmen were contacted
+ * and none was agreed with; the next one deserves the benefit of that doubt
+ * less than they deserve their afternoon back.
+ */
+export async function renewRequest(requestId: string, actor?: ActorContext): Promise<RenewalResult> {
+  const db = await getServicesDb();
+  const request = await getRequestFull(requestId);
+  if (!request) throw new Error("REQUEST_NOT_FOUND");
+  if (request.status !== REQUEST_STATUS.PUBLISHED) {
+    return { ok: false, reason: "REQUEST_STATUS_INVALID" };
+  }
+
+  const marketplace = await getServiceMarketplaceSettings(String(request.country_code || "OM"));
+  const settings: WaveSettings = {
+    waveSize: marketplace.matchWaveSize,
+    maxRenewals: marketplace.maxRequestRenewals,
+    blockDays: marketplace.requestBlockDays,
+    offerValidityHours: marketplace.offerValidityHours,
+  };
+
+  const { states } = await currentWaveStates(requestId, settings);
+  const renewalCount = Number(request.renewal_count ?? 0);
+  const decision = canRenew(states, renewalCount, settings);
+
+  if (!decision.ok) {
+    if (decision.reason !== "RENEWALS_EXHAUSTED") {
+      return { ok: false, reason: decision.reason };
+    }
+    const until = blockedUntil(new Date(), settings);
+    const untilText = until.toISOString().slice(0, 19).replace("T", " ");
+    try {
+      await insertRow(
+        db,
+        `INSERT INTO service_request_blocks (id, user_id, blocked_until, reason, request_id, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+        [
+          crypto.randomUUID(),
+          String(request.customer_user_id),
+          untilText,
+          `تم التواصل مع ${settings.waveSize * (settings.maxRenewals + 1)} مزوداً دون الاتفاق مع أي منهم`,
+          requestId,
+          nowMySqlDateTime(),
+        ],
+      );
+    } catch (error) {
+      console.warn("[services] request block not recorded (is migration 0013 applied?):", error);
+    }
+    await writeAudit({
+      action: "service_request.renewals_exhausted",
+      entityType: "service_requests",
+      entityId: requestId,
+      actorUserId: actor?.userId,
+      ipAddress: actor?.ip,
+    });
+    return { ok: false, reason: "RENEWALS_EXHAUSTED", blockedUntil: untilText };
+  }
+
+  const notified = await runMatching(requestId, { wave: decision.nextWave, settings });
+  const now = nowMySqlDateTime();
+  try {
+    await db
+      .prepare("UPDATE service_requests SET renewal_count = ?1, updated_at = ?2 WHERE id = ?3")
+      .bind(renewalCount + 1, now, requestId)
+      .run();
+  } catch (error) {
+    console.warn("[services] renewal_count not saved (is migration 0013 applied?):", error);
+  }
+  await recordRequestHistory(
+    requestId,
+    REQUEST_STATUS.PUBLISHED,
+    REQUEST_STATUS.PUBLISHED,
+    `طلب مزودين آخرين (الموجة ${decision.nextWave})`,
+    actor?.userId ?? null,
+  );
+  await writeAudit({
+    action: "service_request.renew",
+    entityType: "service_requests",
+    entityId: requestId,
+    actorUserId: actor?.userId,
+    ipAddress: actor?.ip,
+  });
+
+  void processOutbox().catch((error) => {
+    console.error("[services] outbox drain after renewal failed:", error);
+  });
+
+  return { ok: true, wave: decision.nextWave, notified };
 }
 
 export async function getRequestFull(requestId: string): Promise<Record<string, unknown> | null> {

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
-import { createRequestFull, listRequestsFull } from "@services/marketplace";
+import { createRequestFull, listRequestsFull, requestBlockFor } from "@services/marketplace";
+import { isProviderSort } from "@services/request-waves";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 import { resolveCurrencyCode } from "@services/currency-policy";
 import { geoAliases } from "@/lib/geo/platform-location";
@@ -100,6 +101,22 @@ export async function POST(request: NextRequest) {
   if (!hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_OWN) && !hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL)) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
   }
+  // Someone who went through nine craftsmen without agreeing with any of them
+  // is barred for a while. The block is checked before the body is even read:
+  // there is no version of this request that is allowed through.
+  const block = await requestBlockFor(identity.email);
+  if (block) {
+    return NextResponse.json(
+      {
+        error: "REQUEST_BLOCKED",
+        blockedUntil: block.blockedUntil,
+        message: `لا يمكنك فتح طلب خدمة جديد حتى ${String(block.blockedUntil).slice(0, 10)}.`,
+        reason: block.reason,
+      },
+      { status: 403 },
+    );
+  }
+
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
@@ -142,6 +159,7 @@ export async function POST(request: NextRequest) {
         ? body.contactPreference as "platform" | "phone" | "whatsapp" | "email"
         : "platform",
       answers: cleanAnswers(body.answers),
+      providerSort: isProviderSort(body.providerSort) ? body.providerSort : null,
       attachments: Array.isArray(body.attachments) ? body.attachments.flatMap((item) => {
         if (!item || typeof item !== "object") return [];
         const attachment = item as Record<string, unknown>;

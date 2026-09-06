@@ -30,9 +30,19 @@ type DetailRow = Record<string, unknown> & {
   answers?: string | null;
   answers_parsed?: Array<Record<string, unknown>>;
   created_at?: string;
+  renewal_count?: number | null;
+  matches?: Array<Record<string, unknown>>;
   category?: Record<string, unknown> | null;
   attachments?: Array<Record<string, unknown>>;
   offers?: Array<Record<string, unknown>>;
+};
+
+/** Why a renewal was refused, said to the customer rather than logged at them. */
+const RENEWAL_REFUSALS: Record<string, string> = {
+  OFFER_ON_TABLE: "لديك عرض سعر بانتظار ردّك. اقبله أو ارفضه أولاً، ثم يمكنك طلب مزودين آخرين.",
+  WAVE_STILL_OPEN: "ما زال أحد المزودين يدرس طلبك. أمهله قليلاً، وسيتاح لك طلب غيرهم بعد ردّه.",
+  RENEWALS_EXHAUSTED: "تواصلنا معك عبر تسعة مزودين دون اتفاق، ولا يمكن طلب المزيد لهذا الطلب.",
+  REQUEST_STATUS_INVALID: "هذا الطلب غير منشور، فلا مجال لإرساله إلى مزودين آخرين.",
 };
 
 type Props = { id: string };
@@ -42,6 +52,8 @@ export default function ServiceRequestDetailPage({ id }: Props) {
   const [request, setRequest] = useState<DetailRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [renewing, setRenewing] = useState(false);
+  const [renewMessage, setRenewMessage] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -84,6 +96,34 @@ export default function ServiceRequestDetailPage({ id }: Props) {
     ? nameFor(locale, category.name_ar, category.name_en, category.name_tr, request.category_id.slice(0, 6))
     : request.category_id.slice(0, 6);
   const answers = parseJsonArray(request.answers ?? (request.answers_parsed as unknown) ?? null);
+
+  const renewalCount = Number(request?.renewal_count ?? 0);
+  // Two renewals, so three waves of three. The number is the platform's promise
+  // to the craftsmen as much as to the customer.
+  const renewalsLeft = Math.max(0, 2 - renewalCount);
+
+  const askForOthers = async () => {
+    if (!request) return;
+    setRenewing(true);
+    setRenewMessage("");
+    try {
+      const data = await apiFetch<{ ok: boolean; message?: string; request?: DetailRow }>(
+        `/api/service-requests/${encodeURIComponent(request.id)}/renew`,
+        { method: "POST" },
+      );
+      setRenewMessage(data.message ?? "تم إرسال طلبك إلى مزودين آخرين.");
+      if (data.request) setRequest(data.request);
+    } catch (renewError) {
+      // Every refusal here is a rule, and the customer needs the rule in words:
+      // "you have an offer waiting" tells them what to do next, "an error
+      // occurred" tells them nothing. apiFetch throws the server's CODE, not
+      // its sentence, so the sentences live here.
+      const code = renewError instanceof Error ? renewError.message : "";
+      setRenewMessage(RENEWAL_REFUSALS[code] ?? "تعذّر إرسال الطلب إلى مزودين آخرين.");
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   const makeOffer = () => {
     if (!viewer) {
@@ -218,6 +258,25 @@ export default function ServiceRequestDetailPage({ id }: Props) {
              </div>
            )}
          </div>
+
+         {isCustomer && isPublished && (
+           <div className="mt-4 rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
+             <h2 className="text-sm font-black text-gray-900 dark:text-white">{"لم تتفق مع أحد؟"}</h2>
+             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+               {renewalsLeft > 0
+                 ? `أرسلنا طلبك إلى ثلاثة مزودين. يمكنك طلب ثلاثة غيرهم ${renewalsLeft === 2 ? "مرتين" : "مرة واحدة"} بعد أن يعتذر الحاليون أو تنتهي صلاحية عروضهم.`
+                 : "تواصلنا معك عبر تسعة مزودين في هذا الطلب، وهو أقصى ما يتيحه النظام."}
+             </p>
+             {renewalsLeft > 0 && (
+               <Button variant="secondary" className="mt-3" onClick={askForOthers} disabled={renewing}>
+                 {renewing ? "جارٍ الإرسال…" : "اطلب مزودين آخرين"}
+               </Button>
+             )}
+             {renewMessage && (
+               <p className="mt-3 text-sm text-gray-700 dark:text-gray-200">{renewMessage}</p>
+             )}
+           </div>
+         )}
 
          {isCustomer && (
            <div className="mt-4 text-center">

@@ -159,3 +159,61 @@ test("only a known ordering is accepted from a client", () => {
   for (const value of PROVIDER_SORTS) assert.ok(isProviderSort(value));
   for (const value of ["", "closest", "NEAREST", null, 3, {}]) assert.equal(isProviderSort(value), false, String(value));
 });
+
+// ---- the wiring -------------------------------------------------------------
+//
+// The decisions above are pure and tested directly. These check that the parts
+// that touch the database actually call them, because a rule nothing consults
+// is a comment.
+import { readFile } from "node:fs/promises";
+
+const read = (rel) => readFile(new URL(`../${rel}`, import.meta.url), "utf8");
+const strip = (text) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*(\/\/|\*).*$/gm, "");
+
+test("matching sends to one wave, not to every provider in the country", async () => {
+  const source = strip(await read("lib/services/matching.ts"));
+  assert.match(source, /selectWave\(scored, \{ sort, waveSize: settings\.waveSize, alreadyNotified \}\)/);
+  // Scoring still walks every candidate — that is how the wave is chosen from
+  // them. What must be narrow is who gets WRITTEN TO: the notification and the
+  // outbox row are built inside the loop over `chosen`, never over `candidates`.
+  const notifyLoop = source.indexOf("for (const { provider, result } of chosen)");
+  assert.ok(notifyLoop > 0, "the notification loop must run over the chosen wave");
+  assert.ok(source.indexOf("notificationStatements.push") > notifyLoop);
+  assert.ok(source.indexOf("outboxStatements.push") > notifyLoop);
+  const scoreLoop = source.indexOf("for (const provider of candidates)");
+  const scoreLoopBody = source.slice(scoreLoop, source.indexOf("const chosen = selectWave"));
+  assert.doesNotMatch(scoreLoopBody, /notificationStatements\.push|outboxStatements\.push/);
+});
+
+test("a later wave excludes whoever an earlier one already reached", async () => {
+  const source = strip(await read("lib/services/matching.ts"));
+  assert.match(source, /alreadyNotified = new Set\(previousMatches\.map/);
+  assert.match(source, /highestWave > 0 \? highestWave \+ 1 : 1/);
+});
+
+test("renewal asks canRenew, and the refusal is the reason it gave", async () => {
+  const source = strip(await read("lib/services/marketplace.ts"));
+  assert.match(source, /const decision = canRenew\(states, renewalCount, settings\)/);
+  assert.match(source, /reason: decision\.reason/);
+  // Exhausting the renewals writes a block with an end date on it.
+  assert.match(source, /INSERT INTO service_request_blocks/);
+  assert.match(source, /blockedUntil\(new Date\(\), settings\)/);
+});
+
+test("a blocked customer is stopped before the request body is even read", async () => {
+  const source = strip(await read("app/api/service-requests/route.ts"));
+  const blockCheck = source.indexOf("requestBlockFor(identity.email)");
+  const bodyRead = source.indexOf("await request.json()");
+  assert.ok(blockCheck > 0 && bodyRead > 0);
+  assert.ok(blockCheck < bodyRead, "the block must be checked before the body is parsed");
+});
+
+test("an unmigrated database still publishes, and still limits the wave", async () => {
+  // The wave SIZE is the rule; the `wave` COLUMN is only the record of which
+  // one. Losing the column must not lose the rule, and must not lose the
+  // request either.
+  const matching = strip(await read("lib/services/matching.ts"));
+  assert.match(matching, /matchStatement\(db, requestId, candidate, null, now\)/);
+  const marketplace = strip(await read("lib/services/marketplace.ts"));
+  assert.match(marketplace, /is migration 0013 applied/);
+});

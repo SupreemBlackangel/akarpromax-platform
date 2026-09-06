@@ -1,6 +1,15 @@
 import { getServicesDb } from "@services/db";
 import { nowMySqlDateTime } from "@/lib/auth/mysql-time";
 import { computeMatchScore, type MatchProviderRow, type MatchRequestRow } from "@services/match-score";
+import {
+  DEFAULT_WAVE_SETTINGS,
+  DEFAULT_PROVIDER_SORT,
+  isProviderSort,
+  selectWave,
+  type ProviderSort,
+  type ScoredCandidate,
+  type WaveSettings,
+} from "@services/request-waves";
 
 export async function findCandidateProviders(request: MatchRequestRow): Promise<MatchProviderRow[]> {
   const db = await getServicesDb();
@@ -78,7 +87,25 @@ export async function findCandidateProviders(request: MatchRequestRow): Promise<
   return providers;
 }
 
-export async function runMatching(requestId: string): Promise<number> {
+/**
+ * Notify one wave of craftsmen about a request — not every craftsman in the
+ * country.
+ *
+ * This used to write a match and an email for every approved provider who
+ * covered the category and sat within range. In a thin market that is three
+ * people; in a full one it is fifty, and then a request that reaches you is
+ * worth little, because forty-nine others got it too. The owner's rule makes
+ * the notification mean something: you are one of three, so it is worth
+ * answering, and the requester gets three people who actually answer instead
+ * of fifty who might.
+ *
+ * A later wave is this same call with the earlier waves' providers excluded,
+ * so nobody is asked twice about one job.
+ */
+export async function runMatching(
+  requestId: string,
+  options: { wave?: number; settings?: WaveSettings; sort?: ProviderSort } = {},
+): Promise<number> {
   const db = await getServicesDb();
   const requestRow = await db
     .prepare("SELECT * FROM service_requests WHERE id = ?1")
@@ -98,35 +125,47 @@ export async function runMatching(requestId: string): Promise<number> {
     budget_max: requestRow.budget_max == null ? null : Number(requestRow.budget_max),
   };
 
-  const candidates = await findCandidateProviders(request);
-  const now = nowMySqlDateTime();
-  const matchStatements: D1PreparedStatement[] = [];
-  const notificationStatements: D1PreparedStatement[] = [];
-  const outboxStatements: D1PreparedStatement[] = [];
-  const notifications: Array<{ userId: string; providerId: string }> = [];
+  const settings = options.settings ?? (await loadWaveSettings(request.country_code));
+  // The requester chose the ordering when they filed the request; "nearest" is
+  // the rule, and the answer for a row that predates the choice.
+  const sort = options.sort
+    ?? (isProviderSort(requestRow.provider_sort) ? requestRow.provider_sort : DEFAULT_PROVIDER_SORT);
 
-  for (const provider of candidates) {
-    const result = computeMatchScore(request, provider);
-    if (!result) continue;
-
-    matchStatements.push(
+  // Who this request has already reached, and therefore which wave this is.
+  const previous = await db
+    .prepare("SELECT provider_id, wave FROM service_request_matches WHERE request_id = ?1")
+    .bind(requestId)
+    .all<{ provider_id: string; wave?: number | null }>()
+    .catch(() =>
+      // A host that has not taken migration 0013 has no `wave` column. The wave
+      // SIZE is the part of the rule that matters most and does not need the
+      // column, so read the ids without it rather than refuse to match at all.
       db
-        .prepare(
-          `INSERT INTO service_request_matches
-            (id, request_id, provider_id, score, distance_km, category_match, rating_bonus, urgency_bonus, budget_fit, created_at)
-           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-           ON CONFLICT (request_id, provider_id) DO UPDATE SET
-             score = ?11, distance_km = ?12, category_match = ?13, rating_bonus = ?14, urgency_bonus = ?15, budget_fit = ?16`,
-        )
-        .bind(
-          crypto.randomUUID(), requestId, provider.id, result.score, result.distanceKm,
-          result.categoryMatch ? 1 : 0, result.ratingBonus, result.urgencyBonus, result.budgetFit ? 1 : 0, now,
-          result.score, result.distanceKm, result.categoryMatch ? 1 : 0, result.ratingBonus, result.urgencyBonus, result.budgetFit ? 1 : 0,
-        ),
+        .prepare("SELECT provider_id FROM service_request_matches WHERE request_id = ?1")
+        .bind(requestId)
+        .all<{ provider_id: string; wave?: number | null }>(),
     );
 
-    notifications.push({ userId: provider.user_id, providerId: provider.id });
+  const previousMatches = previous.results ?? [];
+  const alreadyNotified = new Set(previousMatches.map((match) => String(match.provider_id)));
+  const highestWave = previousMatches.reduce((highest, match) => Math.max(highest, Number(match.wave ?? 1)), 0);
+  const wave = options.wave ?? (highestWave > 0 ? highestWave + 1 : 1);
 
+  const candidates = await findCandidateProviders(request);
+  const scored: ScoredCandidate[] = [];
+  for (const provider of candidates) {
+    const result = computeMatchScore(request, provider);
+    if (result) scored.push({ provider, result });
+  }
+
+  const chosen = selectWave(scored, { sort, waveSize: settings.waveSize, alreadyNotified });
+  if (chosen.length === 0) return 0;
+
+  const now = nowMySqlDateTime();
+  const notificationStatements: D1PreparedStatement[] = [];
+  const outboxStatements: D1PreparedStatement[] = [];
+
+  for (const { provider, result } of chosen) {
     notificationStatements.push(
       db
         .prepare(
@@ -136,7 +175,9 @@ export async function runMatching(requestId: string): Promise<number> {
         .bind(
           crypto.randomUUID(), provider.user_id,
           "طلب جديد يناسب خدماتك",
-          "وجدنا طلباً جديداً مطابقاً لخدماتك — يمكنك تقديم عرض.",
+          // Telling the craftsman how few were asked is the whole point of
+          // asking few.
+          `وجدنا طلباً جديداً مطابقاً لخدماتك، وأُرسل إلى ${chosen.length} مزودين فقط — يمكنك التواصل وتقديم عرضك.`,
           `/service-requests/${requestId}`,
           requestId, now,
         ),
@@ -151,36 +192,118 @@ export async function runMatching(requestId: string): Promise<number> {
         .bind(
           crypto.randomUUID(),
           "SERVICE_REQUEST_MATCHED",
-          JSON.stringify({ requestId, providerId: provider.id, providerUserId: provider.user_id, score: result.score }),
+          JSON.stringify({ requestId, providerId: provider.id, providerUserId: provider.user_id, score: result.score, wave }),
           now,
         ),
     );
   }
 
-  if (matchStatements.length) await db.batch(matchStatements);
-
-  if (notifications.length > 0) {
-    const customer = String(requestRow.customer_user_id);
-    notificationStatements.push(
-      db
-        .prepare(
-          `INSERT INTO service_notifications (id, user_id, type, title, body, link, entity_type, entity_id, is_read, created_at)
-           VALUES (?1, ?2, 'SERVICE_REQUEST_MATCHED', ?3, ?4, ?5, 'service_requests', ?6, 0, ?7)`,
-        )
-        .bind(
-          crypto.randomUUID(), customer,
-          "تمت مطابقة طلبك",
-          `تم مطابقة طلبك مع ${notifications.length} مزود خدمة محتمل.`,
-          `/service-requests/${requestId}`,
-          requestId, now,
-        ),
-    );
+  try {
+    await db.batch(chosen.map((candidate) => matchStatement(db, requestId, candidate, wave, now)));
+  } catch (error) {
+    // Same reason as the read above: without migration 0013 there is no `wave`
+    // column to write into. Falling back keeps publishing working on an
+    // unmigrated host; what is lost is the record of WHICH wave, not the wave.
+    console.warn("[services] match wave column missing, writing without it:", error);
+    await db.batch(chosen.map((candidate) => matchStatement(db, requestId, candidate, null, now)));
   }
 
-  if (notificationStatements.length) await db.batch(notificationStatements);
-  if (outboxStatements.length) await db.batch(outboxStatements);
+  const customer = String(requestRow.customer_user_id);
+  notificationStatements.push(
+    db
+      .prepare(
+        `INSERT INTO service_notifications (id, user_id, type, title, body, link, entity_type, entity_id, is_read, created_at)
+         VALUES (?1, ?2, 'SERVICE_REQUEST_MATCHED', ?3, ?4, ?5, 'service_requests', ?6, 0, ?7)`,
+      )
+      .bind(
+        crypto.randomUUID(), customer,
+        wave === 1 ? "تم إرسال طلبك" : "تم إرسال طلبك إلى مزودين آخرين",
+        `أرسلنا طلبك إلى ${chosen.length} من المزودين الأقرب في هذا التخصص، وسيتواصلون معك.`,
+        `/service-requests/${requestId}`,
+        requestId, now,
+      ),
+  );
 
-  return notifications.length;
+  await db.batch(notificationStatements);
+  await db.batch(outboxStatements);
+
+  return chosen.length;
+}
+
+/** One match row. `wave` is null on a database that has no such column yet. */
+function matchStatement(
+  db: Awaited<ReturnType<typeof getServicesDb>>,
+  requestId: string,
+  candidate: ScoredCandidate,
+  wave: number | null,
+  now: string,
+): D1PreparedStatement {
+  const { provider, result } = candidate;
+  const columns = ["id", "request_id", "provider_id", "score", "distance_km", "category_match", "rating_bonus", "urgency_bonus", "budget_fit"];
+  const values: unknown[] = [
+    crypto.randomUUID(), requestId, provider.id, result.score, result.distanceKm,
+    result.categoryMatch ? 1 : 0, result.ratingBonus, result.urgencyBonus, result.budgetFit ? 1 : 0,
+  ];
+  if (wave != null) {
+    columns.push("wave");
+    values.push(wave);
+  }
+  columns.push("created_at");
+  values.push(now);
+
+  const insertPlaceholders = values.map((_, index) => `?${index + 1}`).join(", ");
+  // The conflict branch refreshes the score of a provider this request already
+  // reached; it never moves them to another wave, because they were told once.
+  const updateColumns = ["score", "distance_km", "category_match", "rating_bonus", "urgency_bonus", "budget_fit"];
+  const updateValues: unknown[] = [
+    result.score, result.distanceKm, result.categoryMatch ? 1 : 0, result.ratingBonus, result.urgencyBonus, result.budgetFit ? 1 : 0,
+  ];
+  const updateAssignments = updateColumns
+    .map((column, index) => `${column} = ?${values.length + index + 1}`)
+    .join(", ");
+
+  return db
+    .prepare(
+      `INSERT INTO service_request_matches (${columns.join(", ")})
+       VALUES (${insertPlaceholders})
+       ON CONFLICT (request_id, provider_id) DO UPDATE SET ${updateAssignments}`,
+    )
+    .bind(...([...values, ...updateValues] as [unknown, ...unknown[]]));
+}
+
+/**
+ * The wave knobs for a country, from the admin's settings row.
+ *
+ * Read here rather than imported from marketplace.ts, which imports this file:
+ * the numbers are four integers, and a cycle between the two modules would cost
+ * more than reading them.
+ */
+async function loadWaveSettings(countryCode: string): Promise<WaveSettings> {
+  const db = await getServicesDb();
+  try {
+    const settingsRow = await db
+      .prepare(
+        `SELECT match_wave_size, max_request_renewals, request_block_days, offer_validity_hours
+         FROM service_marketplace_settings WHERE UPPER(country_code) = ?1 LIMIT 1`,
+      )
+      .bind(String(countryCode || "").toLocaleUpperCase("en"))
+      .first<Record<string, unknown>>();
+    if (!settingsRow) return DEFAULT_WAVE_SETTINGS;
+    const number = (value: unknown, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    };
+    return {
+      waveSize: number(settingsRow.match_wave_size, DEFAULT_WAVE_SETTINGS.waveSize),
+      maxRenewals: number(settingsRow.max_request_renewals, DEFAULT_WAVE_SETTINGS.maxRenewals),
+      blockDays: number(settingsRow.request_block_days, DEFAULT_WAVE_SETTINGS.blockDays),
+      offerValidityHours: number(settingsRow.offer_validity_hours, DEFAULT_WAVE_SETTINGS.offerValidityHours),
+    };
+  } catch {
+    // No settings row, or no such columns yet. The owner's numbers ARE the
+    // defaults, so this is the right answer and not a degraded one.
+    return DEFAULT_WAVE_SETTINGS;
+  }
 }
 
 export async function listMatchesForRequest(requestId: string): Promise<Array<Record<string, unknown>>> {

@@ -19,6 +19,17 @@ const limitValue = (value: unknown, max: number) => {
   return Number.isFinite(number) ? Math.max(1, Math.min(max, Math.round(number))) : undefined;
 };
 
+/**
+ * Renewals are the one knob that may legitimately be zero: an owner who wants
+ * one wave and no second chance says zero, and `limitValue` would quietly turn
+ * that into one.
+ */
+const renewalValue = (value: unknown) => {
+  if (value === undefined) return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(10, Math.round(number))) : undefined;
+};
+
 export async function GET(request: NextRequest) {
   const country = (request.nextUrl.searchParams.get("country") || "OM").slice(0, 8).toUpperCase();
   const settings = await getServiceMarketplaceSettings(country);
@@ -61,6 +72,13 @@ export async function PATCH(request: NextRequest) {
     latestRequestLimit: limitValue(body.latestRequestLimit, 24),
     allowPublicRequests: boolValue(body.allowPublicRequests),
     allowProviderRegistration: boolValue(body.allowProviderRegistration),
+    // The matching rule, as four numbers an admin can change without a deploy.
+    // The ceilings are deliberately low: a "wave" of forty is not a wave, and a
+    // ten-year block is not a cooling-off period.
+    matchWaveSize: limitValue(body.matchWaveSize, 20),
+    maxRequestRenewals: renewalValue(body.maxRequestRenewals),
+    requestBlockDays: limitValue(body.requestBlockDays, 365),
+    offerValidityHours: limitValue(body.offerValidityHours, 720),
   };
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined) delete patch[key as keyof typeof patch];

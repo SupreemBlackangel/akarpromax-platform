@@ -117,7 +117,13 @@ test("matching pipeline inserts qualified providers and notifies both sides", as
   assert.match(matching, /ON CONFLICT \(request_id, provider_id\) DO UPDATE SET/);
   assert.match(matching, /SERVICE_REQUEST_MATCHED/);
   assert.match(matching, /طلب جديد يناسب خدماتك/);
-  assert.match(matching, /تمت مطابقة طلبك/);
+  // This used to pin "تمت مطابقة طلبك" — "your request was matched". That was
+  // true when every eligible provider in the country was notified and the
+  // customer was told a count they had no say in. Under the wave rule the
+  // customer is told what was actually done and how few it reached, because
+  // three people who will call back is the promise being made.
+  assert.match(matching, /تم إرسال طلبك/);
+  assert.match(matching, /من المزودين الأقرب في هذا التخصص/);
   assert.match(matching, /function runMatching\(/);
   assert.match(matching, /findCandidateProviders\(/);
   // Case-insensitive on purpose. This assertion used to pin `country_code = ?1`,
