@@ -936,6 +936,14 @@ export async function publishRequest(requestId: string, actor?: ActorContext): P
     await db.prepare("UPDATE service_requests SET matched_at = ?1 WHERE id = ?2").bind(now, requestId).run();
   }
   await writeAudit({ action: "service_request.publish", entityType: "service_requests", entityId: requestId, actorUserId: actor?.userId, ipAddress: actor?.ip });
+
+  // Tell the matched craftsmen now, without making the customer wait for SMTP.
+  // The publish is already committed; a slow or failing mail server must not
+  // turn a published request into an error on the customer's screen. Anything
+  // this misses is picked up by the cron that calls /api/service-outbox/drain.
+  void processOutbox().catch((error) => {
+    console.error("[services] outbox drain after publish failed:", error);
+  });
 }
 
 export async function getRequestFull(requestId: string): Promise<Record<string, unknown> | null> {
@@ -2419,6 +2427,24 @@ export async function enqueueOutbox(eventType: string, payload: Record<string, u
   );
 }
 
+/**
+ * Carry the queued events out of the platform, by email.
+ *
+ * This used to mark every event "processed" and send nothing — a letterbox
+ * with no postman. Production had 31 events sitting in it, which is 31 times a
+ * craftsman was never told a job was waiting: the in-app notification only
+ * reaches someone who opens the platform, and the whole point of matching three
+ * of them is that the three find out.
+ *
+ * WhatsApp is not connected yet, so email is the channel. The recipient's
+ * address is the user id — the platform keys a user by their email — and the
+ * notification the event was raised alongside carries the words, already
+ * phrased in Arabic where the event happened.
+ *
+ * A send that fails marks the event failed with its reason and leaves the rest
+ * of the batch alone; the row keeps its attempt count, so a retry is a matter
+ * of flipping it back to pending.
+ */
 export async function processOutbox(limit = 50): Promise<number> {
   const db = await getServicesDb();
   const result = await db
@@ -2428,6 +2454,7 @@ export async function processOutbox(limit = 50): Promise<number> {
   const events = result.results ?? [];
   for (const event of events) {
     try {
+      await deliverOutboxEvent(event);
       await db
         .prepare("UPDATE service_outbox_events SET status = 'processed', processed_at = ?1, attempts = attempts + 1 WHERE id = ?2")
         .bind(nowMySqlDateTime(), event.id)
@@ -2440,6 +2467,57 @@ export async function processOutbox(limit = 50): Promise<number> {
     }
   }
   return events.length;
+}
+
+/** Who an event is addressed to, by the payload each kind carries. */
+export function outboxRecipient(payload: Record<string, unknown>): string | null {
+  for (const key of ["providerUserId", "recipientUserId", "customerUserId", "userId", "revieweeUserId"]) {
+    const value = payload[key];
+    if (typeof value === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) return value;
+  }
+  return null;
+}
+
+/**
+ * One event, delivered. The words come from the notification row the event was
+ * written beside — not from a second copy of the sentence kept here.
+ */
+async function deliverOutboxEvent(event: Record<string, unknown>): Promise<void> {
+  let payload: Record<string, unknown> = {};
+  try {
+    payload = JSON.parse(String(event.payload ?? "{}")) as Record<string, unknown>;
+  } catch {
+    // A payload we cannot read is not a delivery failure to retry for ever.
+    return;
+  }
+
+  const to = outboxRecipient(payload);
+  if (!to) return;
+
+  const db = await getServicesDb();
+  const notification = row(
+    await db
+      .prepare(
+        `SELECT title, body, link FROM service_notifications
+         WHERE user_id = ?1 AND type = ?2 ORDER BY created_at DESC LIMIT 1`,
+      )
+      .bind(to, String(event.event_type ?? ""))
+      .first<Record<string, unknown>>(),
+  );
+  if (!notification) return;
+
+  const link = notification.link ? String(notification.link) : "";
+  const { emailService } = await import("@/lib/email");
+  await emailService.send("notification", {
+    to,
+    locale: "ar",
+    variables: {
+      notificationTitle: String(notification.title ?? ""),
+      notificationBody: String(notification.body ?? ""),
+      notificationUrl: link ? (link.startsWith("http") ? link : `https://akarpromax.com${link}`) : undefined,
+      notificationCta: "افتح المنصة",
+    },
+  });
 }
 
 /* ============================================================

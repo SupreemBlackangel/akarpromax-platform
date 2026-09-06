@@ -10,6 +10,10 @@ export type EmailVariables = {
   tokenExpiryMinutes?: number;
   resetUrl?: string;
   userEmail?: string;
+  notificationTitle?: string;
+  notificationBody?: string;
+  notificationUrl?: string;
+  notificationCta?: string;
 };
 
 export type EmailKind =
@@ -19,13 +23,28 @@ export type EmailKind =
   | "reset"
   | "password_changed"
   | "email_changed"
-  | "email_change_confirm";
+  | "email_change_confirm"
+  /**
+   * A marketplace event, carried out of the platform.
+   *
+   * Unlike the kinds above, its words are not written here: the event that
+   * raised it already phrased them in Arabic at the point it happened ("طلب
+   * جديد يناسب خدماتك"), and re-writing them in a template would give two
+   * places to change one sentence. This template is the envelope — brand,
+   * greeting, button — and `notificationTitle` / `notificationBody` are the
+   * letter.
+   */
+  | "notification";
 
 const BRAND = "AkarProMax";
 const BRAND_URL = "https://akarpromax.com";
 
 const T = {
   ar: {
+    notification: {
+      subject: "لديك إشعار جديد من عقار بروماكس",
+      preheader: "افتح المنصة للاطلاع عليه.",
+    },
     verification: {
       subject: "تفعيل بريدك الإلكتروني على أكار برو ماكس",
       preheader: "أهلاً بك! فعّل بريدك الإلكتروني للمتابعة.",
@@ -56,6 +75,10 @@ const T = {
     },
   },
   en: {
+    notification: {
+      subject: "You have a new notification from AkarProMax",
+      preheader: "Open the platform to see it.",
+    },
     verification: {
       subject: "Verify your email on AkarProMax",
       preheader: "Welcome! Verify your email to continue.",
@@ -86,6 +109,10 @@ const T = {
     },
   },
   tr: {
+    notification: {
+      subject: "AkarProMax'tan yeni bir bildiriminiz var",
+      preheader: "Görmek için platformu açın.",
+    },
     verification: {
       subject: "E-postanızı AkarProMax'ta doğrulayın",
       preheader: "Hoş geldiniz! E-postanızı doğrulayın.",
@@ -166,6 +193,28 @@ export function renderEmail(
     brandTitle: vars.brandTitle || BRAND,
     brandUrl: vars.brandUrl || BRAND_URL,
   };
+
+  if (kind === "notification") {
+    // The event wrote the words; this only puts them in the envelope. A
+    // notification with no title is not sent as an empty email — the subject
+    // falls back to the locale's own line.
+    const title = (vars.notificationTitle ?? "").trim() || t.notification.subject;
+    const body = (vars.notificationBody ?? "").trim();
+    const link = vars.notificationUrl;
+    const cta = (vars.notificationCta ?? "").trim() || tKeys(locale, "verify_email").cta;
+    const html = htmlDocument(
+      locale,
+      body || t.notification.preheader,
+      `<h1>${escapeHtml(title)}</h1><p>${greeting(locale, vars.recipientName)}</p>${body ? `<p>${escapeHtml(body)}</p>` : ""}${link ? linkButton(link, locale, cta) : ""}`,
+    );
+    const txt = `${title}
+
+${greeting(locale, vars.recipientName)}
+${body}
+
+${link ? textLink(link, locale, cta) : ""}`;
+    return { subject: title, html, text: txt };
+  }
 
   if (kind === "verification" || kind === "email_change_confirm") {
     const label = kind === "verification" ? tKeys(locale, "verify_email") : tKeys(locale, "confirm_email");
