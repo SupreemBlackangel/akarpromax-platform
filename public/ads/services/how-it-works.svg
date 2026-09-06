@@ -1,69 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="كيف يعمل سوق الخدمات: تنشر طلبك، يصلك عرض من أكثر من مزوّد، تختار من يناسبك">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="ثلاثة عروض تصل إلى طلب واحد">
   <!--
-    The services hub's hero. The frame lays a dark gradient over this image
-    from the left and prints the campaign's own Arabic copy across the bottom,
-    so the drawing lives in the upper-right and carries no small text of its
-    own: a request card on the right, three offers reaching it from the left.
+    The services hub's hero.
+
+    The frame prints the campaign's Arabic copy OVER this image, right-aligned
+    and large, so the right half must stay quiet: everything drawn here lives
+    in the left 45%, and the right is gradient and a faint skyline. The first
+    version put the request card at x≈880 and the heading landed on top of it.
   -->
   <defs>
     <linearGradient id="ground" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0d2758"/>
-      <stop offset="1" stop-color="#09193c"/>
+      <stop offset="1" stop-color="#08152f"/>
     </linearGradient>
   </defs>
 
   <rect width="1200" height="800" fill="#0B214C"/>
   <rect width="1200" height="800" fill="url(#ground)"/>
 
-  <!-- a soft halo behind the request card -->
-  <circle cx="880" cy="330" r="250" fill="#1769FF" opacity="0.12"/>
+  <!-- a soft halo behind the request, still inside the left half -->
+  <circle cx="430" cy="400" r="215" fill="#1769FF" opacity="0.13"/>
 
-  <!-- the request: one card the customer publishes -->
-  <g transform="translate(740,190)">
-    <rect x="0" y="0" width="300" height="230" rx="22" fill="#FFFFFF"/>
-    <rect x="28" y="34" width="150" height="16" rx="8" fill="#0B214C"/>
-    <rect x="28" y="68" width="230" height="10" rx="5" fill="#C7D3E6"/>
-    <rect x="28" y="90" width="196" height="10" rx="5" fill="#C7D3E6"/>
-    <rect x="28" y="132" width="110" height="30" rx="15" fill="#D8AF55"/>
-    <circle cx="243" cy="147" r="19" fill="#1769FF" opacity="0.14"/>
-    <path d="M236 147 h14 M243 140 v14" stroke="#1769FF" stroke-width="4" stroke-linecap="round"/>
-  </g>
-
-  <!-- three offers travelling toward it -->
+  <!-- three offers, far left -->
   <g fill="#FFFFFF" opacity="0.96">
-    <rect x="300" y="150" width="210" height="86" rx="16"/>
-    <rect x="300" y="272" width="210" height="86" rx="16"/>
-    <rect x="300" y="394" width="210" height="86" rx="16"/>
+    <rect x="60" y="252" width="196" height="80" rx="15"/>
+    <rect x="60" y="360" width="196" height="80" rx="15"/>
+    <rect x="60" y="468" width="196" height="80" rx="15"/>
   </g>
   <g fill="#0B214C">
-    <rect x="326" y="176" width="96" height="12" rx="6"/>
-    <rect x="326" y="298" width="112" height="12" rx="6"/>
-    <rect x="326" y="420" width="84" height="12" rx="6"/>
+    <rect x="84" y="276" width="92" height="11" rx="5.5"/>
+    <rect x="84" y="384" width="106" height="11" rx="5.5"/>
+    <rect x="84" y="492" width="78" height="11" rx="5.5"/>
   </g>
   <g fill="#D8AF55">
-    <rect x="326" y="200" width="58" height="12" rx="6"/>
-    <rect x="326" y="322" width="58" height="12" rx="6"/>
-    <rect x="326" y="444" width="58" height="12" rx="6"/>
+    <rect x="84" y="299" width="54" height="11" rx="5.5"/>
+    <rect x="84" y="407" width="54" height="11" rx="5.5"/>
+    <rect x="84" y="515" width="54" height="11" rx="5.5"/>
   </g>
   <g fill="#1769FF" opacity="0.9">
-    <circle cx="478" cy="193" r="14"/>
-    <circle cx="478" cy="315" r="14"/>
-    <circle cx="478" cy="437" r="14"/>
+    <circle cx="228" cy="293" r="13"/>
+    <circle cx="228" cy="401" r="13"/>
+    <circle cx="228" cy="509" r="13"/>
   </g>
 
-  <!-- the offers reaching the request -->
-  <g stroke="#D8AF55" stroke-width="4" fill="none" opacity="0.75" stroke-linecap="round">
-    <path d="M520 193 C 620 193, 640 280, 730 300"/>
-    <path d="M520 315 C 610 315, 650 300, 730 305"/>
-    <path d="M520 437 C 620 437, 640 340, 730 312"/>
+  <!-- they reach one request -->
+  <g stroke="#D8AF55" stroke-width="4" fill="none" opacity="0.72" stroke-linecap="round">
+    <path d="M266 292 C 320 292, 330 360, 372 386"/>
+    <path d="M266 400 C 320 400, 336 400, 372 400"/>
+    <path d="M266 508 C 320 508, 330 440, 372 414"/>
   </g>
 
-  <!-- horizon: the marketplace the whole thing sits on -->
-  <g opacity="0.30" fill="#1769FF">
-    <rect x="120" y="600" width="90" height="120" rx="10"/>
-    <rect x="234" y="556" width="90" height="164" rx="10"/>
-    <rect x="348" y="622" width="90" height="98" rx="10"/>
-    <rect x="866" y="580" width="90" height="140" rx="10"/>
-    <rect x="980" y="620" width="90" height="100" rx="10"/>
+  <!-- the request itself -->
+  <g transform="translate(382,296)">
+    <rect x="0" y="0" width="230" height="208" rx="20" fill="#FFFFFF"/>
+    <rect x="24" y="30" width="122" height="15" rx="7.5" fill="#0B214C"/>
+    <rect x="24" y="62" width="182" height="9" rx="4.5" fill="#C7D3E6"/>
+    <rect x="24" y="82" width="150" height="9" rx="4.5" fill="#C7D3E6"/>
+    <rect x="24" y="124" width="96" height="27" rx="13.5" fill="#D8AF55"/>
+    <circle cx="184" cy="137" r="17" fill="#1769FF" opacity="0.14"/>
+    <path d="M178 137 h12 M184 131 v12" stroke="#1769FF" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- the city it all happens in: low, faint, out of the copy's way -->
+  <g opacity="0.22" fill="#1769FF">
+    <rect x="70" y="640" width="80" height="106" rx="9"/>
+    <rect x="172" y="600" width="80" height="146" rx="9"/>
+    <rect x="274" y="662" width="80" height="84" rx="9"/>
+    <rect x="376" y="622" width="80" height="124" rx="9"/>
   </g>
 </svg>

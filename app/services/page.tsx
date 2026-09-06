@@ -40,10 +40,14 @@ export default function ServicesHubPage() {
         requestParams.set("districtId", district);
       }
     }
+    // The taxonomy is per country: every country carries its own copy of the
+    // same trades, keyed (country_code, code). Fetching it unscoped was
+    // harmless while only Oman had one; the moment Saudi Arabia's was seeded
+    // this page began listing all ten groups twice, once per country. Every
+    // other services page already scopes it, and now so does this one.
+    const categorySuffix = !isGlobal && country ? `?country=${encodeURIComponent(country)}` : "";
     Promise.allSettled([
-      // The professions directory is global — country scoping only filters
-      // providers and requests, never the taxonomy itself.
-      apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories`),
+      apiFetch<{ categories: CategoryRow[] }>(`/api/service-categories${categorySuffix}`),
       apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?${providerParams.toString()}`),
       apiFetch<{ requests: RequestRow[] }>(`/api/service-requests?${requestParams.toString()}`),
     ]).then(([categoryResult, providerResult, requestResult]) => {
@@ -60,12 +64,18 @@ export default function ServicesHubPage() {
   }, [locale, country, city, governorate, district, isGlobal]);
 
   // Groups are the top-level rows (no parent); professions are their children.
-  const groups = useMemo(
-    () => categories
-      .filter((category) => !category.parent_id)
-      .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)),
-    [categories],
-  );
+  const groups = useMemo(() => {
+    // Browsing globally returns every country's copy of the same trade, so the
+    // list is folded by code — the group's identity is its trade, not the
+    // country whose row happened to arrive first.
+    const byCode = new Map<string, CategoryRow>();
+    for (const category of categories) {
+      if (category.parent_id) continue;
+      const key = String(category.code ?? category.id);
+      if (!byCode.has(key)) byCode.set(key, category);
+    }
+    return [...byCode.values()].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+  }, [categories]);
   // The card resolves a request's category through this. Without it the card
   // has nothing to print but the raw id.
   const categoryMap = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);

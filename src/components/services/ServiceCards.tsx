@@ -70,8 +70,39 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Umbrella, Waves, Wrench, Zap,
 };
 
+/**
+ * Icon names as the taxonomy stores them, where Lucide spells them otherwise.
+ * Everything else converts by shape: "hard-hat" -> "HardHat".
+ */
+const ICON_ALIASES: Record<string, keyof typeof CATEGORY_ICONS> = {
+  "paint-roller": "Paintbrush",
+  building: "Building2",
+  briefcase: "BriefcaseBusiness",
+};
+
+/**
+ * The map above is keyed by Lucide's own PascalCase component names, and the
+ * database stores kebab-case ("wrench", "hard-hat", "paint-roller"). Every
+ * lookup therefore missed and every category on the services hub drew the same
+ * fallback wrench. Both spellings resolve now.
+ */
+function iconFor(name?: string | null) {
+  if (!name) return Wrench;
+  const raw = name.trim();
+  if (CATEGORY_ICONS[raw]) return CATEGORY_ICONS[raw];
+  const aliased = ICON_ALIASES[raw.toLowerCase()];
+  if (aliased) return CATEGORY_ICONS[aliased];
+  const pascal = raw
+    .toLowerCase()
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+  return CATEGORY_ICONS[pascal] ?? Wrench;
+}
+
 export function ServiceCategoryIcon({ name, className = "h-6 w-6" }: { name?: string | null; className?: string }) {
-  const Icon = name ? CATEGORY_ICONS[name] ?? Wrench : Wrench;
+  const Icon = iconFor(name);
   return <Icon aria-hidden="true" className={className} strokeWidth={1.9} />;
 }
 
