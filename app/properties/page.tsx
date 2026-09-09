@@ -290,7 +290,7 @@ export default function PropertiesPage() {
           {locale === "ar" ? `${filtered.length} عقار` : locale === "tr" ? `${filtered.length} mülk` : `${filtered.length} properties`}
         </div>
 
-        <Grid columns={3} className="gap-6">
+        <Grid columns={3} className="listing-grid gap-6">
           {loading
             ? Array.from({ length: 9 }).map((_, index) => (
                 <div key={index} className="rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse h-64 flex items-center justify-center">

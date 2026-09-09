@@ -4,6 +4,8 @@ import { cookies, headers } from "next/headers";
 import { Cairo, Inter } from "next/font/google";
 import SkipLink from "@/src/components/ui/SkipLink";
 import { GeoProvider } from "@/src/contexts/GeoContext";
+import { DisplaySettingsProvider } from "@/src/components/public/display-settings";
+import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettings, MOBILE_BREAKPOINT_PX, type DisplaySettings } from "@/lib/platform-settings";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -20,7 +22,38 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const themeBootScript = `(function(){try{var saved=localStorage.getItem("akarpromax-theme");var mode=saved==="light"||saved==="dark"||saved==="system"?saved:"system";var resolved=mode==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):mode;document.documentElement.dataset.theme=resolved;document.documentElement.dataset.themeMode=mode;}catch(e){}})();`;
+/**
+ * Pre-paint presentation boot. Picks the admin's desktop or mobile display set
+ * for this viewport, stamps it on <html> as data-* attributes (globals.css does
+ * the rest), and resolves the theme — the visitor's stored choice when the
+ * admin allows one, the admin's default otherwise. Runs before first paint and
+ * again on every viewport crossing of the breakpoint, so no flash and no
+ * hydration dependency.
+ */
+function buildDisplayBootScript(display: DisplaySettings): string {
+  return `(function(){try{
+var D=${JSON.stringify(display)},BP=${MOBILE_BREAKPOINT_PX};
+var root=document.documentElement,dark=window.matchMedia("(prefers-color-scheme: dark)");
+function on(v){return v?"on":"off";}
+function apply(){
+var mobile=window.matchMedia("(max-width: "+(BP-1)+"px)").matches,c=mobile?D.mobile:D.desktop,d=root.dataset;
+d.displayDevice=mobile?"mobile":"desktop";
+d.adsHero=on(c.ads.hero);d.adsSide=on(c.ads.side);d.adsBottom=on(c.ads.bottom);
+d.uiDensity=c.density;d.listingLayout=c.listingLayout;d.listingColumns=String(c.listingColumns);
+d.showSidebar=on(c.showSidebar);d.showNewsTicker=on(c.showNewsTicker);d.showOfficePromo=on(c.showOfficePromo);
+d.allowThemeChange=on(c.allowThemeChange);
+var saved=null;try{saved=localStorage.getItem("akarpromax-theme");}catch(e){}
+var stored=saved==="light"||saved==="dark"||saved==="system"?saved:null;
+var mode=c.allowThemeChange&&stored?stored:c.themeMode;
+d.theme=mode==="system"?(dark.matches?"dark":"light"):mode;
+d.themeMode=mode;
+}
+apply();
+window.addEventListener("resize",apply);
+dark.addEventListener("change",apply);
+window.addEventListener("akarpromax-theme-change",apply);
+}catch(e){}})();`;
+}
 
 // Search-engine structured data (Schema.org). One Organization + WebSite
 // graph on every page; entity-level types (RealEstateListing etc.) belong on
@@ -124,13 +157,19 @@ export default async function RootLayout({
   // choice — no more Arabic flash for en/tr visitors, and crawlers see the
   // right lang/dir.
   const locale = await readLocaleCookie();
+  // Admin-editable presentation. Read here so the very first paint already
+  // carries it; a failed read must not take the site down, so it falls back to
+  // the shipped defaults.
+  const display = await getPlatformSettings()
+    .then((settings) => settings.display)
+    .catch(() => DEFAULT_PLATFORM_SETTINGS.display);
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${cairo.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <Script
           id="theme-boot"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeBootScript }}
+          dangerouslySetInnerHTML={{ __html: buildDisplayBootScript(display) }}
         />
         <script
           type="application/ld+json"
@@ -139,7 +178,9 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <SkipLink />
-        <GeoProvider>{children}</GeoProvider>
+        <GeoProvider>
+          <DisplaySettingsProvider value={display}>{children}</DisplaySettingsProvider>
+        </GeoProvider>
       </body>
     </html>
   );

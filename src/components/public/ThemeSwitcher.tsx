@@ -1,20 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import type { ThemeMode, Translation } from "@/src/types/site";
 import { themeOptions } from "@/src/data/translations";
+import { useDisplaySettings } from "@/src/components/public/display-settings";
 
 const STORAGE_KEY = "akarpromax-theme";
 const CHANGE_EVENT = "akarpromax-theme-change";
 
-function readStoredMode(): ThemeMode {
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
-  } catch {
-    return "system";
-  }
+/**
+ * The live mode is whatever the boot script resolved onto <html> — it already
+ * weighed the visitor's stored choice against the admin's default and the
+ * admin's permission to change it, so reading localStorage here would answer a
+ * different question.
+ */
+function readActiveMode(): ThemeMode {
+  const mode = document.documentElement.dataset.themeMode;
+  return mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
 }
 
 function subscribeToMode(callback: () => void): () => void {
@@ -31,38 +34,38 @@ function subscribeToMode(callback: () => void): () => void {
  * app/layout.tsx already applies the stored mode before hydration; this
  * component only reads/writes the same `akarpromax-theme` key and datasets.
  */
+/** Persist the visitor's choice; the boot script listener applies it. */
+export function selectThemeMode(next: ThemeMode): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    // Storage unavailable (private mode) — theme still applies for the session.
+  }
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/** Subscribes to the mode the boot script resolved, for both switchers. */
+export function useThemeMode(): ThemeMode {
+  return useSyncExternalStore(subscribeToMode, readActiveMode, () => "system" as ThemeMode);
+}
+
 export default function ThemeSwitcher({ labels }: { labels: Translation }) {
-  const mode = useSyncExternalStore(subscribeToMode, readStoredMode, () => "system" as ThemeMode);
+  const mode = useThemeMode();
+  const { settings } = useDisplaySettings();
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const resolved = mode === "system" ? (media.matches ? "dark" : "light") : mode;
-      document.documentElement.dataset.theme = resolved;
-      document.documentElement.dataset.themeMode = mode;
-    };
-    apply();
-    if (mode === "system") {
-      media.addEventListener("change", apply);
-      return () => media.removeEventListener("change", apply);
-    }
-  }, [mode]);
-
   const handleSelect = useCallback((next: ThemeMode) => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // Storage unavailable (private mode) — theme still applies for the session.
-    }
-    window.dispatchEvent(new Event(CHANGE_EVENT));
+    selectThemeMode(next);
     setOpen(false);
   }, []);
 
   const active = themeOptions.find((option) => option.id === mode) ?? themeOptions[0];
 
+  // The admin can pin the appearance for a device; then there is nothing to offer.
+  if (!settings.allowThemeChange) return null;
+
   return (
-    <div className="relative">
+    <div className="theme-switcher relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

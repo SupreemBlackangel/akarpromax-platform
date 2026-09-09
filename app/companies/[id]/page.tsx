@@ -33,7 +33,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
       <NewsTicker page="company-detail" country="السعودية" governorate="الرياض" city="الرياض" />
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-2"><AdSidebar page="company-detail" placement="left_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
+          <div className="hidden lg:block lg:col-span-2"><AdSidebar page="company-detail" placement="left_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
           <div className="lg:col-span-8">
             <div className="bg-[var(--color-surface)] rounded-xl shadow-lg overflow-hidden">
               <div className="h-48 bg-gradient-to-r from-purple-500 to-indigo-600 relative">
@@ -60,9 +60,9 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
           </div>
-          <div className="lg:col-span-2"><AdSidebar page="company-detail" placement="right_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
+          <div className="hidden lg:block lg:col-span-2"><AdSidebar page="company-detail" placement="right_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-6"><AdBottom page="company-detail" placement="bottom_01" country="السعودية" governorate="الرياض" city="الرياض" /><AdBottom page="company-detail" placement="bottom_02" /><AdBottom page="company-detail" placement="bottom_03" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6"><AdBottom page="company-detail" placement="bottom_01" country="السعودية" governorate="الرياض" city="الرياض" /><AdBottom page="company-detail" placement="bottom_02" /><AdBottom page="company-detail" placement="bottom_03" /></div>
       </div>
     </div>
   );

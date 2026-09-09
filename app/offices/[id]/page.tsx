@@ -66,7 +66,7 @@ export default function OfficeDetailPage({ params }: { params: Promise<{ id: str
       <NewsTicker page="office-detail" country="السعودية" governorate="الرياض" city="الرياض" />
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-2"><AdSidebar page="office-detail" placement="left_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
+          <div className="hidden lg:block lg:col-span-2"><AdSidebar page="office-detail" placement="left_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
           <div className="lg:col-span-8">
             <div className="bg-[var(--color-surface)] rounded-xl shadow-lg overflow-hidden">
               <div className="h-48 bg-gradient-to-r from-blue-600 to-indigo-600 relative">
@@ -99,9 +99,9 @@ export default function OfficeDetailPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
           </div>
-          <div className="lg:col-span-2"><AdSidebar page="office-detail" placement="right_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
+          <div className="hidden lg:block lg:col-span-2"><AdSidebar page="office-detail" placement="right_01" country="السعودية" governorate="الرياض" city="الرياض" /></div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-6"><AdBottom page="office-detail" placement="bottom_01" country="السعودية" governorate="الرياض" city="الرياض" /><AdBottom page="office-detail" placement="bottom_02" /><AdBottom page="office-detail" placement="bottom_03" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6"><AdBottom page="office-detail" placement="bottom_01" country="السعودية" governorate="الرياض" city="الرياض" /><AdBottom page="office-detail" placement="bottom_02" /><AdBottom page="office-detail" placement="bottom_03" /></div>
       </div>
       <ChatWidget locale="ar" authenticated={viewer.authenticated} onRequireLogin={() => openLogin('login')} />
       {AccountDialog}

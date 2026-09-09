@@ -21,13 +21,13 @@ export default function PdfToWordPage() {
           &larr; {locale === "ar" ? "العودة للادوات" : "Back to tools"}
         </Link>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <AdSidebar page="tools" placement="left_01" country={location.country} governorate={location.governorate} city={location.city} />
           </div>
           <div className="lg:col-span-8">
             <PdfToWord locale={locale} />
           </div>
-          <div className="lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <AdSidebar page="tools" placement="right_01" country={location.country} governorate={location.governorate} city={location.city} />
           </div>
         </div>

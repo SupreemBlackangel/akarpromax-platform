@@ -286,13 +286,13 @@ export default function ToolPage({ params }: { params: Promise<{ id: string }> }
           <h1 className="text-2xl font-bold">{tool.name}</h1>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <AdSidebar page="tools" placement="left_01" country={location.country} governorate={location.governorate} city={location.city} />
           </div>
           <div className="lg:col-span-8">
             <ToolCalculator toolId={toolId} tool={tool} />
           </div>
-          <div className="lg:col-span-2">
+          <div className="hidden lg:block lg:col-span-2">
             <AdSidebar page="tools" placement="right_01" country={location.country} governorate={location.governorate} city={location.city} />
           </div>
         </div>

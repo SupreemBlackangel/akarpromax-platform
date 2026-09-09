@@ -243,7 +243,11 @@ export function PublicShellLayout({
             showDesktopNavigation={showHeaderNav}
           />
 
-          <NewsTicker copy={labels} locale={locale} country={country} city={city} />
+          {/* Wrapped so the admin's per-device "show news ticker" switch has a
+              single element to hide, without the ticker knowing about it. */}
+          <div className="public-news-ticker-slot">
+            <NewsTicker copy={labels} locale={locale} country={country} city={city} />
+          </div>
           </div>
 
           <PwaManager />
@@ -300,13 +304,15 @@ export function PublicShellLayout({
           </main>
 
           {officePromotion && (
-            <OfficeAppPromotion
-              labels={labels}
-              cta={officePromotion.cta}
-              description={officePromotion.description}
-              href={officePromotion.href}
-              onCta={officePromotion.onCta}
-            />
+            <div className="public-office-promo-slot">
+              <OfficeAppPromotion
+                labels={labels}
+                cta={officePromotion.cta}
+                description={officePromotion.description}
+                href={officePromotion.href}
+                onCta={officePromotion.onCta}
+              />
+            </div>
           )}
 
           <PublicFooter labels={labels} />

@@ -67,12 +67,12 @@ export default function StandardPublicAdLayout({
   return (
     <div className="standard-public-ad-layout" data-standard-public-ad-layout={family}>
       {renderHero && (
-        <PageContainer size="full" className="public-ad-layout-container pt-[var(--space-6)]">
+        <PageContainer size="full" className="public-ad-layout-container standard-public-ad-band-hero pt-[var(--space-6)]">
           <AdSlotFrame config={layout.placements.hero} className="standard-public-ad-hero" {...sharedSlotProps} />
         </PageContainer>
       )}
 
-      <PageContainer size="full" className="public-ad-layout-container py-[var(--space-4)]">
+      <PageContainer size="full" className="public-ad-layout-container standard-public-ad-band-main py-[var(--space-4)]">
         <div className="standard-public-ad-grid grid gap-4 xl:grid-cols-[176px_minmax(0,1fr)_176px] 2xl:grid-cols-[176px_minmax(0,1fr)_176px] xl:gap-4 2xl:gap-6">
           <div className="standard-public-ad-rail hidden xl:flex xl:flex-col xl:gap-4">
             <AdSlotFrame config={sideLeft01} className="standard-public-ad-rail" {...sharedSlotProps} />
@@ -90,16 +90,12 @@ export default function StandardPublicAdLayout({
         </div>
       </PageContainer>
 
-      <PageContainer size="full" className="public-ad-layout-container xl:hidden pb-[var(--space-6)]">
-        <div className="grid gap-[var(--space-4)] md:grid-cols-2">
-          <AdSlotFrame config={sideLeft01} className="standard-public-ad-inline" {...sharedSlotProps} />
-          <AdSlotFrame config={sideLeft02} className="standard-public-ad-inline" {...sharedSlotProps} />
-          <AdSlotFrame config={sideRight01} className="standard-public-ad-inline" {...sharedSlotProps} />
-          <AdSlotFrame config={sideRight02} className="standard-public-ad-inline" {...sharedSlotProps} />
-        </div>
-      </PageContainer>
+      {/* NOTE (mobile): the four side-rail slots belong to the wide layout only.
+          They are not repeated inline below the content on small screens — a
+          phone would otherwise end on a stack of seven ad frames. Mobile keeps
+          the hero and the three bottom slots. */}
 
-      <PageContainer size="full" className="public-ad-layout-container pb-[var(--space-8)]">
+      <PageContainer size="full" className="public-ad-layout-container standard-public-ad-band-bottom pb-[var(--space-8)]">
         <div className="grid gap-[var(--space-5)] md:grid-cols-2 xl:grid-cols-3">
           <AdSlotFrame config={bottom01} className="standard-public-ad-bottom" {...sharedSlotProps} />
           <AdSlotFrame config={bottom02} className="standard-public-ad-bottom" {...sharedSlotProps} />

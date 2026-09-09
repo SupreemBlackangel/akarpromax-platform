@@ -246,7 +246,7 @@ export default function ServicesHubPage() {
             of dark blue for one button is a screen not showing providers.
             Signing up is a link at the top of the page instead. */}
         <section className="mt-10">
-          <Grid columns={3}>
+          <Grid columns={3} className="listing-grid">
             {dataLoading
               ? Array.from({ length: 9 }).map((_, i) => (
                   <div key={i} className="h-44 animate-pulse rounded-2xl bg-[var(--color-surface-muted)]" />

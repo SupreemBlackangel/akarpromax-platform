@@ -6,6 +6,9 @@ import type { PublicNavItem } from "@/src/config/public-navigation";
 import { isNavItemActive } from "@/src/config/public-navigation";
 import NavItem from "@/src/components/ui/NavItem";
 import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
+import { useDisplaySettings } from "@/src/components/public/display-settings";
+import { selectThemeMode, useThemeMode } from "@/src/components/public/ThemeSwitcher";
+import { themeOptions } from "@/src/data/translations";
 
 /**
  * Mobile navigation side sheet. Follows Dialog semantics: focus trap, Escape,
@@ -36,6 +39,8 @@ export default function MobileNavigation({
   searchHref,
 }: MobileNavigationProps) {
   const titleId = useId();
+  const themeMode = useThemeMode();
+  const { settings: display } = useDisplaySettings();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const prevPathRef = useRef(currentPath);
@@ -157,6 +162,34 @@ export default function MobileNavigation({
               );
             })}
           </nav>
+          {display.allowThemeChange && (
+            <section aria-label={labels.themeAria} className="flex flex-col gap-[var(--space-2)]">
+              <h3 className="text-[var(--font-size-xs)] font-black text-[color:var(--color-text-muted)]">{labels.themeAria}</h3>
+              {/* A phone has no room for the header dropdown, so the appearance
+                  choice lives here as three plain rows. */}
+              <div className="grid grid-cols-3 gap-[var(--space-2)]">
+                {themeOptions.map((option) => {
+                  const active = themeMode === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => selectThemeMode(option.id)}
+                      className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border px-[var(--space-2)] py-[var(--space-2)] text-[var(--font-size-xs)] font-bold transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] ${
+                        active
+                          ? "border-[color:var(--color-primary)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"
+                          : "border-[color:var(--color-border)] bg-transparent text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)]"
+                      }`}
+                    >
+                      <span aria-hidden="true" className="text-base">{option.symbol}</span>
+                      <span>{labels[option.labelKey]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {searchHref && (
             <a
               href={searchHref}

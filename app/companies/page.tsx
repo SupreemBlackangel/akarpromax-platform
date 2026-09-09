@@ -86,7 +86,7 @@ export default function CompaniesPage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="listing-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="h-48 bg-gray-200 animate-pulse rounded-xl" />
               ))}
@@ -100,7 +100,7 @@ export default function CompaniesPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="listing-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {companies.map((c) => (
                 <CompanyCard
                   key={c.id}

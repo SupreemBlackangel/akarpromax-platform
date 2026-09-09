@@ -1313,3 +1313,46 @@ html[dir="ltr"] .public-floating-sidebar[data-public-sidebar-state="collapsed"]:
 .ad-slot-requestable-empty:hover { border-color: var(--color-primary); background: var(--color-primary-soft); transform: translateY(-1px); }
 .ad-slot-requestable-empty:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 .ad-slot-request-cta { margin-top: 8px; padding: 6px 13px; border-radius: 999px; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 800; }
+
+/* ═══ Admin-controlled presentation ═══════════════════════════════════════
+   The boot script in app/layout.tsx picks the admin's desktop or mobile
+   display set for the current viewport and stamps it on <html>. Everything
+   below reads those attributes, so a page never has to be told which device
+   it is on — and the switches keep working across a resize. */
+
+/* Ad bands. The side rails are hidden AND the grid collapses to one column,
+   otherwise the empty rail tracks keep reserving 176px each. */
+html[data-ads-hero="off"] .standard-public-ad-band-hero { display: none; }
+html[data-ads-bottom="off"] .standard-public-ad-band-bottom { display: none; }
+html[data-ads-side="off"] .standard-public-ad-band-main .standard-public-ad-rail { display: none !important; }
+html[data-ads-side="off"] .standard-public-ad-grid { grid-template-columns: minmax(0, 1fr) !important; }
+
+/* Chrome elements the admin can drop per device. */
+html[data-show-news-ticker="off"] .public-news-ticker-slot { display: none; }
+html[data-show-office-promo="off"] .public-office-promo-slot { display: none; }
+html[data-show-sidebar="off"] .public-floating-sidebar { display: none !important; }
+html[data-allow-theme-change="off"] .theme-switcher { display: none !important; }
+
+/* Card lists: a grid of N columns, or a single column of full-width rows.
+   The column count wins over the page's own responsive classes, which is the
+   point of the setting: the mobile column count is the admin's own choice for
+   phones, so nothing clamps it back down. */
+html[data-listing-layout="grid"][data-listing-columns="1"] .listing-grid { grid-template-columns: minmax(0, 1fr); }
+html[data-listing-layout="grid"][data-listing-columns="2"] .listing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-listing-layout="grid"][data-listing-columns="3"] .listing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html[data-listing-layout="grid"][data-listing-columns="4"] .listing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+html[data-listing-layout="list"] .listing-grid { grid-template-columns: minmax(0, 1fr); }
+
+/* Compact density trims the upper half of the spacing scale only; the small
+   steps carry borders, icon gaps and focus rings and must not move. */
+html[data-ui-density="compact"] {
+  --space-4: 8px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-8: 18px;
+  --space-10: 24px;
+  --space-12: 28px;
+  --space-16: 34px;
+  --space-20: 44px;
+  --space-24: 64px;
+}
