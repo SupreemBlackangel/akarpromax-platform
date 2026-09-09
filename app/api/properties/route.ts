@@ -5,6 +5,7 @@ import { propertyOffers, propertyOfferTypes } from '@/lib/db/schemas/offer-types
 import { eq, and, inArray, like, sql, or, asc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
 import { createPropertySchema, propertySearchSchema } from '@/lib/validators/property-validators';
+import { normalizeWhatsappNumber } from '@/lib/properties/contact-method';
 import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
 import { GeoService } from '@/lib/services/geo/geo.service';
 import { resolveGeoSelection } from '@/lib/services/geo/selection';
@@ -295,6 +296,11 @@ export async function POST(request: NextRequest) {
         referenceNumber: validated.referenceNumber || '',
         advertisingLicense: validated.advertisingLicense || '',
         officeId: validated.officeId || null,
+        // How buyers reach the advertiser on the public detail page.
+        contactMethod: validated.contactMethod,
+        contactWhatsapp: validated.contactMethod === 'whatsapp'
+          ? normalizeWhatsappNumber(validated.contactWhatsapp)
+          : null,
         status: 'draft',
       }).returning();
 

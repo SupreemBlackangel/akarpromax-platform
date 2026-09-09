@@ -35,6 +35,7 @@ const FIELD_STEP: Record<string, PropertyStep> = {
   yearBuilt: 3, facade: 3, direction: 3, advertisingLicense: 3,
 
   price: 4, currency: 4, offers: 4,
+  contactMethod: 4, contactWhatsapp: 4,
   "offers.offerTypeId": 4, "offers.marketingMethod": 4, "offers.auctionType": 4,
   "offers.price": 4, "offers.currency": 4, "offers.negotiable": 4, "offers.isActive": 4,
 

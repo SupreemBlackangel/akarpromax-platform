@@ -4,6 +4,11 @@ import { getDb } from "@/lib/db";
 import { verifySessionPayload } from "@/lib/auth/session";
 import { getRuntimeEnv } from "@/lib/config/runtime-env";
 import { ensureOfficeOrganizationForUser } from "@/lib/integration/office-organization";
+import {
+  DEFAULT_PROPERTY_CONTACT_METHOD,
+  isValidWhatsappNumber,
+  normalizeContactMethod,
+} from "@/lib/properties/contact-method";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +57,7 @@ export async function GET(request: Request) {
   const { db, end } = getDb();
   try {
     const rows = await db.execute(sql`
-      SELECT name, logo_data, phone, whatsapp, email, website, country, governorate, city, address
+      SELECT name, logo_data, phone, whatsapp, email, website, country, governorate, city, address, contact_method
       FROM office_profiles WHERE user_id = ${identity.userId} LIMIT 1
     `);
     const row = (rows as unknown as Array<Record<string, unknown>>)[0];
@@ -71,6 +76,8 @@ export async function GET(request: Request) {
           governorate: row.governorate ?? "",
           city: row.city ?? "",
           address: row.address ?? "",
+          // The office-wide choice the publish bridge stamps onto every listing.
+          contactMethod: normalizeContactMethod(row.contact_method),
         },
       },
       200,
@@ -91,6 +98,7 @@ type ProfileBody = {
   governorate?: unknown;
   city?: unknown;
   address?: unknown;
+  contactMethod?: unknown;
 };
 
 function text(value: unknown, max: number): string {
@@ -127,17 +135,22 @@ export async function POST(request: Request) {
   const governorate = text(body.governorate, 100);
   const city = text(body.city, 100);
   const address = text(body.address, 500);
+  // An office that asks for WhatsApp without a dialable number keeps the chat
+  // thread — the same fallback the publish bridge and the detail page apply.
+  const contactMethod = normalizeContactMethod(body.contactMethod) === "whatsapp" && isValidWhatsappNumber(whatsapp)
+    ? "whatsapp"
+    : DEFAULT_PROPERTY_CONTACT_METHOD;
 
   const { db, end } = getDb();
   try {
     await db.execute(sql`
-      INSERT INTO office_profiles (user_id, name, logo_data, phone, whatsapp, email, website, country, governorate, city, address, updated_at)
-      VALUES (${identity.userId}, ${name}, ${logoData}, ${phone}, ${whatsapp}, ${email}, ${website}, ${country}, ${governorate}, ${city}, ${address}, now())
+      INSERT INTO office_profiles (user_id, name, logo_data, phone, whatsapp, email, website, country, governorate, city, address, contact_method, updated_at)
+      VALUES (${identity.userId}, ${name}, ${logoData}, ${phone}, ${whatsapp}, ${email}, ${website}, ${country}, ${governorate}, ${city}, ${address}, ${contactMethod}, now())
       ON CONFLICT (user_id) DO UPDATE SET
         name = EXCLUDED.name, logo_data = EXCLUDED.logo_data, phone = EXCLUDED.phone,
         whatsapp = EXCLUDED.whatsapp, email = EXCLUDED.email, website = EXCLUDED.website,
         country = EXCLUDED.country, governorate = EXCLUDED.governorate, city = EXCLUDED.city,
-        address = EXCLUDED.address, updated_at = now()
+        address = EXCLUDED.address, contact_method = EXCLUDED.contact_method, updated_at = now()
     `);
   } finally {
     await end();

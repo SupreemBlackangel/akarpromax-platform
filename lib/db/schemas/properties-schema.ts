@@ -35,6 +35,10 @@ export const properties = pgTable('properties', {
   // Office-CRM fields carried through from the desktop app's own record.
   ownerName: text('owner_name'),
   agentName: text('agent_name'),
+  // How a visitor reaches the advertiser: 'chat' (a platform thread) or
+  // 'whatsapp'. See lib/properties/contact-method.ts.
+  contactMethod: text('contact_method').default('chat'),
+  contactWhatsapp: text('contact_whatsapp'),
   status: text('status').default('draft'),
   isFeatured: boolean('is_featured').default(false),
   isVerified: boolean('is_verified').default(false),

@@ -9,6 +9,35 @@ import { getSession } from '@/lib/auth/session';
 import { canAccessAdminArea } from '@/lib/auth/access-control';
 import { updatePropertySchema } from '@/lib/validators/property-validators';
 import { assertPropertyOfferPolicies } from '@/lib/properties/offer-policy';
+import { normalizeWhatsappNumber, normalizeContactMethod } from '@/lib/properties/contact-method';
+import { users, organizations } from '@/lib/db/schema';
+
+/**
+ * The public name behind a listing: the office's, or the publishing member's.
+ * Never the office's own CRM `ownerName` — that is the property owner's private
+ * record, which the API strips for exactly that reason.
+ */
+async function resolveAdvertiser(
+  officeId: string | null,
+  userId: string | null,
+): Promise<{ name: string; type: 'office' | 'user'; id: string | null } | null> {
+  if (officeId) {
+    const [org] = await db
+      .select({ nameAr: organizations.nameAr, nameEn: organizations.nameEn, status: organizations.status })
+      .from(organizations)
+      .where(eq(organizations.id, officeId));
+    const name = (org?.nameAr || org?.nameEn || '').trim();
+    // The office page only serves active offices, so a pending one is named
+    // without a link rather than linked to a 404.
+    if (name) return { name, type: 'office', id: org?.status === 'active' ? officeId : null };
+  }
+  if (userId) {
+    const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
+    const name = (user?.name || '').trim();
+    if (name) return { name, type: 'user', id: userId };
+  }
+  return null;
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -70,6 +99,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .from(propertyOffers)
       .where(eq(propertyOffers.propertyId, id));
 
+    // Who is advertising this listing — the office when it belongs to one,
+    // otherwise the member who published it. The detail page names them next to
+    // the contact button; before this, a visitor was asked to message someone
+    // the page never identified.
+    const advertiser = await resolveAdvertiser(property.officeId, property.userId);
+
     // The owner (or an admin) sees the full record; everyone else gets it with
     // the moderation + internal auction mechanics stripped. userId is kept — the
     // detail page needs it as the "contact advertiser" messaging recipient.
@@ -88,6 +123,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       for (const field of INTERNAL_FIELDS) delete propertyData[field];
     }
 
+    // A listing that asks for WhatsApp but carries no dialable number falls back
+    // to the chat thread, so the page never offers a dead button.
+    const contactWhatsapp = normalizeWhatsappNumber(property.contactWhatsapp);
+    const contactMethod = normalizeContactMethod(property.contactMethod) === 'whatsapp' && contactWhatsapp
+      ? 'whatsapp'
+      : 'chat';
+
     return NextResponse.json({
       success: true,
       data: {
@@ -95,6 +137,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         media,
         offers,
         isFavorite,
+        advertiser,
+        // The number is published only when the advertiser actually chose
+        // WhatsApp — a stored number is not a licence to expose it.
+        // The owner edits what they actually stored — including a number that
+        // is not dialable yet, which they need to see in order to fix it.
+        contactMethod: isOwnerOrAdmin ? normalizeContactMethod(property.contactMethod) : contactMethod,
+        contactWhatsapp: isOwnerOrAdmin
+          ? property.contactWhatsapp ?? null
+          : (contactMethod === 'whatsapp' ? contactWhatsapp : null),
         // Lets the detail page hide "contact the advertiser" on your own listing
         // (self-messaging is rejected by /api/messages).
         isOwner: property.userId === session?.userId,
@@ -175,6 +226,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updateData[field] = ['price', 'area'].includes(field) && typeof value === 'number'
         ? String(value)
         : value;
+    }
+
+    // Switching to chat clears the stored number rather than leaving a stale one
+    // the API would keep publishing.
+    if (validated.contactMethod !== undefined) {
+      updateData.contactMethod = validated.contactMethod;
+      updateData.contactWhatsapp = validated.contactMethod === 'whatsapp'
+        ? normalizeWhatsappNumber(validated.contactWhatsapp)
+        : null;
+    } else if (validated.contactWhatsapp !== undefined) {
+      updateData.contactWhatsapp = normalizeWhatsappNumber(validated.contactWhatsapp) || null;
     }
 
     if (validated.latitude !== undefined) {

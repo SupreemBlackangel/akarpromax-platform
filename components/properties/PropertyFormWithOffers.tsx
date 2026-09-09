@@ -8,6 +8,7 @@ import { CardContent, CardHeader, CardTitle } from '@/src/components/ui/Card';
 import GeoAddressPicker from '@/components/properties/GeoAddressPicker';
 import { CURRENCY_REGISTRY } from '@/lib/market/currency-registry';
 import { createPropertySchema } from '@/lib/validators/property-validators';
+import { DEFAULT_PROPERTY_CONTACT_METHOD, type PropertyContactMethod } from '@/lib/properties/contact-method';
 import { formatZodError, type ValidationError } from '@/lib/validation/formatZodError';
 import { MAX_PROPERTY_IMAGES } from '@/lib/media/limits';
 
@@ -65,6 +66,9 @@ export interface PropertyFormData {
   direction: string;
   referenceNumber: string;
   advertisingLicense: string;
+  /** How buyers reach the advertiser on the public detail page. */
+  contactMethod: PropertyContactMethod;
+  contactWhatsapp: string;
   offers: Offer[];
   media: MediaItem[];
 }
@@ -116,6 +120,8 @@ const defaultFormData: PropertyFormData = {
   direction: '',
   referenceNumber: '',
   advertisingLicense: '',
+  contactMethod: DEFAULT_PROPERTY_CONTACT_METHOD,
+  contactWhatsapp: '',
   offers: [{ ...defaultOffer }],
   media: [],
 };
@@ -202,6 +208,8 @@ function mapInitialData(initialData?: PropertyFormData): PropertyFormData {
     direction: initialData.direction || '',
     referenceNumber: initialData.referenceNumber || '',
     advertisingLicense: initialData.advertisingLicense || '',
+    contactMethod: initialData.contactMethod || DEFAULT_PROPERTY_CONTACT_METHOD,
+    contactWhatsapp: initialData.contactWhatsapp || '',
     offers,
     media,
   };
@@ -353,6 +361,8 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
       direction: formData.direction,
       referenceNumber: formData.referenceNumber,
       advertisingLicense: formData.advertisingLicense,
+      contactMethod: formData.contactMethod,
+      contactWhatsapp: formData.contactWhatsapp,
       // A row the user added and never filled is not an error — the server's
       // normaliser drops it too, so the two agree on what the listing holds.
       media: formData.media
@@ -774,6 +784,49 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
               </div>
             );
           })}
+
+          {/* How interested buyers reach you. The choice is per listing here;
+              an office publishing from the desktop app sets it once in its own
+              control panel and every listing it sends carries that choice. */}
+          <div className="mt-6 border-t border-[var(--color-border)] pt-5">
+            <label className={labelClass}>آلية تواصل المهتمين</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              {([
+                { value: 'chat' as const, label: 'الدردشة الخاصة داخل المنصة', hint: 'تصل الرسائل إلى صندوق الدردشة في حسابك' },
+                { value: 'whatsapp' as const, label: 'واتساب', hint: 'يظهر رقمك ويُحوَّل المتصل إلى محادثة واتساب' },
+              ]).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleChange('contactMethod', option.value)}
+                  className={`text-right rounded-xl border p-3 transition ${
+                    formData.contactMethod === option.value
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
+                      : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/40'
+                  }`}
+                >
+                  <span className="block text-sm font-bold text-[var(--color-text-primary)]">{option.label}</span>
+                  <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+            {formData.contactMethod === 'whatsapp' && (
+              <div className="mt-3">
+                <label className={labelClass}>رقم واتساب</label>
+                <input
+                  type="tel"
+                  dir="ltr"
+                  value={formData.contactWhatsapp}
+                  onChange={(e) => handleChange('contactWhatsapp', e.target.value)}
+                  className={inputClass}
+                  placeholder="9665xxxxxxxx"
+                />
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  بالصيغة الدولية بدون صفر أو علامة + — الرقم المحلي وحده لا يصل إلى واتساب.
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

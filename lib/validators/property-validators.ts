@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { ACCEPTED_PROPERTY_CATEGORIES, isAcceptedPropertyType } from '@/lib/taxonomy/property-taxonomy';
 import { MAX_PROPERTY_MEDIA, isAcceptedMediaUrl } from '@/lib/media/limits';
+import {
+  PROPERTY_CONTACT_METHODS,
+  DEFAULT_PROPERTY_CONTACT_METHOD,
+  isValidWhatsappNumber,
+  WHATSAPP_FORMAT_MESSAGE,
+} from '@/lib/properties/contact-method';
 
 export const propertyDealTypeSchema = z.enum(['sale', 'rent']);
 
@@ -51,7 +57,7 @@ export const propertyOfferInputSchema = z.object({
   }
 });
 
-export const createPropertySchema = z.object({
+export const createPropertyBaseSchema = z.object({
   titleAr: z.string().min(5).max(200),
   titleEn: z.string().max(200).optional(),
   descriptionAr: z.string().min(20).max(5000),
@@ -79,6 +85,10 @@ export const createPropertySchema = z.object({
   referenceNumber: z.string().max(50).optional(),
   advertisingLicense: z.string().max(50).optional(),
   officeId: z.string().uuid().optional(),
+  // How the visitor reaches the advertiser. 'whatsapp' needs a dialable number:
+  // without one the detail page would render a button that goes nowhere.
+  contactMethod: z.enum(PROPERTY_CONTACT_METHODS).default(DEFAULT_PROPERTY_CONTACT_METHOD),
+  contactWhatsapp: z.string().max(40).optional(),
   // A media URL is what property_media actually stores: a site-relative
   // /uploads/properties/... path for a file this platform holds, or an
   // absolute http(s) URL for media hosted elsewhere. `z.string().url()`
@@ -94,7 +104,23 @@ export const createPropertySchema = z.object({
   offers: z.array(propertyOfferInputSchema).max(11).optional(),
 });
 
-export const updatePropertySchema = createPropertySchema.partial();
+/**
+ * A WhatsApp listing must carry a dialable number. Shared by create and update
+ * so an edit cannot switch the method to whatsapp and leave the number behind.
+ */
+function assertWhatsappNumber(
+  value: { contactMethod?: string; contactWhatsapp?: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (value.contactMethod !== 'whatsapp') return;
+  if (!isValidWhatsappNumber(value.contactWhatsapp)) {
+    ctx.addIssue({ code: 'custom', path: ['contactWhatsapp'], message: WHATSAPP_FORMAT_MESSAGE });
+  }
+}
+
+export const createPropertySchema = createPropertyBaseSchema.superRefine(assertWhatsappNumber);
+
+export const updatePropertySchema = createPropertyBaseSchema.partial().superRefine(assertWhatsappNumber);
 
 export const propertySearchSchema = z.object({
   dealType: propertyDealTypeSchema.optional(),

@@ -9,6 +9,12 @@ import { matchesFileSignature } from "@/lib/security/file-signatures";
 import { canonicalPropertyType, categoryForPropertyType } from "@/lib/taxonomy/property-taxonomy";
 import { MAX_PROPERTY_IMAGE_BYTES, MAX_PROPERTY_IMAGES } from "@/lib/media/limits";
 import { mediaFromDesktopPayload, normalizePropertyMedia, type NormalizedMedia } from "@/lib/media/property-media";
+import {
+  DEFAULT_PROPERTY_CONTACT_METHOD,
+  normalizeContactMethod,
+  normalizeWhatsappNumber,
+  type PropertyContactMethod,
+} from "@/lib/properties/contact-method";
 
 /**
  * Shared logic for the desktop property-publish bridge
@@ -143,18 +149,36 @@ async function resolveImages(rawImages: unknown): Promise<string[]> {
   return urls;
 }
 
-async function loadOfficeLocation(userId: string): Promise<{ country: string; governorate: string; city: string }> {
+type OfficeDefaults = {
+  country: string;
+  governorate: string;
+  city: string;
+  /**
+   * The office picks how buyers reach it ONCE, in the desktop control panel;
+   * every listing it publishes carries that choice. Falls back to the chat
+   * thread when the office asked for WhatsApp without a dialable number.
+   */
+  contactMethod: PropertyContactMethod;
+  contactWhatsapp: string;
+};
+
+async function loadOfficeDefaults(userId: string): Promise<OfficeDefaults> {
+  const empty: OfficeDefaults = { country: "", governorate: "", city: "", contactMethod: DEFAULT_PROPERTY_CONTACT_METHOD, contactWhatsapp: "" };
   const { db, end } = getDb();
   try {
-    const rows = await db.execute(sql`SELECT country, governorate, city FROM office_profiles WHERE user_id = ${userId} LIMIT 1`);
+    const rows = await db.execute(sql`SELECT country, governorate, city, contact_method, whatsapp FROM office_profiles WHERE user_id = ${userId} LIMIT 1`);
     const row = (rows as unknown as Array<Record<string, unknown>>)[0];
+    const whatsapp = normalizeWhatsappNumber(row?.whatsapp);
+    const wanted = normalizeContactMethod(row?.contact_method);
     return {
       country: text(row?.country, 100),
       governorate: text(row?.governorate, 100),
       city: text(row?.city, 100),
+      contactMethod: wanted === "whatsapp" && whatsapp ? "whatsapp" : DEFAULT_PROPERTY_CONTACT_METHOD,
+      contactWhatsapp: whatsapp,
     };
   } catch {
-    return { country: "", governorate: "", city: "" };
+    return empty;
   } finally {
     await end();
   }
@@ -314,7 +338,7 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
   // country/governorate/city were picked from /api/geo). The desktop's own
   // `city` is free-typed Arabic text — keeping it here would file the listing
   // under a code that matches no scope, making it invisible on the platform.
-  const office = await loadOfficeLocation(userId);
+  const office = await loadOfficeDefaults(userId);
   const city = office.city;
   if (!office.country || !office.governorate || !city) {
     return { status: 422, body: { ok: false, message: "أكمل بروفايل المكتب (الدولة والمنطقة والمدينة) قبل النشر" } };
@@ -412,6 +436,8 @@ export async function publishDesktopProperty(userId: string, body: DesktopProper
         price: String(price), currency: text(body.currency, 8) || "SAR",
         area: String(area), bedrooms: Math.max(0, num(body.bedrooms, 0)), bathrooms: Math.max(0, num(body.bathrooms, 0)),
         ownerName, agentName,
+        contactMethod: office.contactMethod,
+        contactWhatsapp: office.contactMethod === "whatsapp" ? office.contactWhatsapp : null,
         status: "pending_review",
       })
       .returning();
