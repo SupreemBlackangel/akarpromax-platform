@@ -12,13 +12,10 @@ import {
   Globe2,
   Layers,
   MapPin,
-  Maximize2,
   MessageCircle,
-  Minimize2,
   Navigation,
   RotateCcw,
   ScanLine,
-  Send,
   Sparkles,
   UploadCloud,
   X,
@@ -63,24 +60,6 @@ import {
 } from "@/lib/land/ocr/page-evidence";
 import { chooseOcrLanguages, createOcrWorkerWithFallback } from "@/lib/land/ocr/languages";
 import { ToolCalculatorShell } from "./ToolCalculatorShell";
-import { ManualGeometryPanel } from "./find-my-land/ManualGeometryPanel";
-import {
-  type SourcePoint,
-  type ManualDraft,
-  type ConfirmedManualGeometry,
-  type GeometryStatus,
-  type ValidationResult,
-  createInitialDraft,
-  getPreviewPoints,
-  validateManualGeometry,
-  deriveGeometryStatus,
-  computePolygonArea,
-  computePerimeter,
-  shouldShowManualGeometry,
-  pushHistory,
-  undo,
-  redo,
-} from "./find-my-land/useManualGeometry";
 
 type Props = { locale: Locale };
 
@@ -312,44 +291,6 @@ type AnalysisPayload = {
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const ANALYSIS_TIMEOUT_MS = 60_000;
 const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "jfif", "webp"];
-
-const STATUS_COPY: Record<string, { ar: string; en: string; tr: string }> = {
-  RESOLVED_EXPLICIT_COORDINATES: {
-    ar: "تم تحديد الأرض من الإحداثيات الواردة في الوثيقة",
-    en: "The land was located from coordinates in the document",
-    tr: "Arazi, belgedeki koordinatlardan bulundu",
-  },
-  RESOLVED_GEOCODED: {
-    ar: "تم تحديد الموقع من بيانات العنوان الواردة في الوثيقة",
-    en: "The location was identified from the document address",
-    tr: "Konum, belgedeki adres bilgileriyle bulundu",
-  },
-  NEEDS_USER_CONFIRMATION: {
-    ar: "وجدنا موقعًا مرجحًا ويحتاج إلى تأكيدك",
-    en: "We found a likely location that needs your confirmation",
-    tr: "Onayınızı gerektiren olası bir konum bulundu",
-  },
-  PARTIALLY_RESOLVED: {
-    ar: "استخرجنا بيانات الأرض، لكن بعض تفاصيل الموقع تحتاج مراجعة",
-    en: "Land data was extracted, but some location details need review",
-    tr: "Arazi verileri çıkarıldı; bazı konum ayrıntıları incelenmeli",
-  },
-  UNRESOLVED: {
-    ar: "تمت قراءة الوثيقة، ولم يظهر فيها جدول إحداثيات صالح للرسم",
-    en: "The document was read, but no plottable coordinate table was found",
-    tr: "Belge okundu, ancak çizilebilir koordinat tablosu bulunamadı",
-  },
-  INVALID_DOCUMENT: {
-    ar: "تعذرت قراءة محتوى الملف بوضوح؛ جرّب نسخة أوضح أو ملف PDF أصليًا",
-    en: "The file could not be read clearly; try a clearer copy or the original PDF",
-    tr: "Dosya net okunamadı; daha net bir kopya veya özgün PDF deneyin",
-  },
-  NOT_LAND_DOCUMENT: {
-    ar: "لم نتعرّف تلقائيًا على نوع الوثيقة؛ يمكنك مراجعة النص والبيانات المستخرجة أدناه",
-    en: "The document type was not recognized automatically; review the extracted data below",
-    tr: "Belge türü otomatik tanınmadı; aşağıdaki çıkarılan verileri inceleyin",
-  },
-};
 
 const DOCUMENT_KIND_COPY: Record<string, { ar: string; en: string; tr: string }> = {
   PROPERTY_DEED: { ar: "وثيقة ملكية", en: "Property deed", tr: "Tapu belgesi" },
@@ -909,7 +850,9 @@ export function FindMyLand({ locale }: Props) {
   const [crsMode, setCrsMode] = useState<CrsMode>("auto");
   // The tool opens in focus mode: a survey map and a coordinate table need the
   // full content width, and the page rails can be brought back with one click.
-  const [focusMode, setFocusMode] = useState(true);
+  // The tool always renders in its focused reading view. The toggle that
+  // turned it off lived in the verdict banner, which is gone.
+  const focusMode = true;
 
   /**
    * Coordinate table view: the document's own values, or projected UTM.
@@ -921,14 +864,6 @@ export function FindMyLand({ locale }: Props) {
    */
   // null = follow whatever the document gave us; a value = the reader chose a view.
   const [coordinateViewOverride, setCoordinateViewOverride] = useState<"wgs84" | "utm" | null>(null);
-
-  /* ---- Manual Geometry Recovery state ---- */
-  const [manualDraft, setManualDraft] = useState<ManualDraft | null>(null);
-  const [manualDraftAnalysis, setManualDraftAnalysis] = useState<AnalysisPayload | null>(null);
-  const [manualHistory, setManualHistory] = useState<ManualDraft[]>([]);
-  const [manualHistoryIdx, setManualHistoryIdx] = useState(-1);
-  const [manualConfirmed, setManualConfirmed] = useState<ConfirmedManualGeometry | null>(null);
-  const [highlightedPointId, setHighlightedPointId] = useState<string | null>(null);
 
   const t = useCallback(
     (ar: string, en: string, tr: string) => (locale === "ar" ? ar : locale === "tr" ? tr : en),
@@ -963,11 +898,6 @@ export function FindMyLand({ locale }: Props) {
     setUtmHemisphereInput("N");
     setCrsMode("auto");
     setDocumentPages([]);
-    setManualDraft(null);
-    setManualHistory([]);
-    setManualHistoryIdx(-1);
-    setManualConfirmed(null);
-    setHighlightedPointId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
@@ -999,7 +929,6 @@ export function FindMyLand({ locale }: Props) {
     setAnalysis(null);
     setStage("reading");
     setProgress(5);
-    setFocusMode(true);
     let analysisExpired = false;
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
@@ -1460,113 +1389,6 @@ export function FindMyLand({ locale }: Props) {
       : { value: null, source: "unavailable" as const };
   }, [analysis, automaticGeometryPoints, hasValidPolygon]);
 
-  /* ---- Manual Geometry Recovery derived state ---- */
-  const sourcePointsData = useMemo<SourcePoint[]>(() => {
-    return coordinateRows.map((row, i) => ({
-      ...row,
-      id: analysis?.result.parcel?.vertices?.[i]?.label ?? row.label,
-      label: row.label,
-      sourceIndex: i,
-      confidence: analysis?.result.parcel?.vertices?.[i]?.confidence,
-      page: analysis?.result.parcel?.vertices?.[i]?.page,
-      rowIndex: analysis?.result.parcel?.vertices?.[i]?.rowIndex,
-    }));
-  }, [coordinateRows, analysis]);
-
-  const srcPtsById = useMemo(
-    () => new Map(sourcePointsData.map((sp) => [sp.id, sp])),
-    [sourcePointsData],
-  );
-
-  // Initialize manual draft when analysis completes and panel should show.
-  // Adjusted during render (React's documented pattern for deriving state
-  // from a prop/state change) instead of in an effect, so this doesn't
-  // trigger an extra cascading render pass.
-  if (
-    stage === "done" &&
-    analysis &&
-    manualDraft === null &&
-    analysis !== manualDraftAnalysis &&
-    shouldShowManualGeometry(
-      coordinateRows.length,
-      hasValidPolygon,
-      analysis.result.status,
-      analysis.result.parcel?.boundary.selfIntersections,
-      analysis.result.parcel?.boundary.documentOrderValid,
-    )
-  ) {
-    setManualDraftAnalysis(analysis);
-    const initial = createInitialDraft(sourcePointsData);
-    setManualDraft(initial);
-    setManualHistory([initial]);
-    setManualHistoryIdx(0);
-  }
-
-  const manualPreviewPoints = useMemo(
-    () => manualDraft ? getPreviewPoints(manualDraft, srcPtsById) : [],
-    [manualDraft, srcPtsById],
-  );
-
-  const manualValidation = useMemo<ValidationResult[]>(
-    () => manualPreviewPoints.length > 0
-      ? validateManualGeometry(manualPreviewPoints, !analysis?.result.crsSelection?.required)
-      : [],
-    [manualPreviewPoints, analysis],
-  );
-
-  const manualStatus = useMemo<GeometryStatus>(
-    () => deriveGeometryStatus(manualValidation),
-    [manualValidation],
-  );
-
-  const manualAreaSqm = useMemo(
-    () => manualPreviewPoints.length >= 3 ? computePolygonArea(manualPreviewPoints) : null,
-    [manualPreviewPoints],
-  );
-
-  const manualPerimeter = useMemo(
-    () => manualPreviewPoints.length >= 2 ? computePerimeter(manualPreviewPoints) : null,
-    [manualPreviewPoints],
-  );
-
-  const declaredAreaSqm = useMemo(() => {
-    const raw = analysis?.details.area?.replace(/,/g, "");
-    const v = raw ? Number.parseFloat(raw) : NaN;
-    return Number.isFinite(v) && v > 0 ? v : null;
-  }, [analysis]);
-
-  const hasExplicitTopology = (analysis?.result.parcel?.sequenceEvidence ?? "") !== "UNKNOWN"
-    && (analysis?.result.parcel?.sequenceEvidence ?? "").length > 0;
-
-  const showManualGeometryPanel = manualDraft !== null && stage === "done" && analysis !== null;
-
-  const handleManualDraftChange = useCallback((draft: ManualDraft) => {
-    setManualDraft(draft);
-    const { history: h, historyIndex: idx } = pushHistory(manualHistory, manualHistoryIdx, draft);
-    setManualHistory(h);
-    setManualHistoryIdx(idx);
-  }, [manualHistory, manualHistoryIdx]);
-
-  const handleManualUndo = useCallback(() => {
-    const result = undo(manualHistory, manualHistoryIdx);
-    if (result) {
-      setManualDraft(result.draft);
-      setManualHistoryIdx(result.historyIndex);
-    }
-  }, [manualHistory, manualHistoryIdx]);
-
-  const handleManualRedo = useCallback(() => {
-    const result = redo(manualHistory, manualHistoryIdx);
-    if (result) {
-      setManualDraft(result.draft);
-      setManualHistoryIdx(result.historyIndex);
-    }
-  }, [manualHistory, manualHistoryIdx]);
-
-  const handleManualConfirm = useCallback((geometry: ConfirmedManualGeometry) => {
-    setManualConfirmed(geometry);
-  }, []);
-
   useEffect(() => {
     if (stage !== "done" || !analysis?.result.center || !mapRef.current) return;
     let cancelled = false;
@@ -1583,28 +1405,21 @@ export function FindMyLand({ locale }: Props) {
       }).addTo(map);
 
       const bounds: [number, number][] = [];
-      // When manual geometry is active, draw the preview points in manual order
-      const mapPreviewPoints = showManualGeometryPanel && manualPreviewPoints.length >= 2
-        ? manualPreviewPoints
-        : automaticGeometryPoints;
-      const mapHasValidPoly = showManualGeometryPanel
-        ? manualStatus === "VALID"
-        : hasValidPolygon;
+      const mapPreviewPoints = automaticGeometryPoints;
+      const mapHasValidPoly = hasValidPolygon;
       if (mapHasValidPoly && mapPreviewPoints.length >= 3) {
         const polygon = mapPreviewPoints.map((point) => [point.lat, point.lon] as [number, number]);
         leaflet.polygon(polygon, {
-          color: showManualGeometryPanel ? "#7c3aed" : "#1d4ed8",
-          fillColor: showManualGeometryPanel ? "#8b5cf6" : "#3b82f6",
+          color: "#1d4ed8",
+          fillColor: "#3b82f6",
           fillOpacity: 0.15,
-          weight: showManualGeometryPanel ? 2.5 : 3,
-          dashArray: showManualGeometryPanel ? "6 4" : undefined,
-          className: showManualGeometryPanel ? "fml-manual-preview" : undefined,
-        }).addTo(map);
+          weight: 3,
+                            }).addTo(map);
         bounds.push(...polygon);
       } else if (mapPreviewPoints.length >= 2) {
         const sequence = mapPreviewPoints.map((point) => [point.lat, point.lon] as [number, number]);
         leaflet.polyline(sequence, {
-          color: showManualGeometryPanel ? "#7c3aed" : "#d97706",
+          color: "#d97706",
           dashArray: "8 6",
           weight: 3,
         }).addTo(map);
@@ -1612,11 +1427,10 @@ export function FindMyLand({ locale }: Props) {
       } else {
         bounds.push(center);
       }
-      // Draw numbered markers — manual order if active, source order otherwise
       mapPreviewPoints.forEach((point, index) => {
         const marker = leaflet.circleMarker([point.lat, point.lon], {
           radius: 7,
-          color: showManualGeometryPanel ? "#7c3aed" : "#1d4ed8",
+          color: "#1d4ed8",
           fillColor: "#ffffff",
           fillOpacity: 1,
           weight: 3,
@@ -1625,16 +1439,8 @@ export function FindMyLand({ locale }: Props) {
           permanent: mapPreviewPoints.length <= 24,
           direction: "top",
           offset: [0, -8],
-          className: showManualGeometryPanel ? "fml-manual-point-label" : "fml-point-label",
+          className: "fml-point-label",
         }).addTo(map);
-        if (showManualGeometryPanel) {
-          marker.on("click", () => setHighlightedPointId(
-            sourcePointsData.find((sp) => {
-              const mp = manualDraft?.orderedIds[index];
-              return mp === sp.id;
-            })?.id ?? null,
-          ));
-        }
       });
       // Fitting the real bounds keeps small urban plots and large rural
       // parcels both readable, and never drops the user on a default location.
@@ -1649,26 +1455,10 @@ export function FindMyLand({ locale }: Props) {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
     };
-  }, [analysis, automaticGeometryPoints, focusMode, hasValidPolygon, points, stage, t, showManualGeometryPanel, manualPreviewPoints, manualStatus, manualDraft, sourcePointsData]);
+  }, [analysis, automaticGeometryPoints, focusMode, hasValidPolygon, points, stage, t]);
 
-  const statusCopy = analysis
-    ? STATUS_COPY[analysis.result.status]?.[locale] ?? analysis.result.status
-    : "";
-  const strategy = analysis?.result.strategy;
   const crsSelectionRequired = analysis?.result.crsSelection?.required === true;
   const groupSelectionRequired = analysis?.result.coordinateGroupSelectionRequired === true;
-  const resultVerdict = crsSelectionRequired || groupSelectionRequired
-    ? "review" as const
-    : coordinateRows.length === 0
-      ? "failed" as const
-      : strategy?.requiresReview
-      ? "review" as const
-      : "confident" as const;
-  const resultVerdictCopy = resultVerdict === "confident"
-    ? t("تم التحليل بنجاح", "Analysis completed successfully", "Analiz başarıyla tamamlandı")
-    : resultVerdict === "review"
-      ? t("تحتاج الإحداثيات إلى مراجعة", "Coordinates need review", "Koordinatlar incelenmeli")
-      : t("تعذر استخراج إحداثيات صالحة", "No valid coordinates could be extracted", "Geçerli koordinatlar çıkarılamadı");
   const googleMapsUrl = coordinateRows.length > 0 && analysis?.result.center
     ? `https://www.google.com/maps/search/?api=1&query=${analysis.result.center.lat},${analysis.result.center.lon}`
     : "";
@@ -1693,13 +1483,8 @@ export function FindMyLand({ locale }: Props) {
     window.setTimeout(() => setCopiedTarget((current) => (current === target ? null : current)), 1800);
   }, []);
 
-  // Copy and export keep the full stored precision; only the on-screen table
-  // is allowed to shorten a value.
-  const wgsClipboardText = useMemo(() => [
-    "Point\tLatitude (N)\tLongitude (E)\tCRS",
-    ...coordinateRows.map((point) => `${point.label}\t${point.latText}\t${point.lonText}\tWGS84`),
-  ].join("\n"), [coordinateRows]);
-
+  // Copying keeps the full stored precision; only the on-screen table is
+  // allowed to shorten a value.
   const utmClipboardText = useMemo(() => [
     "Point\tUTM Zone\tEPSG\tEasting (X)\tNorthing (Y)",
     ...utmRows.map((point) => `${point.label}\t${formatUtmZone(point.zone, point.hemisphere)}\t${utmEpsgCode(point.zone, point.hemisphere)}\t${point.easting.toFixed(3)}\t${point.northing.toFixed(3)}`),
@@ -1715,97 +1500,6 @@ export function FindMyLand({ locale }: Props) {
   const whatsappShareUrl = googleMapsUrl
     ? `https://wa.me/?text=${encodeURIComponent(locationShareText)}`
     : "";
-
-  /**
-   * The whole analysis as structured data: the corners in both systems, the
-   * order the document gave and the order in force, the measurements, and the
-   * warnings. Enough for a surveyor to carry the result into another tool.
-   */
-  const exportPayload = useMemo(() => {
-    if (!analysis) return null;
-    const result = analysis.result;
-    return {
-      tool: "akarpromax.find-my-land",
-      version: 1,
-      generatedAt: new Date().toISOString(),
-      disclaimer: "Automated analysis for review. It does not replace the official document.",
-      document: {
-        country: result.documentIntelligence?.country.code ?? "UNKNOWN",
-        countryConfidence: result.documentIntelligence?.country.level ?? "UNKNOWN",
-        type: result.documentIntelligence?.documentType.kind ?? "UNKNOWN_SURVEY_DOCUMENT",
-        pageCount: result.documentIntelligence?.pageCount ?? 1,
-      },
-      crs: {
-        geographic: "EPSG:4326",
-        projected: result.crsSelection?.epsg ? `EPSG:${result.crsSelection.epsg}` : null,
-        zone: result.crsSelection?.zone ?? null,
-        hemisphere: result.crsSelection?.hemisphere ?? null,
-        source: result.crsSelection?.source ?? "NONE",
-      },
-      sequence: {
-        evidence: result.parcel?.sequenceEvidence ?? null,
-        documentOrder: result.parcel?.vertices.map((vertex) => vertex.pointNumber ?? vertex.label) ?? [],
-        confirmedByUser: result.parcel?.orderConfirmedByUser ?? false,
-        closed: result.parcel?.closedByTopology ?? false,
-      },
-      wgs84: coordinateRows.map((row) => ({ point: row.label, latitude: row.latText, longitude: row.lonText })),
-      utm: utmRows.map((row) => ({
-        point: row.label,
-        zone: formatUtmZone(row.zone, row.hemisphere),
-        epsg: utmEpsgCode(row.zone, row.hemisphere),
-        easting: Number(row.easting.toFixed(3)),
-        northing: Number(row.northing.toFixed(3)),
-      })),
-      measurements: {
-        areaSquareMeters: result.parcel?.boundary.areaSquareMeters ?? null,
-        registeredAreaSquareMeters: result.parcel?.documented.area?.squareMeters ?? null,
-        perimeterMeters: result.parcel?.boundary.perimeterMeters ?? null,
-        segments: result.parcel?.boundary.segments.map((segment) => ({
-          from: segment.fromLabel,
-          to: segment.toLabel,
-          calculatedMeters: Number(segment.lengthMeters.toFixed(3)),
-          documentMeters: segment.documentLengthMeters ?? null,
-          bearingDegrees: Number(segment.bearingDegrees.toFixed(2)),
-        })) ?? [],
-      },
-      warnings: [...new Set((result.warnings ?? []).map((warning) => translatedWarning(warning, locale)))],
-    };
-  }, [analysis, coordinateRows, locale, utmRows]);
-
-  const copyExport = useCallback(async () => {
-    if (!exportPayload) return;
-    await copyText(JSON.stringify(exportPayload, null, 2), "export");
-  }, [copyText, exportPayload]);
-
-  const copySummary = useCallback(async () => {
-    if (!analysis) return;
-    const lines = [
-      t("موقع الأرض", "Land location", "Arazi konumu"),
-      wgsClipboardText,
-      ...(utmRows.length ? ["", utmClipboardText] : []),
-      "",
-      googleMapsUrl,
-    ].filter(Boolean);
-    await copyText(lines.join("\n"), "all");
-  }, [analysis, copyText, googleMapsUrl, t, utmClipboardText, utmRows.length, wgsClipboardText]);
-
-  const shareToMessenger = useCallback(async () => {
-    if (!googleMapsUrl) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: t("موقع الأرض", "Land location", "Arazi konumu"),
-          text: locationShareText,
-          url: googleMapsUrl,
-        });
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-      }
-    }
-    await copyText(locationShareText, "share");
-    window.open("https://www.messenger.com/", "_blank", "noopener,noreferrer");
-  }, [copyText, googleMapsUrl, locationShareText, t]);
 
   const errorMessage = errorCode === "FILE_TYPE"
     ? t("الملفات المدعومة: PDF وPNG وJPG وJFIF وWEBP فقط.", "Supported files: PDF, PNG, JPG, JFIF, and WEBP.", "Desteklenen dosyalar: PDF, PNG, JPG, JFIF ve WEBP.")
@@ -2034,33 +1728,6 @@ export function FindMyLand({ locale }: Props) {
         {/* ===== RESULTS ===== */}
         {stage === "done" && analysis && (
           <div className="fml-results">
-
-            <section className={`fml-verdict fml-verdict--${resultVerdict}`}>
-              <span className="fml-verdict-icon">
-                {resultVerdict === "confident" ? <CheckCircle2 size={22} /> : <AlertTriangle size={21} />}
-              </span>
-              <div className="fml-verdict-text">
-                <h3>{resultVerdictCopy}</h3>
-                {resultVerdict !== "confident" && <p>{statusCopy}</p>}
-              </div>
-              <div className="fml-verdict-actions">
-                <button
-                  type="button"
-                  onClick={() => setFocusMode((current) => !current)}
-                  className="fml-ghost-btn"
-                  aria-pressed={focusMode}
-                >
-                  {focusMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-                  {focusMode
-                    ? t("إنهاء وضع التركيز", "Exit focus mode", "Odak modundan çık")
-                    : t("وضع التركيز", "Focus mode", "Odak modu")}
-                </button>
-                <button type="button" onClick={reset} className="fml-ghost-btn">
-                  <RotateCcw size={15} />
-                  {t("إعادة التحليل", "Analyze again", "Yeniden analiz et")}
-                </button>
-              </div>
-            </section>
 
             {/* --- CRS selection required --- */}
             {crsSelectionRequired && (
@@ -2325,32 +1992,6 @@ export function FindMyLand({ locale }: Props) {
               </section>
             )}
 
-            {/* --- Manual Geometry Recovery --- */}
-            {showManualGeometryPanel && manualDraft && (
-              <ManualGeometryPanel
-                locale={locale}
-                sourcePoints={sourcePointsData}
-                draft={manualDraft}
-                onDraftChange={handleManualDraftChange}
-                previewPoints={manualPreviewPoints}
-                validation={manualValidation}
-                status={manualStatus}
-                areaSqm={manualAreaSqm}
-                perimeterMeters={manualPerimeter}
-                declaredAreaSqm={declaredAreaSqm}
-                hasCrs={!analysis.result.crsSelection?.required}
-                hasExplicitTopology={hasExplicitTopology}
-                confirmed={manualConfirmed}
-                onConfirm={handleManualConfirm}
-                highlightedPointId={highlightedPointId}
-                onHighlightPoint={setHighlightedPointId}
-                canUndo={manualHistoryIdx > 0}
-                canRedo={manualHistoryIdx < manualHistory.length - 1}
-                onUndo={handleManualUndo}
-                onRedo={handleManualRedo}
-              />
-            )}
-
             {/* --- COORDINATES (WGS84/original document view switches with UTM, they don't stack) --- */}
             {coordinateRows.length > 0 && (
               <section className="fml-coords">
@@ -2467,65 +2108,6 @@ export function FindMyLand({ locale }: Props) {
               </section>
             )}
 
-            {/* Every edge, measured against the document.
-                The server already computes documentLengthMeters and
-                deviationMeters for each segment (lib/land/boundary/parcel-boundary.ts)
-                — the reason to check a صك at all — and the result panel used to
-                throw them away, carrying them only into the JSON export. */}
-            {(analysis?.result.parcel?.boundary.segments.length ?? 0) > 0 && (
-              <section className="fml-section" data-segment-table>
-                <h3 className="fml-section-title">
-                  {t("الأضلاع: المقيس مقابل الموثّق", "Edges: measured against the document", "Kenarlar: ölçülen ve belgelenen")}
-                </h3>
-                <div className="fml-table-wrap">
-                  <table className="fml-table">
-                    <thead>
-                      <tr>
-                        <th>{t("الضلع", "Edge", "Kenar")}</th>
-                        <th>{t("المقيس (م)", "Measured (m)", "Ölçülen (m)")}</th>
-                        <th>{t("الموثّق (م)", "Documented (m)", "Belgelenen (m)")}</th>
-                        <th>{t("الفرق (م)", "Deviation (m)", "Fark (m)")}</th>
-                        <th>{t("الاتجاه", "Bearing", "Yön")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analysis?.result.parcel?.boundary.segments.map((segment) => {
-                        const documented = segment.documentLengthMeters;
-                        const deviation = segment.deviationMeters;
-                        // Half a metre is the tolerance the side-length check
-                        // already treats as agreement; anything more is worth a look.
-                        const withinTolerance = deviation !== undefined && deviation <= 0.5;
-                        return (
-                          <tr key={`${segment.fromIndex}-${segment.toIndex}`}>
-                            <td className="fml-cell-label" dir="ltr">{segment.fromLabel} → {segment.toLabel}</td>
-                            <td dir="ltr">{segment.lengthMeters.toFixed(2)}</td>
-                            <td dir="ltr">{documented === undefined ? "—" : documented.toFixed(2)}</td>
-                            <td dir="ltr">
-                              {deviation === undefined ? (
-                                <span className="fml-segment-deviation">—</span>
-                              ) : (
-                                <span className={`fml-segment-deviation${withinTolerance ? " fml-segment-deviation--ok" : " fml-segment-deviation--off"}`}>
-                                  {deviation.toFixed(2)}
-                                </span>
-                              )}
-                            </td>
-                            <td dir="ltr">{segment.bearingDegrees.toFixed(1)}°</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="fml-hint">
-                  {t(
-                    "الفرق هو ما بين الطول المحسوب من الإحداثيات والطول المكتوب في الوثيقة. الأخضر ضمن نصف متر.",
-                    "The deviation is the computed length against the one written in the document. Green is within half a metre.",
-                    "Fark, koordinatlardan hesaplanan uzunluk ile belgede yazan uzunluk arasındadır. Yeşil, yarım metre içindedir.",
-                  )}
-                </p>
-              </section>
-            )}
-
             {/* What the extraction actually read, per point: which page, which
                 row, the raw text and how sure it was. Folded away, because it is
                 the answer to "where did this number come from" and not part of
@@ -2570,10 +2152,6 @@ export function FindMyLand({ locale }: Props) {
                     {t("Google Maps", "Google Maps", "Google Maps")}
                   </a>
                 )}
-                <button type="button" onClick={() => copyText(wgsClipboardText, "wgs")} className="fml-action">
-                  {copiedTarget === "wgs" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                  {copiedTarget === "wgs" ? t("تم النسخ", "Copied", "Kopyalandı") : t("نسخ WGS84", "Copy WGS84", "WGS84 kopyala")}
-                </button>
                 <button type="button" onClick={() => copyText(utmClipboardText, "utm")} className="fml-action" disabled={utmRows.length === 0}>
                   {copiedTarget === "utm" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
                   {copiedTarget === "utm" ? t("تم النسخ", "Copied", "Kopyalandı") : t("نسخ UTM", "Copy UTM", "UTM kopyala")}
@@ -2584,18 +2162,6 @@ export function FindMyLand({ locale }: Props) {
                     {t("مشاركة واتساب", "Share on WhatsApp", "WhatsApp'ta paylaş")}
                   </a>
                 )}
-                <button type="button" onClick={shareToMessenger} className="fml-action" disabled={!googleMapsUrl}>
-                  {copiedTarget === "share" ? <CheckCircle2 size={16} /> : <Send size={16} />}
-                  {copiedTarget === "share" ? t("نُسخ الرابط", "Link copied", "Bağlantı kopyalandı") : t("مشاركة", "Share", "Paylaş")}
-                </button>
-                <button type="button" onClick={copySummary} className="fml-action">
-                  {copiedTarget === "all" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                  {copiedTarget === "all" ? t("تم النسخ", "Copied", "Kopyalandı") : t("نسخ الملخص", "Copy summary", "Özeti kopyala")}
-                </button>
-                <button type="button" onClick={copyExport} className="fml-action" disabled={!exportPayload}>
-                  {copiedTarget === "export" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                  {copiedTarget === "export" ? t("تم النسخ", "Copied", "Kopyalandı") : t("تصدير البيانات", "Export data", "Verileri dışa aktar")}
-                </button>
               </div>
             )}
 
