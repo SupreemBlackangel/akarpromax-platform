@@ -312,24 +312,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   line-height: 1.8;
 }
 
-.fml-chip {
-  margin-inline-start: auto;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 900;
-}
-
-.fml-chip--ok {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.fml-chip--warn {
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-}
-
 /* ---- CRS controls ---- */
 .fml-crs-controls {
   display: flex;
@@ -718,38 +700,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   color: #fff;
 }
 
-/* ---- Evidence inspector ---- */
-.fml-evidence-table {
-  width: 100%;
-  min-width: 720px;
-  border-collapse: collapse;
-  font-size: 11.5px;
-}
-
-.fml-evidence-table th {
-  padding: 8px 12px;
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
-  font-size: 10.5px;
-  font-weight: 800;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.fml-evidence-table td {
-  padding: 8px 12px;
-  border-block-start: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  vertical-align: top;
-}
-
-.fml-evidence-source {
-  max-width: 260px;
-  overflow-wrap: anywhere;
-  white-space: normal !important;
-}
-
 /* The raw line the reader was taken from: long, latin, and not worth wrapping
    the whole table for — it scrolls with its own cell. */
 .fml-cell-source {
@@ -837,12 +787,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   font-weight: 900;
 }
 
-.fml-map-note {
-  margin-inline-start: auto;
-  color: var(--color-text-muted);
-  font-size: 11px;
-}
-
 .fml-map {
   width: 100%;
   height: clamp(360px, 58vh, 620px);
@@ -917,37 +861,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   font-weight: 900;
 }
 
-.fml-toggle {
-  display: inline-flex;
-  margin-inline-start: auto;
-  padding: 3px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface-muted);
-}
-
-.fml-toggle button {
-  min-height: 32px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.fml-toggle button.is-active {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-}
-
-.fml-toggle button:disabled {
-  color: var(--color-disabled);
-  cursor: not-allowed;
-}
-
 .fml-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -1000,15 +913,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   background: color-mix(in srgb, var(--color-warning-soft) 70%, transparent);
 }
 
-.fml-cell-dms,
-.fml-cell-raw {
-  max-width: 320px;
-  overflow: hidden;
-  color: var(--color-text-muted) !important;
-  font-size: 11px !important;
-  text-overflow: ellipsis;
-}
-
 /* ---- Action row ---- */
 .fml-actions {
   display: flex;
@@ -1056,227 +960,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
 .fml-action--primary:hover {
   background: var(--color-primary-hover);
   color: var(--color-primary-foreground);
-}
-
-/* ---- Document details ---- */
-.fml-details {
-  display: grid;
-  gap: 0 28px;
-  width: 100%;
-  margin: 0;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.fml-details > div {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(96px, .75fr) 1.25fr;
-  padding-block: 10px;
-  border-block-end: 1px solid var(--color-border);
-}
-
-.fml-details dt {
-  color: var(--color-text-muted);
-  font-size: 12.5px;
-}
-
-.fml-details dd {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 12.5px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-/* ---- Confidence + checks ---- */
-.fml-confidence-grid {
-  display: grid;
-  gap: 10px;
-  width: 100%;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-
-.fml-confidence {
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--fml-radius-sm);
-  background: var(--color-surface-muted);
-}
-
-.fml-confidence-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.fml-confidence-score {
-  color: var(--color-text-primary);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-weight: 900;
-}
-
-.fml-confidence-track {
-  height: 6px;
-  margin-block-start: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--color-border);
-}
-
-.fml-confidence-fill {
-  height: 100%;
-  border-radius: 999px;
-}
-
-.fml-confidence-fill--high { background: var(--color-success); }
-.fml-confidence-fill--mid { background: var(--color-primary); }
-.fml-confidence-fill--low { background: var(--color-warning); }
-.fml-confidence-fill--none { background: var(--color-border-strong); }
-
-.fml-confidence-level {
-  margin: 6px 0 0;
-  color: var(--color-text-muted);
-  font-size: 10.5px;
-  font-weight: 800;
-}
-
-.fml-check-columns {
-  display: grid;
-  gap: 18px;
-  width: 100%;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.fml-check-columns h4 {
-  margin: 0 0 10px;
-  color: var(--color-text-primary);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.fml-check-list {
-  border: 1px solid var(--color-border);
-  border-radius: var(--fml-radius-sm);
-  overflow: hidden;
-}
-
-.fml-check-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 42px;
-  padding: 8px 12px;
-  font-size: 11.5px;
-}
-
-.fml-check-row + .fml-check-row {
-  border-block-start: 1px solid var(--color-border);
-}
-
-.fml-check-row > span:first-child {
-  min-width: 0;
-  color: var(--color-text-secondary);
-  font-weight: 700;
-}
-
-.fml-check-row em {
-  display: block;
-  margin-block-start: 2px;
-  color: var(--color-text-muted);
-  font-size: 10.5px;
-  font-style: normal;
-}
-
-.fml-status {
-  flex-shrink: 0;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.fml-status--pass,
-.fml-status--found { background: var(--color-success-soft); color: var(--color-success); }
-.fml-status--warning,
-.fml-status--inferred,
-.fml-status--corrected { background: var(--color-warning-soft); color: var(--color-warning); }
-.fml-status--fail { background: var(--color-danger-soft); color: var(--color-danger); }
-.fml-status--missing { background: var(--color-surface-muted); color: var(--color-text-muted); }
-
-/* ---- Surveyors ---- */
-.fml-saved {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: var(--color-success);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.fml-surveyors {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.fml-surveyor {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--fml-radius-sm);
-  background: var(--color-surface-muted);
-}
-
-.fml-surveyor-meta {
-  min-width: 0;
-}
-
-.fml-surveyor-name {
-  display: block;
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.fml-surveyor-verified {
-  margin-inline-start: 5px;
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 10px;
-}
-
-.fml-surveyor-stats {
-  display: block;
-  margin-block-start: 2px;
-  color: var(--color-text-muted);
-  font-size: 10.5px;
-}
-
-/* ---- Raw text ---- */
-.fml-raw-text {
-  max-height: 300px;
-  margin: 0;
-  overflow: auto;
-  padding: 16px;
-  border-block-start: 1px solid var(--color-border);
-  background: var(--color-surface-muted);
-  color: var(--color-text-secondary);
-  font-size: 11.5px;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 /* ===== Responsive ===== */
@@ -1335,11 +1018,6 @@ body[data-tool-focus="on"] .public-ad-layout-container {
 
   .fml-panel-controls .fml-primary-btn {
     width: 100%;
-  }
-
-  .fml-details > div {
-    grid-template-columns: 1fr;
-    gap: 2px;
   }
 
   .fml-preview-frame,
