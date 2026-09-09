@@ -32,6 +32,8 @@ No confident wrong parcel · no invented CRS/UTM zone · no silent row loss · n
 ## 7. Manual Geometry Recovery status
 Implemented and merged (useManualGeometry.ts, ManualGeometryPanel.tsx, manual-geometry.test.ts — in the 861 suite). Policy: it is a user tool; never used to rescue automated results in certification.
 
+Retired after launch: the panel left the result view on 2026-09-06 at the owner's request (together with the verdict banner); the module and its tests followed on 2026-09-09 once nothing called them. The policy stands for any manual tool that returns.
+
 ## 8. Final blind holdout status
 **EXECUTED — PASS (safety certification).** Three new blind regional documents (Oman RD 24/2024 gazette table; Egypt Shorouk cordon 636/2017 degraded scan; Kuwait CITRA tender numeric-noise trap), ground-truth ledgers written before any run, absolute freeze held (start fingerprint = end fingerprint). Results: safety gates 9/9 clean on all three; functional: B3 correct NONE; B1/B2 safe honest failure (limitations §6). Artifacts: `tmp/_scratch/holdout-final/` (ledger, results, final report).
 

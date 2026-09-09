@@ -1414,7 +1414,7 @@ export function FindMyLand({ locale }: Props) {
           fillColor: "#3b82f6",
           fillOpacity: 0.15,
           weight: 3,
-                            }).addTo(map);
+        }).addTo(map);
         bounds.push(...polygon);
       } else if (mapPreviewPoints.length >= 2) {
         const sequence = mapPreviewPoints.map((point) => [point.lat, point.lon] as [number, number]);

@@ -265,7 +265,7 @@ describe("Land Surveyor Discovery", () => {
 });
 
 describe("Find My Land launch safeguards", () => {
-  it("Find My Land launch UI keeps upload, timeout, CRS choice, RTL, and explicit verdict safeguards", async () => {
+  it("Find My Land launch UI keeps upload, timeout, CRS choice, and RTL safeguards", async () => {
     const source = await readFile(new URL("../../src/components/tools/FindMyLand.tsx", import.meta.url), "utf8");
     assert.match(source, /MAX_FILE_SIZE\s*=\s*20\s*\*\s*1024\s*\*\s*1024/);
     assert.match(source, /onDragOver=/);
@@ -276,9 +276,6 @@ describe("Find My Land launch safeguards", () => {
     assert.match(source, /aria-label="UTM Zone"/);
     assert.match(source, /utmHemisphereInput/);
     assert.match(source, /dir=\{dir\}/);
-    assert.match(source, /تم التحليل بنجاح/);
-    assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
-    assert.match(source, /تعذر استخراج إحداثيات صالحة/);
   });
 });
 
