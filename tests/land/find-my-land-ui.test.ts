@@ -50,10 +50,14 @@ describe("Find My Land launch visuals", () => {
     assert.doesNotMatch(source, /ماذا تستخرج الأداة؟/);
   });
 
-  it("offers a focus mode that yields the page chrome to the tool", async () => {
+  it("yields the page chrome to the tool, always", async () => {
     const source = await readComponent();
+    // A survey map and a coordinate table need the full content width. The
+    // toggle that let a reader bring the rails back lived in the verdict
+    // banner and went with it, so the focused view is the only view.
+    assert.match(source, /const focusMode = true/);
+    assert.doesNotMatch(source, /setFocusMode/);
     assert.match(source, /dataset\.toolFocus = "on"/);
-    assert.match(source, /setFocusMode/);
     assert.match(source, /fml-root--focus/);
 
     const styles = await readStyles();
@@ -75,9 +79,12 @@ describe("Find My Land launch visuals", () => {
     assert.match(styles, /\.fml-root--focus \.fml-map[\s\S]*?height: clamp\(420px, 68vh, 760px\)/);
   });
 
-  it("orders the result as verdict, summary, map, coordinates, actions", async () => {
+  it("orders the result as summary, map, coordinates, actions, with no verdict banner above them", async () => {
     const source = await readComponent();
-    const order = ["fml-verdict", "fml-summary", "fml-map-card", "fml-coords", "fml-actions"];
+    // The banner that used to head the result — a verdict, the focus toggle
+    // and an "analyze again" button — is gone; the numbers come first.
+    assert.doesNotMatch(source, /fml-verdict/);
+    const order = ["fml-summary", "fml-map-card", "fml-coords", "fml-actions"];
     let cursor = -1;
     for (const marker of order) {
       const index = source.indexOf(marker, cursor + 1);
@@ -109,13 +116,6 @@ describe("Find My Land launch visuals", () => {
     assert.match(source, /UTM_ZONE_MAX - UTM_ZONE_MIN \+ 1/);
     assert.match(source, /<option value="N">N — /);
     assert.match(source, /<option value="S">S — /);
-  });
-
-  it("keeps the three plain-language verdicts", async () => {
-    const source = await readComponent();
-    assert.match(source, /تم التحليل بنجاح/);
-    assert.match(source, /تحتاج الإحداثيات إلى مراجعة/);
-    assert.match(source, /تعذر استخراج إحداثيات صالحة/);
   });
 
   it("renders every UI state separately rather than all at once", async () => {
@@ -180,23 +180,17 @@ describe("Find My Land professional result", () => {
     assert.match(source, /vertex\.confidence/);
   });
 
-  it("shows the measured length beside the documented one for every edge", async () => {
+  it("keeps the actions to what reaches outside: Google Maps, copy UTM, WhatsApp", async () => {
     const source = await readComponent();
-    assert.match(source, /segment\.documentLengthMeters/);
-    assert.match(source, /segment\.deviationMeters/);
-    assert.match(source, /segment\.bearingDegrees/);
-    assert.match(source, /fml-segment-deviation--ok/);
-  });
-
-  it("exports the result as structured data", async () => {
-    const source = await readComponent();
-    assert.match(source, /const exportPayload = useMemo/);
-    assert.match(source, /"akarpromax\.find-my-land"/);
-    assert.match(source, /wgs84: coordinateRows\.map/);
-    assert.match(source, /utm: utmRows\.map/);
-    assert.match(source, /documentOrder:/);
-    assert.match(source, /confirmedByUser:/);
-    assert.match(source, /تصدير البيانات/);
+    assert.match(source, /google\.com\/maps\/search/);
+    assert.match(source, /نسخ UTM/);
+    assert.match(source, /مشاركة واتساب/);
+    // The edge-deviation table, the JSON export, the summary copy and the
+    // generic share sheet are no longer part of the result view.
+    assert.doesNotMatch(source, /fml-segment-deviation/);
+    assert.doesNotMatch(source, /exportPayload/);
+    assert.doesNotMatch(source, /تصدير البيانات/);
+    assert.doesNotMatch(source, /نسخ الملخص/);
   });
 
   it("carries a quiet timestamp and disclaimer, not a banner", async () => {
