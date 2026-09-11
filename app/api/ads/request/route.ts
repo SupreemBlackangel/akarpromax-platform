@@ -4,6 +4,7 @@ import { ensureAdSchema } from "@/lib/ad-schema";
 import { cleanUrl } from "@/lib/ads/admin";
 import { AD_PLACEMENTS } from "@/src/constants/advertising";
 import { STANDARD_PUBLIC_AD_LAYOUT_V1 } from "@/src/config/standard-public-ad-layout";
+import { STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS } from "@/src/config/standard-public-ad-registry";
 import { enforceRateLimit, clientIp } from "@/lib/security/rate-limit";
 import { normalizeCampaignBoundary } from "@/lib/ads/geo";
 
@@ -52,6 +53,17 @@ export async function POST(request: NextRequest) {
   // Optional slot context carried from the clicked frame.
   const canonical = clean(body.canonical, 32);
   const family = clean(body.family, 32).toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  /**
+   * The engine's section vocabulary — not the layout family key.
+   *
+   * `family` is a page-layout key ("company-detail", "property-detail"); the
+   * section gate compares against PLATFORM_SECTIONS ("companies", "properties").
+   * Writing the family key into section_scopes made every request for any
+   * family but `home` permanently ineligible: the advertiser paid, the campaign
+   * was approved, the confirmation email said the ad was live, and no page
+   * could ever serve it. The registry already maps one to the other.
+   */
+  const requestSection = STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS[family as keyof typeof STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS]?.section ?? "home";
   const city = clean(body.city, 64);
   const region = clean(body.region, 64);
   const district = clean(body.district, 64);
@@ -191,13 +203,22 @@ export async function POST(request: NextRequest) {
       JSON.stringify(countryCodes),
       JSON.stringify(city ? [city] : []),
       JSON.stringify(["ar", "en", "tr"]),
-      JSON.stringify(["desktop"]),
+      // A requested spot is bought for the page, not for one class of screen.
+      // Pinning devices to ["desktop"] hid every paid request from every phone
+      // and tablet — most of the traffic — with no way for the advertiser or
+      // the admin to see why.
+      JSON.stringify(["desktop", "tablet", "mobile"]),
       100,
       100,
       normalizeCampaignBoundary(startAt, "start"),
       normalizeCampaignBoundary(endAt, "end"),
-      JSON.stringify([family || "home"]),
-      JSON.stringify([family || "home"]),
+      // section_scopes: the engine's section for this family.
+      JSON.stringify([requestSection]),
+      // page_types: left empty on purpose. The placement below already pins the
+      // request to one family's slot, and the family key is not a page type —
+      // "company-detail" is not in PAGE_TYPES, so writing it here could only
+      // ever reject the campaign.
+      "[]",
       JSON.stringify([placement]),
       JSON.stringify(region ? [region] : []),
       JSON.stringify(district ? [district] : []),
