@@ -212,10 +212,16 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
 
   if (geo.isGlobal) return null;
 
-  // The chip shows only the region (governorate) — the most useful single
-  // level beside the country. City/district are still refined inside the
-  // popover; they just don't crowd the button label.
-  const label = (governorate ? optionName(governorate, locale) : geo.governorate)?.trim() ?? "";
+  // The chip spells the address out from the most specific level the visitor
+  // actually has down to the region: district، city، governorate. A level the
+  // registry hasn't resolved yet falls back to the raw detected name, and
+  // empty levels simply drop out of the chain.
+  const labelParts = [
+    (district ? optionName(district, locale) : geo.district)?.trim() ?? "",
+    (city ? optionName(city, locale) : geo.city)?.trim() ?? "",
+    (governorate ? optionName(governorate, locale) : geo.governorate)?.trim() ?? "",
+  ].filter((part, index, parts) => part.length > 0 && parts.indexOf(part) === index);
+  const label = labelParts.join("، ");
 
   const selectClass =
     "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm font-semibold text-[var(--color-text-primary)] outline-none transition-colors focus:border-[var(--color-primary)] disabled:opacity-45";
@@ -229,8 +235,8 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={t("changeAria", locale)}
-        title={t("changeAria", locale)}
-        className="flex max-w-[280px] items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-muted)]"
+        title={label ? `${label} — ${t("changeAria", locale)}` : t("changeAria", locale)}
+        className="flex max-w-[360px] items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-muted)]"
       >
         <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
         <span className="truncate">{geo.resolving && !label ? t("resolving", locale) : label || t("popoverTitle", locale)}</span>

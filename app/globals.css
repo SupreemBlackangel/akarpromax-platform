@@ -103,6 +103,21 @@ select:not([multiple]):not(.select-arrow) {
   background-position: right 0.7rem center;
 }
 
+/* Drop the native up/down spinner from every number field. The tiny arrows
+   sit on the wrong side in RTL, are hard to hit, and nudge the value on an
+   accidental scroll; typing is the intended input everywhere on the site.
+   A field that genuinely wants the stepper opts back in with .number-spinner. */
+input[type="number"]:not(.number-spinner) {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"]:not(.number-spinner)::-webkit-outer-spin-button,
+input[type="number"]:not(.number-spinner)::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Smooth micro-interactions for all interactive elements */
 .sidebar-link { transition: all 0.15s var(--easing-standard); }
 .sidebar-link:hover { transform: translateX(-2px); }
