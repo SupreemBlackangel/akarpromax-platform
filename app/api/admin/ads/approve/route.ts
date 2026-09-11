@@ -33,15 +33,35 @@ export async function POST(request: NextRequest) {
   const approvalStatus = body.approved === false ? "rejected" : "approved";
 
   const db = await getRuntimeDb();
-  const existing = await db.prepare("SELECT id, countries, campaign_type, status, created_by, internal_name, advertiser_name FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
-    .bind(id).first<{ id: string; countries: string | null; campaign_type: string; status: string; created_by: string | null; internal_name: string | null; advertiser_name: string | null }>();
+  // approval_status and is_active are read for the audit row's BEFORE snapshot.
+  const existing = await db.prepare("SELECT id, countries, campaign_type, status, approval_status, is_active, created_by, internal_name, advertiser_name FROM ad_campaigns WHERE id = ?1 AND deleted_at IS NULL LIMIT 1")
+    .bind(id).first<{ id: string; countries: string | null; campaign_type: string; status: string; approval_status: string | null; is_active: number | null; created_by: string | null; internal_name: string | null; advertiser_name: string | null }>();
   if (!existing) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   if (!canManageTargets(identity, parseList(existing.countries))) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
   const isRequest = existing.campaign_type === "request";
-  const shouldActivate = approvalStatus === "approved" && isRequest && ["draft", "pending", "paused"].includes(existing.status);
+  // Approving is the decision to publish — for every campaign type, not only
+  // the ones that came from the public "advertise with us" form.
+  //
+  // It used to activate `request` campaigns alone, so a campaign created here
+  // in the console came out of approval with approval_status = 'approved' and
+  // is_active = 1 while `status` stayed 'draft'. loadActiveAds requires
+  // status = 'active', so the console showed the approved badge for a campaign
+  // that no page could ever serve: the "approved but not showing" report.
+  //
+  // The widening stops at the permission line. `ads_reviewer` holds ADS_APPROVE
+  // and deliberately NOT ADS_PUBLISH (src/constants/roles.ts), so a reviewer
+  // must not gain publishing by way of the approve button. Requests keep the
+  // behaviour they already had — nothing that published before stops
+  // publishing — and everything else additionally needs ADS_PUBLISH. When the
+  // approver may not publish, the response says so rather than leaving them to
+  // discover it on the live site.
+  const publishable = ["draft", "pending", "paused"].includes(existing.status);
+  const canPublish = hasSponsorPermission(identity, PERMISSIONS.ADS_PUBLISH);
+  const shouldActivate = approvalStatus === "approved" && publishable && (isRequest || canPublish);
+  const awaitingPublish = approvalStatus === "approved" && publishable && !shouldActivate;
 
   // The status is decided here and bound as a plain string, rather than chosen
   // inside the statement with `CASE WHEN ? THEN 'active' ELSE status END`.
@@ -81,7 +101,23 @@ export async function POST(request: NextRequest) {
     await db.prepare(
       `INSERT INTO audit_logs (id, actor_user_id, action, entity_type, entity_id, metadata)
        VALUES (?1, ?2, ?3, 'ad_campaign', ?4, ?5)`,
-    ).bind(crypto.randomUUID(), identity.email, "ad.approval", id, JSON.stringify({ approvalStatus, autoActivated: shouldActivate, statusAfter: nextStatus })).run();
+    ).bind(
+      crypto.randomUUID(),
+      identity.email,
+      "ad.approval",
+      id,
+      // WHO is the actor column; WHAT, BEFORE, AFTER and WHY live here, so the
+      // log answers "who approved this, what did it look like before, and what
+      // did it end on" without a second query.
+      JSON.stringify({
+        approvalStatus,
+        autoActivated: shouldActivate,
+        statusAfter: nextStatus,
+        awaitingPublish,
+        before: { status: existing.status, approvalStatus: existing.approval_status, isActive: existing.is_active },
+        after: { status: nextStatus, approvalStatus, isActive: approvalStatus === "approved" ? 1 : 0 },
+      }),
+    ).run();
   } catch {
     // audit best-effort
   }
@@ -112,5 +148,5 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ ok: true, approvalStatus, autoActivated: shouldActivate });
+  return NextResponse.json({ ok: true, approvalStatus, autoActivated: shouldActivate, status: nextStatus, awaitingPublish });
 }

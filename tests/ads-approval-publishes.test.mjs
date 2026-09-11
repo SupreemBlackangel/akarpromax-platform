@@ -106,6 +106,54 @@ test("the serving query still demands every condition it should", async () => {
   }
 });
 
+test("approval publishes every campaign type, not only public requests", async () => {
+  // The remaining half of "approved but not showing". Auto-activation was
+  // conditioned on campaign_type === 'request', so a campaign created in the
+  // console came out of approval approved and is_active = 1 with status still
+  // 'draft' — and the serving query demands status = 'active'. The console
+  // showed the approved badge for an ad no page could serve.
+  const route = await read("app/api/admin/ads/approve/route.ts");
+
+  assert.doesNotMatch(
+    route,
+    /shouldActivate\s*=\s*approvalStatus === "approved" && isRequest/,
+    "auto-activation must not be restricted to the request type",
+  );
+  assert.match(route, /const publishable = \["draft", "pending", "paused"\]\.includes\(existing\.status\)/);
+  assert.match(route, /const shouldActivate = approvalStatus === "approved" && publishable && \(isRequest \|\| canPublish\)/);
+});
+
+test("approving does not hand publishing to a reviewer who may not publish", async () => {
+  // `ads_reviewer` holds ADS_APPROVE and deliberately not ADS_PUBLISH. Widening
+  // auto-activation must not become a way around that, so everything except the
+  // request type — whose behaviour is unchanged — needs the publish permission.
+  const route = await read("app/api/admin/ads/approve/route.ts");
+  assert.match(route, /const canPublish = hasSponsorPermission\(identity, PERMISSIONS\.ADS_PUBLISH\)/);
+
+  const roles = await read("src/constants/roles.ts");
+  const reviewer = /ads_reviewer:\s*\{[\s\S]*?permissions:\s*\[([^\]]*)\]/.exec(roles);
+  assert.ok(reviewer, "the ads_reviewer role must still exist for this rule to mean anything");
+  assert.match(reviewer[1], /ADS_APPROVE/);
+  assert.doesNotMatch(reviewer[1], /ADS_PUBLISH/);
+});
+
+test("an approval that did not publish says so instead of looking done", async () => {
+  // Silence here is the whole defect: the approver sees a success toast and the
+  // ad is nowhere. The response carries the status it ended on and whether the
+  // campaign is still waiting to be published.
+  const route = await read("app/api/admin/ads/approve/route.ts");
+  assert.match(route, /const awaitingPublish = approvalStatus === "approved" && publishable && !shouldActivate/);
+  assert.match(route, /status: nextStatus, awaitingPublish/);
+});
+
+test("the audit row carries BEFORE and AFTER, not only the intention", async () => {
+  const route = await read("app/api/admin/ads/approve/route.ts");
+  assert.match(route, /before: \{ status: existing\.status, approvalStatus: existing\.approval_status, isActive: existing\.is_active \}/);
+  assert.match(route, /after: \{ status: nextStatus, approvalStatus, isActive:/);
+  assert.match(route, /SELECT id, countries, campaign_type, status, approval_status, is_active/,
+    "the before-snapshot must be read before the update overwrites it");
+});
+
 test("the four gates are all set coherently by approval", async () => {
   // A campaign is servable only when status, approval_status, is_active and
   // deleted_at all agree. Approval is the moment they are decided together;
