@@ -1,5 +1,5 @@
 import { getDb } from '@/lib/db';
-import { countries, governorates, cities, districts, streets } from '@/lib/db/schemas/geo-schema';
+import { countries, governorates, cities, districts, villages, streets } from '@/lib/db/schemas/geo-schema';
 import type { GeoProvider } from '@/lib/services/geo/geo-contract';
 import { eq, asc, and } from 'drizzle-orm';
 
@@ -54,6 +54,19 @@ export class GeoService implements GeoProvider {
         .from(districts)
         .where(and(eq(districts.cityId, cityId), eq(districts.isActive, true)))
         .orderBy(asc(districts.displayOrder));
+    } finally {
+      await end();
+    }
+  }
+
+  async getVillages(cityId: string) {
+    const { db, end } = getDb();
+    try {
+      return await db
+        .select()
+        .from(villages)
+        .where(and(eq(villages.cityId, cityId), eq(villages.isActive, true)))
+        .orderBy(asc(villages.displayOrder));
     } finally {
       await end();
     }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { properties, propertyMedia } from '@/lib/db/schemas/properties-schema';
 import { propertyOffers, propertyOfferTypes } from '@/lib/db/schemas/offer-types-schema';
-import { eq, and, inArray, like, sql, or, asc } from 'drizzle-orm';
+import { eq, and, inArray, isNull, like, sql, or, asc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/session';
 import { createPropertySchema, propertySearchSchema } from '@/lib/validators/property-validators';
 import { normalizeWhatsappNumber } from '@/lib/properties/contact-method';
@@ -20,7 +20,7 @@ import { normalizePropertyMedia } from '@/lib/media/property-media';
 const PUBLIC_PROPERTY_FIELDS = [
   "id", "titleAr", "titleEn", "descriptionAr", "descriptionEn",
   "dealType", "category", "propertyType",
-  "country", "governorate", "city", "district", "latitude", "longitude", "address",
+  "country", "governorate", "city", "district", "village", "latitude", "longitude", "address",
   "price", "currency", "area", "bedrooms", "bathrooms", "floor", "totalFloors",
   "yearBuilt", "facade", "direction", "referenceNumber", "advertisingLicense",
   "agentName", "officeId",
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
       governorate: searchParams.get('governorate'),
       city: searchParams.get('city'),
       district: searchParams.get('district'),
+      village: searchParams.get('village'),
     }, new GeoService());
 
     if (!geoResolution.ok) {
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
       governorate: searchParams.get('governorate') || undefined,
       city: searchParams.get('city') || undefined,
       district: searchParams.get('district') || undefined,
+      village: searchParams.get('village') || undefined,
       minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
       maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
       minArea: searchParams.get('minArea') ? parseFloat(searchParams.get('minArea')!) : undefined,
@@ -127,7 +129,32 @@ export async function GET(request: NextRequest) {
         conditions.push(inArray(sql<string>`lower(${properties.governorate})`, geo.aliases.governorate));
       }
       if (geo.city) conditions.push(inArray(sql<string>`lower(${properties.city})`, geo.aliases.city));
-      if (geo.district) conditions.push(inArray(sql<string>`lower(${properties.district})`, geo.aliases.district));
+      // A listing published against the registry carries the place id; one
+      // published before it carries only the name it was typed with. Match the
+      // id when there is one, and fall back to the name only for the rest, so
+      // a same-named place in another city can never leak in through the text.
+      if (geo.district) {
+        conditions.push(
+          or(
+            eq(properties.districtId, geo.district.id),
+            and(
+              isNull(properties.districtId),
+              inArray(sql<string>`lower(${properties.district})`, geo.aliases.district),
+            ),
+          )!,
+        );
+      }
+      if (geo.village) {
+        conditions.push(
+          or(
+            eq(properties.villageId, geo.village.id),
+            and(
+              isNull(properties.villageId),
+              inArray(sql<string>`lower(${properties.village})`, geo.aliases.village),
+            ),
+          )!,
+        );
+      }
     }
     if (validated.status) conditions.push(eq(properties.status, validated.status));
     if (validated.bedrooms !== undefined) conditions.push(eq(properties.bedrooms, validated.bedrooms));
@@ -280,6 +307,12 @@ export async function POST(request: NextRequest) {
         governorate: validated.governorate,
         city: validated.city,
         district: validated.district || '',
+        village: validated.village || '',
+        countryId: validated.countryId ?? null,
+        governorateId: validated.governorateId ?? null,
+        cityId: validated.cityId ?? null,
+        districtId: validated.districtId ?? null,
+        villageId: validated.villageId ?? null,
         latitude: validated.latitude === null || validated.latitude === undefined ? null : String(validated.latitude),
         longitude: validated.longitude === null || validated.longitude === undefined ? null : String(validated.longitude),
         address: validated.address || '',

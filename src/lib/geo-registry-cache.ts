@@ -16,7 +16,7 @@
  * bug than the duplicate request this removes.
  */
 
-export type GeoLevel = "countries" | "governorates" | "cities" | "districts";
+export type GeoLevel = "countries" | "governorates" | "cities" | "districts" | "villages";
 
 export type GeoRegistryRow = {
   id: string;

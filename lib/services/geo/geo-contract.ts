@@ -18,13 +18,14 @@
  *    core locales without a redesign.
  */
 
-export type GeoEntityType = "countries" | "governorates" | "cities" | "districts" | "streets";
+export type GeoEntityType = "countries" | "governorates" | "cities" | "districts" | "villages" | "streets";
 
 export const GEO_ENTITY_TYPES: readonly GeoEntityType[] = Object.freeze([
   "countries",
   "governorates",
   "cities",
   "districts",
+  "villages",
   "streets",
 ]);
 
@@ -32,6 +33,7 @@ const PARENT_LABEL: Record<Exclude<GeoEntityType, "countries">, string> = {
   governorates: "countryId",
   cities: "governorateId",
   districts: "cityId",
+  villages: "cityId",
   streets: "districtId",
 };
 
@@ -68,6 +70,8 @@ export interface GeoProvider {
   getGovernorates(countryId: string): Promise<GeoChildRow[]>;
   getCities(governorateId: string): Promise<GeoChildRow[]>;
   getDistricts(cityId: string): Promise<GeoChildRow[]>;
+  /** Villages and hamlets — a sibling of districts under the same city. */
+  getVillages(cityId: string): Promise<GeoChildRow[]>;
   getStreets(districtId: string): Promise<GeoChildRow[]>;
 }
 
@@ -167,6 +171,9 @@ export async function resolveGeoRequest(
         break;
       case "districts":
         data = await provider.getDistricts(parentId as string);
+        break;
+      case "villages":
+        data = await provider.getVillages(parentId as string);
         break;
       case "streets":
         data = await provider.getStreets(parentId as string);

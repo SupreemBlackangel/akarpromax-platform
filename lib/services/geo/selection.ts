@@ -7,6 +7,7 @@ export type GeoSelectionInput = {
   governorate?: string | null;
   city?: string | null;
   district?: string | null;
+  village?: string | null;
 };
 
 export type ResolvedGeoSelection = {
@@ -15,11 +16,13 @@ export type ResolvedGeoSelection = {
   governorate: GeoChildRow | null;
   city: GeoChildRow | null;
   district: GeoChildRow | null;
+  village: GeoChildRow | null;
   aliases: {
     country: string[];
     governorate: string[];
     city: string[];
     district: string[];
+    village: string[];
   };
 };
 
@@ -43,7 +46,8 @@ function globalSelection(): ResolvedGeoSelection {
     governorate: null,
     city: null,
     district: null,
-    aliases: { country: [], governorate: [], city: [], district: [] },
+    village: null,
+    aliases: { country: [], governorate: [], city: [], district: [], village: [] },
   };
 }
 
@@ -56,7 +60,7 @@ export async function resolveGeoSelection(
   input: GeoSelectionInput,
   provider: GeoProvider,
 ): Promise<GeoSelectionResult> {
-  const hasLocalToken = [input.country, input.governorate, input.city, input.district].some(requested);
+  const hasLocalToken = [input.country, input.governorate, input.city, input.district, input.village].some(requested);
   if (input.scope === "global") {
     return hasLocalToken ? { ok: false, error: "GEO_INVALID_SELECTION" } : { ok: true, value: globalSelection() };
   }
@@ -67,7 +71,9 @@ export async function resolveGeoSelection(
     return { ok: true, value: globalSelection() };
   }
   if (!requested(input.country)) return { ok: false, error: "GEO_INVALID_SELECTION" };
-  if (requested(input.district) && !requested(input.city)) {
+  // District and village are both children of a city, so neither can be
+  // resolved without one: two cities may each own a "النسيم".
+  if ((requested(input.district) || requested(input.village)) && !requested(input.city)) {
     return { ok: false, error: "GEO_INVALID_SELECTION" };
   }
 
@@ -108,6 +114,12 @@ export async function resolveGeoSelection(
     if (!district) return { ok: false, error: "GEO_INVALID_SELECTION" };
   }
 
+  let village: GeoChildRow | null = null;
+  if (requested(input.village)) {
+    village = uniqueMatch(await provider.getVillages(city!.id), input.village as string);
+    if (!village) return { ok: false, error: "GEO_INVALID_SELECTION" };
+  }
+
   return {
     ok: true,
     value: {
@@ -116,11 +128,13 @@ export async function resolveGeoSelection(
       governorate,
       city,
       district,
+      village,
       aliases: {
         country: geoAliases(country),
         governorate: governorate ? geoAliases(governorate) : [],
         city: city ? geoAliases(city) : [],
         district: district ? geoAliases(district) : [],
+        village: village ? geoAliases(village) : [],
       },
     },
   };

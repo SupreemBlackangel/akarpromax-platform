@@ -101,3 +101,63 @@ export function matchesGeoAlias(row: GeoAliasRow, value: unknown): boolean {
   const token = normalizeGeoToken(value);
   return Boolean(token) && geoAliases(row).includes(token);
 }
+
+// Arabic orthography the writer varies and the reader does not: harakat and
+// tatweel, the hamza forms of alef, the final ta-marbuta/ha and alef-maqsura,
+// and the generic prefix a publisher may or may not type ("حي النسيم" vs
+// "النسيم"). Stripped here so the same place cannot enter the registry twice.
+const ARABIC_DIACRITICS = /[ؐ-ًؚ-ٰٟۖ-ۭـ]/g;
+const PLACE_PREFIXES = [
+  "حي",
+  "حارة",
+  "قرية",
+  "هجرة",
+  "بلدة",
+  "مدينة",
+  "محافظة",
+  "منطقة",
+  "ولاية",
+  "مركز",
+  "ضاحية",
+  "مخطط",
+];
+
+/**
+ * The deduplication key for a registry place name. Two names that differ only
+ * in spelling habits collapse onto one key; genuinely different names never
+ * do. Used for the (parent, match_key) unique index — NOT for matching stored
+ * free-text values, which `normalizeGeoToken` still owns.
+ */
+export function geoMatchKey(value: unknown): string {
+  let text = typeof value === "string" ? value.normalize("NFKC") : "";
+  if (!text) return "";
+  text = text
+    .replace(ARABIC_DIACRITICS, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .toLocaleLowerCase("en");
+
+  for (const prefix of PLACE_PREFIXES) {
+    const stripped = geoMatchKeyPrefixStrip(text, prefix);
+    if (stripped) {
+      text = stripped;
+      break;
+    }
+  }
+  // "ال" is a definite article here, not part of the name, unless removing it
+  // would leave nothing to match on.
+  const withoutArticle = text.startsWith("ال") ? text.slice(2).trim() : text;
+  return (withoutArticle || text).replace(/\s+/g, " ");
+}
+
+function geoMatchKeyPrefixStrip(text: string, prefix: string): string | null {
+  const normalizedPrefix = prefix.replace(/ة/g, "ه");
+  if (!text.startsWith(`${normalizedPrefix} `)) return null;
+  const rest = text.slice(normalizedPrefix.length).trim();
+  return rest || null;
+}

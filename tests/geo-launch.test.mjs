@@ -38,6 +38,7 @@ const geoProvider = {
   async getGovernorates(countryId) { return governorates[countryId] ?? []; },
   async getCities(governorateId) { return cities[governorateId] ?? []; },
   async getDistricts(cityId) { return districts[cityId] ?? []; },
+  async getVillages() { return []; },
   async getStreets() { return []; },
 };
 

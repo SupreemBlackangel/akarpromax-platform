@@ -69,6 +69,14 @@ export const createPropertyBaseSchema = z.object({
   governorate: z.string().min(2).max(100),
   city: z.string().min(2).max(100),
   district: z.string().max(100).optional(),
+  village: z.string().max(100).optional(),
+  // Registry ids when the publisher picked a known place; absent when they
+  // typed a new one, which the ingestion layer then adds to the catalogue.
+  countryId: z.string().uuid().optional(),
+  governorateId: z.string().uuid().optional(),
+  cityId: z.string().uuid().optional(),
+  districtId: z.string().uuid().optional(),
+  villageId: z.string().uuid().optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   address: z.string().max(500).optional(),
@@ -130,6 +138,7 @@ export const propertySearchSchema = z.object({
   governorate: z.string().optional(),
   city: z.string().optional(),
   district: z.string().optional(),
+  village: z.string().optional(),
   minPrice: z.number().min(0).optional(),
   maxPrice: z.number().positive().optional(),
   minArea: z.number().min(0).optional(),

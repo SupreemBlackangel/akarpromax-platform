@@ -31,6 +31,7 @@ function provider(overrides = {}) {
     getGovernorates: async () => [{ id: "g1", code: "RIYADH", nameAr: "الرياض", nameEn: "Riyadh", nameTr: null }],
     getCities: async () => [],
     getDistricts: async () => [],
+    getVillages: async () => [],
     getStreets: async () => [],
     ...overrides,
   };
@@ -197,7 +198,7 @@ test("an unknown type is a 400, not a silent empty success", async () => {
 });
 
 test("child entities require their parent id", async () => {
-  for (const type of ["governorates", "cities", "districts", "streets"]) {
+  for (const type of ["governorates", "cities", "districts", "villages", "streets"]) {
     const res = await resolveGeoRequest({ type }, provider());
     assert.equal(res.status, 400, `${type} without parentId`);
     assert.equal(res.body.error, "GEO_PARENT_REQUIRED");

@@ -13,10 +13,20 @@ export const properties = pgTable('properties', {
   dealType: text('deal_type').notNull(),
   category: text('category').notNull(),
   propertyType: text('property_type').notNull(),
+  // The display names stay authoritative for rendering and for rows that
+  // predate the registry. The *_id columns below are the search key: matching
+  // a listing to a place by lowercased free text cannot tell "النسيم" in
+  // Riyadh from "النسيم" in Jeddah, and an id can.
   country: text('country').notNull(),
   governorate: text('governorate').notNull(),
   city: text('city').notNull(),
   district: text('district'),
+  village: text('village'),
+  countryId: uuid('country_id'),
+  governorateId: uuid('governorate_id'),
+  cityId: uuid('city_id'),
+  districtId: uuid('district_id'),
+  villageId: uuid('village_id'),
   latitude: decimal('latitude', { precision: 10, scale: 8 }),
   longitude: decimal('longitude', { precision: 11, scale: 8 }),
   address: text('address'),
@@ -73,6 +83,11 @@ export const properties = pgTable('properties', {
   statusIdx: index('properties_status_idx').on(table.status),
   dealTypeIdx: index('properties_deal_type_idx').on(table.dealType),
   cityIdx: index('properties_city_idx').on(table.city),
+  cityIdIdx: index('properties_city_id_idx').on(table.cityId),
+  districtIdIdx: index('properties_district_id_idx').on(table.districtId),
+  villageIdIdx: index('properties_village_id_idx').on(table.villageId),
+  // A radius search scans a bounding box first; without this it scans the table.
+  coordinatesIdx: index('properties_coordinates_idx').on(table.latitude, table.longitude),
   createdAtIdx: index('properties_created_at_idx').on(table.createdAt),
   auctionIdx: index('properties_auction_idx').on(table.isAuction, table.auctionStatus),
   auctionEndIdx: index('properties_auction_end_idx').on(table.auctionEndDate),
