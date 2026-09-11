@@ -1,0 +1,577 @@
+{
+ "briefVsReality": [
+  {
+   "assumption": "دورة اعتماد للخدمة: SERVICE_PENDING_APPROVAL → SERVICE_APPROVED → SERVICE_ACTIVE مع approve/reject/request-changes/suspend/archive",
+   "reality": "service_listings يملك أربع حالات فقط draft/active/paused/removed، وتُنشأ الخدمة بحالة active مباشرة (app/api/services/listings/route.ts:100 + lib/services/core.ts:120)، ولا توجد أعمدة reviewed_by/rejection_reason ولا أي واجهة إدارية",
+   "consequenceForPlan": "إمّا بناء الدورة داخل service_listings (هجرة + LISTING_FLOW + تبويب) أو ربط مفردات الطلب بما هو قائم فعلاً: «الخدمة» = service_provider_categories المحكومة باعتماد المزوّد. القرار يسبق أي عمل في المرحلة 3"
+  },
+  {
+   "assumption": "دورة حياة الطلب: NEW → SUBMITTED → UNDER_REVIEW → ACCEPTED → MATCHING_PROVIDERS → PROVIDER_SELECTED",
+   "reality": "المفردات الفعلية draft/published/receiving_offers/offer_selected/completed/cancelled/expired؛ وscheduled/in_progress/disputed معرّفة ولا يكتبها أي كود (lib/services/constants.ts:46)",
+   "consequenceForPlan": "لا تُخترع حالات جديدة في طبقة الإشعارات؛ تُضاف طبقة review_status منفصلة أو تُعاد صياغة الطلب على المفردات القائمة"
+  },
+  {
+   "assumption": "سلسلة كيانات Campaign → Ad → Placement → Slot → Approval",
+   "reality": "صف واحد في ad_campaigns هو الحملة والإعلان معًا، وad_creatives مجرد نسخ وسائط، وليس هناك جدول ad_placements/ad_slots — الأماكن ثوابت في src/constants/advertising.ts",
+   "consequenceForPlan": "يُوصى بتثبيت النموذج الحالي في الوثائق وإضافة effectiveStatus مشتق بدل تطبيع الكيانات الآن"
+  },
+  {
+   "assumption": "إشعار يصل الإدارة فور وصول طلب خدمة أو طلب اعتماد مزوّد",
+   "reality": "لا يوجد أي إشعار موجّه للإدارة؛ service_notifications مفتاحه user_id واحد (بريد) ولا يدعم جمهورًا بصلاحية. القناة الوحيدة هي فتح /admin أو /admin/services",
+   "consequenceForPlan": "يلزم notifyReviewers يحلّ حاملي الصلاحية إلى بُرد إلكترونية — عمل مرحلة 5"
+  },
+  {
+   "assumption": "سجل تدقيق كامل: WHO / WHAT / WHEN / BEFORE / AFTER / REASON",
+   "reality": "مخزنان: audit_logs (الخدمات والإعلانات) وaudit_events (المصادقة). شاشة /admin/audit تقرأ الثاني فقط، وaudit_logs بلا أعمدة before/after/reason",
+   "consequenceForPlan": "UNION في نقطة القراءة + تمرير before/after/reason داخل metadata بلا تغيير مخطط — أرخص إصلاح"
+  },
+  {
+   "assumption": "طلب الخدمة ليد/مهمة، وليس إعلانًا منشورًا",
+   "reality": "GET /api/service-requests عام و/service-requests صفحة عامة تعرض الطلبات المنشورة بعنوان مختصر وحي ووصف",
+   "consequenceForPlan": "قرار منتج مطلوب: إزالة اللوحة العامة أو الاحتفاظ بها كسوق مفتوح؛ الإصلاح الأمني (حجب short_address/district) مطلوب في الحالتين"
+  },
+  {
+   "assumption": "كاش صحيح وإعادة تحقّق عند الاعتماد (revalidate)",
+   "reality": "لا يوجد في المستودع كله unstable_cache ولا revalidateTag/revalidatePath ولا export const revalidate؛ كل صفحة عامة \"use client\" وتجلب بياناتها من المتصفح",
+   "consequenceForPlan": "لا يمكن «إبطال كاش» لأن لا كاش؛ المرحلة 8 تبني الطبقة عند حدود الـ API أولاً ثم تنقل استعلامًا واحدًا لكل صفحة إلى الخادم"
+  },
+  {
+   "assumption": "مفاتيح أجنبية، حذف ناعم، قيود فريدة على جداول الخدمات",
+   "reality": "drizzle-pg-forward/0003 ينشئ 26 جدولًا و44 فهرسًا بصفر REFERENCES؛ لا deleted_at؛ reference_number يُولَّد بـ COUNT(*)+1001 بلا فهرس فريد",
+   "consequenceForPlan": "هجرة واحدة لتنظيف الأيتام ثم إضافة FKs داخل نطاق الخدمات فقط، مع تأجيل تحويل البريد إلى uuid"
+  },
+  {
+   "assumption": "حالة PROVIDER ACTIVE وسجل approvalHistory وreviewedBy/reviewedAt",
+   "reality": "المزوّد ينتهي عند approved؛ الصف يحمل approved_at/suspended_at/rejection_reason فقط، وrejection_reason يُكتب عند كل انتقال فيُمحى عند الاعتماد",
+   "consequenceForPlan": "عمودان جديدان + جدول تاريخ على غرار service_request_status_history"
+  },
+  {
+   "assumption": "أدوار مراجعة معلنة (ads_reviewer, country_manager) تعمل",
+   "reality": "identity.countryCode ثابت null (lib/identity-auth.ts:108) وcanManageTargets يرفض كل من ليس super_admin/ad_manager؛ وad_manager لا يملك ADS_APPROVE",
+   "consequenceForPlan": "إمّا تعبئة الدولة من صف المستخدم أو تعطيل التحجيم عندما تكون null — قرار منتج في المرحلة 4"
+  },
+  {
+   "assumption": "ملفات مخطط TypeScript هي مصدر الحقيقة",
+   "reality": "lib/db/schemas/services-schema.ts نموذج Drizzle ميّت بأسماء جداول تصطدم بالجداول الحقيقية؛ الحقيقة في lib/services-schema.ts + lib/services-marketplace-schema.ts + drizzle-pg-forward",
+   "consequenceForPlan": "إعادة تسمية الجداول الميتة إلى legacy_* أو حذف الملف مع professional.matcher.ts"
+  },
+  {
+   "assumption": "جداول الإعلانات مُدارة بالهجرات مثل باقي النطاقات",
+   "reality": "لا هجرة واحدة تنشئ جدول إعلانات؛ كلها DDL وقت التشغيل خلف قفل ak_content_schema_meta بنسخة 3، وverify-schema-truth لا يفحص إلا السجل الجغرافي",
+   "consequenceForPlan": "0014_ads_baseline.sql + verifyAdsSchemaTruth قبل أي عمل إعلاني آخر (مرحلة 7، مع تقديم DATABASE-01 إلى المرحلة 2 إن أثبت الفحص الحي النقص)"
+  }
+ ],
+ "confirmedFindings": [
+  {
+   "id": "ADS-01",
+   "title": "الاعتماد لا ينشر: الحملات غير من نوع request تبقى في status='draft' بعد الاعتماد فلا تدخل استعلام العرض",
+   "severity": "HIGH",
+   "category": "الإعلانات",
+   "status": "confirmed",
+   "rootCause": "مسار الاعتماد يرفع status إلى active فقط عندما campaign_type === 'request'، بينما حملات لوحة الإدارة تُنشأ draft افتراضيًا (وتُجبر على draft لمن لا يملك ADS_PUBLISH)، واستعلام العرض يشترط status='active'",
+   "files": [
+    "app/api/admin/ads/approve/route.ts:43-44,63",
+    "lib/ads/engine.ts:204-211",
+    "app/api/admin/ads/route.ts:127-130",
+    "app/admin/ads/ads-admin-client.tsx:345-351,767"
+   ],
+   "fix": "توسيع shouldActivate ليشمل كل الأنواع عندما الحالة draft/pending/paused ويملك الفاعل ADS_PUBLISH (وهو ما فعلته النسخة غير الملتزَم بها في شجرة العمل)، وإرجاع awaitingPublish للواجهة مع شارة «معتمدة لكن غير منشورة» وزر نشر",
+   "verifyHow": "توسيع tests/ads-approval-publishes.test.mjs بحالة campaign_type='platform' تتوقع statusAfter='active'؛ يدويًا: إنشاء حملة platform كمسودة، اعتمادها، ثم POST /api/admin/ads/simulate يعيد eligible:true"
+  },
+  {
+   "id": "ADS-02",
+   "title": "طلبات الإعلان العامة تُخزَّن بـ section_scopes وpage_types = مفتاح عائلة الصفحة، فلا تُطابق أي بوابة إلا 'home'، وdevices=['desktop'] فقط",
+   "severity": "CRITICAL",
+   "category": "الإعلانات",
+   "status": "confirmed",
+   "rootCause": "مسار الإدخال العام يعيد استخدام مفتاح العائلة (company-detail، properties) في بُعدين للمحرك لهما مفردات مختلفة تمامًا (sections وPAGE_TYPES)، ولا تحقّق من page_types على هذا المسار",
+   "files": [
+    "app/api/ads/request/route.ts:55,194,199-200",
+    "lib/ads/engine.ts:332-338,362-366,377-384",
+    "src/constants/advertising.ts:93-108",
+    "src/config/standard-public-ad-registry.ts:26-47"
+   ],
+   "fix": "اشتقاق section من STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS[family].section، وكتابة page_types='[]' وdevices=['desktop','tablet','mobile'] (الإصلاح موجود في شجرة العمل غير ملتزَم به)، مع هجرة بيانات لمرة واحدة تصحح صفوف campaign_type='request' القائمة",
+   "verifyHow": "اختبار شكل الإدراج لعائلة company-detail؛ ثم POST /api/admin/ads/simulate بـ placement=web_company_detail_side_left_01 وdeviceType=mobile يعيد eligible:true"
+  },
+  {
+   "id": "ADMIN-UI-02",
+   "title": "متغيّرات CSS مستهلكة وغير معرّفة في أي مكان: --accent و--accent-soft و--color-error و--color-error-soft",
+   "severity": "HIGH",
+   "category": "بصرية",
+   "status": "confirmed",
+   "rootCause": "docs/brand-identity.md يسمّي الذهبي --accent والخطأ --color-error بينما tokens.css شحن --color-accent و--color-danger؛ المكوّنات كُتبت على الوثيقة، واختبار الرموز يفحص وجود الأسماء المعيارية لا تحلّل ما تستعمله الشيفرة",
+   "files": [
+    "app/admin/services/admin-client.tsx:236,240",
+    "src/styles/tokens.css:41-43,55-60,184-203",
+    "app/globals.css:12-24,26-90,527-538",
+    "docs/brand-identity.md:14,18"
+   ],
+   "fix": "إضافة رموز مرادفة في :root وفي [data-theme=dark]: --accent → var(--color-accent)، --color-error → var(--color-danger)، والنعومتان؛ وتوسيع tests/design-tokens.test.mjs ليؤكّد أن كل var(--x) مستعمل في app/ وsrc/ له تعريف",
+   "verifyHow": "اختبار grep يجمع كل var(--name) ويؤكد تعريفها؛ يدويًا: افتعال خطأ API في /admin/services ورؤية إشعار أحمر. النطاق الحقيقي 124 استعمالًا في 61 ملفًا لا 55"
+  },
+  {
+   "id": "ADMIN-UI-03",
+   "title": "اعتماد/رفض/تعليق المزوّد ينفَّذ بنقرة واحدة بلا حوار ولا سبب، ويعرض انتقالات يرفضها الخادم فتظهر http_500",
+   "severity": "HIGH",
+   "category": "الاعتماد",
+   "status": "confirmed",
+   "rootCause": "أزرار الصف مشروطة بـ status !== 'approved' / !== 'rejected' بدل PROVIDER_FLOW، وترسل {status} فقط؛ والحارس الخادمي وحقل note أُضيفا لاحقًا ولم تُحدَّث الواجهتان، ومسار الحالة يخرّط PROVIDER_NOT_FOUND فقط",
+   "files": [
+    "app/admin/services/admin-client.tsx:173-176,223",
+    "app/dashboard/services/supervisor/providers/page.tsx:77-88",
+    "app/api/service-providers/[id]/status/route.ts:29,40-45",
+    "lib/services/marketplace.ts:246,253-256,271,277"
+   ],
+   "fix": "ثلاثة حوارات على src/components/ui/Dialog (اعتماد بملخّص، رفض/تعليق بسبب إلزامي) ترسل {status, note}؛ اشتقاق الأزرار من canTransitionProvider؛ ربط PROVIDER_STATUS_INVALID بـ 409. يدمج PROVIDERS-05 وPROVIDERS-06",
+   "verifyHow": "اختبار مسار: from='draft' إلى 'approved' يعيد 409 لا 500؛ اختبار SSR: صف draft لا يعرض زر اعتماد؛ يدويًا: رفض مزوّد ثم التحقق من rejection_reason ومن نص الإشعار"
+  },
+  {
+   "id": "SECURITY-01",
+   "title": "أي مزوّد معتمد يستطيع تغيير حالة خدمة مزوّد آخر، والخدمة تُنشر بلا مراجعة",
+   "severity": "HIGH",
+   "category": "الأمان",
+   "status": "confirmed",
+   "rootCause": "المسار يعامل SERVICES_UPDATE (صلاحية «حدّث خاصتك» حسب الوثيقة) كصلاحية إشراف، وupdateListingStatus لا يفحص provider_user_id إطلاقًا؛ وlib/services/identity.ts يمنح كامل حزمة service_provider لأي ملف حالته approved",
+   "files": [
+    "app/api/services/listings/[id]/route.ts:37-41,47",
+    "src/constants/roles.ts:63,69,81",
+    "lib/services/identity.ts:20-21",
+    "lib/identity-auth.ts:95-98,116-118",
+    "lib/services/core.ts:129-138",
+    "docs/services/SERVICES_RBAC_POLICY.md:25,29"
+   ],
+   "fix": "isAdmin = SERVICES_APPROVE فقط، وتمرير هوية الفاعل إلى updateListingStatus ليتحقق من الملكية؛ وبعد تثبيت قرار PROVIDERS-01 تقييد الحالات المسموحة للمالك بـ draft/paused. يدمج PROVIDERS-02",
+   "verifyHow": "اختبار مسار بهويتَي مزوّدَين: PATCH من غير المالك 403، من service_supervisor 200، ومن المالك إلى 'active' 400"
+  },
+  {
+   "id": "PROVIDERS-03",
+   "title": "طلبات المزوّدين الجديدة (submitted) غير مرئية في طابور المراجعة، و'under_review' لا تصل إليها أي واجهة",
+   "severity": "HIGH",
+   "category": "الاعتماد",
+   "status": "confirmed",
+   "rootCause": "مسار الإرسال يكتب 'submitted' بينما شاشات المشرف كلها مبنية على 'under_review'، ولا شيء ينقل الملف تلقائيًا؛ وأسوأ: صفحات المشرف تستدعي /api/service-providers بلا admin=1 فيتجاهل الخادم بارامتر status ويعيد المعتمدين فقط",
+   "files": [
+    "lib/services/marketplace.ts:229-232,336-339",
+    "app/api/service-providers/route.ts:37",
+    "app/dashboard/services/supervisor/providers/page.tsx:20,30,65",
+    "app/dashboard/services/supervisor/page.tsx:60",
+    "app/dashboard/services/supervisor/verification/page.tsx:3-5"
+   ],
+   "fix": "قبول قائمة حالات مفصولة بفواصل في listProviderProfiles والمسار (IN (...))، وإرسال admin=1 من شاشات المشرف، وجعل الافتراضي status=submitted,under_review؛ واختياريًا نقل الملف إلى under_review عند فتحه",
+   "verifyHow": "بذر ملف 'submitted' في قاعدة الذاكرة واستدعاء GET /api/service-providers?admin=1&status=submitted,under_review والتأكد من إرجاعه؛ يدويًا: إرسال طلب ثم فتح /dashboard/services/supervisor/verification"
+  },
+  {
+   "id": "PROVIDERS-01",
+   "title": "دورة اعتماد الخدمة غير موجودة: الخدمة تولد عامة فور إنشائها",
+   "severity": "HIGH",
+   "category": "معمارية",
+   "status": "confirmed",
+   "rootCause": "سوق الخدمات أُعيد بناؤه حول ملفات المزوّدين وفئاتهم، وبقي service_listings إرثًا من core.ts بمسار API بلا واجهة ولا مراجعة؛ createListing يفرض 'active' متجاوزًا الافتراضي 'draft' في الجدول",
+   "files": [
+    "lib/services/constants.ts:37-44",
+    "lib/services/core.ts:97-137",
+    "app/api/services/listings/route.ts:49-62,100-101",
+    "lib/services-schema.ts:26",
+    "lib/services-marketplace-schema.ts:32-33",
+    "app/admin/services/admin-client.tsx:42"
+   ],
+   "fix": "قرار الكيان أولاً: (أ) تقاعد service_listings ومعاملة service_provider_categories كـ«الخدمة» المحكومة باعتماد المزوّد، أو (ب) توسيع LISTING_STATUS بـ pending_approval/approved/changes_requested/archived + أعمدة reviewed_by/reviewed_at/review_note + LISTING_FLOW يُفرض في updateListingStatus + createListing يتجاهل body.status. يدمج DATABASE-05 وADMIN-UI-05",
+   "verifyHow": "POST خدمة كمزوّد معتمد ثم GET /api/services/listings يجب ألا تظهر قبل الاعتماد؛ وصف في audit_logs بـ service_listing.status.approved؛ توسيع tests/services-public-privacy.test.mjs"
+  },
+  {
+   "id": "REQUESTS-01",
+   "title": "دورة حياة الطلب الإدارية (قبول/رفض/طلب معلومات/إسناد/متابعة/إغلاق) غير موجودة",
+   "severity": "HIGH",
+   "category": "طلبات الخدمات",
+   "status": "confirmed",
+   "rootCause": "السوق بُني كـRFQ يقوده العميل (النشر يشغّل المطابقة مباشرة)، والمراجعة الإدارية وُثِّقت في SERVICE_REQUEST_STATE_MACHINE.md ولم تُنفَّذ قط؛ لا أعمدة review_status/reviewed_by/assigned_to ولا مسار admin",
+   "files": [
+    "lib/services/constants.ts:46-80",
+    "lib/services/state-machine.ts:1-22",
+    "app/api/service-requests/[id]/route.ts:50-96",
+    "lib/services/marketplace.ts:1287,2189-2191,2241-2246",
+    "app/admin/services/admin-client.tsx:225",
+    "app/dashboard/services/supervisor/page.tsx:247-251",
+    "drizzle-pg-forward/0003_l1c_services_baseline.sql:114"
+   ],
+   "fix": "هجرة أمامية تضيف review_status/reviewed_by/reviewed_at/rejection_reason/assigned_to/closed_at، ودالة reviewRequest(id, action, {reason, assignee}, actor) تكتب status history + writeAudit، معروضة على POST /api/admin/service-requests/[id]/{accept|reject|request-info|assign|close} خلف SERVICE_REQUESTS_MANAGE_ALL؛ وإضافة فرع إداري لـ publish/renew/cancel. يدمج SECURITY-05 وADMIN-UI-04 وNOTIFY-AUDIT-04",
+   "verifyHow": "اختبار: إنشاء مسودة، نشر، رفض إداري بسبب ← status='rejected' وصف تاريخ from/to وصف تدقيق بالسبب؛ ومستخدم آخر يحصل على 403"
+  },
+  {
+   "id": "REQUESTS-02",
+   "title": "POST /api/service-requests/[id]/matching يتيح للعميل إطلاق موجات بلا حد، متجاوزًا حراس التجديد والحظر",
+   "severity": "HIGH",
+   "category": "طلبات الخدمات",
+   "status": "confirmed",
+   "rootCause": "مسار المطابقة أقدم من قاعدة الموجات وتُرك كمشغّل عام مفتوح للعميل؛ runMatching يشتق الموجة من الصفوف القائمة فيفتح الموجة التالية في كل نداء، بينما canRenew وrenewal_count وservice_request_blocks تعيش كلها داخل renewRequest",
+   "files": [
+    "app/api/service-requests/[id]/matching/route.ts:45-50",
+    "lib/services/matching.ts:150-162,164-209",
+    "lib/services/marketplace.ts:1124-1207",
+    "lib/services/request-waves.ts:105-153"
+   ],
+   "fix": "في POST: تفويض العميل إلى renewRequest (أو إرجاع 405)، وللإداريين تمرير {wave} صريحة بعد canRenew مع تدقيق service_request.rematch بالسبب",
+   "verifyHow": "اختبار: نشر ثم POST /matching مرتين كعميل ← النداء الثاني 409 WAVE_STILL_OPEN وبلا صفوف service_request_matches جديدة"
+  },
+  {
+   "id": "REQUESTS-03",
+   "title": "التجديد مستحيل بمجرد وصول أول عرض: الحالة تصير receiving_offers ولا تعود أبدًا إلى published",
+   "severity": "HIGH",
+   "category": "طلبات الخدمات",
+   "status": "confirmed",
+   "rootCause": "ميزة الموجات (هجرة 0013) رُكّبت فوق تقسيم published/receiving_offers القديم دون توحيد أي الحالتين «مفتوحة»؛ publishRequest هو الكاتب الوحيد لـ'published' وهو مشروط بـ DRAFT، ورفض/سحب العرض لا يمسّ صف الطلب",
+   "files": [
+    "lib/services/marketplace.ts:995-1003,1124-1130,1596-1607,1752-1771",
+    "lib/services/constants.ts:69",
+    "app/service-requests/[id]/page.tsx:76,262-274",
+    "app/api/service-requests/[id]/renew/route.ts:43"
+   ],
+   "fix": "قبول {published, receiving_offers} في renewRequest (العرض المقبول ينقل الحالة إلى offer_selected أصلاً)، واختياريًا العودة إلى published مع صف تاريخ عند نفاد العروض المرسلة، وتقييد زر الواجهة بالحالتين. ملاحظة: بوابة الحالة الحالية تجعل فرع OFFER_ON_TABLE شيفرة ميتة",
+   "verifyHow": "اختبار: نشر، عرض من مزوّد، رفض العميل، ثم POST /renew ← ok:true بالموجة 2؛ وPOST /renew أثناء وجود عرض 'sent' ← 409 OFFER_ON_TABLE"
+  },
+  {
+   "id": "NOTIFY-AUDIT-01",
+   "title": "/admin/audit تقرأ audit_events فقط، فكل صفوف تدقيق الخدمات والإعلانات (audit_logs) غير مرئية للإدارة",
+   "severity": "HIGH",
+   "category": "الإشعارات وسجل التدقيق",
+   "status": "confirmed",
+   "rootCause": "مخزنان نشآ منفصلين: audit_logs من مخطط المحتوى بنمط D1 (الخدمات والإعلانات) وaudit_events من مخطط Drizzle للمصادقة؛ الشاشة بُنيت على الثاني ولم تُوصل بالأول، وقائمة المرشِّحات في الواجهة تسمّي أحداثًا لا يبعثها أي كود",
+   "files": [
+    "app/api/admin/audit/route.ts:86-87,105-110",
+    "lib/services/audit.ts:13-31",
+    "app/api/admin/ads/approve/route.ts:101-120",
+    "app/admin/audit/audit-admin-client.tsx:24-32",
+    "lib/services/db.ts:22-24"
+   ],
+   "fix": "إضافة بارامتر source (افتراضه all) وUNION ALL بين audit_logs وaudit_events في نفس قاعدة البيانات مرتَّبة بـ created_at، ونقل ترشيح entity_type/entity_id إلى SQL، واستبدال قائمة EVENT_TYPES الجامدة بـ SELECT DISTINCT. يدمج SECURITY-04 وNOTIFY-AUDIT-08",
+   "verifyHow": "اعتماد مزوّد عبر PATCH ثم GET /api/admin/audit?entity_type=service_provider_profiles&entity_id=<id> يعيد صف service_provider.status.approved؛ واختبار node ببذر صف في كل جدول"
+  },
+  {
+   "id": "PUBLIC-PERF-03",
+   "title": "أربع عائلات صفحات ما زالت تطلب إعلانًا لكل خانة، وكل طلب يشغّل تمريرة محرك كاملة",
+   "severity": "HIGH",
+   "category": "الأداء",
+   "status": "confirmed",
+   "rootCause": "صفحات /companies/[id] و/offices/[id] و/tools/[id] و/tools/pdf2word لم تُنقل إلى PublicPageShell + StandardPublicAdLayout؛ المسار القديم رُقِّع ليستدعي المحرك الحقيقي فبقي شكل «طلب لكل خانة» كما هو",
+   "files": [
+    "components/advertising/placements/AdSidebar.tsx:20-31",
+    "components/advertising/placements/AdBottom.tsx:20-31",
+    "app/companies/[id]/page.tsx:36,63,65",
+    "app/offices/[id]/page.tsx:69,102,104",
+    "app/api/advertising/match/route.ts:99-108",
+    "lib/ads/engine.ts:725-729,806,843-854",
+    "src/config/standard-public-ad-registry.ts:30,34,36"
+   ],
+   "fix": "استبدال AdSidebar/AdBottom بـ PublicPageShell مع adLayout={{mode:'standard', family}} — العائلات company-detail/office-detail/tools معرّفة أصلاً — وهو ما يحذف آخر مستهلكي المسار القديم دفعة واحدة",
+   "verifyHow": "فتح /companies/<id> مع تصفية الشبكة على /api/ad: بالضبط POST واحد إلى /api/ads/match-batch وصفر GET إلى /api/advertising/match؛ واختبار مصدري يمنع استيراد AdSidebar من app/**"
+  },
+  {
+   "id": "NOTIFY-AUDIT-02",
+   "title": "صفوف التدقيق تحمل WHO/WHAT/WHEN بلا BEFORE/AFTER، والسبب أحيانًا فقط",
+   "severity": "MEDIUM",
+   "category": "الإشعارات وسجل التدقيق",
+   "status": "confirmed",
+   "rootCause": "لا عقد مشترك: AuditEntry بلا before/after/reason فيقرّر كل موضع نداء بنفسه؛ setProviderStatus يحسب الحالة السابقة ثم يهملها، ومسارات الإعلانات تكتب INSERT خاصًا بها بالبريد في عمود actor_user_id",
+   "files": [
+    "lib/services/audit.ts:4-31",
+    "lib/services/marketplace.ts:245-256,277",
+    "app/api/admin/ads/approve/route.ts:27,137",
+    "app/api/admin/ads/route.ts:46-55",
+    "app/api/admin/ads/restore/route.ts:41-46",
+    "docs/services/PROVIDER_VERIFICATION_POLICY.md:150-162"
+   ],
+   "fix": "توسيع AuditEntry بـ before/after/reason تُحفظ داخل metadata (بلا هجرة)، وتمرير {before:{status:from}, after:{status}, reason:note} في setProviderStatus ونظائره، وإضافة حقل reason إلزامي عند الرفض في مسار اعتماد الإعلان، وتوجيه الكتّاب المضمّنين إلى writeAudit",
+   "verifyHow": "اختبار وحدة: setProviderStatus ثم قراءة metadata والتأكد من before.status='submitted' وafter.status='approved' وreason. ملاحظة: مسار اعتماد الإعلان يكتب before/after بالفعل اليوم؛ الناقص فيه هو السبب فقط"
+  },
+  {
+   "id": "SECURITY-02",
+   "title": "أدوار اعتماد الإعلانات معطّلة عمليًا: identity.countryCode دائمًا null فيرفض canManageTargets كل مراجع",
+   "severity": "MEDIUM",
+   "category": "الأمان",
+   "status": "confirmed",
+   "rootCause": "لا مصدر للدولة: جدول users بلا عمود دولة، ورمز الجلسة يحمل userId/role/permissions فقط، فيثبّت identityFromSession القيمة null؛ ومسنِدات التحجيم القُطري بقيت من برنامج الرعاة الملغى وتفشل مغلقة",
+   "files": [
+    "lib/identity-auth.ts:103-110,127-130",
+    "lib/auth/session.ts:14-19,38-54",
+    "lib/db/schema.ts:3-31",
+    "lib/ads/admin.ts:308-312",
+    "app/api/admin/ads/route.ts:57-61",
+    "app/api/admin/ads/approve/route.ts:40-42,54-60",
+    "src/constants/roles.ts:87,93"
+   ],
+   "fix": "إمّا قراءة دولة من صف المستخدم إلى identity.countryCode، أو السماح لأي هوية تحمل صلاحية ADS_* عندما تكون countryCode = null مع إبقاء التقييد عند وجود دولة؛ ومعالجة شرط countries.length === 1 الذي يرفض الحملات متعددة الدول أصلاً",
+   "verifyHow": "بهوية اختبارية role='ads_reviewer' يجب أن يعيد POST /api/admin/ads/approve الحالة 200 ويضبط approval_status='approved'؛ الفشل اليوم هو 404 صامت وقائمة فارغة"
+  },
+  {
+   "id": "PUBLIC-PERF-01",
+   "title": "لا توجد طبقة كاش أو إعادة تحقّق من Next على الموقع العام إطلاقًا",
+   "severity": "MEDIUM",
+   "category": "الأداء",
+   "status": "confirmed",
+   "rootCause": "الموقع العام بُني كـSPA فوق app router: كل صفحة \"use client\" والبيانات تصل عبر /api/*، فلم يكن لأي بدائية كاش ما تنطبق عليه؛ lib/cache.ts أُضيف كبديل ولا يصدّر أي وسيلة إبطال",
+   "files": [
+    "lib/cache.ts:3-24",
+    "lib/cache/cache.service.ts:1-22",
+    "app/page.tsx:1",
+    "app/properties/page.tsx:1",
+    "app/services/page.tsx:1",
+    "app/api/properties/route.ts:1-15",
+    "app/sitemap.ts:18-22"
+   ],
+   "fix": "عدم إعادة كتابة الصفحات: إضافة invalidate(prefix) إلى lib/cache.ts أولاً واستدعاؤه من مسارات الاعتماد/النشر، ثم نقل أول استعلام قائمة في /properties و/services و/providers إلى مكوّن خادم داخل unstable_cache بوسم، مع إبقاء مكوّن العميل للفلاتر والصفحات",
+   "verifyHow": "اختبار grep يؤكد أن قائمتي المزوّدين والعقارات تستعملان بدائية كاش؛ واختبار تكامل يعتمد مزوّدًا ويتحقق من ظهوره دون انتظار TTL. ملاحظة: لا بيانات قديمة اليوم لأن لا كاش؛ الأثر أداء وSEO لا صحة"
+  },
+  {
+   "id": "PUBLIC-PERF-02",
+   "title": "/api/offices و/api/companies تفتح وتغلق اتصال Postgres جديدًا في كل طلب",
+   "severity": "MEDIUM",
+   "category": "الأداء",
+   "status": "confirmed",
+   "rootCause": "النمط مقصود وموثّق (AGENTS.md يفرض getDb() + finally end() لأن تجمّع postgres-js على مستوى الوحدة ينكسر في زمن تشغيل Workers للتطوير)، لكنه طُبِّق دون بوابة كشف زمن التشغيل كالتي في lib/pg-runtime.ts",
+   "files": [
+    "lib/db/index.ts:6-13",
+    "app/api/offices/route.ts:25,38-40",
+    "app/api/companies/route.ts:25,38-40",
+    "src/components/home/HomeFeaturedOffices.tsx:22-42",
+    "lib/pg-runtime.ts:21-33,55-81",
+    "AGENTS.md:319-327"
+   ],
+   "fix": "إعادة استخدام التجمّع المشترك في زمن تشغيل Node خلف نفس كشف Workers الذي تطبّقه pg-runtime.ts؛ لا يُستبدل getDb() بمفرد ثابت بلا بوابة وإلا عاد خطأ I/O عبر الطلبات",
+   "verifyHow": "طَرق /api/offices خمسين مرة ومراقبة pg_stat_activity: العدد يبقى ثابتًا. ملاحظة: DATABASE_URL يشير إلى نقطة Neon -pooler، فادّعاء استنزاف max_connections لا ينطبق؛ التكلفة الحقيقية مصافحة TLS لكل طلب"
+  },
+  {
+   "id": "DATABASE-05",
+   "title": "دورة اعتماد الخدمة غائبة عن المخطط نفسه: لا حالة انتظار ولا مراجع ولا سبب رفض",
+   "severity": "HIGH",
+   "category": "قاعدة البيانات",
+   "status": "confirmed",
+   "rootCause": "دورة المزوّد وحدها بُنيت (PROVIDER_FLOW)؛ عوملت الخدمة كمحتوى تابع للمزوّد لا ككيان قابل للاعتماد، فأُضيف approved_at/published_at بلا مفردات حالة تستعملها — وهي مسجّلة في سجل المنتج كفجوة مؤجّلة (SVC-031 / ADMIN-017) لا كانحدار",
+   "files": [
+    "lib/services/constants.ts:37-42,239",
+    "lib/services/core.ts:97-137,168-177",
+    "lib/services-schema.ts:26",
+    "lib/services-marketplace-schema.ts:32-33",
+    "app/api/services/listings/[id]/route.ts:14,38",
+    "src/constants/roles.ts:69"
+   ],
+   "fix": "مدموج مع PROVIDERS-01: هجرة أمامية تضيف rejection_reason وrequested_changes وreviewed_by وreviewed_at وarchived_at، وتوسيع LISTING_STATUS، وجعل createListing يبدأ من pending_approval، وخريطة LISTING_FLOW تُفرض في updateListingStatus",
+   "verifyHow": "اختبار ينشئ خدمة ويؤكد أن حالتها pending_approval وأن استعلام السوق العام لا يعيدها، ثم يعتمدها ويؤكد ظهورها، ثم يرفض انتقالًا غير قانوني (rejected → active)"
+  },
+  {
+   "id": "DATABASE-01",
+   "title": "أعمدة نسخ الإعلان التي يقرأها المحرك يُنشئها ترقيع لا يُشغَّل على قاعدة مقفولة بالنسخة",
+   "severity": "CRITICAL",
+   "category": "قاعدة البيانات",
+   "status": "contested",
+   "rootCause": "مخطط الإعلانات بلا هجرة خاصة؛ يتطوّر عبر ALTER على مسار الطلب ومنسّقه الوحيد ensureContentSchema يُقصَر بقفل نسخة خشن (CONTENT_SCHEMA_VERSION = 3) لم يُرفَع عند إضافة الأعمدة",
+   "files": [
+    "lib/content-schema.ts:172-184,578,590",
+    "lib/ad-schema.ts:158-170",
+    "lib/ads/engine.ts:148-181",
+    "app/api/admin/ads/route.ts:86,135",
+    "app/api/ads/request/route.ts:121"
+   ],
+   "fix": "drizzle-pg-forward/0014_ad_creative_media_metadata.sql بـ ADD COLUMN IF NOT EXISTS لـ alt_text_ar/en/tr وmedia_width/media_height، وإضافة الأعمدة نفسها إلى CREATE الأساسي في lib/content-schema.ts وlib/mysql-runtime.ts؛ رفع رقم النسخة وحده غير كافٍ لأنه يعيد تشغيل مئات جمل DDL من مسار طلب",
+   "verifyHow": "«متنازع عليه»: لم يُرجع المدقّق حكمًا. الحسم فحص للقراءة فقط على الإنتاج: SELECT column_name FROM information_schema.columns WHERE table_name='ad_creatives' — الشيفرة تثبت إمكان الفجوة، وقاعدة الإنتاج وحدها تثبت إن كان POST سابق قد رقّعها عرضًا. ثم توسيع tests/ads-base-ddl-contract.test.mjs ليشمل ad_creatives"
+  }
+ ],
+ "refutedFindings": [
+  {
+   "id": "ADMIN-UI-01",
+   "title": "حارس PermissionGuard يطلب كل الصلاحيات الثلاث بينما بوابة الخادم تقبل أيًّا منها",
+   "why": "التناقض حقيقي في الشيفرة لكنه غير قابل للبلوغ: الصلاحيات تُشتق حصريًا من ROLE_CATALOG الثابت، والدوران الوحيدان اللذان يجتازان بوابة الخادم (service_supervisor وsuper_admin) يحملان الصلاحيات الثلاث جميعًا فيجتازان every() أيضًا. لا يوجد دور «مزوّدون فقط» أو «بلاغات فقط» في المستودع، ولا مسار يمنح مجموعة جزئية. الباقي خطر كامن منخفض: الحارس يتجاهل الرمز '*' ولا يدعم وضع any"
+  },
+  {
+   "id": "ADS-03",
+   "title": "الحملات المستهدَفة بدولة تختفي لزوّار بلا رمز ISO",
+   "why": "دُحض في جوهره: resolvePlatformLocation يُرجع سوق المنصة الافتراضي 'om' عند تعذّر الاستدلال، فحالة «دولة مجهولة» لا تنتج countryCode فارغًا؛ والحالة الفارغة الوحيدة هي اختيار الزائر الصريح «كل الدول»، وهي سلسلة الرجوع الموثّقة في docs/ads-targeting.md. ومسار «الأسماء العربية» غير موجود: المكوّنات القديمة تقرأ رموزًا مُطبَّعة وتتجاهل الخصائص المكتوبة يدويًا. يبقى صحيحًا فقط أن المسار القديم لا يشتق الجهاز/الجغرافيا من الطلب — وهو مُغطّى في PUBLIC-PERF-03/04"
+  },
+  {
+   "id": "NOTIFY-AUDIT-03",
+   "title": "لا إشعار يصل الإدارة إطلاقًا",
+   "why": "الوصف غير دقيق في نقطته المحورية: صفحة /admin هي CommandCenterOverview وتعرض عدد الطلبات المفتوحة و«بانتظار المراجعة» (submitted + under_review) بنبرة تحذير مع عمر أقدم عنصر — أي أن الإشارة على أول صفحة يفتحها المسؤول لا داخل تبويب مخفي. وdocs/command-center/OPERATIONAL_ALERTS.md يوثّق نموذج السحب صراحةً ويضع إشعارات البريد/الويبهوك تحت «تحسينات مستقبلية». ما يتبقّى طلب ميزة منخفض الأولوية لا خلل"
+  },
+  {
+   "id": "SECURITY-03",
+   "title": "تجاوز خط النشر: اعتماد تلقائي عند الإنشاء وapproval_status قابل للكتابة عبر PATCH",
+   "why": "ليس تجاوز تخويل: كلا المسارين مشروطان بـ ADS_APPROVE (وبـ ADS_PUBLISH للوصول إلى 'active')، فلا تُنتَج حالة لا يستطيع الفاعل نفسه إنتاجها بنداءين. كما أن ادّعاء «PATCH لا يضبط is_active» خاطئ (المسار يضبطه فعلاً)، وادّعاء «لا أثر لمن اعتمد» مبالغ فيه (صف تدقيق بالفاعل والحالة موجود). ونموذج الإنشاء في الواجهة يرسل approvalStatus='pending' دائمًا فلا يصل فرع الاعتماد التلقائي. المتبقي: اعتماد عبر PATCH يفوّت الإشعار وصف ad.approval وإبطال الكاش"
+  },
+  {
+   "id": "DATABASE-10",
+   "title": "أي مستخدم مسجّل يستطيع منح نفسه أي دور عبر /api/admin/roles/assign",
+   "why": "المسار سقالة ميتة: لا شيء في حلّ الصلاحيات يقرأ admin_role_assignments أو admin_roles إطلاقًا — الصلاحيات تُشتق من رمز الجلسة وROLE_CATALOG. وrole_id مقيّد بمفتاح أجنبي نحو admin_roles الذي لا يملؤه التطبيق أبدًا، فأي roleId يُرسله مهاجم ينتهي بخرق قيد و500. إدارة الأدوار الحقيقية في PATCH /api/admin/roles وهي محروسة بـ ROLES_MANAGE ومدوَّنة في audit_logs. المتبقي: كتابة/حذف صفوف في جدول يتيم — العلاج حذف السقالة لا تحصينها"
+  }
+ ],
+ "phasePlan": [
+  {
+   "phase": "المرحلة 2 — إيقاف النزيف الإعلاني والرموز البصرية",
+   "goal": "أن يعرض إعلان معتمد فعلاً، وأن تظهر ألوان الحالات، ودون لمس بنية الإعلانات",
+   "steps": [
+    "دمج إصلاح مسار الاعتماد الموجود في شجرة العمل غير الملتزَم به: shouldActivate يشمل كل الأنواع عندما الحالة draft/pending/paused ويملك الفاعل ADS_PUBLISH، مع إرجاع awaitingPublish (ADS-01)",
+    "دمج إصلاح مسار الإدخال العام: اشتقاق section من سجل العائلات، page_types='[]'، devices ثلاثية (ADS-02)",
+    "هجرة بيانات لمرة واحدة تصحّح صفوف campaign_type='request' القائمة التي تحمل مفتاح عائلة في page_types/section_scopes",
+    "استدعاء invalidateActiveAdsCache بعد كل كتابة في /api/admin/ads و/restore عبر مُعين afterCampaignWrite (ADS-04)",
+    "تسجيل أخطاء match-batch بـ console.error بدل ابتلاعها (ADS-09)",
+    "إضافة الرموز المرادفة --accent/--accent-soft/--color-error/--color-error-soft في :root وفي [data-theme=dark]، وتوسيع اختبار الرموز ليتحقق من تحلّل كل var المستعمل (ADMIN-UI-02)",
+    "الفحص الحاسم لـ DATABASE-01 على الإنتاج (استعلام information_schema للقراءة فقط) وترقية الأولوية فورًا إن ثبت النقص"
+   ],
+   "risks": [
+    "تعديل shouldActivate قد يمنح ads_reviewer حق النشر إن لم يُشترط ADS_PUBLISH — النسخة في شجرة العمل تعالج ذلك صراحةً",
+    "هجرة بيانات الطلبات القديمة قد تنشّط حملات كانت راكدة: تُشغَّل بعد مراجعة قائمة الصفوف المتأثرة",
+    "إضافة رموز مرادفة قد تكشف تباينات تباين لوني في الوضع الداكن لم تكن مرئية"
+   ],
+   "whatMustNotChange": [
+    "إطار العمل Next/React وبنية app router",
+    "بوابات العرض الخمس في استعلام المحرك (status/approval_status/is_active/deleted_at/النافذة الزمنية) — الاختبار يثبّتها ولا تُخفَّف",
+    "صلاحيات ADS_* وتقسيمها بين ADS_APPROVE وADS_PUBLISH",
+    "سجل الأماكن في src/constants/advertising.ts ومفاتيح العائلات"
+   ]
+  },
+  {
+   "phase": "المرحلة 3 — اعتماد المزوّدين: طابور صحيح وقرار موثّق",
+   "goal": "أن يرى المراجع الطلبات الجديدة، وأن يحمل كل قرار سببًا وانتقالًا قانونيًا",
+   "steps": [
+    "قبول قائمة حالات مفصولة بفواصل في listProviderProfiles والمسار (IN (...)) مع تحقق من PROVIDER_STATUS_VALUES (PROVIDERS-03)",
+    "إرسال admin=1 من شاشات المشرف وتغيير الافتراضي وإعادة التوجيه إلى status=submitted,under_review",
+    "ثلاثة حوارات على ui/Dialog: اعتماد بملخّص، رفض وتعليق بسبب إلزامي؛ ترسل {status, note} (ADMIN-UI-03، PROVIDERS-05)",
+    "اشتقاق أزرار الصف من canTransitionProvider بدل !== approved",
+    "ربط PROVIDER_STATUS_INVALID بـ 409 وPROVIDER_DOCUMENTS_MISSING بـ 400 مع قائمة الناقص (PROVIDERS-06)",
+    "اشتراط assessVerification(...).canApprove عند الاعتماد (PROVIDERS-04)",
+    "إيقاف مسح rejection_reason عند الاعتماد، وإضافة reviewed_by/reviewed_at وجدول service_provider_approvals على غرار service_request_status_history (PROVIDERS-08، DATABASE-14)"
+   ],
+   "risks": [
+    "اشتراط canApprove قد يجمّد اعتمادات كانت تمر سابقًا — يلزم فحص عدد الملفات المعلّقة بمستندات غير موثّقة قبل التفعيل",
+    "تغيير الافتراضي في الطابور يكشف دفعة طلبات متراكمة لم يرها أحد"
+   ],
+   "whatMustNotChange": [
+    "PROVIDER_FLOW ومفردات الحالات الست",
+    "بوابة العرض العام status='approved' في مسارَي المزوّدين والمطابقة",
+    "صلاحية SERVICE_PROVIDERS_REVIEW كشرط وحيد لتغيير الحالة"
+   ]
+  },
+  {
+   "phase": "المرحلة 4 — الأمان والصلاحيات",
+   "goal": "إغلاق الكتابة عبر المستأجرين، وتفعيل أدوار المراجعة، ومنع تعداد غير المعتمدين",
+   "steps": [
+    "isAdmin = SERVICES_APPROVE فقط في PATCH /api/services/listings/[id]، وتمرير هوية الفاعل إلى updateListingStatus للتحقق من provider_user_id (SECURITY-01)",
+    "قرار منتج لمصدر الدولة ثم إمّا تعبئة identity.countryCode أو تخفيف canManageTargets عند null، مع معالجة شرط countries.length === 1 (SECURITY-02)",
+    "إضافة بوابة approved (أو المالك/المراجع) وDTO عام لمسارَي categories وportfolio تحت [id] (SECURITY-07، PROVIDERS-11)",
+    "قصر fileUrl في مرفقات الطلب على عناوين رفع المنصة (SECURITY-07)",
+    "مطابقة معرّف المزوّد في المسار مع صاحب المستند في PATCH documents (SECURITY-11)",
+    "حذف أفعال الكتابة من app/api/ads/route.ts أو تحويلها إلى /api/admin/ads (SECURITY-06)",
+    "حذف مسار /api/admin/roles/assign الميت بدل تحصينه (DATABASE-10 المستبعد)",
+    "تصحيح SERVICES_RBAC_POLICY.md ليصف السياسة المنفَّذة، وإصلاح الاختبار الذي يستعمل PERMISSIONS.ADS_MANAGE غير الموجود (SECURITY-09)"
+   ],
+   "risks": [
+    "حصر isAdmin في SERVICES_APPROVE يكسر أي أداة داخلية تعتمد SERVICES_UPDATE كإشراف — لا مستهلك واجهة معروف",
+    "تعبئة الدولة تغيّر ما يراه ad_manager من حملات؛ يُطلق خلف علم إن أمكن"
+   ],
+   "whatMustNotChange": [
+    "ثوابت PERMISSIONS وROLE_CATALOG كمصدر وحيد للصلاحيات",
+    "آلية الجلسة: رمز JWT في كوكي HttpOnly بـ SameSite=lax",
+    "بوابات المسارات القائمة التي تعمل صحيحًا (getSessionIdentity في كل مسار خدمات)"
+   ]
+  },
+  {
+   "phase": "المرحلة 5 — الإشعارات وسجل التدقيق",
+   "goal": "أن يرى المسؤول من فعل وماذا ولماذا، وأن يصل الإشعار إلى الطرف الصحيح",
+   "steps": [
+    "توحيد قراءة التدقيق: بارامتر source وUNION ALL بين audit_logs وaudit_events مع ترشيح في SQL وقائمة أنواع مشتقة من البيانات (NOTIFY-AUDIT-01، NOTIFY-AUDIT-08، SECURITY-04)",
+    "توسيع AuditEntry بـ before/after/reason داخل metabase metadata وتمريرها من كل دالة تغيّر حالة (NOTIFY-AUDIT-02)",
+    "notifyReviewers(permission, input) يحلّ حاملي الصلاحية ويبعث ADMIN_PROVIDER_SUBMITTED وADMIN_NEW_SERVICE_REQUEST مع رابط إجراء (PROVIDERS-07)",
+    "تمرير notificationId وrecipientUserId في كل حمولة outbox، ووسم الحدث بلا مستلم failed لا processed (NOTIFY-AUDIT-05)",
+    "مطالبة صفوف outbox بالحجز (status='sending') وإعادة المحاولة المحدودة ولوحة صغيرة لحالة الطابور (NOTIFY-AUDIT-09)",
+    "إضافة enqueueOutbox بعد إشعارات اعتماد/رفض المزوّد (NOTIFY-AUDIT-10) وإشعار داخل التطبيق لمالك الحملة عند الاعتماد/الرفض مع السبب (NOTIFY-AUDIT-07)",
+    "إصلاح علم القراءة: DTO يحوّل is_read إلى read (NOTIFY-AUDIT-06)",
+    "اختبارات سلوكية فعلية بـ in-memory DB وsetTransportForTests بدل اختبارات النصّ المصدري (NOTIFY-AUDIT-13)"
+   ],
+   "risks": [
+    "توسيع القراءة إلى audit_logs يكشف حجمًا كبيرًا من الصفوف: يلزم فهرس (actor_user_id, created_at) و(created_at) قبل التفعيل",
+    "تعميم الإشعارات للمراجعين قد يولّد ضجيجًا: يبدأ بحاملي SERVICE_PROVIDERS_REVIEW فقط"
+   ],
+   "whatMustNotChange": [
+    "مخطط audit_logs نفسه (before/after/reason داخل metadata بلا هجرة)",
+    "قناة التطبيق المكتبي office_notification_deliveries وسلوكها",
+    "مفتاح service_notifications بالبريد الإلكتروني"
+   ]
+  },
+  {
+   "phase": "المرحلة 6 — دورة حياة طلب الخدمة ولوحته الإدارية",
+   "goal": "أن تستطيع الإدارة فرز الطلب وقبوله ورفضه وإسناده وإغلاقه، وأن تعمل قاعدة الموجات كما وُعد بها",
+   "steps": [
+    "هجرة أمامية: review_status وreviewed_by/reviewed_at وrejection_reason وassigned_to/assigned_at وclosed_at على service_requests (REQUESTS-01)",
+    "reviewRequest(id, action, {reason, assignee}, actor) تكتب تاريخ الحالة + تدقيق، معروضة على POST /api/admin/service-requests/[id]/{accept|reject|request-info|assign|close} خلف SERVICE_REQUESTS_MANAGE_ALL",
+    "إضافة فرع إداري لـ publish/renew/cancel/matches وعلم canManageAll في cancelRequestFull (SECURITY-05)",
+    "تفويض POST /matching للعميل إلى renewRequest، وللإداري موجة صريحة بعد canRenew مع تدقيق (REQUESTS-02)",
+    "قبول receiving_offers في renewRequest وتقييد زر الواجهة بالحالتين (REQUESTS-03)",
+    "اشتراط صف service_request_matches لإنشاء عرض ما لم يملك الفاعل SERVICE_OFFERS_MANAGE_ALL، وإزالة short_address/district من أي حمولة عامة (REQUESTS-04)",
+    "GET /api/service-admin/requests بترشيح وترقيم من الخادم وتبويب requests بجدول ui/Table + Pagination (ADMIN-UI-04، REQUESTS-12)",
+    "تشغيل expireStaleRequests وانتهاء العروض من مسار cron القائم (REQUESTS-07)",
+    "إضافة إشعارات النقاط المفقودة: لا مطابقة، إلغاء، انتهاء، رفض/سحب عرض (REQUESTS-05)"
+   ],
+   "risks": [
+    "إضافة review_status فوق status قد يربك المفردات: يُوصى بحقل مراجعة منفصل لا بتوسيع REQUEST_STATUS",
+    "تشغيل مهمة الانتهاء لأول مرة سينقل دفعة طلبات قديمة إلى expired ويغيّر مؤشرات اللوحة",
+    "اشتراط المطابقة لإنشاء العرض يقطع أي مزوّد كان يعتمد اللوحة العامة"
+   ],
+   "whatMustNotChange": [
+    "مفردات REQUEST_STATUS الحالية المكتوبة فعلاً في قاعدة البيانات",
+    "ملكية العميل للنشر والإلغاء افتراضيًا — الفرع الإداري إضافة لا استبدال",
+    "قاعدة الموجات: ثلاثة لكل موجة وتجديدان وحد تسعة ثم حظر"
+   ]
+  },
+  {
+   "phase": "المرحلة 7 — قاعدة البيانات والهجرات",
+   "goal": "أن يكون كل عمود يقرأه مسار حي منشأً بآلية تعمل على قاعدة إنتاج قائمة، وأن تُحمى السلامة المرجعية",
+   "steps": [
+    "0014_ads_baseline.sql يوفّق كامل DDL الإعلانات، وverifyAdsSchemaTruth يؤكد مجموعة الأعمدة التي يقرأها المحرك (DATABASE-01، DATABASE-02)",
+    "تغيير افتراضي approval_status إلى 'pending' مع CHECK على القيم الثلاث (DATABASE-03)",
+    "توسيع أعمدة الملكية في الخدمات إلى varchar(255) — تغيير فوري غير هدّام — قبل أي تحويل إلى uuid (DATABASE-07)",
+    "تنظيف الأيتام ثم إضافة FKs داخل نطاق الخدمات فقط (عرض←طلب، أمر←عرض/طلب، مطابقة←طلب/مزوّد، مستندات/فئات/أعمال←مزوّد) بسلوك حذف صريح (DATABASE-06، PROVIDERS-10)",
+    "تسلسل لـ reference_number + فهرس فريد جزئي، واستبدال COUNT(*) بـ nextval (DATABASE-08)",
+    "مواءمة DDL وقت التشغيل مع الهجرات 0012/0013 (wave، declined_at، renewal_count، service_request_blocks، أنواع timestamp) واختبار عقد يمنع الانحراف مجددًا (DATABASE-12)",
+    "فهارس (status, created_at DESC) على service_requests وservice_listings وفهرس جزئي لأهلية الإعلانات (DATABASE-15)",
+    "إعادة تسمية جداول lib/db/schemas/services-schema.ts إلى legacy_* أو حذف الملف مع professional.matcher.ts (DATABASE-11، ADMIN-UI-15)",
+    "تسوية الجداول التي لا ينشئها إلا السلسلة القديمة المجمّدة (DATABASE-09) وتوحيد مكدّسَي الاتصال (DATABASE-16)"
+   ],
+   "risks": [
+    "إضافة FKs على بيانات إنتاج قد تفشل بسبب أيتام: تُطبَّق NOT VALID ثم VALIDATE بعد التنظيف",
+    "تغيير أنواع الأعمدة الزمنية يتطلب توقف قراءة قصيرًا على بعض الجداول",
+    "البناء المحلي لـ Next يموت على ويندوز: كل هجرة تُشغَّل وتُختبر على الخادم"
+   ],
+   "whatMustNotChange": [
+    "قاعدة البيانات نفسها: Postgres على Neon عبر مهايئ D1 — لا تحويل إلى Drizzle كمصدر تشغيل",
+    "سلسلة drizzle-pg-forward كسجل وحيد للهجرات الأمامية؛ السلسلة القديمة تبقى مجمّدة",
+    "أسماء الجداول والأعمدة التي تقرأها المسارات الحية"
+   ]
+  },
+  {
+   "phase": "المرحلة 8 — الأداء والكاش والتوحيد البصري",
+   "goal": "طلب واحد لكل قائمة، دفعة واحدة للإعلانات في كل صفحة، ومفردة بصرية واحدة للإدارة",
+   "steps": [
+    "نقل /companies/[id] و/offices/[id] و/tools/[id] و/tools/pdf2word إلى PublicPageShell + StandardPublicAdLayout وحذف المسار القديم ومكوّناته (PUBLIC-PERF-03، PUBLIC-PERF-04، PUBLIC-PERF-10، ADS-10)",
+    "تعطيل تأثيرات القوائم والإعلانات أثناء geo.resolving لإنهاء الجلب المزدوج (PUBLIC-PERF-06)",
+    "إزالة مذكّرة الاستجابة من /api/ads/match أو إدخال sessionId في المفتاح وإعادة سكّ الرموز (PUBLIC-PERF-05)",
+    "جعل apiFetch يحترم cache الممرَّر من المستدعي حتى تُطبَّق ترويسات Cache-Control العامة (PUBLIC-PERF-11)",
+    "بوابة زمن التشغيل حول getDb() لإعادة استخدام التجمّع في Node (PUBLIC-PERF-02)",
+    "نقل ترشيح نصف القطر إلى SQL بصندوق إحاطة قبل LIMIT (PUBLIC-PERF-09، PROVIDERS-12)",
+    "توجيه /properties إلى تصنيف عام بدل مسار admin الذي يعيد 403 دائمًا (PUBLIC-PERF-07)",
+    "إضافة invalidate(prefix) إلى lib/cache.ts ثم نقل أول استعلام قائمة في ثلاث صفحات إلى الخادم داخل unstable_cache بوسم (PUBLIC-PERF-01، PUBLIC-PERF-13)",
+    "توحيد الإدارة: <main> واحد، مفردة admin.css للترويسة وشبكة المؤشرات، استبدال window.confirm/prompt بـ ConfirmDialog، وشارات الحالة المشتركة (ADMIN-UI-06، ADMIN-UI-07، ADMIN-UI-08، ADMIN-UI-10، ADMIN-UI-11)",
+    "إزالة محدّد اللغة من صفحة إدارة عربية بالكامل أو ترجمتها فعليًا (ADMIN-UI-09)، وتصحيح انحراف الوثائق (ADS-11، PROVIDERS-14، REQUESTS-06، PUBLIC-PERF-14)"
+   ],
+   "risks": [
+    "نقل صفحات التفاصيل إلى القشرة يغيّر مفاتيح الأماكن المفوترة: يلزم فحص الحملات المستهدفة للعائلات الثلاث قبل النشر",
+    "إدخال unstable_cache يعيد مشكلة البيانات القديمة التي لا وجود لها اليوم؛ لا يُدخل بلا إبطال عند الاعتماد",
+    "توحيد الإدارة بصريًا لمسة واسعة: يُجزَّأ صفحة صفحة مع لقطات مقارنة"
+   ],
+   "whatMustNotChange": [
+    "مسارات التوجيه العامة وروابطها (لا تغيير في عناوين الصفحات)",
+    "دفعة /api/ads/match-batch وعزل نتائجها بالفهرس — اختباران يثبّتانها",
+    "رموز التتبّع الموقّعة ودفتر الـnonce وحدوده",
+    "اللغة العربية والاتجاه RTL كافتراضي للقشرة الإدارية"
+   ]
+  }
+ ]
+}
