@@ -12,7 +12,9 @@ import {
   Globe2,
   Layers,
   MapPin,
+  Maximize2,
   MessageCircle,
+  Minimize2,
   Navigation,
   RotateCcw,
   ScanLine,
@@ -397,55 +399,6 @@ async function writeClipboard(text: string): Promise<void> {
   textarea.select();
   document.execCommand("copy");
   textarea.remove();
-}
-
-function polygonAreaSqm(points: Point[]): number | null {
-  if (points.length < 3) return null;
-  const samePoint = (left: Point, right: Point) =>
-    Math.abs(left.lat - right.lat) < 1e-12 && Math.abs(left.lon - right.lon) < 1e-12;
-  const polygon = samePoint(points[0], points[points.length - 1]) ? points.slice(0, -1) : points;
-  if (polygon.length < 3) return null;
-
-  const unique = new Set(polygon.map((point) => `${point.lat.toFixed(12)},${point.lon.toFixed(12)}`));
-  if (unique.size !== polygon.length) return null;
-
-  const orientation = (a: Point, b: Point, c: Point) =>
-    (b.lon - a.lon) * (c.lat - a.lat) - (b.lat - a.lat) * (c.lon - a.lon);
-  const intersects = (a: Point, b: Point, c: Point, d: Point) => {
-    const abC = orientation(a, b, c);
-    const abD = orientation(a, b, d);
-    const cdA = orientation(c, d, a);
-    const cdB = orientation(c, d, b);
-    return ((abC > 0 && abD < 0) || (abC < 0 && abD > 0))
-      && ((cdA > 0 && cdB < 0) || (cdA < 0 && cdB > 0));
-  };
-
-  for (let first = 0; first < polygon.length; first += 1) {
-    const firstNext = (first + 1) % polygon.length;
-    for (let second = first + 1; second < polygon.length; second += 1) {
-      const secondNext = (second + 1) % polygon.length;
-      const adjacent = first === second
-        || firstNext === second
-        || secondNext === first;
-      if (!adjacent && intersects(polygon[first], polygon[firstNext], polygon[second], polygon[secondNext])) {
-        return null;
-      }
-    }
-  }
-
-  const averageLat = polygon.reduce((sum, point) => sum + point.lat, 0) / polygon.length;
-  const xFactor = 111_320 * Math.cos((averageLat * Math.PI) / 180);
-  const yFactor = 110_540;
-  let area = 0;
-  for (let index = 0; index < polygon.length; index += 1) {
-    const next = (index + 1) % polygon.length;
-    const x1 = polygon[index].lon * xFactor;
-    const y1 = polygon[index].lat * yFactor;
-    const x2 = polygon[next].lon * xFactor;
-    const y2 = polygon[next].lat * yFactor;
-    area += x1 * y2 - x2 * y1;
-  }
-  return Math.abs(area) / 2;
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -849,10 +802,9 @@ export function FindMyLand({ locale }: Props) {
   const [utmHemisphereInput, setUtmHemisphereInput] = useState<"N" | "S">("N");
   const [crsMode, setCrsMode] = useState<CrsMode>("auto");
   // The tool opens in focus mode: a survey map and a coordinate table need the
-  // full content width, and the page rails can be brought back with one click.
-  // The tool always renders in its focused reading view. The toggle that
-  // turned it off lived in the verdict banner, which is gone.
-  const focusMode = true;
+  // full content width, and the page rails come back with one click — the
+  // toggle sits on the map card, the widest thing focus mode is there to serve.
+  const [focusMode, setFocusMode] = useState(true);
 
   /**
    * Coordinate table view: the document's own values, or projected UTM.
@@ -1378,17 +1330,6 @@ export function FindMyLand({ locale }: Props) {
 
   const hasValidPolygon = analysis?.result.geometry?.type === "polygon";
 
-  const area = useMemo(() => {
-    const statedArea = Number.parseFloat(analysis?.details.area?.replace(/,/g, "") ?? "");
-    if (Number.isFinite(statedArea) && statedArea > 0) {
-      return { value: statedArea, source: "registered" as const };
-    }
-    const computedArea = hasValidPolygon ? polygonAreaSqm(automaticGeometryPoints) : null;
-    return computedArea
-      ? { value: computedArea, source: "geometry" as const }
-      : { value: null, source: "unavailable" as const };
-  }, [analysis, automaticGeometryPoints, hasValidPolygon]);
-
   useEffect(() => {
     if (stage !== "done" || !analysis?.result.center || !mapRef.current) return;
     let cancelled = false;
@@ -1462,17 +1403,6 @@ export function FindMyLand({ locale }: Props) {
   const googleMapsUrl = coordinateRows.length > 0 && analysis?.result.center
     ? `https://www.google.com/maps/search/?api=1&query=${analysis.result.center.lat},${analysis.result.center.lon}`
     : "";
-
-  const crsLabel = crsSelectionRequired
-    ? t("بانتظار اختيار UTM", "Awaiting UTM choice", "UTM seçimi bekleniyor")
-    : analysis?.result.crsSelection?.zone && analysis.result.crsSelection.hemisphere
-      ? `UTM ${formatUtmZone(analysis.result.crsSelection.zone, analysis.result.crsSelection.hemisphere)} → WGS84`
-      : "WGS84";
-  const crsEpsgLabel = analysis?.result.crsSelection?.epsg
-    ? `EPSG:${analysis.result.crsSelection.epsg}`
-    : coordinateRows.length > 0
-      ? "EPSG:4326"
-      : "";
 
   const copyText = useCallback(async (
     text: string,
@@ -1862,42 +1792,6 @@ export function FindMyLand({ locale }: Props) {
               </section>
             )}
 
-            {/* --- Summary --- */}
-            <section className="fml-summary">
-              <div className="fml-summary-card">
-                <p className="fml-summary-label">{t("نقاط الحدود", "Boundary points", "Sınır noktaları")}</p>
-                <p className="fml-summary-value">{points.length || "—"}</p>
-              </div>
-              <div className="fml-summary-card">
-                <p className="fml-summary-label">{t("نظام الإحداثيات", "Coordinate system", "Koordinat sistemi")}</p>
-                <p className="fml-summary-value fml-summary-value--sm">{crsLabel}</p>
-                {crsEpsgLabel && <p className="fml-summary-note">{crsEpsgLabel}</p>}
-              </div>
-              <div className="fml-summary-card">
-                <p className="fml-summary-label">{t("نطاق UTM", "UTM zone", "UTM zonu")}</p>
-                <p className="fml-summary-value fml-summary-value--sm">
-                  {analysis.result.utmOutOfRange
-                    ? t("خارج نطاق UTM", "Outside UTM range", "UTM aralığı dışında")
-                    : utmRows.length
-                      ? formatUtmZone(utmRows[0].zone, utmRows[0].hemisphere)
-                      : "—"}
-                </p>
-              </div>
-              <div className="fml-summary-card">
-                <p className="fml-summary-label">
-                  {area.source === "registered"
-                    ? t("المساحة المسجلة", "Registered area", "Kayıtlı alan")
-                    : area.source === "geometry"
-                      ? t("المساحة التقديرية", "Estimated area", "Tahmini alan")
-                      : t("المساحة", "Area", "Alan")}
-                </p>
-                <p className="fml-summary-value">
-                  {area.value ? area.value.toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { maximumFractionDigits: 2 }) : "—"}
-                  {area.value ? <span className="fml-summary-unit">م²</span> : null}
-                </p>
-              </div>
-            </section>
-
             {/* --- MAP --- */}
             <section className="fml-map-card">
               <div className="fml-map-head">
@@ -1905,6 +1799,17 @@ export function FindMyLand({ locale }: Props) {
                   <MapPin size={17} />
                   <h3>{t("رسم القطعة على الخريطة", "Parcel on map", "Parsel haritası")}</h3>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setFocusMode((current) => !current)}
+                  className="fml-ghost-btn"
+                  aria-pressed={focusMode}
+                >
+                  {focusMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                  {focusMode
+                    ? t("إنهاء وضع التركيز", "Exit focus mode", "Odak modundan çık")
+                    : t("وضع التركيز", "Focus mode", "Odak modu")}
+                </button>
               </div>
               {coordinateRows.length > 0 && analysis.result.center ? (
                 <div ref={mapRef} className="fml-map" aria-label={t("خريطة موقع الأرض", "Land map", "Arazi haritası")} />
