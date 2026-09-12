@@ -1641,6 +1641,17 @@ export function FindMyLand({ locale }: Props) {
   }, [coordinateViewOverride, sourceProjectedRows.length, utmRows.length]);
 
   /**
+   * Which corner the deed's own distances disagree about.
+   *
+   * The rule and the reasoning live in src/lib/tools/fml-suspect-vertex.ts,
+   * where they can be tested against the deeds that produced them.
+   */
+  const suspectVertices = useMemo(
+    () => suspectVertexIndices(analysis?.result.parcel?.boundary.segments ?? []),
+    [analysis],
+  );
+
+  /**
    * The grid these numbers belong to, said next to them.
    *
    * An easting of 597113.520 means nothing on its own: the same number is a
@@ -2557,6 +2568,51 @@ export function FindMyLand({ locale }: Props) {
                 <span className="fml-area-verdict">
                   {areaVerdictCopy(analysis.result.parcel.boundary.areaComparison.verdict, locale)}
                 </span>
+              </section>
+            )}
+
+            {/* --- Which corner the sheet's own distances disagree about --- */}
+            {suspectVertices.length > 0 && (
+              <section className="fml-panel fml-panel--warning" data-suspect-vertices>
+                <div className="fml-panel-head">
+                  <AlertTriangle size={19} />
+                  <div>
+                    <h3>
+                      {t(
+                        "أطوال الأضلاع المكتوبة في الصك لا توافق نقطة بعينها",
+                        "The side lengths written on the deed disagree about one point",
+                        "Tapuda yazılı kenar uzunlukları tek bir noktada uyuşmuyor",
+                      )}
+                    </h3>
+                    <p>
+                      {t(
+                        "الصك يذكر طول كل ضلع، وضلعا هذه النقطة وحدهما يخالفان ما هو مكتوب — أي أن قراءة أحد أرقامها خاطئة. صحّح الرقم في الجدول أدناه ثم أعد التحليل.",
+                        "The deed states the length of every side, and only the two sides touching this point disagree with it — so one of its numbers was read wrongly. Correct it in the table below and re-analyse.",
+                        "Tapu her kenarın uzunluğunu belirtir ve yalnızca bu noktaya değen iki kenar bununla uyuşmuyor — yani sayılarından biri yanlış okundu. Aşağıdaki tabloda düzeltin ve yeniden çözümleyin.",
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <ul className="fml-suspect-list">
+                  {suspectVertices.map((index) => {
+                    const vertex = analysis.result.parcel?.vertices[index];
+                    const sides = (analysis.result.parcel?.boundary.segments ?? [])
+                      .filter((segment) => segment.fromIndex === index || segment.toIndex === index);
+                    return (
+                      <li key={index}>
+                        <strong>{t("النقطة", "Point", "Nokta")} {vertex?.pointNumber ?? vertex?.label ?? index + 1}</strong>
+                        {sides.map((side, sideIndex) => (
+                          <span key={sideIndex} className="fml-suspect-side">
+                            {side.fromLabel}→{side.toLabel}:{" "}
+                            <bdi>{formatMeters(side.lengthMeters ?? 0)}</bdi>
+                            {" "}
+                            <em>({t("والمكتوب", "deed says", "tapuda")} <bdi>{formatMeters(side.documentLengthMeters ?? 0)}</bdi>)</em>
+                          </span>
+                        ))}
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
             )}
 

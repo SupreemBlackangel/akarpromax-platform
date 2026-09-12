@@ -222,7 +222,10 @@ describe("Find My Land professional result", () => {
     assert.match(source, /analysedAt/);
 
     const styles = await readStyles();
-    assert.match(styles, /\.fml-footnote[\s\S]*?font-size: 11px/);
+    // Quiet, but not below the floor. This asserted 11px, which is smaller than
+    // anything this product is allowed to render (docs/brand-identity.md) — the
+    // test was pinning the violation in place. The token is 12px.
+    assert.match(styles, /\.fml-footnote[\s\S]*?font-size: var\(--text-xs\)/);
   });
 });
 

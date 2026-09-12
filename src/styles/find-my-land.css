@@ -908,6 +908,42 @@ body[data-tool-focus="on"] .public-ad-layout-container {
   letter-spacing: .02em;
 }
 
+/* Which corner the deed's own distances disagree about. */
+.fml-suspect-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.fml-suspect-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control, 12px);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+}
+
+.fml-suspect-list strong {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.fml-suspect-side {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fml-suspect-side em {
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+
 /* The zone, when the analysis got it wrong.
    Opening from the badge keeps the correction where the wrong value is shown:
    a reader who sees "النطاق 40N" and knows it is 39 presses the thing that
