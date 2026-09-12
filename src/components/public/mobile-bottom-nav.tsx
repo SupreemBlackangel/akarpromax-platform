@@ -17,12 +17,32 @@ type MobileBottomNavProps = {
   items: PublicNavItem[];
   currentPath: string;
   labels: Translation;
+  locale?: "ar" | "en" | "tr";
 };
 
 /** How many fit before the targets stop being thumb-sized. */
 const MAX_ITEMS = 5;
 
-export default function MobileBottomNav({ items, currentPath, labels }: MobileBottomNavProps) {
+/**
+ * What each destination is called when there are seventy pixels to say it in.
+ *
+ * "شركات و مكاتب عقارية" truncated to "شركات و ..." — which is the same three
+ * words as "شركات أخرى" truncated, so two of the five buttons read alike. The
+ * icon carries the recognition at this size and the word only has to
+ * distinguish; these are the shortest forms that still do.
+ */
+const SHORT_LABELS: Record<string, { ar: string; en: string; tr: string }> = {
+  properties: { ar: "العقارات", en: "Properties", tr: "Mülkler" },
+  tools: { ar: "الأدوات", en: "Tools", tr: "Araçlar" },
+  services: { ar: "الخدمات", en: "Services", tr: "Hizmetler" },
+  offices: { ar: "المكاتب", en: "Offices", tr: "Ofisler" },
+  companies: { ar: "الشركات", en: "Companies", tr: "Şirketler" },
+  organizations: { ar: "الشركات", en: "Companies", tr: "Şirketler" },
+  community: { ar: "المنتدى", en: "Forum", tr: "Forum" },
+  knowledge: { ar: "المكتبة", en: "Library", tr: "Kütüphane" },
+};
+
+export default function MobileBottomNav({ items, currentPath, labels, locale = "ar" }: MobileBottomNavProps) {
   const visible = items.slice(0, MAX_ITEMS);
   if (visible.length === 0) return null;
 
@@ -48,7 +68,7 @@ export default function MobileBottomNav({ items, currentPath, labels }: MobileBo
                 )}
               >
                 {Icon ? <Icon aria-hidden="true" className="size-5 shrink-0" /> : null}
-                <span className="max-w-full truncate">{labels[item.labelKey]}</span>
+                <span className="max-w-full truncate">{SHORT_LABELS[item.key]?.[locale] ?? labels[item.labelKey]}</span>
               </a>
             </li>
           );

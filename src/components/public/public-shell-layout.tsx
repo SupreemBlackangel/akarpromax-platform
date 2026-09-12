@@ -322,7 +322,7 @@ export function PublicShellLayout({
 
       {/* The five sections a thumb can reach, and the room for them: the bar is
           fixed, so the page ends with padding rather than with content under it. */}
-      <MobileBottomNav items={navItems} currentPath={currentPath} labels={labels} />
+      <MobileBottomNav items={navItems} currentPath={currentPath} labels={labels} locale={locale} />
 
       <ChatWidget locale={locale} authenticated={viewer.authenticated} onRequireLogin={onLogin} hideLauncherOnRail={showPublicSidebar} />
 

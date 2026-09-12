@@ -48,13 +48,23 @@ export default function PublicHeader({
       {/* Row 1 — menu trigger + brand + primary navigation */}
       <PageContainer size="wide" className="flex min-h-14 flex-wrap items-center gap-x-2 gap-y-2 py-2">
         <div className="flex min-w-0 items-center gap-2">
-          <Button variant="ghost" size="icon" className="md:hidden rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
-            <Menu aria-hidden="true" className="size-5" />
-          </Button>
-          {onToggleSidebar && (
-            <Button variant="ghost" size="icon" className="hidden md:inline-flex rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onToggleSidebar}>
+          {/* One menu button at a time. `hidden` was on the Button itself, and
+              the Button's own `inline-flex` wins over it — Tailwind resolves
+              that by the order the utilities are emitted in the stylesheet, not
+              by the order they appear in the attribute — so a phone showed BOTH
+              hamburgers side by side. The breakpoint lives on a wrapper, which
+              has no display of its own to argue with. */}
+          <span className="md:hidden">
+            <Button variant="ghost" size="icon" className="rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onOpenMenu}>
               <Menu aria-hidden="true" className="size-5" />
             </Button>
+          </span>
+          {onToggleSidebar && (
+            <span className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="rounded-lg bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]" aria-label={labels.showMenu} onClick={onToggleSidebar}>
+                <Menu aria-hidden="true" className="size-5" />
+              </Button>
+            </span>
           )}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
