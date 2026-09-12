@@ -1111,10 +1111,12 @@ html[dir="ltr"] .cc-metric-note { text-align: right; }
    text nobody finishes; the rails may use the rest. */
 .standard-public-ad-content { max-width: 1100px; margin-inline: auto; }
 
-/* A rail with no frame left to draw takes no column. `:empty` is exact here —
-   a frame that renders nothing renders NO element, so the rail really is
-   empty rather than holding invisible children. */
-.standard-public-ad-rail:empty { display: none !important; }
+/* The rails carry sellable inventory and are shown whether or not it is sold —
+   an empty slot is how the space is offered. They were briefly collapsed when
+   empty, which took the product off the page. */
+@media (min-width: 1280px) {
+  .standard-public-ad-grid > .standard-public-ad-rail { display: flex !important; }
+}
 
 @media (min-width: 1280px) {
   .standard-public-ad-grid > .standard-public-ad-rail {
@@ -1129,8 +1131,6 @@ html[dir="ltr"] .cc-metric-note { text-align: right; }
    what they made the same was seven dashed grey boxes announcing that nobody
    had bought this section. Which frame invites is decided in
    src/components/ads/ad-invite.tsx; the rest render no element at all. */
-.public-ad-slot-collapsed { display: none; }
-
 .ad-slot-empty {
   display: grid;
   place-content: center;
