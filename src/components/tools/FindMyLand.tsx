@@ -14,18 +14,23 @@ import {
   FileText,
   Globe2,
   Layers,
+  Map as MapIcon,
   MapPin,
   Maximize2,
   MessageCircle,
   Minimize2,
   Navigation,
   RotateCcw,
+  Satellite,
   ScanLine,
   Sparkles,
   UploadCloud,
+  Users,
   X,
 } from "lucide-react";
 import type { Locale } from "@/src/types/site";
+import { enhanceContrastStretch, medianFilter, processRaster, targetRasterSize } from "@/lib/land/ocr/preprocess";
+import type { PreprocessResponse } from "@/src/workers/fml-preprocess.worker";
 import {
   extractLandDetails,
   type ExtractedLandDetails,
@@ -95,6 +100,18 @@ type Stage = "idle" | "ready" | "reading" | "ocr" | "resolving" | "done" | "erro
 /** The user's manual override of the detected coordinate system. */
 type CrsMode = "auto" | "wgs84" | "utm";
 type Point = { lat: number; lon: number };
+/** One entry from the platform's surveyor directory. */
+type SurveyorNearby = {
+  id: string;
+  name: string;
+  role: string;
+  isAvailable: boolean;
+  isVerified: boolean;
+  ratingAvg?: number;
+  jobsCompleted?: number;
+  distanceKm?: number;
+};
+
 type CoordinateRow = Point & {
   label: string;
   raw: string;
@@ -440,6 +457,82 @@ function EditableValue({
   );
 }
 
+/**
+ * The two backdrops a parcel is read against.
+ *
+ * A street map answers "where is this", satellite imagery answers "what is on
+ * it" — a surveyor checking a boundary against a wall or a track needs the
+ * second, and the tool only ever offered the first.
+ */
+const MAP_LAYERS = {
+  map: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap",
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    // Esri's terms require the source line; it is not decoration.
+    attribution: "Esri · Maxar · Earthstar Geographics",
+  },
+} as const;
+
+type MapLayerKey = keyof typeof MAP_LAYERS;
+const MAP_LAYER_STORAGE_KEY = "fml.mapLayer";
+const MAP_LAYER_EVENT = "fml:map-layer";
+
+/**
+ * The chosen backdrop as an external store, for the same reason the copy
+ * format is one: localStorage does not exist during the server render, and
+ * reading it in an effect flashes the default first.
+ */
+function subscribeMapLayer(onChange: () => void): () => void {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(MAP_LAYER_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(MAP_LAYER_EVENT, onChange);
+  };
+}
+
+function readMapLayer(): MapLayerKey {
+  try {
+    const stored = window.localStorage.getItem(MAP_LAYER_STORAGE_KEY);
+    return stored === "satellite" ? "satellite" : "map";
+  } catch {
+    return "map";
+  }
+}
+
+function serverMapLayer(): MapLayerKey {
+  return "map";
+}
+
+function writeMapLayer(next: MapLayerKey): void {
+  try {
+    window.localStorage.setItem(MAP_LAYER_STORAGE_KEY, next);
+  } catch {
+    // The choice still applies to this reading.
+  }
+  window.dispatchEvent(new Event(MAP_LAYER_EVENT));
+}
+
+/** Below this the labels are noise rather than information. */
+const LABEL_MIN_ZOOM = 16;
+
+/**
+ * A design token's computed value, for the one place that cannot use CSS.
+ *
+ * Leaflet paints into a canvas and takes colours as strings, so the map is the
+ * single place in this tool where a colour has to be read rather than
+ * declared. Reading it keeps the palette in tokens.css instead of freezing
+ * `#1d4ed8` into the drawing, and follows the dark theme for free.
+ */
+function tokenColor(name: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 function areaVerdictCopy(verdict: string, locale: Locale): string {
   const copy: Record<string, { ar: string; en: string; tr: string }> = {
     MATCH: { ar: "متطابقة تقريبًا", en: "Effectively identical", tr: "Neredeyse aynı" },
@@ -449,8 +542,16 @@ function areaVerdictCopy(verdict: string, locale: Locale): string {
   return copy[verdict]?.[locale] ?? verdict;
 }
 
-function formatMeters(value: number, locale: Locale): string {
-  return value.toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US", {
+/**
+ * A measurement, in Latin digits whatever the interface language.
+ *
+ * `ar-SA` renders 1,234.56 as ١٢٣٤٫٥٦ — Arabic-Indic digits and an Arabic
+ * decimal separator. That is correct Arabic typography and wrong for a survey
+ * reading: the number is checked against a deed, typed into a total station
+ * and pasted into CAD, and none of those read it. Only the unit is translated.
+ */
+function formatMeters(value: number): string {
+  return value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -553,63 +654,6 @@ function cleanOcrText(text: string): string {
   return t.trim();
 }
 
-function medianFilter(data: Uint8ClampedArray, w: number, h: number, size = 3) {
-  const src = new Uint8ClampedArray(data);
-  const half = Math.floor(size / 2);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const pixels: number[] = [];
-      for (let dy = -half; dy <= half; dy++) {
-        for (let dx = -half; dx <= half; dx++) {
-          const px = Math.min(w - 1, Math.max(0, x + dx));
-          const py = Math.min(h - 1, Math.max(0, y + dy));
-          pixels.push(src[(py * w + px) * 4]);
-        }
-      }
-      pixels.sort((a, b) => a - b);
-      const median = pixels[Math.floor(pixels.length / 2)];
-      const idx = (y * w + x) * 4;
-      data[idx] = data[idx + 1] = data[idx + 2] = median;
-    }
-  }
-}
-
-function otsuThreshold(data: Uint8ClampedArray): number {
-  const hist = new Uint32Array(256);
-  for (let i = 0; i < data.length; i += 4) hist[Math.round(data[i])]++;
-  const total = data.length / 4;
-  let sum = 0;
-  for (let t = 0; t < 256; t++) sum += t * hist[t];
-  let sumB = 0, wB = 0;
-  let maxVariance = 0, threshold = 128;
-  for (let t = 0; t < 256; t++) {
-    wB += hist[t];
-    if (wB === 0) continue;
-    const wF = total - wB;
-    if (wF === 0) break;
-    sumB += t * hist[t];
-    const meanB = sumB / wB;
-    const meanF = (sum - sumB) / wF;
-    const between = wB * wF * (meanB - meanF) * (meanB - meanF);
-    if (between > maxVariance) { maxVariance = between; threshold = t; }
-  }
-  return threshold;
-}
-
-function enhanceContrastStretch(data: Uint8ClampedArray) {
-  let min = 255, max = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i] < min) min = data[i];
-    if (data[i] > max) max = data[i];
-  }
-  const range = max - min;
-  if (range < 10) return;
-  for (let i = 0; i < data.length; i += 4) {
-    const stretched = Math.round(((data[i] - min) / range) * 255);
-    data[i] = data[i + 1] = data[i + 2] = stretched;
-  }
-}
-
 /** The raster an OCR pass actually saw, with the size its boxes are relative to. */
 interface PreparedImage {
   blob: Blob;
@@ -617,12 +661,15 @@ interface PreparedImage {
   height: number;
 }
 
-async function preprocessImage(blob: Blob): Promise<PreparedImage> {
+/**
+ * The same pipeline on the main thread, for a browser without OffscreenCanvas.
+ *
+ * It calls the same functions the worker does, so a browser that falls back
+ * here reads a document identically — just with the page frozen while it runs.
+ */
+async function preprocessOnMainThread(blob: Blob): Promise<PreparedImage> {
   const bitmap = await createImageBitmap(blob);
-  const sourceWidth = bitmap.width;
-  const scale = Math.min(2.5, Math.max(1, 1800 / Math.max(1, sourceWidth)));
-  const width = Math.min(2800, Math.round(bitmap.width * scale));
-  const height = Math.round((bitmap.height * width) / bitmap.width);
+  const { width, height } = targetRasterSize(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -632,20 +679,45 @@ async function preprocessImage(blob: Blob): Promise<PreparedImage> {
   bitmap.close();
 
   const image = context.getImageData(0, 0, width, height);
-  const data = image.data;
-  for (let index = 0; index < data.length; index += 4) {
-    data[index] = data[index + 1] = data[index + 2] =
-      Math.round(0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2]);
-  }
-  medianFilter(data, width, height, 3);
-  enhanceContrastStretch(data);
-  const threshold = otsuThreshold(data);
-  for (let i = 0; i < data.length; i += 4) {
-    const val = data[i] < threshold ? 0 : 255;
-    data[i] = data[i + 1] = data[i + 2] = val;
-  }
+  processRaster(image.data, width, height);
   context.putImageData(image, 0, 0);
   return { blob: await canvasToBlob(canvas), width, height };
+}
+
+/** One worker for the session, started on first use and reused after. */
+let preprocessWorker: Worker | null = null;
+let preprocessRequestId = 0;
+
+function canUseWorker(): boolean {
+  return typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
+}
+
+/**
+ * Prepare a raster for OCR, off the main thread when the browser allows it.
+ *
+ * A failure in the worker falls back rather than failing the reading: a
+ * document the user is waiting on matters more than where the pixels were
+ * pushed.
+ */
+async function preprocessImage(blob: Blob): Promise<PreparedImage> {
+  if (!canUseWorker()) return preprocessOnMainThread(blob);
+  try {
+    preprocessWorker ??= new Worker(new URL("@/src/workers/fml-preprocess.worker.ts", import.meta.url));
+    const worker = preprocessWorker;
+    const id = ++preprocessRequestId;
+    return await new Promise<PreparedImage>((resolve, reject) => {
+      const onMessage = (event: MessageEvent<PreprocessResponse>) => {
+        if (event.data.id !== id) return;
+        worker.removeEventListener("message", onMessage);
+        if (event.data.ok) resolve({ blob: event.data.blob, width: event.data.width, height: event.data.height });
+        else reject(new Error(event.data.error));
+      };
+      worker.addEventListener("message", onMessage);
+      worker.postMessage({ id, blob });
+    });
+  } catch {
+    return preprocessOnMainThread(blob);
+  }
 }
 
 async function cropSurveyTableImage(blob: Blob, tsv: string | null, sourceBlob: Blob = blob): Promise<Blob | null> {
@@ -922,6 +994,10 @@ export function FindMyLand({ locale }: Props) {
    * from a total station, an email, or this tool's own copy button — had no way
    * in short of printing them to PDF first.
    */
+  /** Street map or satellite, remembered between readings. */
+  const mapLayer = useSyncExternalStore(subscribeMapLayer, readMapLayer, serverMapLayer);
+  const chooseMapLayer = useCallback((next: MapLayerKey) => writeMapLayer(next), []);
+
   const [inputMode, setInputMode] = useState<"file" | "paste">("file");
   const [pastedText, setPastedText] = useState("");
   const [pasteZone, setPasteZone] = useState("40");
@@ -1584,10 +1660,15 @@ export function FindMyLand({ locale }: Props) {
       const center: [number, number] = [analysis.result.center!.lat, analysis.result.center!.lon];
       const map = leaflet.map(mapRef.current, { center, zoom: 17, zoomControl: true });
       mapInstanceRef.current = map;
-      leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap",
-        maxZoom: 22,
-      }).addTo(map);
+      const backdrop = MAP_LAYERS[mapLayer];
+      leaflet.tileLayer(backdrop.url, { attribution: backdrop.attribution, maxZoom: 22 }).addTo(map);
+
+      // Leaflet paints into a canvas and takes colours as strings, so this is
+      // the one place in the tool that reads a token instead of declaring it.
+      const strokeColor = tokenColor("--color-primary-active", "#0945b0");
+      const fillColor = tokenColor("--color-primary", "#1769ff");
+      const vertexColor = tokenColor("--color-accent", "#d8af55");
+      const warnColor = tokenColor("--color-warning", "#ca8a04");
 
       const bounds: [number, number][] = [];
       const mapPreviewPoints = automaticGeometryPoints;
@@ -1595,16 +1676,18 @@ export function FindMyLand({ locale }: Props) {
       if (mapHasValidPoly && mapPreviewPoints.length >= 3) {
         const polygon = mapPreviewPoints.map((point) => [point.lat, point.lon] as [number, number]);
         leaflet.polygon(polygon, {
-          color: "#1d4ed8",
-          fillColor: "#3b82f6",
+          color: strokeColor,
+          fillColor,
           fillOpacity: 0.15,
           weight: 3,
         }).addTo(map);
         bounds.push(...polygon);
       } else if (mapPreviewPoints.length >= 2) {
         const sequence = mapPreviewPoints.map((point) => [point.lat, point.lon] as [number, number]);
+        // Dashed and in the warning colour: an unclosed sequence is not a
+        // parcel, and it should not be drawn as though it were one.
         leaflet.polyline(sequence, {
-          color: "#d97706",
+          color: warnColor,
           dashArray: "8 6",
           weight: 3,
         }).addTo(map);
@@ -1615,7 +1698,7 @@ export function FindMyLand({ locale }: Props) {
       mapPreviewPoints.forEach((point, index) => {
         const marker = leaflet.circleMarker([point.lat, point.lon], {
           radius: 7,
-          color: "#1d4ed8",
+          color: vertexColor,
           fillColor: "#ffffff",
           fillOpacity: 1,
           weight: 3,
@@ -1627,11 +1710,64 @@ export function FindMyLand({ locale }: Props) {
           className: "fml-point-label",
         }).addTo(map);
       });
+      /**
+       * Side lengths and the area, on the drawing.
+       *
+       * A boundary is checked by its sides, and reading a length meant looking
+       * away from the map to a table and back. These are the resolver's own
+       * computed segment lengths, not a second calculation — one number, one
+       * source. They hide below zoom 16, where the labels would overlap into
+       * noise rather than tell anybody anything.
+       */
+      const labels: Array<{ marker: ReturnType<typeof leaflet.marker> }> = [];
+      const segments = analysis.result.parcel?.boundary.segments ?? [];
+      if (mapHasValidPoly && segments.length > 0) {
+        for (const segment of segments) {
+          const from = mapPreviewPoints[segment.fromIndex];
+          const to = mapPreviewPoints[segment.toIndex];
+          if (!from || !to || !Number.isFinite(segment.lengthMeters)) continue;
+          const marker = leaflet.marker(
+            [(from.lat + to.lat) / 2, (from.lon + to.lon) / 2],
+            {
+              interactive: false,
+              icon: leaflet.divIcon({
+                className: "fml-edge-label",
+                html: `${segment.lengthMeters.toFixed(2)} m`,
+              }),
+            },
+          ).addTo(map);
+          labels.push({ marker });
+        }
+      }
+
+      const mapArea = analysis.result.parcel?.boundary.areaComparison?.computedSquareMeters
+        ?? analysis.result.parcel?.boundary.areaSquareMeters;
+      if (mapHasValidPoly && typeof mapArea === "number" && Number.isFinite(mapArea)) {
+        const areaMarker = leaflet.marker(center, {
+          interactive: false,
+          icon: leaflet.divIcon({
+            className: "fml-area-label",
+            html: `${mapArea.toLocaleString("en-US", { maximumFractionDigits: 2 })} m²`,
+          }),
+        }).addTo(map);
+        labels.push({ marker: areaMarker });
+      }
+
+      const syncLabels = () => {
+        const visible = map.getZoom() >= LABEL_MIN_ZOOM;
+        for (const { marker } of labels) {
+          const element = marker.getElement();
+          if (element) element.style.display = visible ? "" : "none";
+        }
+      };
+      map.on("zoomend", syncLabels);
+
       // Fitting the real bounds keeps small urban plots and large rural
       // parcels both readable, and never drops the user on a default location.
       const fitted = leaflet.latLngBounds(bounds).pad(0.22);
       map.fitBounds(fitted, { maxZoom: 19 });
       if (points.length < 2) map.setView(center, 17);
+      syncLabels();
       window.setTimeout(() => map.invalidateSize(), 50);
     })();
 
@@ -1640,7 +1776,7 @@ export function FindMyLand({ locale }: Props) {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
     };
-  }, [analysis, automaticGeometryPoints, focusMode, hasValidPolygon, points, stage, t]);
+  }, [analysis, automaticGeometryPoints, focusMode, hasValidPolygon, mapLayer, points, stage, t]);
 
   const crsSelectionRequired = analysis?.result.crsSelection?.required === true;
   const groupSelectionRequired = analysis?.result.coordinateGroupSelectionRequired === true;
@@ -1786,6 +1922,47 @@ export function FindMyLand({ locale }: Props) {
     setCorrections((current) => ({ ...current, [cleaned]: current[previous] ?? previous }));
     void reanalyze({ text: text.replace(previous, cleaned) });
   }, [analysis, reanalyze, t]);
+
+  /**
+   * Surveyors near the parcel, from the platform's own directory.
+   *
+   * `/api/land/discover-surveyors` takes a point and answers from the
+   * directory. (The `[id]/surveyors` route the brief names ranks a candidate
+   * pool the caller supplies and needs a saved land id, so it cannot answer
+   * this question from a reading that has not been saved.)
+   */
+  const [surveyorSheet, setSurveyorSheet] = useState<"closed" | "loading" | "open">("closed");
+  const [surveyors, setSurveyors] = useState<SurveyorNearby[]>([]);
+  const [surveyorError, setSurveyorError] = useState("");
+
+  const findSurveyorsNearby = useCallback(async () => {
+    const centre = analysis?.result.center;
+    if (!centre) return;
+    setSurveyorSheet("loading");
+    setSurveyorError("");
+    try {
+      const query = new URLSearchParams({
+        lat: String(centre.lat),
+        lon: String(centre.lon),
+        sortBy: "distance",
+        limit: "12",
+      });
+      const countryCode = analysis?.result.documentIntelligence?.country.code;
+      if (countryCode && countryCode !== "UNKNOWN") query.set("countryCode", countryCode);
+      const response = await fetch(`/api/land/discover-surveyors?${query.toString()}`);
+      const data = (await response.json().catch(() => ({}))) as { candidates?: SurveyorNearby[]; error?: string };
+      if (!response.ok) throw new Error(data.error || `HTTP_${response.status}`);
+      setSurveyors(data.candidates ?? []);
+      setSurveyorSheet("open");
+    } catch {
+      setSurveyorError(t(
+        "تعذر جلب قائمة المسّاحين الآن.",
+        "The surveyor list could not be loaded right now.",
+        "Haritacı listesi şu anda yüklenemedi.",
+      ));
+      setSurveyorSheet("open");
+    }
+  }, [analysis, t]);
 
   /** One row, in the format the button is set to. */
   const copyRow = useCallback((row: CopyRow) => {
@@ -2263,17 +2440,42 @@ export function FindMyLand({ locale }: Props) {
                   <MapPin size={17} />
                   <h3>{t("رسم القطعة على الخريطة", "Parcel on map", "Parsel haritası")}</h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFocusMode((current) => !current)}
-                  className="fml-ghost-btn"
-                  aria-pressed={focusMode}
-                >
-                  {focusMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-                  {focusMode
-                    ? t("إنهاء وضع التركيز", "Exit focus mode", "Odak modundan çık")
-                    : t("وضع التركيز", "Focus mode", "Odak modu")}
-                </button>
+                <div className="fml-map-actions">
+                  {/* A street map says where the parcel is; imagery says what
+                      is on it. Checking a boundary against a wall or a track
+                      needs the second. */}
+                  <div className="fml-layer-toggle" role="group" aria-label={t("خلفية الخريطة", "Map backdrop", "Harita arka planı")}>
+                    <button
+                      type="button"
+                      className={`fml-layer-btn${mapLayer === "map" ? " is-active" : ""}`}
+                      aria-pressed={mapLayer === "map"}
+                      onClick={() => chooseMapLayer("map")}
+                    >
+                      <MapIcon size={14} aria-hidden="true" />
+                      {t("خريطة", "Map", "Harita")}
+                    </button>
+                    <button
+                      type="button"
+                      className={`fml-layer-btn${mapLayer === "satellite" ? " is-active" : ""}`}
+                      aria-pressed={mapLayer === "satellite"}
+                      onClick={() => chooseMapLayer("satellite")}
+                    >
+                      <Satellite size={14} aria-hidden="true" />
+                      {t("قمر صناعي", "Satellite", "Uydu")}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFocusMode((current) => !current)}
+                    className="fml-ghost-btn"
+                    aria-pressed={focusMode}
+                  >
+                    {focusMode ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                    {focusMode
+                      ? t("إنهاء وضع التركيز", "Exit focus mode", "Odak modundan çık")
+                      : t("وضع التركيز", "Focus mode", "Odak modu")}
+                  </button>
+                </div>
               </div>
               {coordinateRows.length > 0 && analysis.result.center ? (
                 <div ref={mapRef} className="fml-map" aria-label={t("خريطة موقع الأرض", "Land map", "Arazi haritası")} />
@@ -2304,16 +2506,16 @@ export function FindMyLand({ locale }: Props) {
               >
                 <div>
                   <span className="fml-area-label">{t("المساحة المحسوبة", "Calculated area", "Hesaplanan alan")}</span>
-                  <strong>{formatMeters(analysis.result.parcel.boundary.areaComparison.computedSquareMeters, locale)} م²</strong>
+                  <strong>{formatMeters(analysis.result.parcel.boundary.areaComparison.computedSquareMeters)} م²</strong>
                 </div>
                 <div>
                   <span className="fml-area-label">{t("المساحة المسجلة", "Registered area", "Kayıtlı alan")}</span>
-                  <strong>{formatMeters(analysis.result.parcel.boundary.areaComparison.statedSquareMeters, locale)} م²</strong>
+                  <strong>{formatMeters(analysis.result.parcel.boundary.areaComparison.statedSquareMeters)} م²</strong>
                 </div>
                 <div>
                   <span className="fml-area-label">{t("الفرق", "Difference", "Fark")}</span>
                   <strong>
-                    {formatMeters(Math.abs(analysis.result.parcel.boundary.areaComparison.differenceSquareMeters), locale)} م²
+                    {formatMeters(Math.abs(analysis.result.parcel.boundary.areaComparison.differenceSquareMeters))} م²
                     {" "}
                     <em>({analysis.result.parcel.boundary.areaComparison.differencePercent.toFixed(2)}%)</em>
                   </strong>
@@ -2347,7 +2549,7 @@ export function FindMyLand({ locale }: Props) {
                     .join(" → ")}
                   {" · "}
                   {t("المساحة", "Area", "Alan")}{" "}
-                  {formatMeters(analysis.result.parcel.boundary.suggestedSequence.areaSquareMeters, locale)} م²
+                  {formatMeters(analysis.result.parcel.boundary.suggestedSequence.areaSquareMeters)} م²
                 </p>
                 <button
                   type="button"
@@ -2415,9 +2617,9 @@ export function FindMyLand({ locale }: Props) {
                       <table className="fml-table" dir="ltr">
                         <thead>
                           <tr>
-                            <th># / LINE</th>
-                            <th>X / Easting</th>
-                            <th>Y / Northing</th>
+                            <th>{t("النقطة", "Point", "Nokta")}</th>
+                            <th>{t("الشرقيات X", "Easting X", "Doğu X")}</th>
+                            <th>{t("الشماليات Y", "Northing Y", "Kuzey Y")}</th>
                             <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                           </tr>
                         </thead>
@@ -2466,9 +2668,9 @@ export function FindMyLand({ locale }: Props) {
                       <table className="fml-table" dir="ltr">
                         <thead>
                           <tr>
-                            <th>#</th>
-                            <th>N / Latitude</th>
-                            <th>E / Longitude</th>
+                            <th>{t("النقطة", "Point", "Nokta")}</th>
+                            <th>{t("خط العرض", "Latitude", "Enlem")}</th>
+                            <th>{t("خط الطول", "Longitude", "Boylam")}</th>
                             <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                           </tr>
                         </thead>
@@ -2498,10 +2700,10 @@ export function FindMyLand({ locale }: Props) {
                     <table className="fml-table" dir="ltr">
                       <thead>
                         <tr>
-                          <th>#</th>
-                          <th>Zone</th>
-                          <th>X / Easting</th>
-                          <th>Y / Northing</th>
+                          <th>{t("النقطة", "Point", "Nokta")}</th>
+                          <th>{t("النطاق", "Zone", "Zon")}</th>
+                          <th>{t("الشرقيات X", "Easting X", "Doğu X")}</th>
+                          <th>{t("الشماليات Y", "Northing Y", "Kuzey Y")}</th>
                           <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                         </tr>
                       </thead>
@@ -2643,6 +2845,12 @@ export function FindMyLand({ locale }: Props) {
                     <ChevronDown size={14} aria-hidden="true" />
                   </label>
                 </div>
+                {analysis.result.center && (
+                  <button type="button" onClick={() => void findSurveyorsNearby()} className="fml-action">
+                    <Users size={16} />
+                    {t("مسّاحون قرب هذه الأرض", "Surveyors near this land", "Bu araziye yakın haritacılar")}
+                  </button>
+                )}
                 {whatsappShareUrl && (
                   <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="fml-action">
                     <MessageCircle size={16} />
@@ -2650,6 +2858,70 @@ export function FindMyLand({ locale }: Props) {
                   </a>
                 )}
               </div>
+            )}
+
+            {surveyorSheet !== "closed" && (
+              <aside
+                className="fml-sheet"
+                role="dialog"
+                aria-modal="false"
+                aria-label={t("مسّاحون قرب هذه الأرض", "Surveyors near this land", "Bu araziye yakın haritacılar")}
+              >
+                <div className="fml-sheet-head">
+                  <h3>{t("مسّاحون قرب هذه الأرض", "Surveyors near this land", "Bu araziye yakın haritacılar")}</h3>
+                  <button
+                    type="button"
+                    className="fml-sheet-close"
+                    onClick={() => setSurveyorSheet("closed")}
+                    aria-label={t("إغلاق", "Close", "Kapat")}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                {surveyorSheet === "loading" && (
+                  <p className="fml-hint">{t("جارٍ البحث…", "Searching…", "Aranıyor…")}</p>
+                )}
+                {surveyorSheet === "open" && surveyorError && (
+                  <p className="fml-error-text" role="alert">{surveyorError}</p>
+                )}
+                {surveyorSheet === "open" && !surveyorError && surveyors.length === 0 && (
+                  <p className="fml-hint">
+                    {t(
+                      "لا يوجد مسّاحون مسجّلون قرب هذا الموقع بعد.",
+                      "No surveyors are registered near this location yet.",
+                      "Bu konuma yakın kayıtlı haritacı henüz yok.",
+                    )}
+                  </p>
+                )}
+                {surveyorSheet === "open" && surveyors.length > 0 && (
+                  <ul className="fml-sheet-list">
+                    {surveyors.map((surveyor) => (
+                      <li key={surveyor.id} className="fml-surveyor">
+                        <div className="fml-surveyor-main">
+                          <strong>{surveyor.name}</strong>
+                          {surveyor.isVerified && (
+                            <span className="fml-surveyor-badge">
+                              <CheckCircle2 size={12} aria-hidden="true" />
+                              {t("موثّق", "Verified", "Doğrulanmış")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="fml-surveyor-meta" dir="ltr">
+                          {[
+                            typeof surveyor.distanceKm === "number"
+                              ? `${formatMeters(surveyor.distanceKm)} km`
+                              : null,
+                            typeof surveyor.ratingAvg === "number" ? `★ ${surveyor.ratingAvg.toFixed(1)}` : null,
+                            typeof surveyor.jobsCompleted === "number"
+                              ? `${surveyor.jobsCompleted.toLocaleString("en-US")}`
+                              : null,
+                          ].filter(Boolean).join("  ·  ")}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </aside>
             )}
 
             {/* What a printed reading needs and a banner cannot give: when it

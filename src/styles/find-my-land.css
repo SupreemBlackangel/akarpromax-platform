@@ -1313,3 +1313,171 @@ html[data-theme="dark"] .fml-point-label {
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Map backdrop, and measurements on the drawing (FML phase 4) --- */
+
+.fml-map-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fml-layer-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+
+.fml-layer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--easing-standard), color var(--motion-fast) var(--easing-standard);
+}
+
+.fml-layer-btn.is-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-xs);
+}
+
+.fml-layer-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* A side length, on the side it measures. Leaflet positions a divIcon by its
+   top-left corner, so the translate centres it on the midpoint. */
+.fml-edge-label {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-strong);
+  font: 600 11px/1.6 ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: max-content !important;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.fml-area-label {
+  padding: 3px 9px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font: 700 12px/1.6 ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: max-content !important;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 640px) {
+  .fml-map-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* --- Surveyors near the parcel (FML phase 4) --- */
+
+/* A panel rather than a modal: the reader is comparing this list against the
+   parcel on screen, so the parcel must stay visible. */
+.fml-sheet {
+  margin-top: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--fml-radius-md, 16px);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.fml-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.fml-sheet-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.fml-sheet-close {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.fml-sheet-close:hover {
+  color: var(--color-text-primary);
+}
+
+.fml-sheet-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fml-surveyor {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+
+.fml-surveyor-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--color-text-primary);
+}
+
+/* Gold on a "verified" badge: one of the three uses the identity allows. */
+.fml-surveyor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.fml-surveyor-meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
