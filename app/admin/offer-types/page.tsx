@@ -121,6 +121,11 @@ function OfferTypesAdmin() {
                 </td>
               </tr>
             ))}
+            {types.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">لا توجد أنواع عروض بعد — أضف الأول من النموذج أعلاه.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
