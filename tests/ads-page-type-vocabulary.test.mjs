@@ -16,7 +16,7 @@ import test from "node:test";
 
 import { matchAds } from "../lib/ads/engine.ts";
 import { buildContext } from "../lib/ads/context.ts";
-import { PAGE_TYPES_LIST } from "../src/constants/advertising.ts";
+import { PAGE_TYPES_LIST, PLATFORM_SECTIONS_REGISTRY } from "../src/constants/advertising.ts";
 
 const EMPTY_STATS = { daily: new Map(), userFrequency: new Map() };
 
@@ -142,4 +142,38 @@ test("a placement written in the wrong case matches nothing", async () => {
   // placement a campaign occupies is what an advertiser is billed for.
   assert.equal((await serve(campaign({ pageTypes: [], placements: ["hero"] }))).length, 0);
   assert.equal((await serve(campaign({ pageTypes: [], placements: ["HERO"] }))).length, 1);
+});
+
+test("no seed script writes a section name into page_types", async () => {
+  // How the damage came back after the first repair: seed-ads-services-house
+  // was re-run on 2026-09-11 and wrote page_types=["services"] over the nine
+  // house campaigns again. The placement already pins the family; the field
+  // is left empty ("any page type"), and "home" is the one section name that
+  // is also a real page type.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const dir = fileURLToPath(new URL("../scripts/", import.meta.url));
+  const SECTION_NAMES = new Set([...Object.keys(PLATFORM_SECTIONS_REGISTRY), "global"]);
+  const offenders = [];
+  for (const name of await readdir(dir)) {
+    if (!/^seed-ads-.*\.(mjs|ts)$/.test(name)) continue;
+    const source = await readFile(dir + name, "utf8");
+    // Two shapes: a keyed `page_types: '[...]'`, and the positional row in
+    // seed-ads-services-house where the page_types literal follows the
+    // section_scopes literal on the same line. So: every quoted JSON-array
+    // literal on a line that is not the line's first, plus every keyed one.
+    for (const line of source.split(/\r?\n/)) {
+      const literals = [...line.matchAll(/'(\[[^\]]*\])'/g)].map((m) => m[1]);
+      const keyed = line.match(/page_types['"]?\s*:\s*'(\[[^\]]*\])'/)?.[1];
+      const candidates = keyed ? [keyed] : literals.slice(1);
+      // A positional literal is only suspect when it holds a section name:
+      // device and language lists share these lines and are not the problem.
+      for (const literal of candidates) {
+        const values = JSON.parse(literal);
+        const sectionNames = values.filter((value) => SECTION_NAMES.has(value) && !PAGE_TYPES_LIST.includes(value));
+        if (sectionNames.length) offenders.push(`${name}: ${literal}`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, []);
 });

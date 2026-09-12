@@ -182,7 +182,7 @@ function rowFor(fill) {
     // A paid campaign for the same slot has the lower priority number and wins;
     // these only ever fill a slot nothing else wanted.
     900, 1,
-    '["services","global"]', '["services"]', JSON.stringify([fill.placement]),
+    '["services","global"]', '[]', JSON.stringify([fill.placement]),
     1, 1, 1, 1,
     "house", "approved", 1, 1, 1,
   ];
