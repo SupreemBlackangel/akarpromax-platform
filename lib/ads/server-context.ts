@@ -23,6 +23,17 @@ export type CountrySource = "server" | "client";
 export type ServerAdContext = {
   /** Parsed from the User-Agent — cannot be spoofed by the page's JS. */
   deviceType: DeviceType;
+  /**
+   * Also from the User-Agent, and for the same reason the device is.
+   *
+   * Until this existed nothing filled `ctx.operatingSystem`: no client sent it
+   * and the server did not derive it, so `isOsMatch` — which refuses a campaign
+   * whose OS list is non-empty when the context has none — rejected EVERY
+   * campaign that used the admin panel's operating-system targeting. Ticking
+   * all five boxes made a campaign invisible to everybody, which is the worst
+   * possible reading of "select everything".
+   */
+  operatingSystem: string | undefined;
   /** The Host header, not window.location. */
   domain: string | undefined;
   /** Signed, HttpOnly-backed id. Stable per browser, not per tab. */
@@ -40,7 +51,32 @@ const SESSION_TTL_DAYS = 30;
 /** Bots first: they must never consume frequency budget as "mobile users". */
 const BOT = /bot|crawl|spider|slurp|bingpreview|headlesschrome|lighthouse|pingdom|gtmetrix/i;
 const TABLET = /ipad|tablet|playbook|silk|(android(?!.*mobile))/i;
+/**
+ * Order matters: iPadOS and iOS both say "like Mac OS X", and Android's UA
+ * contains "Linux". The more specific platform has to be tested first or every
+ * iPhone reads as a Mac and every Android as a Linux desktop.
+ */
+const OPERATING_SYSTEMS: ReadonlyArray<readonly [string, RegExp]> = [
+  ["android", /android/i],
+  ["ios", /iphone|ipad|ipod/i],
+  ["windows", /windows/i],
+  ["macos", /macintosh|mac os x/i],
+  ["linux", /linux|x11|ubuntu|fedora|cros/i],
+];
 const MOBILE = /iphone|ipod|android.*mobile|windows phone|blackberry|opera mini|iemobile/i;
+
+/**
+ * The visitor's operating system, in the vocabulary the admin panel offers.
+ *
+ * `undefined` when the User-Agent names none this platform targets — a bot, a
+ * console, something new. The campaigns that do not target an OS are unaffected
+ * either way; the ones that do simply do not match an unknown.
+ */
+export function operatingSystemFromUserAgent(userAgent: string | null | undefined): string | undefined {
+  const ua = userAgent ?? "";
+  if (!ua) return undefined;
+  return OPERATING_SYSTEMS.find(([, pattern]) => pattern.test(ua))?.[0];
+}
 
 export function deviceFromUserAgent(userAgent: string | null | undefined): DeviceType {
   const ua = (userAgent ?? "").toLowerCase();
@@ -121,6 +157,7 @@ export function resolveServerAdContext(
 
   return {
     deviceType: deviceFromUserAgent(headers.get("user-agent")),
+    operatingSystem: operatingSystemFromUserAgent(headers.get("user-agent")),
     domain: host ? host.split(":")[0].toLowerCase() : undefined,
     sessionId,
     issuedSessionCookie: existing ? null : sessionCookieHeader(sessionId),

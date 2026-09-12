@@ -81,7 +81,10 @@ export function buildContext(input: MatchRequest, server?: ServerAdContext): Res
   const sessionId = server ? server.sessionId : cleanString(input.sessionId, 120);
   const userId = cleanString(input.userId, 120);
   const entityType = cleanString(input.entityType, 64);
-  const operatingSystem = cleanString(input.operatingSystem, 40);
+  // The server's reading of the User-Agent wins over the payload's, for the
+  // same reason the session id does: the page's JavaScript can claim anything,
+  // and OS targeting decides what an advertiser is billed for.
+  const operatingSystem = server?.operatingSystem ?? cleanString(input.operatingSystem, 40);
 
   return {
     section,
