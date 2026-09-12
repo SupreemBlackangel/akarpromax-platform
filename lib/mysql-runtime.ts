@@ -297,6 +297,13 @@ const MYSQL_SCHEMA_SQL: string[] = [
     position INT NOT NULL DEFAULT 1,
     duration_seconds INT NOT NULL DEFAULT 6,
     status VARCHAR(16) NOT NULL DEFAULT 'active',
+    -- The five the engine SELECTs on every page load. See the same block in
+    -- lib/content-schema.ts: they were reachable only through a write path.
+    alt_text_ar VARCHAR(180) NULL,
+    alt_text_en VARCHAR(180) NULL,
+    alt_text_tr VARCHAR(180) NULL,
+    media_width INT NULL,
+    media_height INT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS ad_impressions (

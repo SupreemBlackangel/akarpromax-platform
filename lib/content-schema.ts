@@ -180,6 +180,16 @@ export const CONTENT_TABLES_SQL: string[] = [
     position INTEGER NOT NULL DEFAULT 1,
     duration_seconds INTEGER NOT NULL DEFAULT 6,
     status TEXT NOT NULL DEFAULT 'active',
+    -- The engine SELECTs these five on every page load (lib/ads/engine.ts,
+    -- loadCreatives). They used to exist only in the AD_CREATIVE_NEW_COLUMNS
+    -- ALTER list, which is applied by a write path — so a freshly provisioned
+    -- database could not serve a single ad until somebody submitted one. A
+    -- column the read path cannot run without belongs in the CREATE.
+    alt_text_ar TEXT,
+    alt_text_en TEXT,
+    alt_text_tr TEXT,
+    media_width INTEGER,
+    media_height INTEGER,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS moderator_scopes (
