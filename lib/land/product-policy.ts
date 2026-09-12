@@ -11,6 +11,16 @@ export interface UtmZoneDecision {
 const ZONE_PATTERNS: RegExp[] = [
   /(?:PROJECTION\s*:?\s*)?(?:WGS\s*84\s*)?(?:UTM\s*)?ZONE\s*[:：\-]?\s*(\d{1,2})\s*([NS])?/i,
   /(?:UTM|زون|نطاق|النطاق)\s*[:：\-]?\s*(\d{1,2})\s*([NS])?/i,
+  // "WGS84 39N", printed above the coordinate table on Omani survey drawings
+  // and nowhere else. It states the datum and the zone in four characters and
+  // never uses the word "zone", so every pattern above walked past the one
+  // unambiguous statement on the sheet — and a Salalah plot that says 39N was
+  // read as 40N and placed seven hundred kilometres out in the Arabian Sea.
+  /WGS\s*-?\s*84\s*[:\-]?\s*(\d{1,2})\s*([NS])\b/i,
+  // The MGRS grid-zone designator inside a map-sheet number:
+  // "40Q/AD/860-840/B10". The slash is required — without it any two digits
+  // followed by a letter would qualify.
+  /\b(\d{1,2})\s*([C-HJ-NP-X])(?=\s*\/)/,
   /EPSG\s*[:#]?\s*326(\d{2})\b/i,
 ];
 
