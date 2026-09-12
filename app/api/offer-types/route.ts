@@ -1,19 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
-import { propertyOfferTypes } from '@/lib/db/schemas/offer-types-schema';
-import { eq, desc } from 'drizzle-orm';
-import { cached } from '@/lib/cache';
+import { NextResponse } from 'next/server';
+import { activeOfferTypes } from '@/lib/integration/reference';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The offer types the property form fills its "how is this marketed" select
+ * from. The query lives in lib/integration/reference.ts because the desktop
+ * office app's /api/office/v1/reference must answer from the same rows in the
+ * same order — two queries would drift, and drift means the desktop offering a
+ * marketing method the website will not accept.
+ */
 export async function GET() {
-  const { db, end } = getDb();
-  try {
-    const rows = await cached('offer-types', 60_000, () =>
-      db.select().from(propertyOfferTypes).where(eq(propertyOfferTypes.isActive, true)).orderBy(propertyOfferTypes.displayOrder),
-    );
-    return NextResponse.json({ success: true, data: rows });
-  } finally {
-    await end();
-  }
+  return NextResponse.json({ success: true, data: await activeOfferTypes() });
 }
