@@ -34,10 +34,41 @@ describe("Find My Land client wiring", () => {
     assert.doesNotMatch(CLIENT, /createWorker\("ara\+eng"/, "the language is no longer hard-coded");
   });
 
-  it("sends the positioned evidence to the resolver, and re-sends it on a correction", () => {
+  it("sends the positioned evidence to the resolver, and re-sends it on a coordinate-system correction", () => {
     const sends = CLIENT.match(/positionedItems:/g) ?? [];
     assert.ok(sends.length >= 3, `expected the payload to carry positionedItems, saw ${sends.length} references`);
-    assert.match(CLIENT, /positionedItems: analysis\.positionedItems/);
+    // Re-running for a different zone or hemisphere leaves the document text
+    // alone, so the word boxes still describe it and must travel again —
+    // without them the resolver falls back to a weaker reading of the table.
+    assert.match(CLIENT, /positionedItems: overrideText \? undefined : analysis\.positionedItems/);
+  });
+
+  it("drops the positioned evidence when the reader corrects a value", () => {
+    // A typed-over number rewrites the document text, and the word boxes, the
+    // OCR output and the page images all still describe the text before the
+    // correction. Sending them lets the resolver prefer that stale reading and
+    // the correction disappears with no error — the worst possible outcome for
+    // somebody fixing a misread digit.
+    assert.match(CLIENT, /ocrText: overrideText \? undefined : \(analysis\.ocrText \|\| undefined\)/);
+    assert.match(CLIENT, /ocrConfidence: overrideText \? undefined : analysis\.ocrConfidence/);
+    assert.match(CLIENT, /pages: !overrideText && documentPages\.length > 1/);
+    assert.match(CLIENT, /nativeText: overrideText \|\| analysis\.nativeText/);
+  });
+
+  it("a correction is a text edit, and only applies when the value is unambiguous", () => {
+    // Two identical numbers in one document make "which one did you click"
+    // unanswerable, and replacing the wrong one moves a different corner.
+    assert.match(CLIENT, /const occurrences = text\.split\(previous\)\.length - 1;/);
+    assert.match(CLIENT, /if \(occurrences !== 1\)/);
+  });
+
+  it("typed coordinates take the same route as a scanned plan", () => {
+    // No second resolve endpoint: a parallel manual pipeline would be a second
+    // implementation of the part that must not drift.
+    const resolveCalls = CLIENT.match(/fetch\("\/api\/land\/resolve"/g) ?? [];
+    assert.ok(resolveCalls.length >= 3, `typed coordinates reuse the resolve route, saw ${resolveCalls.length}`);
+    assert.doesNotMatch(CLIENT, /\/api\/land\/manual/);
+    assert.match(CLIENT, /pastedRowsAsDocumentText\(pastedRows/);
   });
 
   it("validates positioned evidence on the way in rather than trusting it", () => {

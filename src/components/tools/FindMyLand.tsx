@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
+  ClipboardList,
   Copy,
   Download,
   ExternalLink,
@@ -31,7 +32,9 @@ import {
 } from "@/src/lib/tools/land-analysis";
 import {
   dedupeGeometryPoints,
+  parsePastedCoordinateRows,
   parseProjectedSourceRows,
+  pastedRowsAsDocumentText,
   sourcePointLabel,
 } from "@/src/lib/tools/fml-display-policy";
 import {
@@ -379,6 +382,62 @@ function downloadFile(content: string, fileName: string, mime: string): void {
   link.click();
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 5_000);
+}
+
+/**
+ * A coordinate the reader can correct in place.
+ *
+ * OCR misreads a digit often enough that a reading can be right in every way
+ * except one number, and re-uploading a clearer scan is not always possible.
+ * Clicking the value opens it; Enter applies, Escape abandons. A corrected
+ * cell keeps a warning border so nobody mistakes it for what the document
+ * says — the original stays visible in the extraction details.
+ */
+function EditableValue({
+  value,
+  corrected,
+  editing,
+  onEdit,
+  onCommit,
+  onCancel,
+  label,
+}: {
+  value: string;
+  corrected: boolean;
+  editing: boolean;
+  onEdit: () => void;
+  onCommit: (next: string) => void;
+  onCancel: () => void;
+  label: string;
+}) {
+  if (editing) {
+    return (
+      <input
+        className="fml-cell-input"
+        defaultValue={value}
+        autoFocus
+        dir="ltr"
+        inputMode="decimal"
+        aria-label={label}
+        onBlur={(event) => onCommit(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") { event.preventDefault(); onCommit(event.currentTarget.value); }
+          if (event.key === "Escape") { event.preventDefault(); onCancel(); }
+        }}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      className={`fml-cell-edit${corrected ? " is-corrected" : ""}`}
+      onClick={onEdit}
+      aria-label={label}
+      dir="ltr"
+    >
+      {value}
+    </button>
+  );
 }
 
 function areaVerdictCopy(verdict: string, locale: Locale): string {
@@ -858,6 +917,15 @@ export function FindMyLand({ locale }: Props) {
   const [documentPages, setDocumentPages] = useState<string[]>([]);
   const [copiedTarget, setCopiedTarget] = useState<"wgs" | "utm" | "all" | "share" | "export" | "row" | null>(null);
   const [actionError, setActionError] = useState("");
+  /**
+   * Where the coordinates come from. A surveyor who already has the numbers —
+   * from a total station, an email, or this tool's own copy button — had no way
+   * in short of printing them to PDF first.
+   */
+  const [inputMode, setInputMode] = useState<"file" | "paste">("file");
+  const [pastedText, setPastedText] = useState("");
+  const [pasteZone, setPasteZone] = useState("40");
+  const [pasteHemisphere, setPasteHemisphere] = useState<"N" | "S">("N");
   const [utmZoneInput, setUtmZoneInput] = useState("");
   const [utmHemisphereInput, setUtmHemisphereInput] = useState<"N" | "S">("N");
   const [crsMode, setCrsMode] = useState<CrsMode>("auto");
@@ -924,6 +992,7 @@ export function FindMyLand({ locale }: Props) {
     setUtmHemisphereInput("N");
     setCrsMode("auto");
     setDocumentPages([]);
+    setPastedText("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
@@ -1186,6 +1255,82 @@ export function FindMyLand({ locale }: Props) {
     }
   }, [crsMode, file, utmHemisphereInput, utmZoneInput]);
 
+  /** What the typed text parses to, shown live under the box as a count. */
+  const pastedRows = useMemo(() => parsePastedCoordinateRows(pastedText), [pastedText]);
+
+  /**
+   * Typed coordinates take the same road as a scanned plan.
+   *
+   * They are turned into a document's worth of text and posted to
+   * /api/land/resolve exactly as an extracted PDF would be — no second API, no
+   * second code path — so they get the same polygon, the same closure and area
+   * checks, the same warnings and the same map. A parallel "manual" pipeline
+   * would be a second implementation of the part that must not drift.
+   */
+  const analyzePasted = useCallback(async () => {
+    const zone = Number.parseInt(pasteZone, 10);
+    if (!isSelectableZone(zone)) {
+      setActionError(t(
+        "اختر نطاق UTM صالحًا من 1 إلى 60.",
+        "Select a valid UTM zone from 1 to 60.",
+        "1 ile 60 arasında geçerli bir UTM zonu seçin.",
+      ));
+      return;
+    }
+    if (pastedRows.length < 3) {
+      setActionError(t(
+        "أدخل ثلاث نقاط على الأقل لتكوين مضلّع.",
+        "Enter at least three points to form a polygon.",
+        "Bir çokgen oluşturmak için en az üç nokta girin.",
+      ));
+      return;
+    }
+
+    setActionError("");
+    setErrorCode("");
+    setStage("resolving");
+    setProgress(70);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
+    const text = pastedRowsAsDocumentText(pastedRows, { zone, hemisphere: pasteHemisphere });
+    try {
+      const response = await fetch("/api/land/resolve", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: "typed-coordinates.txt",
+          mimeType: "text/plain",
+          sizeBytes: text.length,
+          nativeText: text,
+          // Oman by default, which is where this platform operates; the zone
+          // and hemisphere the user picked still decide the projection.
+          countryCode: "OM",
+          crsMode: "utm",
+          utmZone: zone,
+          utmHemisphere: pasteHemisphere,
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as ResolveResponse & { error?: string };
+      if (!response.ok) throw new Error(result.error || `HTTP_${response.status}`);
+      setAnalysedAt(new Date().toISOString());
+      setAnalysis({ result, extractedText: text, nativeText: text, ocrText: "", ocrUsed: false, details: extractLandDetails(text) });
+      setUtmZoneInput(String(zone));
+      setUtmHemisphereInput(pasteHemisphere);
+      setCrsMode("utm");
+      setDocumentPages([]);
+      setProgress(100);
+      setStage("done");
+    } catch (error) {
+      setErrorCode(error instanceof DOMException && error.name === "AbortError"
+        ? "ANALYSIS_TIMEOUT"
+        : error instanceof Error ? error.message : "ANALYSIS_FAILED");
+      setStage("error");
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }, [pasteHemisphere, pasteZone, pastedRows, t]);
+
   /**
    * Re-runs the analysis with the user's coordinate-system correction or the
    * coordinate group they picked. Nothing is re-read from the file: the text
@@ -1197,8 +1342,16 @@ export function FindMyLand({ locale }: Props) {
     mode?: CrsMode;
     coordinateGroupId?: string;
     confirmedOrder?: number[];
+    /**
+     * Corrected document text. When a reader fixes a misread digit the whole
+     * reading is redone from the corrected text, by the same route, so the
+     * correction gets the same closure and area checks as the original.
+     */
+    text?: string;
   } = {}) => {
-    if (!file || !analysis) return;
+    // A file is no longer required: coordinates can be typed, and correcting a
+    // typed reading has to re-run the same way a scanned one does.
+    if (!analysis) return;
     const mode = overrides.mode ?? crsMode;
     const zone = overrides.zone ?? Number.parseInt(utmZoneInput, 10);
     const hemisphere = overrides.hemisphere ?? utmHemisphereInput;
@@ -1215,6 +1368,7 @@ export function FindMyLand({ locale }: Props) {
     setActionError("");
     setStage("resolving");
     setProgress(86);
+    const overrideText = overrides.text;
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
     try {
@@ -1223,15 +1377,18 @@ export function FindMyLand({ locale }: Props) {
         signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: file.name,
-          mimeType: file.type || `image/${fileExtension(file)}`,
-          sizeBytes: file.size,
-          nativeText: analysis.nativeText || analysis.extractedText || undefined,
-          pages: documentPages.length > 1 && !analysis.ocrUsed ? documentPages : undefined,
-          ocrText: analysis.ocrText || undefined,
-          ocrConfidence: analysis.ocrConfidence,
-          positionedItems: analysis.positionedItems,
-          countryCode: inferDocumentCountry(`${file.name}\n${analysis.extractedText}`),
+          fileName: file?.name ?? "typed-coordinates.txt",
+          mimeType: file ? (file.type || `image/${fileExtension(file)}`) : "text/plain",
+          sizeBytes: file?.size ?? analysis.extractedText.length,
+          nativeText: overrideText || analysis.nativeText || analysis.extractedText || undefined,
+          // A correction rewrites the text, so the page images, the OCR output
+          // and the positioned word boxes no longer describe it. Sending them
+          // would let the resolver prefer a stale reading over the correction.
+          pages: !overrideText && documentPages.length > 1 && !analysis.ocrUsed ? documentPages : undefined,
+          ocrText: overrideText ? undefined : (analysis.ocrText || undefined),
+          ocrConfidence: overrideText ? undefined : analysis.ocrConfidence,
+          positionedItems: overrideText ? undefined : analysis.positionedItems,
+          countryCode: inferDocumentCountry(`${file?.name ?? ""}\n${overrideText || analysis.extractedText}`),
           crsMode: mode === "auto" ? undefined : mode,
           utmZone: isSelectableZone(zone) ? zone : undefined,
           utmHemisphere: isSelectableZone(zone) ? hemisphere : undefined,
@@ -1241,7 +1398,9 @@ export function FindMyLand({ locale }: Props) {
       });
       const result = (await response.json().catch(() => ({}))) as ResolveResponse & { error?: string };
       if (!response.ok) throw new Error(result.error || `HTTP_${response.status}`);
-      setAnalysis((current) => current ? { ...current, result } : current);
+      setAnalysis((current) => current
+        ? { ...current, result, ...(overrideText ? { extractedText: overrideText, nativeText: overrideText } : {}) }
+        : current);
       setProgress(100);
       setStage("done");
     } catch (error) {
@@ -1582,6 +1741,52 @@ export function FindMyLand({ locale }: Props) {
     window.setTimeout(() => setCopiedTarget((current) => (current === "export" ? null : current)), 1800);
   }, [parcelExport]);
 
+  /**
+   * Corrections a reader made to the reading, keyed by the value that was
+   * replaced.
+   *
+   * Kept so the cell can be marked and the original can still be shown in the
+   * extraction details: a survey tool that silently accepts a typed-over value
+   * has lost the provenance that is its whole point.
+   */
+  const [corrections, setCorrections] = useState<Record<string, string>>({});
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+
+  /**
+   * Replace one number in the document text and read the whole thing again.
+   *
+   * The text is the only input the resolver has, so a correction is a text
+   * edit — which also means it can only be applied when the old value appears
+   * exactly once. Two identical values in the document would make "which one"
+   * unanswerable, and guessing would move a different corner than the one the
+   * reader clicked.
+   */
+  const applyCorrection = useCallback((previous: string, next: string) => {
+    setEditingCell(null);
+    const cleaned = next.trim();
+    if (!cleaned || cleaned === previous || !analysis) return;
+    if (!/^-?\d+(?:\.\d+)?$/.test(cleaned)) {
+      setActionError(t(
+        "أدخل رقمًا بأرقام لاتينية ونقطة عشرية.",
+        "Enter a number in Latin digits with a decimal point.",
+        "Latin rakamlar ve ondalık nokta ile bir sayı girin.",
+      ));
+      return;
+    }
+    const text = analysis.extractedText;
+    const occurrences = text.split(previous).length - 1;
+    if (occurrences !== 1) {
+      setActionError(t(
+        "تعذر تحديد هذه القيمة في نص الوثيقة بدقة، فلم تُطبَّق. عدّل عبر «لصق أو كتابة الإحداثيات».",
+        "This value could not be located unambiguously in the document text, so it was not applied. Use \"Paste or type coordinates\" instead.",
+        "Bu değer belge metninde tam olarak bulunamadı, bu yüzden uygulanmadı. Bunun yerine \"Koordinat yapıştır veya yaz\" kullanın.",
+      ));
+      return;
+    }
+    setCorrections((current) => ({ ...current, [cleaned]: current[previous] ?? previous }));
+    void reanalyze({ text: text.replace(previous, cleaned) });
+  }, [analysis, reanalyze, t]);
+
   /** One row, in the format the button is set to. */
   const copyRow = useCallback((row: CopyRow) => {
     void copyText(formatPoints([row], copyFormat), "row");
@@ -1684,8 +1889,95 @@ export function FindMyLand({ locale }: Props) {
         {/* ===== EMPTY / READY / ERROR ===== */}
         {(stage === "idle" || stage === "ready" || stage === "error") && !analysis && (
           <section className="fml-stage">
+            {/* Two ways in, because a surveyor often already has the numbers
+                and printing them to a PDF just to read them back is absurd. */}
+            <div className="fml-input-tabs" role="tablist" aria-label={t("طريقة الإدخال", "Input method", "Giriş yöntemi")}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inputMode === "file"}
+                className={`fml-tab${inputMode === "file" ? " fml-tab--active" : ""}`}
+                onClick={() => setInputMode("file")}
+              >
+                <UploadCloud size={15} aria-hidden="true" />
+                {t("رفع كروكي أو PDF", "Upload a plan or PDF", "Plan veya PDF yükle")}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inputMode === "paste"}
+                className={`fml-tab${inputMode === "paste" ? " fml-tab--active" : ""}`}
+                onClick={() => setInputMode("paste")}
+              >
+                <ClipboardList size={15} aria-hidden="true" />
+                {t("لصق أو كتابة الإحداثيات", "Paste or type coordinates", "Koordinat yapıştır veya yaz")}
+              </button>
+            </div>
+
+            {inputMode === "paste" && (
+              <div className="fml-paste" data-paste-coordinates>
+                <label className="fml-paste-label" htmlFor="fml-paste-box">
+                  {t("الإحداثيات", "Coordinates", "Koordinatlar")}
+                </label>
+                <textarea
+                  id="fml-paste-box"
+                  className="fml-paste-box"
+                  dir="ltr"
+                  rows={8}
+                  spellCheck={false}
+                  value={pastedText}
+                  onChange={(event) => setPastedText(event.target.value)}
+                  placeholder={`1\t565150.500,2550415.280\n2\t565136.780,2550388.600\n3\t565127.880,2550393.170`}
+                />
+                <p className="fml-hint">
+                  {t(
+                    "يقبل الحقل كل صيغ النسخ من هذه الأداة: E,N و N,E و CSV وأمر AutoCAD، بمسافات أو فواصل أو Tab، مع رقم النقطة أو بدونه.",
+                    "Accepts every copy format this tool produces: E,N, N,E, CSV and the AutoCAD command, separated by spaces, commas or tabs, with or without a point number.",
+                    "Bu aracın ürettiği her kopyalama biçimini kabul eder: E,N, N,E, CSV ve AutoCAD komutu; boşluk, virgül veya sekme ile, nokta numarası olsun olmasın.",
+                  )}
+                </p>
+                <div className="fml-paste-controls">
+                  <label className="fml-field">
+                    <span>{t("نطاق UTM", "UTM zone", "UTM zonu")}</span>
+                    <select value={pasteZone} onChange={(event) => setPasteZone(event.target.value)} dir="ltr">
+                      {Array.from({ length: UTM_ZONE_MAX - UTM_ZONE_MIN + 1 }, (_, index) => UTM_ZONE_MIN + index).map((zone) => (
+                        <option key={zone} value={zone}>{zone}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="fml-field">
+                    <span>{t("نصف الكرة", "Hemisphere", "Yarım küre")}</span>
+                    <select
+                      value={pasteHemisphere}
+                      onChange={(event) => setPasteHemisphere(event.target.value === "S" ? "S" : "N")}
+                      dir="ltr"
+                    >
+                      <option value="N">N</option>
+                      <option value="S">S</option>
+                    </select>
+                  </label>
+                  <span className="fml-paste-count" aria-live="polite">
+                    {pastedRows.length > 0
+                      ? `${pastedRows.length} ${t("نقطة مقروءة", "points read", "nokta okundu")}`
+                      : t("لم تُقرأ أي نقطة بعد", "no points read yet", "henüz nokta okunmadı")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void analyzePasted()}
+                    className="fml-primary-btn"
+                    disabled={pastedRows.length < 3}
+                  >
+                    <ScanLine size={17} />
+                    {t("تحليل الإحداثيات", "Analyse coordinates", "Koordinatları çözümle")}
+                  </button>
+                </div>
+                {actionError && <p className="fml-error-text" role="alert">{actionError}</p>}
+              </div>
+            )}
+
             <button
               type="button"
+              hidden={inputMode !== "file"}
               className={`fml-dropzone${dragging ? " is-dragging" : ""}${file ? " has-file" : ""}`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(event) => {
@@ -2133,8 +2425,28 @@ export function FindMyLand({ locale }: Props) {
                           {sourceProjectedRows.map((point, index) => (
                             <tr key={`${point.label}-${index}`}>
                               <td className="fml-cell-label">{point.label}</td>
-                              <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
-                              <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                              <td className="fml-cell-lat">
+                                <EditableValue
+                                value={point.easting.toFixed(3)}
+                                corrected={Boolean(corrections[point.easting.toFixed(3)])}
+                                editing={editingCell === `src-e-${index}`}
+                                onEdit={() => { setActionError(""); setEditingCell(`src-e-${index}`); }}
+                                onCommit={(next) => applyCorrection(point.easting.toFixed(3), next)}
+                                onCancel={() => setEditingCell(null)}
+                                label={t("تصحيح الشرقيات", "Correct the easting", "Doğuyu düzelt")}
+                              />
+                              </td>
+                              <td className="fml-cell-lon">
+                                <EditableValue
+                                value={point.northing.toFixed(3)}
+                                corrected={Boolean(corrections[point.northing.toFixed(3)])}
+                                editing={editingCell === `src-n-${index}`}
+                                onEdit={() => { setActionError(""); setEditingCell(`src-n-${index}`); }}
+                                onCommit={(next) => applyCorrection(point.northing.toFixed(3), next)}
+                                onCancel={() => setEditingCell(null)}
+                                label={t("تصحيح الشماليات", "Correct the northing", "Kuzeyi düzelt")}
+                              />
+                              </td>
                               <td className="fml-cell-copy">
                                 <button
                                   type="button"
@@ -2236,6 +2548,7 @@ export function FindMyLand({ locale }: Props) {
                           <th>{t("الصفحة", "Page", "Sayfa")}</th>
                           <th>{t("السطر", "Row", "Satır")}</th>
                           <th>{t("النص المقروء", "Source text", "Okunan metin")}</th>
+                          <th>{t("القيمة الأصلية", "Original value", "Özgün değer")}</th>
                           <th>{t("الثقة", "Confidence", "Güven")}</th>
                         </tr>
                       </thead>
@@ -2246,6 +2559,14 @@ export function FindMyLand({ locale }: Props) {
                             <td dir="ltr">{vertex.page ?? "—"}</td>
                             <td dir="ltr">{vertex.rowIndex ?? "—"}</td>
                             <td className="fml-cell-source select-all" dir="ltr">{vertex.sourceText}</td>
+                            {/* What the document said before a correction. Blank
+                                means nothing on this row was typed over. */}
+                            <td className="fml-cell-original" dir="ltr">
+                              {[vertex.original.easting, vertex.original.northing]
+                                .map((value) => (typeof value === "number" ? corrections[value.toFixed(3)] : undefined))
+                                .filter(Boolean)
+                                .join(" · ") || "—"}
+                            </td>
                             <td dir="ltr">{Math.round(vertex.confidence * 100)}%</td>
                           </tr>
                         ))}

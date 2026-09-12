@@ -200,3 +200,67 @@ export function polygonSelfIntersects(points: readonly { lat: number; lon: numbe
   }
   return false;
 }
+
+/**
+ * Coordinates a person typed or pasted, rather than a document's text.
+ *
+ * Deliberately a separate entry point rather than a widening of
+ * `parseProjectedSourceRow`: that function reads survey documents, where a
+ * comma directly before a number is not a column separator, and loosening it
+ * would change what every existing document parses to. Here the separators are
+ * known, because this accepts exactly what the tool's own copy formats produce
+ * (fml-clipboard.ts) plus the loose shapes people type.
+ *
+ * Accepted per line, with or without a leading point number:
+ *   1<TAB>511606.450,2384968.870      the default copy format
+ *   1,511606.450,2384968.870          CSV
+ *   511606.450 2384968.870            bare pair
+ *   2384968.870,511606.450            northing first — decided by magnitude
+ * Skipped: blank lines, a CSV header, and the `_PLINE` / `C` wrapper of the
+ * AutoCAD format, so a whole copied command pastes without hand-editing.
+ */
+const PASTE_SKIP = /^\s*(?:_?PLINE|C|CLOSE|point\s*,|#|\/\/)/i;
+const PASTE_LEADING_LABEL = /^\s*([A-Za-z]?\d{1,14}(?:-\d{1,4})?)\s*[\s,;|\t]\s*(?=[\d.])/;
+
+export function parsePastedCoordinateRows(text: string): ProjectedSourceRow[] {
+  const rows: ProjectedSourceRow[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || PASTE_SKIP.test(trimmed)) continue;
+
+    // The label is taken before separators are normalised, so a point called
+    // "12-13" survives and is not read as two numbers.
+    const labelMatch = PASTE_LEADING_LABEL.exec(trimmed);
+    const rest = labelMatch ? trimmed.slice(labelMatch[0].length) : trimmed;
+    // One separator vocabulary for the pair, whatever the source used.
+    const normalised = rest.replace(/[,;|\t]+/g, " ").replace(/\s+/g, " ").trim();
+    if (!normalised) continue;
+
+    const parsed = parseProjectedSourceRow({ label: "", raw: ` ${normalised} ` });
+    if (!parsed) continue;
+    rows.push({
+      ...parsed,
+      raw: trimmed,
+      label: labelMatch?.[1] ?? `P${rows.length + 1}`,
+    });
+  }
+  return rows;
+}
+
+/**
+ * Pasted rows as the text the resolver reads.
+ *
+ * There is no second API path for typed coordinates: they become a document's
+ * worth of text and travel the same route, so they get the same polygon, the
+ * same validation and the same map as a scanned plan.
+ */
+export function pastedRowsAsDocumentText(
+  rows: readonly ProjectedSourceRow[],
+  crs: { zone: number; hemisphere: "N" | "S" },
+): string {
+  return [
+    `PROJECTION: UTM ZONE ${crs.zone}${crs.hemisphere}`,
+    "POINT    EASTING        NORTHING",
+    ...rows.map((row) => `${row.label}    ${row.easting.toFixed(3)}     ${row.northing.toFixed(3)}`),
+  ].join("\n");
+}

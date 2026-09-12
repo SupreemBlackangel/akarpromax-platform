@@ -1177,3 +1177,139 @@ html[data-theme="dark"] .fml-point-label {
   white-space: nowrap;
   border: 0;
 }
+
+/* --- Two ways in: a file, or the numbers themselves (FML phase 3) --- */
+
+.fml-input-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-5);
+}
+
+.fml-input-tabs .fml-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fml-paste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--fml-radius-md, 16px);
+  background: var(--color-surface);
+}
+
+.fml-paste-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* Monospace and LTR: these are columns of digits, and they only line up in a
+   fixed-width face. The interface language does not change that. */
+.fml-paste-box {
+  width: 100%;
+  min-height: 190px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-input);
+  color: var(--color-text-primary);
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+}
+
+.fml-paste-box:focus-visible {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.fml-paste-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.fml-paste-controls .fml-primary-btn {
+  margin-inline-start: auto;
+}
+
+/* Reads as a running tally while typing, so a line the parser could not read
+   is obvious before the button is pressed rather than after. */
+.fml-paste-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .fml-input-tabs {
+    flex-direction: column;
+  }
+  .fml-paste-controls .fml-primary-btn {
+    margin-inline-start: 0;
+    width: 100%;
+  }
+}
+
+/* --- Correcting a misread number in place (FML phase 3) --- */
+
+/* Looks like the value until it is hovered: the table is for reading first,
+   and a grid of input boxes reads as a form. */
+.fml-cell-edit {
+  padding: 2px 6px;
+  margin-inline-start: -6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: text;
+  transition: border-color var(--motion-fast) var(--easing-standard), background-color var(--motion-fast) var(--easing-standard);
+}
+
+.fml-cell-edit:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-muted);
+}
+
+.fml-cell-edit:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+/* A value somebody typed over is not what the document says, and a survey
+   reading that hides that has lost its provenance. */
+.fml-cell-edit.is-corrected {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+  font-weight: 700;
+}
+
+.fml-cell-input {
+  width: 100%;
+  min-width: 110px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-border-focus);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.fml-cell-original {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
