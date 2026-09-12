@@ -197,10 +197,15 @@ describe("Find My Land professional result", () => {
     assert.match(source, /vertex\.confidence/);
   });
 
-  it("keeps the actions to what reaches outside: Google Maps, copy UTM, WhatsApp", async () => {
+  it("keeps the actions to what reaches outside: Google Maps, copy, WhatsApp", async () => {
     const source = await readComponent();
     assert.match(source, /google\.com\/maps\/search/);
-    assert.match(source, /نسخ UTM/);
+    // "Copy UTM" was the old label and the old behaviour: it emitted the UTM
+    // table whichever tab was open. The button now copies the rows on screen,
+    // in the format chosen beside it, so it is no longer named after one grid.
+    assert.match(source, /نسخ الإحداثيات/);
+    assert.doesNotMatch(source, /نسخ UTM/);
+    assert.match(source, /formatPoints\(visibleRows, copyFormat\)/);
     assert.match(source, /مشاركة واتساب/);
     // The edge-deviation table, the JSON export, the summary copy and the
     // generic share sheet are no longer part of the result view.
@@ -291,5 +296,41 @@ describe("Find My Land has no regional coordinate defaults", () => {
     assert.match(utm, /UTM_ZONE_MAX = 60/);
     assert.match(utm, /UTM_NORTH_EPSG_BASE = 32600/);
     assert.match(utm, /UTM_SOUTH_EPSG_BASE = 32700/);
+  });
+});
+
+describe("Find My Land copy formats", () => {
+  it("copies the rows the table is showing, not one fixed grid", async () => {
+    const source = await readComponent();
+    // The old clipboard string is gone, zone and EPSG with it: they describe
+    // the numbers rather than being numbers, and sitting in the middle of
+    // every row they broke a paste into a coordinate column.
+    assert.doesNotMatch(source, /utmClipboardText/);
+    assert.doesNotMatch(source, /Point\tUTM Zone\tEPSG/);
+    assert.match(source, /const visibleRows = useMemo<CopyRow\[\]>/);
+    assert.match(source, /coordinateView === "utm"/);
+  });
+
+  it("offers the five formats and remembers the choice", async () => {
+    const source = await readComponent();
+    assert.match(source, /COPY_FORMAT_OPTIONS\.map/);
+    assert.match(source, /chooseCopyFormat\(event\.target\.value as CopyFormat\)/);
+    // The choice is an external store, not an effect: localStorage does not
+    // exist during the server render, and reading it afterwards would flash
+    // the default before the remembered value.
+    assert.match(source, /useSyncExternalStore\(subscribeCopyFormat, readCopyFormat, serverCopyFormat\)/);
+    // A format the rows cannot produce is disabled, not silently empty.
+    assert.match(source, /disabled=\{!canFormat\(visibleRows, option\.value\)\}/);
+    assert.match(source, /disabled=\{!canCopy\}/);
+  });
+
+  it("puts the grid in the tooltip and a copy button on every row", async () => {
+    const source = await readComponent();
+    assert.match(source, /const copyHint = useMemo/);
+    assert.match(source, /EPSG:\$\{utmEpsgCode\(zone, hemisphere\)\}/);
+    assert.match(source, /title=\{copyHint \|\| undefined\}/);
+    assert.match(source, /aria-label=\{copyHint \|\| undefined\}/);
+    assert.match(source, /className="fml-row-copy"/);
+    assert.match(source, /copyRow\(visibleRows\[index\]\)/);
   });
 });

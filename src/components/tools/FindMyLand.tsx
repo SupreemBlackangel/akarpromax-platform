@@ -2,10 +2,11 @@
 
 import "leaflet/dist/leaflet.css";
 import "@/src/styles/find-my-land.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Copy,
   ExternalLink,
   FileText,
@@ -32,6 +33,16 @@ import {
   parseProjectedSourceRows,
   sourcePointLabel,
 } from "@/src/lib/tools/fml-display-policy";
+import {
+  canFormat,
+  formatPoints,
+  readCopyFormat,
+  serverCopyFormat,
+  subscribeCopyFormat,
+  writeCopyFormat,
+  type CopyFormat,
+  type CopyRow,
+} from "@/src/lib/tools/fml-clipboard";
 import {
   UTM_ZONE_MAX,
   UTM_ZONE_MIN,
@@ -325,6 +336,20 @@ const SEQUENCE_EVIDENCE_COPY: Record<string, { ar: string; en: string; tr: strin
     tr: "Tablo satır sırası",
   },
 };
+
+/**
+ * The copy menu. Deliberately not translated: every label is either a column
+ * order or the name of a program, and "E,N" means the same thing in all three
+ * languages — translating it would make it harder to match against the
+ * spreadsheet the surveyor is pasting into.
+ */
+const COPY_FORMAT_OPTIONS: readonly { value: CopyFormat; label: string }[] = [
+  { value: "en", label: "E,N" },
+  { value: "ne", label: "N,E" },
+  { value: "csv", label: "CSV" },
+  { value: "acad", label: "AutoCAD PLINE" },
+  { value: "wgs84", label: "WGS84" },
+];
 
 function areaVerdictCopy(verdict: string, locale: Locale): string {
   const copy: Record<string, { ar: string; en: string; tr: string }> = {
@@ -801,7 +826,7 @@ export function FindMyLand({ locale }: Props) {
   // Per-page text from the first pass, kept so a re-analysis keeps each piece
   // of evidence tied to its page instead of collapsing the document to one.
   const [documentPages, setDocumentPages] = useState<string[]>([]);
-  const [copiedTarget, setCopiedTarget] = useState<"wgs" | "utm" | "all" | "share" | "export" | null>(null);
+  const [copiedTarget, setCopiedTarget] = useState<"wgs" | "utm" | "all" | "share" | "export" | "row" | null>(null);
   const [actionError, setActionError] = useState("");
   const [utmZoneInput, setUtmZoneInput] = useState("");
   const [utmHemisphereInput, setUtmHemisphereInput] = useState<"N" | "S">("N");
@@ -821,6 +846,20 @@ export function FindMyLand({ locale }: Props) {
    */
   // null = follow whatever the document gave us; a value = the reader chose a view.
   const [coordinateViewOverride, setCoordinateViewOverride] = useState<"wgs84" | "utm" | null>(null);
+
+  /**
+   * Which shape the clipboard takes. A surveyor pastes into the same program
+   * every day, so the choice is remembered; it starts on E,N because that is
+   * what a coordinate column and a CAD command line both expect.
+   *
+   * `useSyncExternalStore` rather than an effect: localStorage does not exist
+   * during the server render, and reading it afterwards would flash the
+   * default before the remembered value.
+   */
+  const copyFormat = useSyncExternalStore(subscribeCopyFormat, readCopyFormat, serverCopyFormat);
+  const chooseCopyFormat = useCallback((next: CopyFormat) => {
+    writeCopyFormat(next);
+  }, []);
 
   const t = useCallback(
     (ar: string, en: string, tr: string) => (locale === "ar" ? ar : locale === "tr" ? tr : en),
@@ -1422,19 +1461,76 @@ export function FindMyLand({ locale }: Props) {
 
   const copyText = useCallback(async (
     text: string,
-    target: "wgs" | "utm" | "all" | "share" | "export",
+    target: "wgs" | "utm" | "all" | "share" | "export" | "row",
   ) => {
     await writeClipboard(text);
     setCopiedTarget(target);
     window.setTimeout(() => setCopiedTarget((current) => (current === target ? null : current)), 1800);
   }, []);
 
-  // Copying keeps the full stored precision; only the on-screen table is
-  // allowed to shorten a value.
-  const utmClipboardText = useMemo(() => [
-    "Point\tUTM Zone\tEPSG\tEasting (X)\tNorthing (Y)",
-    ...utmRows.map((point) => `${point.label}\t${formatUtmZone(point.zone, point.hemisphere)}\t${utmEpsgCode(point.zone, point.hemisphere)}\t${point.easting.toFixed(3)}\t${point.northing.toFixed(3)}`),
-  ].join("\n"), [utmRows]);
+  /**
+   * Exactly the rows the table is showing, in the order it shows them.
+   *
+   * Copy used to emit the UTM table regardless of which tab was open, so a
+   * reader looking at the document's own eastings copied converted ones. The
+   * WGS84 pair rides along on every row so that format stays available
+   * whichever tab is open — it is the same corner either way.
+   */
+  const visibleRows = useMemo<CopyRow[]>(() => {
+    const geographicAt = (index: number) => ({
+      lat: coordinateRows[index]?.lat,
+      lon: coordinateRows[index]?.lon,
+    });
+    if (coordinateView === "utm") {
+      return utmRows.map((row, index) => ({
+        label: row.label,
+        easting: row.easting,
+        northing: row.northing,
+        ...geographicAt(index),
+      }));
+    }
+    if (sourceProjectedRows.length > 0) {
+      return sourceProjectedRows.map((row, index) => ({
+        label: row.label,
+        easting: row.easting,
+        northing: row.northing,
+        ...geographicAt(index),
+      }));
+    }
+    // Geographic-only document: the table shows latitude and longitude, and a
+    // metric format borrows the projection when one exists. When it does not,
+    // `canFormat` disables those formats rather than copying NaN.
+    return coordinateRows.map((row, index) => ({
+      label: row.label,
+      easting: utmRows[index]?.easting ?? Number.NaN,
+      northing: utmRows[index]?.northing ?? Number.NaN,
+      lat: row.lat,
+      lon: row.lon,
+    }));
+  }, [coordinateRows, coordinateView, sourceProjectedRows, utmRows]);
+
+  const canCopy = canFormat(visibleRows, copyFormat);
+
+  /**
+   * The zone and the EPSG code used to sit in the middle of every copied row.
+   * They describe the numbers rather than being numbers, so they belong here,
+   * where a reader can check the grid before pasting.
+   */
+  const copyHint = useMemo(() => {
+    const count = visibleRows.length;
+    if (count === 0) return "";
+    const points = `${count} ${t("نقاط", "points", "nokta")}`;
+    if (coordinateView === "utm" && utmRows.length > 0) {
+      const { zone, hemisphere } = utmRows[0];
+      return `UTM ${formatUtmZone(zone, hemisphere)} · EPSG:${utmEpsgCode(zone, hemisphere)} · ${points}`;
+    }
+    return `${t("قيم الوثيقة", "document values", "belge değerleri")} · ${points}`;
+  }, [coordinateView, t, utmRows, visibleRows.length]);
+
+  /** One row, in the format the button is set to. */
+  const copyRow = useCallback((row: CopyRow) => {
+    void copyText(formatPoints([row], copyFormat), "row");
+  }, [copyFormat, copyText]);
 
   const locationShareText = useMemo(() => [
     t("موقع الأرض من أداة حدّد أرضك", "Land location from Map My Deed", "Tapumu Haritala konumu"),
@@ -1975,6 +2071,7 @@ export function FindMyLand({ locale }: Props) {
                             <th># / LINE</th>
                             <th>X / Easting</th>
                             <th>Y / Northing</th>
+                            <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1983,6 +2080,17 @@ export function FindMyLand({ locale }: Props) {
                               <td className="fml-cell-label">{point.label}</td>
                               <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
                               <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                              <td className="fml-cell-copy">
+                                <button
+                                  type="button"
+                                  className="fml-row-copy"
+                                  onClick={() => copyRow(visibleRows[index])}
+                                  aria-label={t("نسخ هذه النقطة", "Copy this point", "Bu noktayı kopyala")}
+                                  disabled={!visibleRows[index] || !canFormat([visibleRows[index]], copyFormat)}
+                                >
+                                  <Copy size={13} aria-hidden="true" />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1994,6 +2102,7 @@ export function FindMyLand({ locale }: Props) {
                             <th>#</th>
                             <th>N / Latitude</th>
                             <th>E / Longitude</th>
+                            <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2002,6 +2111,17 @@ export function FindMyLand({ locale }: Props) {
                               <td className="fml-cell-label">{point.label}</td>
                               <td className="fml-cell-lat select-all">{point.latText}</td>
                               <td className="fml-cell-lon select-all">{point.lonText}</td>
+                              <td className="fml-cell-copy">
+                                <button
+                                  type="button"
+                                  className="fml-row-copy"
+                                  onClick={() => copyRow(visibleRows[index])}
+                                  aria-label={t("نسخ هذه النقطة", "Copy this point", "Bu noktayı kopyala")}
+                                  disabled={!visibleRows[index] || !canFormat([visibleRows[index]], copyFormat)}
+                                >
+                                  <Copy size={13} aria-hidden="true" />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -2015,6 +2135,7 @@ export function FindMyLand({ locale }: Props) {
                           <th>Zone</th>
                           <th>X / Easting</th>
                           <th>Y / Northing</th>
+                          <th className="fml-cell-copy"><span className="fml-sr-only">{t("نسخ", "Copy", "Kopyala")}</span></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2024,6 +2145,17 @@ export function FindMyLand({ locale }: Props) {
                             <td>{formatUtmZone(point.zone, point.hemisphere)}</td>
                             <td className="fml-cell-lat select-all">{point.easting.toFixed(3)}</td>
                             <td className="fml-cell-lon select-all">{point.northing.toFixed(3)}</td>
+                            <td className="fml-cell-copy">
+                              <button
+                                type="button"
+                                className="fml-row-copy"
+                                onClick={() => copyRow(visibleRows[index])}
+                                aria-label={t("نسخ هذه النقطة", "Copy this point", "Bu noktayı kopyala")}
+                                disabled={!visibleRows[index] || !canFormat([visibleRows[index]], copyFormat)}
+                              >
+                                <Copy size={13} aria-hidden="true" />
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2077,10 +2209,36 @@ export function FindMyLand({ locale }: Props) {
                     {t("Google Maps", "Google Maps", "Google Maps")}
                   </a>
                 )}
-                <button type="button" onClick={() => copyText(utmClipboardText, "utm")} className="fml-action" disabled={utmRows.length === 0}>
-                  {copiedTarget === "utm" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                  {copiedTarget === "utm" ? t("تم النسخ", "Copied", "Kopyalandı") : t("نسخ UTM", "Copy UTM", "UTM kopyala")}
-                </button>
+                <div className="fml-copy-group">
+                  <button
+                    type="button"
+                    onClick={() => copyText(formatPoints(visibleRows, copyFormat), "utm")}
+                    className="fml-action fml-copy-group__button"
+                    disabled={!canCopy}
+                    title={copyHint || undefined}
+                    aria-label={copyHint || undefined}
+                  >
+                    {copiedTarget === "utm" ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                    {copiedTarget === "utm"
+                      ? t("تم النسخ", "Copied", "Kopyalandı")
+                      : t("نسخ الإحداثيات", "Copy coordinates", "Koordinatları kopyala")}
+                  </button>
+                  <label className="fml-copy-group__format">
+                    <span className="fml-sr-only">{t("صيغة النسخ", "Copy format", "Kopyalama biçimi")}</span>
+                    <select
+                      value={copyFormat}
+                      onChange={(event) => chooseCopyFormat(event.target.value as CopyFormat)}
+                      dir="ltr"
+                    >
+                      {COPY_FORMAT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value} disabled={!canFormat(visibleRows, option.value)}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} aria-hidden="true" />
+                  </label>
+                </div>
                 {whatsappShareUrl && (
                   <a href={whatsappShareUrl} target="_blank" rel="noopener noreferrer" className="fml-action">
                     <MessageCircle size={16} />
