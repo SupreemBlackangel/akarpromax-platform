@@ -417,6 +417,47 @@ boot without it (`getRuntimeEnv`/`parseDbProvider`).
 - **Runtime smoke (production build, `.env` → Neon):** `next start` and `node .next/standalone/server.js` both boot; GET / 200; `/api/geo?type=countries` 200 (PG geo tables); POST `/api/ads/match` HERO 200 (house campaign served — PG content schema ensured at runtime); `/api/auth/login` 401 (PG users query); `/api/properties`, `/api/news`, `/api/currencies`, `/api/land/search` all 200 with real Neon rows. NOTE: `next start` prints a warning that `output: standalone` should run via `node .next/standalone/server.js` (copy `.next/static` + `public` into the standalone dir) — that artifact is verified working.
 - **Schema:** no migrations changed. PG content schema is ensured at runtime by `ensureContentSchema` via `PgRuntimeDb` (translated D1 SQL); auth/geo/properties tables already exist in Neon (0015). All verified live.
 
+## Find My Land clipboard/export (DONE 2026-09-12)
+
+Four phases on `src/components/tools/FindMyLand.tsx`, documented in
+`docs/tools/find-my-land.md`. Commits `48d825b`, `4ffcc3a`, `087a732`, `d3c0e79`.
+
+**Copy** (`src/lib/tools/fml-clipboard.ts`): five formats — `en` (default,
+`label<TAB>E,N`), `ne`, `csv`, `acad` (`_PLINE`…`C`), `wgs84` — chosen beside
+the button and remembered in `localStorage` under `fml.copyFormat`. The exact
+default output is pinned character-for-character in `tests/fml-clipboard.test.ts`;
+change it and that test fails. Zone and EPSG live in the button's tooltip, not
+in the copied rows. Latin digits always, whatever the UI language.
+
+**Export** (`src/lib/tools/fml-export.ts` over `src/lib/tools/dxf.ts`): DXF
+(closed LWPOLYLINE on PARCEL, labels on POINTS, area on AREA, `$INSUNITS = 6`),
+KML (`lon,lat,0` — the opposite order to every table in the tool) and CSV with
+both coordinate systems. `points-to-dxf.ts` is deliberately NOT migrated onto
+the shared primitives: its output has no test and rewriting a working tool's
+file format to share plumbing is an unforced regression risk.
+
+**Manual entry**: a paste tab takes everything the copy button produces, plus
+loose typed shapes, via `parsePastedCoordinateRows` — a separate entry point
+from the document parser so loosening separators could not change how existing
+documents read. Typed points become document text and go through
+`/api/land/resolve` like any scan; there is no second endpoint. Table values are
+correctable in place; a correction is a text edit, applies only when the old
+value appears exactly once, and drops the page images, OCR text and positioned
+word boxes, which describe the text *before* it.
+
+**Map and OCR**: map/satellite toggle (Esri imagery, attribution required),
+colours read from tokens because Leaflet takes strings, side lengths and area
+drawn from `boundary.segments`, hidden below zoom 16. Preprocessing runs in
+`src/workers/fml-preprocess.worker.ts` with the pixel functions shared from
+`lib/land/ocr/preprocess.ts` by both the worker and the main-thread fallback.
+OCR width capped at 2000px.
+
+**Not done**: splitting the 2,700-line component (pure move, no user gain,
+highest regression risk); "save to my account" (`POST /api/land` takes
+`ownerId` from the body unauthenticated) and "create a listing with these
+boundaries" (`/dashboard/properties/new` reads no query params) — both need
+platform work, not tool work.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
