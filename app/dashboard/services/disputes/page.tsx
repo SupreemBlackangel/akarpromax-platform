@@ -92,11 +92,11 @@ export default function CustomerDisputesPage() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.disputeId") ?? "نزاع"} #{d.id.slice(0, 8)}</span>
                       <span className="px-2 py-0.5 rounded-full text-xs font-semibold
-                        {d.status === 'open' ? 'bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]' :
-                         d.status === 'in_review' ? 'bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]' :
-                         d.status === 'resolved' ? 'bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)]' :
-                         'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                        }">
+ {d.status === 'open' ? 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]' :
+ d.status === 'in_review' ? 'bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]' :
+ d.status === 'resolved' ? 'bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)]' :
+ 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+ }">
                         {d.status}
                       </span>
                     </div>

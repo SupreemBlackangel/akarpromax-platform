@@ -158,7 +158,7 @@ export default function JobDetailPage({ id }: Props) {
                 {(job.scheduled_at || job.scheduled_date) && <div><span className="block text-xs text-gray-500 dark:text-gray-400">الموعد</span><span className="text-gray-800 dark:text-gray-100">{formatDateTime(job.scheduled_at ?? job.scheduled_date)}</span></div>}
                 {(job.short_address || job.address) && <div><span className="block text-xs text-gray-500 dark:text-gray-400">العنوان</span><span className="text-gray-800 dark:text-gray-100">{job.short_address ?? job.address}</span></div>}
               </div>
-              {job.source_type === "direct_booking" && job.viewer_role === "provider" && job.status === "pending_provider" && <p className="mt-3 rounded-xl bg-[var(--accent-soft)] p-3 text-xs font-bold text-[var(--accent)]">تظهر بيانات الموقع والتواصل الدقيقة بعد قبول الحجز فقط.</p>}
+              {job.source_type === "direct_booking" && job.viewer_role === "provider" && job.status === "pending_provider" && <p className="mt-3 rounded-xl bg-[var(--color-warning-soft)] p-3 text-xs font-bold text-[var(--color-warning)]">تظهر بيانات الموقع والتواصل الدقيقة بعد قبول الحجز فقط.</p>}
               {job.source_type === "direct_booking" && (job.contact_phone || job.contact_email) && <div className="mt-3 rounded-xl bg-[var(--color-primary-soft)] p-3 text-sm"><strong>التواصل:</strong> {job.contact_phone || job.contact_email} ({job.contact_preference})</div>}
               {offer && Boolean(offer.offer_notes) && <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">{String(offer.offer_notes)}</p>}
               {job.notes && <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{job.notes}</p>}

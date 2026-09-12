@@ -6,7 +6,7 @@ import { requestStatusLabel, requestStatusColor, offerStatusLabel, offerStatusCo
 const colorClasses: Record<StatusColor, string> = {
   default: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300",
   success: "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300",
-  warning: "bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]",
+  warning: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
   error: "bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-red-300",
   info: "bg-[var(--color-primary-soft)] dark:bg-blue-900/30 text-[var(--color-primary)] dark:text-[var(--color-primary)]",
 };

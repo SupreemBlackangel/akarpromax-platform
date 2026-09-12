@@ -534,7 +534,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
                       : "بدون حدود"}
                   </td>
                   <td className="px-3 py-2">
-                    <span className={`px-2 py-1 text-xs rounded-lg ${placement.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]"}`}>
+                    <span className={`px-2 py-1 text-xs rounded-lg ${placement.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--color-warning-soft)] text-[var(--color-warning)]"}`}>
                       {placement.status === "active" ? "نشط" : "موقوف"}
                     </span>
                   </td>
@@ -792,7 +792,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{source.countryCode ? countryName(source.countryCode) : "عالمي"}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-lg ${source.trustLevel === "TRUSTED" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]"}`}>
+                    <span className={`px-2 py-1 text-xs rounded-lg ${source.trustLevel === "TRUSTED" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-[var(--color-warning-soft)] text-[var(--color-warning)]"}`}>
                       {trustLabels[source.trustLevel] ?? source.trustLevel}
                     </span>
                   </td>
@@ -1093,7 +1093,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
       </div>
 
       {feedEmpty && !loading && (
-        <div className="mb-4 px-4 py-3 bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)] rounded-lg text-sm font-semibold">
+        <div className="mb-4 px-4 py-3 bg-[var(--color-warning-soft)] text-[var(--color-warning)] rounded-lg text-sm font-semibold">
           الشريط الحي فارغ — الموقع يعرض الآن نصوص الاحتياط الثابتة.
           <span className="block mt-1 text-xs font-normal">فعّل خبرًا واحدًا على الأقل (الحالة «منشورة») أو شغّل استهداف WEBSITE_TICKER الموقوف حتى يعود الشريط الحي للعمل.</span>
         </div>
@@ -1146,7 +1146,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
                       {!row.placement && <div className="text-xs text-gray-400">استهداف افتراضي (بدون سجل مخصص)</div>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs rounded-lg ${paused ? "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]" : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300"}`}>
+                      <span className={`px-2 py-1 text-xs rounded-lg ${paused ? "bg-[var(--color-warning-soft)] text-[var(--color-warning)]" : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300"}`}>
                         {paused ? "موقوف" : "نشط"}
                       </span>
                     </td>
@@ -1453,7 +1453,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                       </label>
                     )}
                     {editing.scope === "city" && !cities.length && (
-                      <p className="text-xs text-[var(--accent)] dark:text-[var(--accent)]">لا توجد مدن مدرجة لهذه الدولة بعد.</p>
+                      <p className="text-xs text-[var(--color-warning)]">لا توجد مدن مدرجة لهذه الدولة بعد.</p>
                     )}
                   </div>
                   <label className="block">
@@ -1539,7 +1539,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                       <option value="draft">مسودة</option>
                       <option value="active">منشورة</option>
                     </select>
-                    {!canPublish && <span className="text-xs text-[var(--accent)] dark:text-[var(--accent)]">تنشر كمسودة — تحتاج صلاحية النشر.</span>}
+                    {!canPublish && <span className="text-xs text-[var(--color-warning)]">تنشر كمسودة — تحتاج صلاحية النشر.</span>}
                   </label>
                   <label className="block">
                     <span className="text-xs text-gray-500 dark:text-gray-400">الأولوية (الأصغر أولًا)</span>
@@ -1605,11 +1605,11 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 text-xs rounded-lg ${item.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : item.status === "draft" ? "bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)]" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                          <span className={`px-2 py-1 text-xs rounded-lg ${item.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : item.status === "draft" ? "bg-[var(--color-warning-soft)] text-[var(--color-warning)]" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
                             {statusLabels[item.status] ?? item.status}
                           </span>
                           {item.reviewStatus !== "APPROVED" && (
-                            <div className={`text-[10px] mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-[var(--accent)] dark:text-[var(--accent)]"}`}>
+                            <div className={`text-[10px] mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-[var(--color-warning)]"}`}>
                               {reviewLabels[item.reviewStatus] ?? item.reviewStatus}
                             </div>
                           )}

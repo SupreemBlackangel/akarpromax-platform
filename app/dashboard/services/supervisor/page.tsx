@@ -177,7 +177,7 @@ export default function SupervisorDashboardPage() {
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.city_id || "—"}</td>
-                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-[var(--accent-soft)] dark:bg-[var(--accent-soft)]/30 text-[var(--accent)] dark:text-[var(--accent)] text-xs font-semibold">{p.status}</span></td>
+                      <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-[var(--color-warning-soft)] text-[var(--color-warning)] text-xs font-semibold">{p.status}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
                           <button onClick={() => void setProviderStatus(p.id, "approved")} disabled={busy} className="px-3 py-1.5 rounded-lg bg-[var(--color-success)] hover:bg-[var(--color-success)]/80 disabled:opacity-50 text-white text-xs font-bold">{t("services.approve") ?? "اعتماد"}</button>
@@ -212,7 +212,7 @@ export default function SupervisorDashboardPage() {
                     <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
                       <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-md bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] text-xs font-semibold">{r.target_type}</span></td>
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.reason || r.description || "—"}</td>
-                      <td className="px-4 py-3 text-xs font-semibold text-[var(--accent)] dark:text-[var(--accent)]">{r.status || "open"}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-[var(--color-warning)]">{r.status || "open"}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs">{r.created_at ? new Date(r.created_at).toLocaleString(locale === "ar" ? "ar-SA" : locale === "tr" ? "tr-TR" : "en-US") : "—"}</td>
                       <td className="px-4 py-3">
                         {(r.status === "open" || r.status === "in_review") && (

@@ -1,6 +1,7 @@
 import type { Translation } from "@/src/types/site";
 import PageContainer from "@/src/components/layout/PageContainer";
 import { FOOTER_COLUMNS, FOOTER_CONTACT, FOOTER_SOCIAL } from "@/src/config/footer-navigation";
+import BrandMark from "@/src/components/ui/BrandMark";
 
 /**
  * Public footer, driven entirely by src/config/footer-navigation.ts.
@@ -21,13 +22,7 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
           <div className="flex flex-col gap-[var(--space-3)]">
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
             <a href="/" aria-label={labels.brandTitle} className="inline-flex items-center gap-[var(--space-2)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]">
-              <span className="flex size-8 items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--color-primary)] font-bold text-[color:var(--color-primary-foreground)]" aria-hidden="true">
-                A
-              </span>
-              <span className="flex flex-col leading-tight">
-                <strong className="text-[var(--font-size-md)] font-semibold text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
-                <small className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.brandSubtitle}</small>
-              </span>
+              <BrandMark size="md" name={labels.brandTitle} subtitle={labels.brandSubtitle} />
             </a>
             <p className="max-w-prose text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)]">
               {labels.footerDescription}

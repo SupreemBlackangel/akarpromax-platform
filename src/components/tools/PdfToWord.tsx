@@ -532,7 +532,7 @@ export function PdfToWord({ locale }: Props) {
           >
             <span className="mb-3 flex items-center justify-between gap-3">
               <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${mode === "editable" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-background)] text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)]"}`}><PencilLine className="h-5 w-5" /></span>
-              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-[var(--accent)] dark:bg-amber-950/50 dark:text-[var(--accent)]">{arabic ? "تنسيق تقريبي" : "Approximate layout"}</span>
+              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-[var(--color-warning)]">{arabic ? "تنسيق تقريبي" : "Approximate layout"}</span>
             </span>
             <span className="block text-sm font-bold text-[var(--color-text-primary)] dark:text-white">{arabic ? "نص قابل للتحرير" : "Editable text"}</span>
             <span className="mt-1.5 block text-xs leading-5 text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">{arabic ? "يعيد بناء الأسطر واتجاه العربية والجداول الممكن اكتشافها. قد يختلف التخطيط عن PDF المعقد." : "Rebuilds lines, Arabic RTL, and detectable tables. Complex layouts may differ from the PDF."}</span>

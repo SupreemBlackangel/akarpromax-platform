@@ -193,7 +193,7 @@ export function PointsToDxf({ locale }: Props) {
         )}
 
         {content.trim() && parsed.points.length === 0 && !readError && (
-          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-[var(--accent-soft)] p-4 text-sm font-bold text-amber-800">
+          <div className="flex items-start gap-2 rounded-xl border border-[var(--color-warning)]/40 bg-[var(--color-warning-soft)] p-4 text-sm font-bold text-[var(--color-warning)]">
             <AlertTriangle size={18} className="mt-0.5 shrink-0" />
             {t("لم يتم العثور على نقاط صالحة. تأكد أن كل سطر يحتوي على N ثم X ثم Y ثم Z.", "No valid points were found. Check that each row contains N, X, Y and Z.")}
           </div>
@@ -213,7 +213,7 @@ export function PointsToDxf({ locale }: Props) {
                       )}
                     </p>
                     {parsed.skippedLines > 0 && (
-                      <p className="mt-1 text-xs font-semibold text-[var(--accent)]">
+                      <p className="mt-1 text-xs font-semibold text-[var(--color-warning)]">
                         {t(`تم تخطي ${parsed.skippedLines} سطر غير صالح`, `${parsed.skippedLines} invalid rows skipped`)}
                       </p>
                     )}
@@ -264,7 +264,7 @@ export function PointsToDxf({ locale }: Props) {
                         <td className="px-4 py-2.5 font-black text-[var(--color-text-primary)]">{point.name || "—"}</td>
                         <td className="px-4 py-2.5 text-[var(--color-primary)]">{point.x.toFixed(3)}</td>
                         <td className="px-4 py-2.5 text-[var(--color-success)]">{point.y.toFixed(3)}</td>
-                        <td className="px-4 py-2.5 text-[var(--accent)]">{point.z.toFixed(3)}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-warning)]">{point.z.toFixed(3)}</td>
                         <td className="px-4 py-2.5 font-bold text-purple-700">{point.code || "—"}</td>
                       </tr>
                     ))}

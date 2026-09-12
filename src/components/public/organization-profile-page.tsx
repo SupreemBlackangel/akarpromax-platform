@@ -66,9 +66,9 @@ const IDENTITY = {
     error: { ar: "تعذر تحميل ملف الشركة", en: "The company profile could not be loaded.", tr: "Sirket profili yuklenemedi." },
     titleNote: { ar: "نشاط تجاري", en: "Business Entity", tr: "Ticari Isletme" },
     membersLabel: { ar: "فريق العمل", en: "Team members", tr: "Ekip uyeleri" },
-    chip: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
+    chip: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
     chipSolid: "bg-amber-600 text-white",
-    heading: "text-[var(--accent)] dark:text-[var(--accent)]",
+    heading: "text-[var(--color-warning)]",
     cta: { ar: "تصفح الشركات", en: "Browse companies", tr: "Sirketlere goz at" },
   },
 } as const;

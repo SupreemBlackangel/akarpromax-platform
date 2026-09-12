@@ -155,7 +155,7 @@ export default function NewsPageClient() {
                           <span className="rounded-full bg-red-100 px-2.5 py-1 text-[var(--color-error)] dark:bg-red-900/40 dark:text-red-300">{locale === "ar" ? "عاجل" : locale === "tr" ? "Son Dakika" : "Breaking"}</span>
                         )}
                         {item.isPinned && (
-                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]">{locale === "ar" ? "مثبت" : locale === "tr" ? "Sabit" : "Pinned"}</span>
+                          <span className="rounded-full bg-[var(--color-warning-soft)] px-2.5 py-1 text-[var(--color-warning)]">{locale === "ar" ? "مثبت" : locale === "tr" ? "Sabit" : "Pinned"}</span>
                         )}
                       </div>
                       <h2 className="text-xl font-black text-gray-900 dark:text-white">{title}</h2>

@@ -56,3 +56,21 @@ live in `tests/design-tokens.test.mjs`. Run:
 ```
 node --import tsx --test tests/design-tokens.test.mjs tests/ui-components.test.mjs
 ```
+
+## Raw colours are a lint error (design phase 1)
+
+`eslint-rules/no-raw-colours.mjs` adds four `no-restricted-syntax` selectors to every `className`
+under `app/**` and `src/**`: a Tailwind palette class (`bg-gray-100`, `text-red-500`,
+`border-amber-200/40` …) or a hex literal (`#1769ff`) in a string or template fails the lint.
+Colours come from `var(--color-*)` in `src/styles/tokens.css` — the only file allowed to hold a hex.
+
+`eslint-raw-colour-allowlist.json` lists the files that already carried raw colours when the rule
+landed (124 at the time). They are exempt so the rule could ship without a repo-wide rewrite;
+**delete a file from the list when you clean it** and the rule guards it from then on. Do not add
+files to the list.
+
+Companion rules from the same phase, enforced by review rather than lint: two font families only
+(`--font-heading-stack` for h1–h4 and the brand, `--font-body-stack` for everything else; no Inter,
+Tajawal or Arial), the type scale `--text-xs … --text-2xl` (nothing below 12px, no weight 900 under
+28px, numbers `tabular-nums`), and gold (`--color-accent`) for exactly three things: the
+"featured" badge, the "verified" badge and the rating star.

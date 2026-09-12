@@ -11,7 +11,7 @@ const STATUS_TONES: Record<string, string> = {
   synced: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]",
   conflict: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
   failed: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
-  retrying: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
+  retrying: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
   dead_letter: "bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   queued: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]",
 };

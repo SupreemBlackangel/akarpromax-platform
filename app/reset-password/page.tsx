@@ -61,7 +61,7 @@ function ResetPasswordForm() {
     return (
       <>
         <h1 className="auth-title text-2xl font-bold">{t.resetTitle}</h1>
-        <p className="auth-ok mt-4 text-sm text-[color:var(--color-accent)]">✓ تم تعيين كلمة المرور. جارٍ تحويلك إلى تسجيل الدخول…</p>
+        <p className="auth-ok mt-4 text-sm text-[var(--color-success)]">✓ تم تعيين كلمة المرور. جارٍ تحويلك إلى تسجيل الدخول…</p>
       </>
     );
   }

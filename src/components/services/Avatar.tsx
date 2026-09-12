@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const palette = [
-  "bg-[var(--color-primary)]", "bg-[var(--color-success)]", "bg-[var(--accent-soft)]0", "bg-rose-500",
+  "bg-[var(--color-primary)]", "bg-[var(--color-success)]", "bg-[var(--color-warning)]", "bg-rose-500",
   "bg-indigo-600", "bg-teal-600", "bg-orange-500", "bg-violet-600",
 ];
 

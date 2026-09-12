@@ -165,7 +165,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
                </span>
              )}
              {request.urgency && (
-               <span className="px-3 py-1.5 rounded-lg bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)] font-semibold">إلحاح: {request.urgency}</span>
+               <span className="px-3 py-1.5 rounded-lg bg-[var(--color-warning-soft)] text-[var(--color-warning)] font-semibold">إلحاح: {request.urgency}</span>
              )}
              {request.preferred_period && (
                <span className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">{request.preferred_period}</span>

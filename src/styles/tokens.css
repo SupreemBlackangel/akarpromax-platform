@@ -128,8 +128,29 @@
   --shadow-inset: inset 0 2px 4px rgba(20, 50, 100, 0.04);
 
   /* ---- Typography ---- */
-  --font-family-arabic: var(--font-cairo), "Cairo", Tahoma, Arial, sans-serif;
-  --font-family-latin: var(--font-inter), "Segoe UI", Roboto, Arial, sans-serif;
+  /* Two families only (docs/brand-identity.md). next/font injects
+     --font-heading / --font-body on <html>; the literal names behind them are
+     the fallback when the font file has not arrived yet. The two legacy
+     aliases keep every existing `var(--font-family-*)` resolving. */
+  --font-heading-stack: var(--font-heading), "Cairo", Tahoma, sans-serif;
+  --font-body-stack: var(--font-body), "IBM Plex Sans Arabic", Tahoma, sans-serif;
+  --font-family-arabic: var(--font-body-stack);
+  --font-family-latin: var(--font-body-stack);
+
+  /* Type scale. Six steps; nothing in the UI goes below --text-xs. Small
+     sizes read as running text (1.5); headings sit tighter (1.25). */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 40px;
+  --leading-xs: 1.5;
+  --leading-sm: 1.5;
+  --leading-md: 1.5;
+  --leading-lg: 1.35;
+  --leading-xl: 1.25;
+  --leading-2xl: 1.15;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-md: 15px;

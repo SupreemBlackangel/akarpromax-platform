@@ -49,7 +49,7 @@ export default function MatchedRequestsPage() {
         <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
 
         {!loading && hasProfile === false && (
-          <div className="mb-4 rounded-xl bg-[var(--accent-soft)] dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-[var(--accent)] dark:text-[var(--accent)]">
+          <div className="mb-4 rounded-xl bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/40 p-5 text-sm text-[var(--color-warning)]">
             {t("services.applyToMatch") ?? "للاستفادة من نظام المطابقة تحتاج لإنشاء ملف مقدم خدمة والموافقة عليه."}
             <Link href="/dashboard/services/provider-profile" className="mt-2 inline-block font-bold underline">← {t("services.applyProvider") ?? "قدم الآن"}</Link>
           </div>

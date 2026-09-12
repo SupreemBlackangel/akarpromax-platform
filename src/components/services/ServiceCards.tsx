@@ -332,7 +332,7 @@ export function OfferCard({ offer, locale, customer = false }: { offer: OfferRow
       {offer.offer_notes && <p className="mt-3 text-sm text-[var(--color-text-secondary)]">{offer.offer_notes}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">
         {Boolean(offer.materials_included) && <span className="px-2 py-0.5 rounded-md bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300">المواد متضمنة</span>}
-        {Boolean(offer.needs_visit) && <span className="px-2 py-0.5 rounded-md bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]">يتطلب معاينة</span>}
+        {Boolean(offer.needs_visit) && <span className="px-2 py-0.5 rounded-md bg-[var(--color-warning-soft)] text-[var(--color-warning)]">يتطلب معاينة</span>}
       </div>
     </div>
   );

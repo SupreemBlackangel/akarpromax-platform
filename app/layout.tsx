@@ -1,25 +1,28 @@
 import Script from "next/script";
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
-import { Cairo, Inter } from "next/font/google";
+import { Cairo, IBM_Plex_Sans_Arabic } from "next/font/google";
 import SkipLink from "@/src/components/ui/SkipLink";
 import { GeoProvider } from "@/src/contexts/GeoContext";
 import { DisplaySettingsProvider } from "@/src/components/public/display-settings";
 import { DEFAULT_PLATFORM_SETTINGS, getPlatformSettings, MOBILE_BREAKPOINT_PX, type DisplaySettings } from "@/lib/platform-settings";
 import "./globals.css";
 
-const cairo = Cairo({
+// Two families, per docs/brand-identity.md: Cairo for headings and the brand,
+// IBM Plex Sans Arabic for everything else. Both cover Arabic and Latin, so
+// the same pair serves ar/en/tr — Inter is gone.
+const heading = Cairo({
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["700", "800", "900"],
   display: "swap",
-  variable: "--font-cairo",
+  variable: "--font-heading",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+const body = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "700"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-body",
 });
 
 /**
@@ -164,7 +167,7 @@ export default async function RootLayout({
     .then((settings) => settings.display)
     .catch(() => DEFAULT_PLATFORM_SETTINGS.display);
   return (
-    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${cairo.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"} className={`${heading.variable} ${body.variable}`} suppressHydrationWarning>
       <head>
         <Script
           id="theme-boot"

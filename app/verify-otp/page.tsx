@@ -60,7 +60,7 @@ function VerifyOtpForm() {
     return (
       <>
         <h1 className="auth-title text-2xl font-bold">{t.verifyOtpTitle}</h1>
-        <p className="auth-ok mt-4 text-sm text-[color:var(--color-accent)]">✓ تم التحقق. جارٍ التحويل…</p>
+        <p className="auth-ok mt-4 text-sm text-[var(--color-success)]">✓ تم التحقق. جارٍ التحويل…</p>
       </>
     );
   }

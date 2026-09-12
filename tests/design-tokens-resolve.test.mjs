@@ -26,10 +26,12 @@ const STYLESHEETS = ["src/styles/tokens.css", "app/globals.css", "src/styles/adm
  * Names that are legitimately absent from the stylesheets.
  *
  * next/font generates the two font variables and attaches them to <html> at
- * runtime (app/layout.tsx passes `cairo.variable` and `inter.variable`), so
- * they can never appear in a checked-in stylesheet.
+ * runtime (app/layout.tsx passes `heading.variable` and `body.variable`), so
+ * they can never appear in a checked-in stylesheet. The names changed with the
+ * type system in design phase 1: Cairo is the heading face, IBM Plex Sans
+ * Arabic the body face, and Inter is gone.
  */
-const INJECTED_AT_RUNTIME = new Set(["--font-cairo", "--font-inter"]);
+const INJECTED_AT_RUNTIME = new Set(["--font-heading", "--font-body"]);
 
 function walk(dir, files = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

@@ -50,7 +50,7 @@ export default function OfficeIntegrationPage() {
     { label: "الأجهزة النشطة", value: activeDevices, icon: "💻", href: "/dashboard/office/devices", tone: "blue" },
     { label: "عمليات مزامنة ناجحة", value: syncedCount, icon: "🔄", href: "/dashboard/office/sync", tone: "green" },
     { label: "تعارضات", value: conflictCount, icon: "⚖", href: "/dashboard/office/sync?status=conflict", tone: "red" },
-    { label: "مسح رادار", value: radars.length, icon: "📡", href: "/dashboard/office/radar", tone: "purple" },
+    { label: "مسح رادار", value: radars.length, icon: "📡", href: "/dashboard/office/radar", tone: "info" },
     { label: "تنبيهات معلّقة", value: pendingDeliveries, icon: "🔔", href: "/dashboard/office/notifications", tone: "amber" },
   ];
 
@@ -58,8 +58,8 @@ export default function OfficeIntegrationPage() {
     blue: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]",
     green: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]",
     red: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
-    purple: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-    amber: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
+    info: "bg-[var(--color-info-soft)] text-[var(--color-info)]",
+    amber: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
   };
 
   return (

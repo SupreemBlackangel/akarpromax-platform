@@ -36,7 +36,7 @@ test("Button renders primary variant with type=button", () => {
 });
 
 test("Button maps variants to token colors and never raw hex", () => {
-  for (const variant of ["primary", "secondary", "outline", "ghost", "danger", "accent"]) {
+  for (const variant of ["primary", "secondary", "outline", "ghost", "danger"]) {
     const html = r(createElement(Button, { variant }, "Click"));
     assert.match(html, /bg-\[color:var\(--color-/, `variant ${variant} must use a color token`);
   }

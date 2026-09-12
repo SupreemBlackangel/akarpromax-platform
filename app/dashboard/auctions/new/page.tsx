@@ -140,11 +140,11 @@ export default function NewAuctionPage() {
 
         {/* Organizer Notice */}
         {isFixed && organizers.length === 0 && (
-          <div className="bg-[var(--accent-soft)] border border-amber-200 rounded-2xl p-5 flex items-start gap-4">
-            <AlertTriangle className="w-5 h-5 text-[var(--accent)] mt-0.5" />
+          <div className="bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/40 rounded-2xl p-5 flex items-start gap-4">
+            <AlertTriangle className="w-5 h-5 text-[var(--color-warning)] mt-0.5" />
             <div>
-              <p className="font-bold text-[var(--accent)] text-sm">لا توجد جهات منظمة متاحة</p>
-              <p className="text-xs text-[var(--accent)] mt-1">
+              <p className="font-bold text-[var(--color-warning)] text-sm">لا توجد جهات منظمة متاحة</p>
+              <p className="text-xs text-[var(--color-warning)] mt-1">
                 المزاد المغلق يتطلب جهة منظمة (مكتب عقاري أو محاماة) حاصلة على صلاحية من الإدارة. تواصل مع الدعم.
               </p>
             </div>

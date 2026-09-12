@@ -16,10 +16,10 @@ interface AuctionRow {
 }
 
 const statusBadge: Record<string, { label: string; color: string; bg: string }> = {
-  pending_seller_terms: { label: 'بانتظار موافقة البائع', color: 'text-[var(--accent)]', bg: 'bg-amber-100' },
+  pending_seller_terms: { label: 'بانتظار موافقة البائع', color: 'text-[var(--color-warning)]', bg: 'bg-amber-100' },
   active: { label: 'نشط', color: 'text-green-700', bg: 'bg-green-100' },
   awaiting_seller_decision: { label: 'بانتظار قرار البائع', color: 'text-[var(--color-primary)]', bg: 'bg-[var(--color-primary-soft)]' },
-  awarded: { label: 'تم اعتماد الفائز', color: 'text-purple-700', bg: 'bg-purple-100' },
+  awarded: { label: 'تم اعتماد الفائز', color: 'text-[var(--color-success)]', bg: 'bg-[var(--color-success-soft)]' },
   ended_no_bids: { label: 'انتهى بلا مزايدات', color: 'text-gray-600', bg: 'bg-gray-100' },
   rejected: { label: 'رفض البائع النتيجة', color: 'text-[var(--color-error)]', bg: 'bg-red-100' },
   cancelled: { label: 'ملغي', color: 'text-gray-500', bg: 'bg-gray-100' },

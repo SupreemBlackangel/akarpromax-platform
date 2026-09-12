@@ -159,7 +159,7 @@ export default function NewPropertyPage() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-[var(--color-surface)]/10 px-3 py-1.5 text-xs font-bold backdrop-blur mb-4">
-                <Sparkles className="h-3.5 w-3.5 text-[var(--accent)]" />
+                <Sparkles className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                 معالج إضافة عقار
               </div>
               <h1 className="text-3xl md:text-4xl font-black mb-2">إضافة عقار جديد</h1>

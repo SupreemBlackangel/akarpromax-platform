@@ -9,6 +9,7 @@ import { trapFocusKeydown } from "@/src/components/ui/focus-trap";
 import { useDisplaySettings } from "@/src/components/public/display-settings";
 import { selectThemeMode, useThemeMode } from "@/src/components/public/ThemeSwitcher";
 import { themeOptions } from "@/src/data/translations";
+import BrandMark from "@/src/components/ui/BrandMark";
 
 /**
  * Mobile navigation side sheet. Follows Dialog semantics: focus trap, Escape,
@@ -131,9 +132,12 @@ export default function MobileNavigation({
         className="fixed inset-block-0 inset-inline-start-0 z-[var(--layer-dialog)] flex w-full max-w-[320px] flex-col overflow-y-auto border-e border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-[var(--shadow-overlay)] focus:outline-none md:hidden"
       >
         <div className="flex items-center justify-between gap-[var(--space-4)] border-b border-[color:var(--color-border)] p-[var(--space-5)]">
-          <h2 id={titleId} className="text-[var(--font-size-lg)] font-semibold text-[color:var(--color-text-primary)]">
-            {labels.mainNavAria}
-          </h2>
+          <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+            <BrandMark size="sm" />
+            <h2 id={titleId} className="truncate text-[var(--text-md)] font-semibold text-[color:var(--color-text-primary)]">
+              {labels.mainNavAria}
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}

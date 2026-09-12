@@ -128,7 +128,7 @@ export default function NewOfferPage({ id }: Props) {
         ) : !request ? (
           <p className="mt-6 text-gray-500 dark:text-gray-400">{t("services.empty")}</p>
         ) : !isOpen ? (
-          <div className="mt-6 rounded-xl bg-[var(--accent-soft)] dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 text-sm text-[var(--accent)] dark:text-[var(--accent)]">
+          <div className="mt-6 rounded-xl bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/40 p-5 text-sm text-[var(--color-warning)]">
             {t("services.requestClosed") ?? "هذا الطلب لم يعد متاحاً لاستقبال العروض."}
           </div>
         ) : (
@@ -142,7 +142,7 @@ export default function NewOfferPage({ id }: Props) {
               {request.description && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-3">{request.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2 text-sm">
                 <span className="px-3 py-1 rounded-lg bg-[var(--color-success-soft)] dark:bg-emerald-900/30 text-[var(--color-success)] dark:text-emerald-300 font-bold">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</span>
-                {request.urgency && <span className="px-3 py-1 rounded-lg bg-[var(--accent-soft)] dark:bg-amber-900/30 text-[var(--accent)] dark:text-[var(--accent)]">إلحاح: {request.urgency}</span>}
+                {request.urgency && <span className="px-3 py-1 rounded-lg bg-[var(--color-warning-soft)] text-[var(--color-warning)]">إلحاح: {request.urgency}</span>}
               </div>
             </div>
 

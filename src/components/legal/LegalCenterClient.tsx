@@ -59,7 +59,7 @@ export default function LegalCenterClient({ slug }: Props) {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-amber-200 bg-[var(--accent-soft)] px-5 py-4 text-sm font-bold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <div className="rounded-2xl border border-[var(--color-warning)]/40 bg-[var(--color-warning-soft)] px-5 py-4 text-sm font-bold text-[var(--color-warning)]">
           REQUIRES HUMAN LEGAL REVIEW BEFORE PRODUCTION
         </div>
 

@@ -23,7 +23,7 @@ export function ToolResultCard({ metrics, note }: ToolResultCardProps) {
               {m.value}
             </div>
             {m.warning && (
-              <div className="text-[10px] text-[var(--accent)] dark:text-[var(--accent)] mt-0.5">{m.warning}</div>
+              <div className="text-[10px] text-[var(--color-warning)] mt-0.5">{m.warning}</div>
             )}
           </div>
         ))}

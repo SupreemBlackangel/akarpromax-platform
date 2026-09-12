@@ -86,7 +86,7 @@ function ChangePasswordForm({ t }: { t: import("@/lib/auth-labels").AuthLabels }
         <p className="auth-hint mt-1 text-xs text-[color:var(--color-text-secondary)]">{t.passwordHint}</p>
       </div>
       <Button type="submit" variant="primary" loading={submitting}>{t.changePasswordSubmit}</Button>
-      {status === "success" && <p className="auth-ok text-sm text-[color:var(--color-accent)]">✓ تم تحديث كلمة المرور</p>}
+      {status === "success" && <p className="auth-ok text-sm text-[var(--color-success)]">✓ تم تحديث كلمة المرور</p>}
       {status === "error" && <p className="auth-error text-sm text-[color:var(--color-danger)]">{error}</p>}
     </form>
   );
@@ -135,7 +135,7 @@ function ChangeEmailForm({ t, onStarted }: { t: import("@/lib/auth-labels").Auth
         <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.newEmailPlaceholder} className="auth-input mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-3)] py-[var(--space-2)]" required />
       </div>
       <Button type="submit" variant="primary" loading={submitting}>{t.changeEmailSubmit}</Button>
-      {status === "sent" && <p className="auth-ok text-sm text-[color:var(--color-accent)]">✓ أرسلنا رمزاً إلى بريدك الجديد</p>}
+      {status === "sent" && <p className="auth-ok text-sm text-[var(--color-success)]">✓ أرسلنا رمزاً إلى بريدك الجديد</p>}
       {status === "error" && <p className="auth-error text-sm text-[color:var(--color-danger)]">{error}</p>}
     </form>
   );

@@ -9,7 +9,7 @@ type DeliveryRow = Record<string, unknown> & { id: string; status: string; event
 const STATUS_TONES: Record<string, string> = {
   queued: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]",
   delivered: "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]",
-  deferred: "bg-amber-100 text-[var(--accent)] dark:bg-amber-900/40 dark:text-[var(--accent)]",
+  deferred: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]",
   failed: "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]",
 };
 

@@ -66,13 +66,13 @@ function AccountProfileForm() {
       <p className="auth-subtitle mt-2 text-sm text-[color:var(--color-text-secondary)]">{t.accountDescription}</p>
 
       <div className="mt-6 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-2xl font-black text-[color:var(--color-accent)]">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-2xl font-black text-[var(--color-primary)]">
           {(me?.name ?? viewer.displayName).charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
           <p className="text-lg font-bold text-[color:var(--color-text-primary)]">{me?.name ?? viewer.displayName}</p>
           <p className="text-sm text-[color:var(--color-text-secondary)]">{me?.email ?? viewer.email}</p>
-          <span className="mt-1 inline-block rounded-full bg-[color:var(--color-accent-soft)] px-3 py-0.5 text-xs font-bold text-[color:var(--color-accent)]">
+          <span className="mt-1 inline-block rounded-full bg-[var(--color-primary-soft)] px-3 py-0.5 text-xs font-bold text-[var(--color-primary)]">
             {roleLabel}
           </span>
         </div>

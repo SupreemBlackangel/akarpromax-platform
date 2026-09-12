@@ -6,6 +6,7 @@ import type { Translation } from "@/src/types/site";
 import type { PublicNavItem } from "@/src/config/public-navigation";
 import { isNavItemActive } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
+import BrandMark from "@/src/components/ui/BrandMark";
 
 export type PublicSidebarExtraItem = {
   key: string;
@@ -97,12 +98,7 @@ export default function PublicSidebar({ labels, items, extraItems, currentPath, 
         <div className="flex items-center justify-between gap-2 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]/60 px-[var(--space-4)] py-[var(--space-4)]">
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-[var(--space-3)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
-            <img src="/brand/logo.svg" alt="" aria-hidden="true" className="size-9 shrink-0" width={36} height={36} />
-            <span className="flex flex-col leading-tight min-w-0">
-              <strong className="text-sm font-bold text-[color:var(--color-text-primary)] truncate">{labels.brandTitle}</strong>
-              <small className="text-[10px] font-semibold text-[color:var(--color-primary)] truncate">{labels.brandSubtitle}</small>
-            </span>
+            <BrandMark size="md" name={labels.brandTitle} subtitle={labels.brandSubtitle} />
           </a>
           {onToggle && (
             <button

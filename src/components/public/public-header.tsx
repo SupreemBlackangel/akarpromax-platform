@@ -11,6 +11,7 @@ import ThemeSwitcher from "@/src/components/public/ThemeSwitcher";
 import LanguageSwitcher from "@/src/components/public/LanguageSwitcher";
 import LocationCluster from "@/src/components/public/LocationCluster";
 import type { Locale } from "@/src/types/site";
+import BrandMark from "@/src/components/ui/BrandMark";
 
 type PublicHeaderProps = {
   labels: Translation;
@@ -57,11 +58,10 @@ export default function PublicHeader({
           )}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- presentational SSR-safe brand link */}
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
-            <img src="/brand/logo.svg" alt="" aria-hidden="true" className="size-9 shrink-0" width={36} height={36} />
+            <BrandMark size="md" />
             <span className="flex min-w-0 flex-col leading-tight">
-              <strong className="truncate text-[15px] font-black text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
-              <small className="hidden truncate text-[10px] font-bold text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>
+              <strong className="truncate font-[family-name:var(--font-heading-stack)] text-[var(--text-md)] font-extrabold text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
+              <small className="hidden truncate text-[var(--text-xs)] font-medium text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>
             </span>
           </a>
         </div>

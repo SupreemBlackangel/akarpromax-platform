@@ -57,7 +57,7 @@ export default function AuctionsPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       active: 'bg-green-100 text-green-700',
-      pending_seller_terms: 'bg-amber-100 text-[var(--accent)]',
+      pending_seller_terms: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]',
       awaiting_seller_decision: 'bg-orange-100 text-orange-700',
       awarded: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
       ended_no_bids: 'bg-gray-100 text-gray-700',

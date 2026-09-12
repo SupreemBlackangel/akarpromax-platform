@@ -1225,14 +1225,14 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                     <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 120, direction: "ltr" }}>
                       {perf.daily.map((d) => (
                         <div key={d.date} title={`${d.date} — ظهور ${d.impressions} • نقرات ${d.clicks}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 2, height: "100%" }}>
-                          <div style={{ height: `${Math.max(3, Math.round((d.clicks / max) * 100))}%`, background: "var(--accent)", borderRadius: 3 }} />
+                          <div style={{ height: `${Math.max(3, Math.round((d.clicks / max) * 100))}%`, background: "var(--color-info)", borderRadius: 3 }} />
                           <div style={{ height: `${Math.max(4, Math.round((d.impressions / max) * 100))}%`, background: "var(--color-primary)", borderRadius: 3, opacity: 0.85 }} />
                         </div>
                       ))}
                     </div>
                     <div style={{ display: "flex", gap: 14, marginTop: 10, fontSize: 11, fontWeight: 800 }}>
                       <span style={{ color: "var(--color-primary)" }}>■ الظهور</span>
-                      <span style={{ color: "var(--accent)" }}>■ النقرات</span>
+                      <span style={{ color: "var(--color-info)" }}>■ النقرات</span>
                       <span style={{ color: "var(--color-text-muted)", marginInlineStart: "auto" }}>{perf.daily[0]?.date} ← {perf.daily[perf.daily.length - 1]?.date}</span>
                     </div>
                   </div>
