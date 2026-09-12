@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getSessionIdentity } from "@/lib/sponsor-auth";
+import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
+import { PERMISSIONS } from "@/src/constants/permissions";
 import { getRequestFull, cancelRequestFull } from "@services/marketplace";
 import { SERVICE_ERROR_CODES } from "@services/constants";
 
@@ -20,7 +21,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   const body = (await request.json().catch(() => null)) as { reason?: string } | null;
   try {
-    await cancelRequestFull(id, identity.email, body?.reason ? body.reason.trim().slice(0, 500) || null : null, { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null });
+    await cancelRequestFull(
+      id,
+      identity.email,
+      body?.reason ? body.reason.trim().slice(0, 500) || null : null,
+      { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null },
+      { canManageAll: hasSponsorPermission(identity, PERMISSIONS.SERVICE_REQUESTS_MANAGE_ALL) },
+    );
   } catch (error) {
     if (error instanceof Error && error.message === "REQUEST_STATUS_INVALID") {
       return NextResponse.json({ error: "request_status_invalid" }, { status: 400 });

@@ -27,6 +27,11 @@ import {
   isOrderStatus,
   canTransition,
   canTransitionProvider,
+  canTransitionRequest,
+  REQUEST_REVIEW_ACTIONS,
+  REQUEST_REVIEW_ACTIONS_NEEDING_REASON,
+  REQUEST_REVIEW_STATUS,
+  type RequestReviewAction,
   type OrderStatus,
   ACTIVE_JOB_STATUS_SQL,
 } from "@services/constants";
@@ -1290,11 +1295,21 @@ export async function updateRequest(requestId: string, patch: {
   await writeAudit({ action: "service_request.update", entityType: "service_requests", entityId: requestId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
-export async function cancelRequestFull(requestId: string, byUserId: string, reason?: string | null, actor?: ActorContext): Promise<void> {
+export async function cancelRequestFull(
+  requestId: string,
+  byUserId: string,
+  reason?: string | null,
+  actor?: ActorContext,
+  // A supervisor holding SERVICE_REQUESTS_MANAGE_ALL could not cancel an
+  // abusive request: this guard refused everyone who was not the customer, so
+  // the only route to a live request the platform wanted stopped was the
+  // database. The route decides who qualifies; this module is told.
+  options: { canManageAll?: boolean } = {},
+): Promise<void> {
   const db = await getServicesDb();
   const request = await getRequestFull(requestId);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
-  if (String(request.customer_user_id) !== byUserId) throw new Error("ONLY_CUSTOMER");
+  if (String(request.customer_user_id) !== byUserId && !options.canManageAll) throw new Error("ONLY_CUSTOMER");
   const from = String(request.status);
   const cancellable: string[] = [REQUEST_STATUS.DRAFT, REQUEST_STATUS.PUBLISHED, REQUEST_STATUS.RECEIVING_OFFERS, REQUEST_STATUS.OFFER_SELECTED];
   if (!cancellable.includes(from)) throw new Error("REQUEST_STATUS_INVALID");
@@ -1302,7 +1317,14 @@ export async function cancelRequestFull(requestId: string, byUserId: string, rea
     .prepare("UPDATE service_requests SET status = 'cancelled', updated_at = ?1 WHERE id = ?2")
     .bind(nowMySqlDateTime(), requestId)
     .run();
-  await recordRequestHistory(requestId, from, REQUEST_STATUS.CANCELLED, reason ?? "أُلغي الطلب من قبل العميل", byUserId);
+  const byCustomer = String(request.customer_user_id) === byUserId;
+  await recordRequestHistory(
+    requestId,
+    from,
+    REQUEST_STATUS.CANCELLED,
+    reason ?? (byCustomer ? "أُلغي الطلب من قبل العميل" : "أُلغي الطلب من قبل الإدارة"),
+    byUserId,
+  );
   await writeAudit({ action: "service_request.cancel", entityType: "service_requests", entityId: requestId, actorUserId: actor?.userId, ipAddress: actor?.ip });
 }
 
@@ -1488,6 +1510,100 @@ export async function recordRequestHistory(requestId: string, from: string | nul
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
     [crypto.randomUUID(), requestId, from, to, note, changedBy ?? null, nowMySqlDateTime()],
   );
+}
+
+/**
+ * The platform's own decision about a request.
+ *
+ * Until now there was none to make: publishing ran the matching engine and that
+ * was the entire lifecycle. An administrator could not accept a request, refuse
+ * one, ask the customer for something missing, put somebody on it, or close it
+ * — and a supervisor could not even cancel an abusive one, because the only
+ * cancel path refuses anyone who is not the customer.
+ *
+ * This writes the review track (see migration 0016), which is separate from
+ * `status`. Rejecting is the one action that also touches `status`: a refused
+ * request must stop reaching craftsmen, so it is cancelled as well when its
+ * lifecycle still allows that. The two facts are recorded separately — the
+ * verdict in `review_status`, its effect in `status` — because "an
+ * administrator refused this" and "it is no longer live" are different claims
+ * and a later reader needs both.
+ */
+export async function reviewRequest(
+  requestId: string,
+  action: RequestReviewAction,
+  options: { reason?: string | null; assignee?: string | null } = {},
+  actor?: ActorContext,
+): Promise<{ reviewStatus: string; status: string }> {
+  const db = await getServicesDb();
+  const request = await getRequestFull(requestId);
+  if (!request) throw new Error("REQUEST_NOT_FOUND");
+
+  const reason = options.reason?.trim() || null;
+  if (REQUEST_REVIEW_ACTIONS_NEEDING_REASON.includes(action) && !reason) {
+    throw new Error("REQUEST_REVIEW_REASON_REQUIRED");
+  }
+  if (action === "assign" && !options.assignee?.trim()) {
+    throw new Error("REQUEST_ASSIGNEE_REQUIRED");
+  }
+
+  const now = nowMySqlDateTime();
+  const fromStatus = String(request.status ?? "");
+  const fromReview = String(request.review_status ?? REQUEST_REVIEW_STATUS.PENDING);
+  const nextReview = REQUEST_REVIEW_ACTIONS[action] ?? fromReview;
+
+  const fields: string[] = ["updated_at = ?1"];
+  const values: unknown[] = [now];
+  const set = (column: string, value: unknown) => {
+    values.push(value);
+    fields.push(`${column} = ?${values.length}`);
+  };
+
+  if (action === "assign") {
+    set("assigned_to", options.assignee?.trim() ?? null);
+    set("assigned_at", now);
+  } else {
+    set("review_status", nextReview);
+    set("reviewed_by", actor?.userId ?? null);
+    set("reviewed_at", now);
+    set("review_note", reason);
+    if (action === "close") set("closed_at", now);
+  }
+
+  // A refused request must stop being offered to craftsmen. `cancelled` is the
+  // lifecycle's own word for that, and REQUEST_FLOW decides whether the request
+  // is still somewhere it can be reached from — a completed job is not undone
+  // by a late refusal.
+  const cancelOnReject = action === "reject" && canTransitionRequest(fromStatus, REQUEST_STATUS.CANCELLED);
+  if (cancelOnReject) set("status", REQUEST_STATUS.CANCELLED);
+
+  values.push(requestId);
+  await db
+    .prepare(`UPDATE service_requests SET ${fields.join(", ")} WHERE id = ?${values.length}`)
+    .bind(...values)
+    .run();
+
+  if (cancelOnReject) {
+    await recordRequestHistory(requestId, fromStatus, REQUEST_STATUS.CANCELLED, reason, actor?.userId ?? null);
+  }
+  await writeAudit({
+    action: `service_request.review.${action}`,
+    entityType: "service_requests",
+    entityId: requestId,
+    metadata: {
+      before: { reviewStatus: fromReview, status: fromStatus },
+      after: { reviewStatus: action === "assign" ? fromReview : nextReview, status: cancelOnReject ? REQUEST_STATUS.CANCELLED : fromStatus },
+      reason,
+      assignee: action === "assign" ? options.assignee?.trim() ?? null : undefined,
+    },
+    actorUserId: actor?.userId,
+    ipAddress: actor?.ip,
+  });
+
+  return {
+    reviewStatus: action === "assign" ? fromReview : nextReview,
+    status: cancelOnReject ? REQUEST_STATUS.CANCELLED : fromStatus,
+  };
 }
 
 export async function listRequestHistory(requestId: string): Promise<Array<Record<string, unknown>>> {

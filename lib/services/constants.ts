@@ -167,6 +167,47 @@ export function canTransitionRequest(from: string, to: string): boolean {
   return REQUEST_FLOW[fromStatus]?.includes(to as RequestStatus) ?? false;
 }
 
+/**
+ * What the platform has decided about a request — a separate question from
+ * `status`, which is where the request stands in the customer's own lifecycle.
+ *
+ * Keeping them apart is deliberate: `status` already carries three legacy
+ * values, and folding an administrative verdict into it would make every
+ * existing guard ambiguous. See forward migration 0016.
+ */
+export const REQUEST_REVIEW_STATUS = {
+  /** Nobody has looked at it yet. Every request starts here. */
+  PENDING: "pending",
+  /** The platform is handling it. */
+  ACCEPTED: "accepted",
+  /** Refused, with a reason the customer can read. */
+  REJECTED: "rejected",
+  /** Waiting on the customer for something. */
+  INFO_REQUESTED: "info_requested",
+  /** Finished with, from the platform's side. */
+  CLOSED: "closed",
+} as const;
+
+export type RequestReviewStatus = (typeof REQUEST_REVIEW_STATUS)[keyof typeof REQUEST_REVIEW_STATUS];
+
+/** The administrative actions, and the review state each one lands on. */
+export const REQUEST_REVIEW_ACTIONS = {
+  accept: REQUEST_REVIEW_STATUS.ACCEPTED,
+  reject: REQUEST_REVIEW_STATUS.REJECTED,
+  "request-info": REQUEST_REVIEW_STATUS.INFO_REQUESTED,
+  assign: null,
+  close: REQUEST_REVIEW_STATUS.CLOSED,
+} as const;
+
+export type RequestReviewAction = keyof typeof REQUEST_REVIEW_ACTIONS;
+
+export function isRequestReviewAction(value: unknown): value is RequestReviewAction {
+  return typeof value === "string" && Object.hasOwn(REQUEST_REVIEW_ACTIONS, value);
+}
+
+/** Refusing or asking for something without saying what is not a decision. */
+export const REQUEST_REVIEW_ACTIONS_NEEDING_REASON: RequestReviewAction[] = ["reject", "request-info"];
+
 export const OFFER_STATUS = {
   SENT: "sent",
   WITHDRAWN: "withdrawn",
