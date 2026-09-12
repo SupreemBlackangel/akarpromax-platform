@@ -194,6 +194,18 @@ function evalClause(clause, row, params) {
     }
   }
 
+  // `UPPER(col) = ?n` / `LOWER(col) = ?n`, which the services layer uses to
+  // compare country codes case-insensitively. Both sides are folded the same
+  // way, so the comparison means here what it means in Postgres.
+  const folded = /^(UPPER|LOWER)\(\s*([a-z_][a-z0-9_.]*)\s*\)\s*=\s*(.+)$/i.exec(c);
+  if (folded) {
+    const fold = folded[1].toUpperCase() === "UPPER" ? (s) => s.toUpperCase() : (s) => s.toLowerCase();
+    const value = row[stripAlias(folded[2])];
+    if (value == null) return false;
+    const expected = valueOf(folded[3], params);
+    return fold(String(value)) === fold(String(expected ?? ""));
+  }
+
   throw new Error(`Unsupported WHERE clause: ${c}`);
 }
 

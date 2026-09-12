@@ -1140,7 +1140,15 @@ export async function renewRequest(requestId: string, actor?: ActorContext): Pro
   const db = await getServicesDb();
   const request = await getRequestFull(requestId);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
-  if (request.status !== REQUEST_STATUS.PUBLISHED) {
+  // `receiving_offers` is where a request lands the moment the first craftsman
+  // answers, and it never goes back. Accepting only `published` therefore made
+  // renewal impossible from the first reply onwards — precisely when a customer
+  // wants it, having now seen an offer they do not want. Nothing is loosened by
+  // adding it: `canRenew` still refuses outright while any offer is on the
+  // table, so this only opens the case where all of them were declined or went
+  // stale.
+  const renewable: string[] = [REQUEST_STATUS.PUBLISHED, REQUEST_STATUS.RECEIVING_OFFERS];
+  if (!renewable.includes(String(request.status))) {
     return { ok: false, reason: "REQUEST_STATUS_INVALID" };
   }
 
@@ -1201,8 +1209,11 @@ export async function renewRequest(requestId: string, actor?: ActorContext): Pro
   }
   await recordRequestHistory(
     requestId,
-    REQUEST_STATUS.PUBLISHED,
-    REQUEST_STATUS.PUBLISHED,
+    // The status the request was actually in, not an assumed one: a renewal
+    // from `receiving_offers` would otherwise be recorded as having come from
+    // `published`, and the history is the thing a later reader trusts.
+    String(request.status),
+    String(request.status),
     `طلب مزودين آخرين (الموجة ${decision.nextWave})`,
     actor?.userId ?? null,
   );
