@@ -19,17 +19,18 @@ type AuditResponse = {
   total: number;
   page: number;
   limit: number;
+  /**
+   * The action names the two stores actually hold.
+   *
+   * This list used to be hard-coded here, and it named events no code in the
+   * repository emits (ADS_CAMPAIGN_CREATED, OFFICE_PAIRING_STARTED and the
+   * rest) while omitting every action the services and ads side does write —
+   * `service_provider.status.approved`, `ad.approval`, `service_listing.status.*`.
+   * Filtering by one of them returned nothing, which reads as "no such activity"
+   * rather than "no such event name".
+   */
+  actions?: string[];
 };
-
-const EVENT_TYPES = [
-  "AUTH_LOGIN_FAILED", "AUTH_LOGIN_SUCCESS", "AUTH_RATE_LIMITED",
-  "AUTH_REGISTER_ATTEMPT", "AUTH_REGISTER_SUCCESS", "AUTH_REGISTER_FAILED",
-  "AUTH_SESSION_INVALIDATED", "AUTH_PASSWORD_RESET_SUCCESS",
-  "ROLE_ASSIGNED", "ROLE_REMOVED", "PERMISSION_CHANGED",
-  "USER_SUSPENDED", "USER_BANNED", "USER_RESTORED", "USER_ROLE_CHANGED",
-  "ADS_CAMPAIGN_CREATED", "ADS_CAMPAIGN_UPDATED", "ADS_CAMPAIGN_DELETED",
-  "OFFICE_PAIRING_STARTED", "OFFICE_PAIRING_COMPLETED",
-];
 
 const EVENT_LABELS: Record<string, string> = {
   AUTH_LOGIN_FAILED: "فشل تسجيل الدخول",
@@ -137,7 +138,7 @@ export default function AuditAdminClient() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "12px 16px" }}>
           <select value={action} onChange={(e) => { setAction(e.target.value); setPage(1); }} style={selectStyle}>
             <option value="">جميع الأحداث</option>
-            {EVENT_TYPES.map((et) => (
+            {(data?.actions ?? []).map((et) => (
               <option key={et} value={et}>{EVENT_LABELS[et] ?? et}</option>
             ))}
           </select>
