@@ -205,7 +205,10 @@ export async function updateListingStatus(listingId: string, status: string, act
     action: `service_listing.status.${status}`,
     entityType: "service_listings",
     entityId: listingId,
-    metadata: { before: { status: from }, after: { status }, reason: note, byReviewer: Boolean(reviewerMove) },
+    before: { status: from },
+    after: { status },
+    reason: note,
+    metadata: { byReviewer: Boolean(reviewerMove) },
     actorUserId: actor?.userId,
     ipAddress: actor?.ip,
   });

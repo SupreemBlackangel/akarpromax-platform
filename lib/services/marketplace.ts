@@ -279,7 +279,19 @@ export async function setProviderStatus(providerId: string, status: ProviderStat
       entityId: providerId,
     });
   }
-  await writeAudit({ action: `service_provider.status.${status}`, entityType: "service_provider_profiles", entityId: providerId, metadata: { note }, actorUserId: actor?.userId, ipAddress: actor?.ip });
+  // `from` was read three lines up to validate the transition and then thrown
+  // away, so the log said a provider had been rejected without saying what they
+  // had been, or why.
+  await writeAudit({
+    action: `service_provider.status.${status}`,
+    entityType: "service_provider_profiles",
+    entityId: providerId,
+    before: { status: from },
+    after: { status },
+    reason: note ?? null,
+    actorUserId: actor?.userId,
+    ipAddress: actor?.ip,
+  });
 }
 
 export async function updateProviderAdminSettings(
@@ -1336,7 +1348,17 @@ export async function cancelRequestFull(
     reason ?? (byCustomer ? "أُلغي الطلب من قبل العميل" : "أُلغي الطلب من قبل الإدارة"),
     byUserId,
   );
-  await writeAudit({ action: "service_request.cancel", entityType: "service_requests", entityId: requestId, actorUserId: actor?.userId, ipAddress: actor?.ip });
+  await writeAudit({
+    action: "service_request.cancel",
+    entityType: "service_requests",
+    entityId: requestId,
+    before: { status: from },
+    after: { status: REQUEST_STATUS.CANCELLED },
+    reason: reason ?? null,
+    metadata: { byCustomer },
+    actorUserId: actor?.userId,
+    ipAddress: actor?.ip,
+  });
 }
 
 export async function expireStaleRequests(days = 14): Promise<number> {
@@ -1601,12 +1623,10 @@ export async function reviewRequest(
     action: `service_request.review.${action}`,
     entityType: "service_requests",
     entityId: requestId,
-    metadata: {
-      before: { reviewStatus: fromReview, status: fromStatus },
-      after: { reviewStatus: action === "assign" ? fromReview : nextReview, status: cancelOnReject ? REQUEST_STATUS.CANCELLED : fromStatus },
-      reason,
-      assignee: action === "assign" ? options.assignee?.trim() ?? null : undefined,
-    },
+    before: { reviewStatus: fromReview, status: fromStatus },
+    after: { reviewStatus: action === "assign" ? fromReview : nextReview, status: cancelOnReject ? REQUEST_STATUS.CANCELLED : fromStatus },
+    reason,
+    metadata: action === "assign" ? { assignee: options.assignee?.trim() ?? null } : {},
     actorUserId: actor?.userId,
     ipAddress: actor?.ip,
   });
