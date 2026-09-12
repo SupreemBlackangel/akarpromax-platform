@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 import { useServicesPage } from "@services-ui/useServicesPage";
 import AdminPropertyModeration from "@/components/properties/AdminPropertyModeration";
 
@@ -63,6 +64,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function PropertiesAdminClient() {
+  const [confirm, confirmDialog] = useConfirm();
   const { dir } = useServicesPage();
   const [section, setSection] = useState<"moderation" | "taxonomy">("moderation");
   const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
@@ -193,8 +195,15 @@ export default function PropertiesAdminClient() {
   };
 
   const handleDelete = async (kind: "category" | "type", id: string) => {
-    const label = kind === "category" ? "هذا التصنيف" : "هذا النوع";
-    if (!confirm(`هل أنت متأكد من حذف ${label}؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
+    const ok = await confirm({
+      title: kind === "category" ? "حذف التصنيف" : "حذف النوع",
+      body: kind === "category"
+        ? "سيُحذف هذا التصنيف وكل ما يندرج تحته من أنواع نهائيًا. لا يمكن التراجع عن هذا الإجراء."
+        : "سيُحذف هذا النوع نهائيًا ولن يظهر عند إضافة عقار. لا يمكن التراجع عن هذا الإجراء.",
+      confirmLabel: "حذف نهائي",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     setMessage("");
     try {
@@ -213,6 +222,7 @@ export default function PropertiesAdminClient() {
 
   return (
       <div dir={dir}>
+      {confirmDialog}
         <header className="advertiser-admin-header">
           <div><p>إدارة السوق العقاري</p><h1>إدارة العقارات</h1></div>
           <div className="admin-header-actions">

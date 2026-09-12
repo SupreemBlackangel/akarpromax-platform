@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { citiesForCountry, countryOptions } from "@/src/data/locations";
 import {
@@ -177,6 +178,7 @@ function parseListText(text: string): string[] {
 }
 
 function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boolean }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [placements, setPlacements] = useState<NewsPlacement[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<NewsPlacement | null>(null);
@@ -271,7 +273,13 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
   }
 
   async function deletePlacement(id: string) {
-    if (!confirm("هل تريد حذف هذا الاستهداف؟")) return;
+    const ok = await confirm({
+      title: "حذف الاستهداف",
+      body: "سيتوقف هذا الخبر عن الظهور في الموضع المحدد. الخبر نفسه لا يُمس.",
+      confirmLabel: "حذف الاستهداف",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/news/placements?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok) {
@@ -309,6 +317,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
 
   return (
     <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-800">
+      {confirmDialog}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-gray-900 dark:text-[var(--color-text-primary)]">الاستهداف حسب القنوات (Placements)</h3>
         {canUpdate && (
@@ -551,6 +560,7 @@ function PlacementEditor({ newsId, canUpdate }: { newsId: string; canUpdate: boo
 }
 
 function SourcesTab({ can }: { can: (permission: string) => boolean }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [sources, setSources] = useState<NewsSource[]>([]);
   const [editing, setEditing] = useState<SourceForm | null>(null);
   const [loading, setLoading] = useState(true);
@@ -635,7 +645,13 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
   }
 
   async function deleteSource(id: string) {
-    if (!confirm("هل تريد حذف هذا المصدر؟")) return;
+    const ok = await confirm({
+      title: "حذف المصدر",
+      body: "سيُحذف هذا المصدر ولن تُجلب منه أخبار جديدة. الأخبار المجلوبة سابقًا تبقى كما هي.",
+      confirmLabel: "حذف المصدر",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/news/sources?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       const data = await res.json();
@@ -675,6 +691,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
 
   return (
     <div>
+      {confirmDialog}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">المصادر الخارجية</h2>
@@ -1161,6 +1178,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
 }
 
 export default function NewsAdminClient({ initialUser }: { initialUser: { email: string; displayName: string } }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [identity, setIdentity] = useState<Identity>({
     authenticated: true,
     displayName: initialUser.displayName,
@@ -1313,7 +1331,13 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
   }
 
   async function archive(id: string) {
-    if (!confirm("هل تريد أرشفة هذا الخبر؟")) return;
+    const ok = await confirm({
+      title: "أرشفة الخبر",
+      body: "سيختفي الخبر من الموقع وينتقل إلى الأرشيف. لا يُحذف، ويمكن إعادة نشره لاحقًا.",
+      confirmLabel: "أرشفة",
+      tone: "danger",
+    });
+    if (!ok) return;
     setMessage("");
     try {
       const res = await fetch(`/api/news?id=${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -1331,6 +1355,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      {confirmDialog}
       <header className="bg-[var(--color-surface)] dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">إدارة الأخبار والشريط</h1>

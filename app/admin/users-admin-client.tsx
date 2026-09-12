@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 import Link from "next/link";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { roleNameAr, type SponsorRole } from "@/src/constants/roles";
@@ -53,6 +54,7 @@ export default function UsersAdminClient({
 }: {
   initialUser: { email: string; displayName: string };
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [identity, setIdentity] = useState<Identity>({
     email: initialUser.email,
     displayName: initialUser.displayName,
@@ -128,7 +130,13 @@ export default function UsersAdminClient({
   }
 
   async function deleteUser(id: string) {
-    if (!window.confirm("هل تريد إزالة هذا المستخدم نهائيًا؟")) return;
+    const ok = await confirm({
+      title: "إزالة المستخدم",
+      body: "سيُزال هذا المستخدم من المنصة نهائيًا ولن يستطيع الدخول. لا يمكن التراجع عن هذا الإجراء.",
+      confirmLabel: "إزالة نهائية",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     setMessage("");
     try {
@@ -148,6 +156,7 @@ export default function UsersAdminClient({
 
   return (
     <>
+      {confirmDialog}
       <header className="advertiser-admin-header">
         <div><p>الوصول والصلاحيات</p><h1>إدارة المستخدمين</h1></div>
         <div className="admin-header-actions">

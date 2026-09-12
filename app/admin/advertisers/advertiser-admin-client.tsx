@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- Advertiser artwork and logos may be managed runtime URLs. */
 
 import { type DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 import Link from "next/link";
 import { PERMISSIONS } from "@/src/constants/permissions";
 
@@ -108,6 +109,7 @@ export default function AdvertiserAdminClient({
   initialUser: { email: string; displayName: string };
   initialAction?: "new" | "edit";
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [identity, setIdentity] = useState<Identity>({
     email: initialUser.email,
     displayName: initialUser.displayName,
@@ -216,7 +218,13 @@ export default function AdvertiserAdminClient({
   }
 
   async function archiveAdvertiser(id: string) {
-    if (!window.confirm("هل تريد أرشفة هذا المعلن؟")) return;
+    const ok = await confirm({
+      title: "أرشفة المعلن",
+      body: "سينتقل المعلن إلى الأرشيف ويختفي من القائمة النشطة. حملاته لا تُحذف.",
+      confirmLabel: "أرشفة",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     const response = await fetch(`/api/advertisers?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     if (response.ok) {
@@ -266,6 +274,7 @@ export default function AdvertiserAdminClient({
 
   return (
     <>
+      {confirmDialog}
       <header className="advertiser-admin-header">
         <div><p>إدارة الشراكات التجارية</p><h1>نظام المعلنين حسب الدولة</h1></div>
         <div className="admin-header-actions"><Link href="/" target="_blank">معاينة الموقع ↗</Link>{canEdit && <button type="button" onClick={startCreate}>+ معلن جديد</button>}</div>

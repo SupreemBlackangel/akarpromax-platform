@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import type { Locale } from "@/src/types/site";
 
@@ -52,6 +53,7 @@ const CUSTOM_NAMESPACE = "__custom__";
 const emptyAddForm = { namespace: "", customNamespace: "", key: "", description: "", ar: "", en: "", tr: "" };
 
 export default function I18nAdminClient({ initialUser }: { initialUser: { email: string; displayName: string } }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [identity, setIdentity] = useState<Identity>({
     authenticated: true,
     displayName: initialUser.displayName,
@@ -207,7 +209,13 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
   }
 
   async function rollbackVersion(version: number) {
-    if (!confirm(`Rollback to version ${version}?`)) return;
+    const ok = await confirm({
+      title: "الرجوع إلى إصدار سابق",
+      body: `ستُستبدل الترجمات الحالية بمحتوى الإصدار ${version} وتُنشر فورًا للزوار. يبقى الإصدار الحالي محفوظًا في السجل ويمكن الرجوع إليه.`,
+      confirmLabel: `الرجوع إلى الإصدار ${version}`,
+      tone: "danger",
+    });
+    if (!ok) return;
     setMessage("");
     try {
       const res = await fetch("/api/i18n/admin/versions", {
@@ -283,6 +291,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
 
   return (
     <main className="i18n-admin" dir="rtl">
+      {confirmDialog}
       <div className="container" style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">إدارة الترجمات</h1>
 

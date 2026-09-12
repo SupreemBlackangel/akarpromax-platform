@@ -8,6 +8,7 @@ import GeoTargetPicker from "./GeoTargetPicker";
 import SimulatorPanel from "./simulator-panel";
 import { PLATFORM_SECTIONS_REGISTRY, AD_PLACEMENTS, PAGE_TYPES_LIST, DEVICE_TYPES, PRICING_MODELS, FREQUENCY_PERIODS, APPROVAL_STATUSES, visibleAdminPlacements } from "@/src/constants/advertising";
 import { checkCreativeFit, suggestedSize } from "@/lib/ads/creative-fit";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 
 type Identity = {
   authenticated: boolean;
@@ -490,6 +491,7 @@ function toApiBody(form: FormState) {
 }
 
 export default function AdsAdminClient({ initialUser }: { initialUser: { email: string; displayName: string } }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [identity, setIdentity] = useState<Identity>({
     authenticated: true,
     email: initialUser.email,
@@ -539,7 +541,12 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   }
 
   async function restoreCampaign(id: string, name: string) {
-    if (!window.confirm(`استرجاع حملة «${name}» من الأرشيف كمسودة؟`)) return;
+    const ok = await confirm({
+      title: "استرجاع الحملة من الأرشيف",
+      body: `ستعود حملة «${name}» إلى قائمة الحملات كمسودة غير نشطة، فلا تظهر للزوار حتى تُفعّلها وتُعتمد من جديد.`,
+      confirmLabel: "استرجاع كمسودة",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const response = await fetch("/api/admin/ads/restore", {
@@ -714,7 +721,13 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   }
 
   async function archiveCampaign(id: string) {
-    if (!window.confirm("هل تريد أرشفة هذه الحملة؟")) return;
+    const ok = await confirm({
+      title: "أرشفة الحملة",
+      body: "ستتوقف الحملة عن الظهور للزوار وتنتقل إلى الأرشيف. لا يُحذف شيء، ويمكنك استرجاعها كمسودة في أي وقت.",
+      confirmLabel: "أرشفة",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const response = await fetch(`/api/admin/ads?id=${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -730,7 +743,13 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   }
 
   async function deleteCampaignForever(id: string, name: string) {
-    if (!window.confirm(`حذف حملة «${name}» نهائيًا؟ سيُحذف الإعلان وصوره وإحصاءاته ولا يمكن التراجع.`)) return;
+    const ok = await confirm({
+      title: "حذف الحملة نهائيًا",
+      body: `سيُحذف إعلان «${name}» وصوره وكل إحصاءاته من قاعدة البيانات. لا يمكن التراجع عن هذا الإجراء، والأرشفة تكفي إن كان المقصود إيقاف الظهور فقط.`,
+      confirmLabel: "حذف نهائي",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const response = await fetch(`/api/admin/ads?id=${encodeURIComponent(id)}&hard=1`, { method: "DELETE" });
@@ -872,7 +891,13 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
   }
 
   async function deleteAsset(asset: Asset) {
-    if (!window.confirm(`حذف ${asset.fileName} من المكتبة؟`)) return;
+    const ok = await confirm({
+      title: "حذف ملف من المكتبة",
+      body: `سيُحذف «${asset.fileName}» من مكتبة الوسائط نهائيًا. أي حملة تستخدمه ستفقد صورتها.`,
+      confirmLabel: "حذف الملف",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const response = await fetch(`/api/ad-assets?key=${encodeURIComponent(asset.key)}`, { method: "DELETE" });
@@ -901,6 +926,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
 
   return (
     <>
+      {confirmDialog}
       <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/ogg" hidden onChange={(event) => { void uploadMedia(event.target.files || undefined); event.currentTarget.value = ""; }} />
       <>
           <header className="ads-admin-header">

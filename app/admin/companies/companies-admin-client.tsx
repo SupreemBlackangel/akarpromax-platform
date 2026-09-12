@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useConfirm } from "@/src/components/ui/ConfirmDialog";
 
 type Specialty = {
   id: string;
@@ -26,6 +27,7 @@ type Draft = {
 const EMPTY_DRAFT: Draft = { name_en: "", name_ar: "", name_tr: "", slug: "", icon: "", is_active: true, sort_order: 0 };
 
 export default function CompaniesAdminClient() {
+  const [confirm, confirmDialog] = useConfirm();
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +124,13 @@ export default function CompaniesAdminClient() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this specialty?")) return;
+    const ok = await confirm({
+      title: "حذف التخصص",
+      body: "سيُحذف هذا التخصص من قائمة تخصصات الشركات نهائيًا، ولن تتمكن الشركات من اختياره بعد الآن.",
+      confirmLabel: "حذف",
+      tone: "danger",
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/companies/taxonomy/${id}`, { method: "DELETE" });
@@ -143,6 +151,7 @@ export default function CompaniesAdminClient() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }} dir="rtl">
+      {confirmDialog}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>تصنيفات الشركات</h1>
         <button onClick={startCreate} style={btnPrimary}>+ إضافة تصنيف</button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useConfirm, type ConfirmRequest } from "@/src/components/ui/ConfirmDialog";
 import { BadgeCheck, Ban, CircleCheck, Eye, PauseCircle, Pencil, RefreshCw, Search, ShieldAlert, Trash2, X } from "lucide-react";
 
 type AdminUserRow = {
@@ -40,6 +41,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function UsersManageClient() {
+  const [confirm, confirmDialog] = useConfirm();
   const [rows, setRows] = useState<AdminUserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [q, setQ] = useState("");
@@ -74,8 +76,8 @@ export default function UsersManageClient() {
     return () => window.clearTimeout(timer);
   }, [q, status, load]);
 
-  const act = async (user: AdminUserRow, action: "verify" | "activate" | "suspend" | "block" | "unblock", confirmText?: string) => {
-    if (confirmText && !window.confirm(confirmText)) return;
+  const act = async (user: AdminUserRow, action: "verify" | "activate" | "suspend" | "block" | "unblock", confirmation?: ConfirmRequest) => {
+    if (confirmation && !(await confirm(confirmation))) return;
     setBusyId(user.id);
     setNotice(null);
     try {
@@ -131,7 +133,13 @@ export default function UsersManageClient() {
   };
 
   const deleteUser = async (user: AdminUserRow) => {
-    if (!window.confirm(`حذف حساب «${user.name || user.email}»؟ سيُقفل الحساب نهائيًا ولن يستطيع الدخول.`)) return;
+    const ok = await confirm({
+      title: "حذف الحساب",
+      body: `سيُقفل حساب «${user.name || user.email}» نهائيًا ولن يستطيع صاحبه الدخول مرة أخرى. لا يمكن التراجع عن هذا الإجراء.`,
+      confirmLabel: "حذف الحساب",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusyId(user.id);
     setNotice(null);
     try {
@@ -152,6 +160,7 @@ export default function UsersManageClient() {
 
   return (
     <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+      {confirmDialog}
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-black text-[var(--color-text-primary)]">إدارة المستخدمين</h2>
@@ -255,12 +264,12 @@ export default function UsersManageClient() {
                             <CircleCheck className="h-3.5 w-3.5" /> إعادة تنشيط
                           </button>
                         ) : user.status === "active" && (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "suspend", `إيقاف حساب «${user.name || user.email}»؟`)} className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "suspend", { title: "إيقاف الحساب", body: `سيُوقف حساب «${user.name || user.email}» مؤقتًا ولن يستطيع الدخول حتى يُعاد تفعيله.`, confirmLabel: "إيقاف", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50">
                             <PauseCircle className="h-3.5 w-3.5" /> إيقاف
                           </button>
                         )}
                         {user.isActive ? (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "block", `حظر «${user.name || user.email}» نهائيًا من الدخول؟`)} className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-black text-red-700 hover:bg-red-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "block", { title: "حظر الحساب", body: `سيُحظر «${user.name || user.email}» من الدخول إلى المنصة. يمكن رفع الحظر لاحقًا من هذه اللوحة.`, confirmLabel: "حظر", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-black text-red-700 hover:bg-red-100 disabled:opacity-50">
                             <Ban className="h-3.5 w-3.5" /> حظر
                           </button>
                         ) : (
