@@ -32,12 +32,12 @@ const MAX_ITEMS = 5;
  * distinguish; these are the shortest forms that still do.
  */
 const SHORT_LABELS: Record<string, { ar: string; en: string; tr: string }> = {
+  home: { ar: "الرئيسية", en: "Home", tr: "Ana Sayfa" },
   properties: { ar: "العقارات", en: "Properties", tr: "Mülkler" },
-  tools: { ar: "الأدوات", en: "Tools", tr: "Araçlar" },
-  services: { ar: "الخدمات", en: "Services", tr: "Hizmetler" },
-  offices: { ar: "المكاتب", en: "Offices", tr: "Ofisler" },
-  companies: { ar: "الشركات", en: "Companies", tr: "Şirketler" },
-  organizations: { ar: "الشركات", en: "Companies", tr: "Şirketler" },
+  "engineering-tools": { ar: "الأدوات", en: "Tools", tr: "Araçlar" },
+  "services-market": { ar: "الخدمات", en: "Services", tr: "Hizmetler" },
+  "real-estate-companies": { ar: "المكاتب", en: "Offices", tr: "Ofisler" },
+  "other-companies": { ar: "الشركات", en: "Companies", tr: "Şirketler" },
   community: { ar: "المنتدى", en: "Forum", tr: "Forum" },
   knowledge: { ar: "المكتبة", en: "Library", tr: "Kütüphane" },
 };
