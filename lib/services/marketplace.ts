@@ -333,9 +333,19 @@ export async function listProviderProfiles(query: {
   if (query.countryCode || query.countryAliases?.length) {
     addAliasClause("p.country_code", query.countryAliases, query.countryCode);
   }
-  if (query.status) {
-    params.push(query.status);
-    clauses.push(`p.status = ?${params.length}`);
+  // A review queue is two statuses, not one: an application lands in
+  // `submitted` and only becomes `under_review` when a reviewer takes it up, so
+  // a screen that can ask for a single status can never show the new arrivals
+  // beside the ones already being read. Comma-separated values are accepted and
+  // compared with IN; the caller is responsible for validating them against
+  // PROVIDER_STATUS_VALUES.
+  const statuses = [...new Set(String(query.status ?? "").split(",").map((value) => value.trim()).filter(Boolean))];
+  if (statuses.length) {
+    const placeholders = statuses.map((value) => {
+      params.push(value);
+      return `?${params.length}`;
+    });
+    clauses.push(`p.status IN (${placeholders.join(",")})`);
   }
   addAliasClause("p.governorate", query.governorateAliases, query.governorate);
   addAliasClause("p.city_id", query.cityAliases, query.cityId);

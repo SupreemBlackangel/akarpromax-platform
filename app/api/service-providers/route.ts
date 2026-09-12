@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionIdentity, hasSponsorPermission } from "@/lib/sponsor-auth";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import { listProviderProfiles, upsertProviderProfile } from "@services/marketplace";
-import { SERVICE_ERROR_CODES } from "@services/constants";
+import { PROVIDER_STATUS_VALUES, SERVICE_ERROR_CODES } from "@services/constants";
 import { toPublicProviderProfile } from "@services/public-dto";
 import { GeoService } from "@/lib/services/geo/geo.service";
 import { resolveGeoSelection } from "@/lib/services/geo/selection";
@@ -18,6 +18,8 @@ import {
 } from "@/lib/services/numbers";
 
 export const dynamic = "force-dynamic";
+
+const PROVIDER_STATUS_LIST = Object.values(PROVIDER_STATUS_VALUES);
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -34,12 +36,23 @@ export async function GET(request: NextRequest) {
   if (limited) return limited;
   const q = request.nextUrl.searchParams;
   const admin = q.get("admin") === "1";
-  const status = admin ? q.get("status") ?? undefined : "approved";
+  // The public directory is approved providers and nothing else, whatever the
+  // query string says. A reviewer may ask for several statuses at once — the
+  // queue is `submitted` (just arrived) plus `under_review` (already being
+  // read) — so the value is a comma-separated list, validated here rather than
+  // passed through to the SQL builder.
+  let status: string | undefined = "approved";
   if (admin) {
     const identity = await getSessionIdentity();
     if (!identity.authenticated || !hasSponsorPermission(identity, PERMISSIONS.SERVICE_PROVIDERS_REVIEW)) {
       return NextResponse.json({ error: SERVICE_ERROR_CODES.FORBIDDEN }, { status: 403 });
     }
+    const requested = (q.get("status") ?? "").split(",").map((value) => value.trim()).filter(Boolean);
+    const unknown = requested.filter((value) => !PROVIDER_STATUS_LIST.includes(value as (typeof PROVIDER_STATUS_LIST)[number]));
+    if (unknown.length) {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_QUERY, unknownStatuses: unknown }, { status: 400 });
+    }
+    status = requested.length ? requested.join(",") : undefined;
   }
   const rawScope = q.get("scope");
   if (rawScope && rawScope !== "local" && rawScope !== "global") {

@@ -17,17 +17,27 @@ type ProviderRow = Record<string, unknown> & {
   created_at?: string;
 };
 
-const STATUSES = ["under_review", "approved", "rejected", "suspended"] as const;
+/**
+ * The queue tab is two statuses at once.
+ *
+ * An application is written as `submitted`; nothing moves it to `under_review`
+ * until a reviewer acts. A screen whose first tab asked for `under_review`
+ * alone therefore showed an empty queue while applications piled up behind it.
+ */
+const PENDING_STATUSES = "submitted,under_review";
+
+const STATUSES = [PENDING_STATUSES, "approved", "rejected", "suspended"] as const;
 
 const STATUS_AR: Record<string, string> = {
-  under_review: "قيد المراجعة", approved: "معتمد", rejected: "مرفوض", suspended: "موقوف",
+  [PENDING_STATUSES]: "بانتظار المراجعة",
+  submitted: "مُرسل", under_review: "قيد المراجعة", approved: "معتمد", rejected: "مرفوض", suspended: "موقوف",
 };
 
 function SupervisorProvidersContent() {
   const { locale, viewer, copy, dir, country, city, t, openLogin, handleLogout, AccountDialog } = useServicesPage();
   const searchParams = useSearchParams();
   const isArabic = locale === "ar";
-  const [status, setStatus] = useState(searchParams.get("status") || "under_review");
+  const [status, setStatus] = useState(searchParams.get("status") || PENDING_STATUSES);
   const [rows, setRows] = useState<ProviderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -63,7 +73,11 @@ function SupervisorProvidersContent() {
 
   const load = useCallback((current: string) => {
     setLoading(true);
-    apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?status=${encodeURIComponent(current)}&limit=100`)
+    // admin=1 is what makes the status filter mean anything: without it the
+    // route serves the public directory and answers every filter with
+    // `approved`, so this screen showed approved providers under the heading
+    // "awaiting review".
+    apiFetch<{ profiles: ProviderRow[] }>(`/api/service-providers?admin=1&status=${encodeURIComponent(current)}&limit=100`)
       .then((data) => setRows(data.profiles ?? []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));

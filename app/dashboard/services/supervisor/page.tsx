@@ -57,7 +57,11 @@ export default function SupervisorDashboardPage() {
       try {
         const [overviewData, providersData, reportsData, categoriesData] = await Promise.all([
           apiFetch<{ overview: Overview }>(SERVICE_ADMIN_OVERVIEW_ENDPOINT),
-          apiFetch<{ profiles: ProviderRow[] }>("/api/service-providers?status=under_review&limit=100").catch(() => ({ profiles: [] })),
+          // admin=1 or the route answers with the public directory — approved
+          // providers — no matter which status is asked for. Both statuses an
+          // application can wait in are requested, because nothing promotes a
+          // `submitted` profile to `under_review` on its own.
+          apiFetch<{ profiles: ProviderRow[] }>("/api/service-providers?admin=1&status=submitted,under_review&limit=100").catch(() => ({ profiles: [] })),
           apiFetch<{ reports: ReportRow[] }>("/api/service-reports?limit=100").catch(() => ({ reports: [] })),
           apiFetch<{ categories: CategoryRow[] }>("/api/service-categories?country=OM").catch(() => ({ categories: [] })),
         ]);
