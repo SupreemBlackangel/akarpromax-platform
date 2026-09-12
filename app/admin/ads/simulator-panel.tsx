@@ -175,33 +175,35 @@ export default function SimulatorPanel() {
               <p>لا توجد حملة مؤهلة بهذه المعطيات. السبب لكل حملة مذكور بالأسفل.</p>
             </div>
           )}
-          <table className="ads-simulator-table">
-            <thead>
-              <tr>
-                <th>الحملة</th><th>الأولوية</th><th>الوزن</th><th>نسبة الظهور</th><th>الحالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.campaigns.map((campaign) => (
-                <tr key={campaign.campaignId} className={campaign.competing ? "is-competing" : ""}>
-                  <td>
-                    <strong>{campaign.internalName}</strong>
-                    <small>{campaign.advertiserName}</small>
-                  </td>
-                  <td>{campaign.priority}</td>
-                  <td>{campaign.weight}</td>
-                  <td>{campaign.competing ? percent(campaign.trafficShare) : "—"}</td>
-                  <td>
-                    {campaign.competing
-                      ? <span className="ads-badge ads-badge-approved">تتنافس</span>
-                      : campaign.eligible
-                        ? <span className="ads-badge ads-badge-pending">مؤهلة لكنها لا تفوز أبداً هنا</span>
-                        : <span className="ads-badge ads-badge-rejected">{campaign.reasonLabel?.ar ?? campaign.reason}</span>}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="ads-simulator-table">
+              <thead>
+                <tr>
+                  <th>الحملة</th><th>الأولوية</th><th>الوزن</th><th>نسبة الظهور</th><th>الحالة</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {result.campaigns.map((campaign) => (
+                  <tr key={campaign.campaignId} className={campaign.competing ? "is-competing" : ""}>
+                    <td>
+                      <strong>{campaign.internalName}</strong>
+                      <small>{campaign.advertiserName}</small>
+                    </td>
+                    <td>{campaign.priority}</td>
+                    <td>{campaign.weight}</td>
+                    <td>{campaign.competing ? percent(campaign.trafficShare) : "—"}</td>
+                    <td>
+                      {campaign.competing
+                        ? <span className="ads-badge ads-badge-approved">تتنافس</span>
+                        : campaign.eligible
+                          ? <span className="ads-badge ads-badge-pending">مؤهلة لكنها لا تفوز أبداً هنا</span>
+                          : <span className="ads-badge ads-badge-rejected">{campaign.reasonLabel?.ar ?? campaign.reason}</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </section>

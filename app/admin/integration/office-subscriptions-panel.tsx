@@ -145,82 +145,84 @@ export default function OfficeSubscriptionsPanel() {
       ) : rows.length === 0 ? (
         <p className="admin-empty">لا توجد مكاتب مرتبطة بعد.</p>
       ) : (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>المكتب</th>
-              <th>الحالة</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th>الوضع</th>
-              <th>إجراء</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const badge = stateBadge(row);
-              const isEditing = editing === row.sponsorId;
-              return (
-                <tr key={row.sponsorId}>
-                  <td>
-                    {row.officeId || row.officeName || row.sponsorId}
-                    <br />
-                    <small>{row.sponsorId}</small>
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}>
-                        {statuses.map((status) => (
-                          <option key={status} value={status}>{STATUS_LABELS[status] ?? status}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span>{row.status ? STATUS_LABELS[row.status] ?? row.status : "—"}</span>
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input type="date" value={draft.startDate} onChange={(e) => setDraft({ ...draft, startDate: e.target.value })} />
-                    ) : (
-                      row.startDate ?? "—"
-                    )}
-                  </td>
-                  <td>
-                    {isEditing ? (
-                      <input type="date" value={draft.endDate} onChange={(e) => setDraft({ ...draft, endDate: e.target.value })} />
-                    ) : (
-                      row.endDate ?? "—"
-                    )}
-                  </td>
-                  <td>
-                    <span className={`badge badge-${badge.tone}`}>{badge.label}</span>
-                    {row.isActive && row.daysRemaining != null ? <small> · {row.daysRemaining} يوم</small> : null}
-                  </td>
-                  <td className="admin-row-actions">
-                    {isEditing ? (
-                      <>
-                        <button type="button" disabled={busy} onClick={() => void save(row)}>حفظ</button>
-                        <button type="button" disabled={busy} onClick={() => setEditing(null)}>إلغاء</button>
-                      </>
-                    ) : (
-                      <>
-                        <button type="button" disabled={busy} onClick={() => beginEdit(row)}>
-                          {row.status ? "تعديل" : "إنشاء / تفعيل"}
-                        </button>
-                        {row.status && row.status !== "suspended" ? (
-                          <button type="button" disabled={busy} onClick={() => void setStatus(row, "suspended")}>تعليق</button>
-                        ) : null}
-                        {row.status === "suspended" ? (
-                          <button type="button" disabled={busy} onClick={() => void setStatus(row, "active")}>تفعيل</button>
-                        ) : null}
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>المكتب</th>
+                <th>الحالة</th>
+                <th>من</th>
+                <th>إلى</th>
+                <th>الوضع</th>
+                <th>إجراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const badge = stateBadge(row);
+                const isEditing = editing === row.sponsorId;
+                return (
+                  <tr key={row.sponsorId}>
+                    <td>
+                      {row.officeId || row.officeName || row.sponsorId}
+                      <br />
+                      <small>{row.sponsorId}</small>
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}>
+                          {statuses.map((status) => (
+                            <option key={status} value={status}>{STATUS_LABELS[status] ?? status}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span>{row.status ? STATUS_LABELS[row.status] ?? row.status : "—"}</span>
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <input type="date" value={draft.startDate} onChange={(e) => setDraft({ ...draft, startDate: e.target.value })} />
+                      ) : (
+                        row.startDate ?? "—"
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <input type="date" value={draft.endDate} onChange={(e) => setDraft({ ...draft, endDate: e.target.value })} />
+                      ) : (
+                        row.endDate ?? "—"
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge badge-${badge.tone}`}>{badge.label}</span>
+                      {row.isActive && row.daysRemaining != null ? <small> · {row.daysRemaining} يوم</small> : null}
+                    </td>
+                    <td className="admin-row-actions">
+                      {isEditing ? (
+                        <>
+                          <button type="button" disabled={busy} onClick={() => void save(row)}>حفظ</button>
+                          <button type="button" disabled={busy} onClick={() => setEditing(null)}>إلغاء</button>
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" disabled={busy} onClick={() => beginEdit(row)}>
+                            {row.status ? "تعديل" : "إنشاء / تفعيل"}
+                          </button>
+                          {row.status && row.status !== "suspended" ? (
+                            <button type="button" disabled={busy} onClick={() => void setStatus(row, "suspended")}>تعليق</button>
+                          ) : null}
+                          {row.status === "suspended" ? (
+                            <button type="button" disabled={busy} onClick={() => void setStatus(row, "active")}>تفعيل</button>
+                          ) : null}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

@@ -269,7 +269,7 @@ export default function AuctionOrganizersClient() {
       )}
 
       {/* Grants List */}
-      <div className="bg-[var(--color-surface)] rounded-xl border shadow-sm overflow-hidden">
+      <div className="bg-[var(--color-surface)] rounded-xl border shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b text-right">

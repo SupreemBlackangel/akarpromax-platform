@@ -770,7 +770,7 @@ function SourcesTab({ can }: { can: (permission: string) => boolean }) {
       ) : sources.length === 0 ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد مصادر بعد.</p>
       ) : (
-        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -910,7 +910,7 @@ function AnalyticsTab() {
           {items.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد بيانات إحصائيات بعد.</p>
           ) : (
-            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+            <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -1106,7 +1106,7 @@ function TickerTab({ news, canUpdate }: { news: NewsItem[]; canUpdate: boolean }
       ) : rows.length === 0 ? (
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد عناصر موجهة للشريط حاليًا — انشر خبرًا أو أضف استهداف WEBSITE_TICKER.</p>
       ) : (
-        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -1573,7 +1573,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
             ) : filtered.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400 py-12">لا توجد أخبار مطابقة.</p>
             ) : (
-              <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+              <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-right border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">

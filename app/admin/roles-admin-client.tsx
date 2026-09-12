@@ -581,47 +581,49 @@ export default function RolesAdminClient() {
                 {scopesBusy && scopes.length === 0 ? (
                   <div className="admin-empty"><span>◇</span><strong>جارٍ التحميل...</strong></div>
                 ) : (
-                  <table className="roles-matrix" style={{ fontSize: 9 }}>
-                    <thead>
-                      <tr>
-                        <th className="roles-perm-cell" style={{ textAlign: "right" }}>المستخدم</th>
-                        <th>الوحدة</th>
-                        <th>الدولة</th>
-                        <th>المدينة</th>
-                        <th>إجراءات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {scopes.map((scope) => {
-                        const user = eligibleUsers.find((u) => u.id === scope.userId);
-                        const country = scope.countryCode
-                          ? countries.find(([id]) => id === scope.countryCode?.toLowerCase())?.[1] ?? scope.countryCode
-                          : null;
-                        return (
-                          <tr key={scope.id}>
-                            <td className="roles-perm-cell" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                              {user ? (user.displayName || user.email) : scope.userId}
-                            </td>
-                            <td>
-                              <span style={{ padding: "3px 8px", borderRadius: 12, background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 8, fontWeight: 900 }}>
-                                {scope.module}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: 8 }}>{country ?? "الكل"}</td>
-                            <td style={{ fontSize: 8 }}>{scope.cityId ?? "—"}</td>
-                            <td>
-                              <div className="admin-row-actions">
-                                <button className="danger" type="button" aria-label={`حذف نطاق ${scope.module} لـ ${scope.userId}`} onClick={() => removeScope(scope.id)} disabled={scopesBusy}>حذف</button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {scopes.length === 0 && (
-                        <tr><td colSpan={5}><div className="admin-empty"><span>◇</span><strong>لا توجد نطاقات بعد</strong></div></td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="roles-matrix" style={{ fontSize: 9 }}>
+                      <thead>
+                        <tr>
+                          <th className="roles-perm-cell" style={{ textAlign: "right" }}>المستخدم</th>
+                          <th>الوحدة</th>
+                          <th>الدولة</th>
+                          <th>المدينة</th>
+                          <th>إجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scopes.map((scope) => {
+                          const user = eligibleUsers.find((u) => u.id === scope.userId);
+                          const country = scope.countryCode
+                            ? countries.find(([id]) => id === scope.countryCode?.toLowerCase())?.[1] ?? scope.countryCode
+                            : null;
+                          return (
+                            <tr key={scope.id}>
+                              <td className="roles-perm-cell" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                {user ? (user.displayName || user.email) : scope.userId}
+                              </td>
+                              <td>
+                                <span style={{ padding: "3px 8px", borderRadius: 12, background: "var(--color-primary-soft)", color: "var(--color-primary)", fontSize: 8, fontWeight: 900 }}>
+                                  {scope.module}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: 8 }}>{country ?? "الكل"}</td>
+                              <td style={{ fontSize: 8 }}>{scope.cityId ?? "—"}</td>
+                              <td>
+                                <div className="admin-row-actions">
+                                  <button className="danger" type="button" aria-label={`حذف نطاق ${scope.module} لـ ${scope.userId}`} onClick={() => removeScope(scope.id)} disabled={scopesBusy}>حذف</button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {scopes.length === 0 && (
+                          <tr><td colSpan={5}><div className="admin-empty"><span>◇</span><strong>لا توجد نطاقات بعد</strong></div></td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </section>
