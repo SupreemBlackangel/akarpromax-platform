@@ -417,6 +417,47 @@ boot without it (`getRuntimeEnv`/`parseDbProvider`).
 - **Runtime smoke (production build, `.env` → Neon):** `next start` and `node .next/standalone/server.js` both boot; GET / 200; `/api/geo?type=countries` 200 (PG geo tables); POST `/api/ads/match` HERO 200 (house campaign served — PG content schema ensured at runtime); `/api/auth/login` 401 (PG users query); `/api/properties`, `/api/news`, `/api/currencies`, `/api/land/search` all 200 with real Neon rows. NOTE: `next start` prints a warning that `output: standalone` should run via `node .next/standalone/server.js` (copy `.next/static` + `public` into the standalone dir) — that artifact is verified working.
 - **Schema:** no migrations changed. PG content schema is ensured at runtime by `ensureContentSchema` via `PgRuntimeDb` (translated D1 SQL); auth/geo/properties tables already exist in Neon (0015). All verified live.
 
+## Office reference + settings API (DONE 2026-09-12)
+
+Three phases opening `/api/office/v1` for the desktop office app. Contract and
+worked examples in `docs/office-protocol.md`. Commits `103e491`, `0a2bfc1`,
+`fda41d9`.
+
+**`GET /reference`** — the drop-downs the desktop fills its forms from. Offer
+types run the *same query* `/api/offer-types` runs (`activeOfferTypes` in
+`lib/integration/reference.ts`, which that route now imports), categories and
+types come from `lib/taxonomy/property-taxonomy.ts`, currencies from the market
+registry. A second list would drift, and drift means a desktop offering
+something the website rejects. Scoped to `office.properties.read` deliberately
+— device scopes are frozen at pairing, so a new scope would have locked out
+every already-paired device. ETag is a sha256 of the content, not a timestamp;
+`If-None-Match` answers 304.
+
+**`dealType`** now accepts the eleven offer-type codes lowercased, not
+`["sale","rent"]`. That mismatch is *why* the desktop only ever offered four
+chips: تقبيل and فروغ were rejected with INVALID_FIELD. The list is written out
+(it is a validator on a hot write path) and held to the catalogue by a test that
+fails if `propertyOfferTypesSeed` gains a code it lacks.
+
+**`listingStatus`** is optional on `property.upsert`
+(`active_market` / `under_management` / `completed`), stored on
+`office_property_links`, **not** on `properties`. `properties.status` is the
+website's moderation state and stays the website's — an office filing a listing
+"under management" must not thereby approve it. Absent is not `active_market`,
+and a later push that omits it clears it.
+
+**`GET|PUT /settings`** — office settings shared across its machines, with
+optimistic concurrency: a stale save gets 409 *carrying the current state*, and
+a partial save keeps the sections it did not mention. `license` is served from
+the subscription snapshot and refused on write. `branding` projects onto the
+public organisation row — through the same field list `patchProfile` allows but
+not through it, since there is no browser session on a device request.
+Read-only admin panel at `/admin/integration`.
+
+**Not done**: the `users` section (app accounts are local and the app sends no
+count yet). `/admin/offices/[sponsor]` does not exist in this repo — office
+administration lives in `/admin/integration`.
+
 ## Find My Land clipboard/export (DONE 2026-09-12)
 
 Four phases on `src/components/tools/FindMyLand.tsx`, documented in
