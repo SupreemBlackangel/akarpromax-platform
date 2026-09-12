@@ -113,8 +113,13 @@ test("every legacy placement literal in the tree resolves to a real placement", 
     }
   }
 
-  assert.ok(uses.length > 0, "the sweep must find the legacy ad slots");
-
+  // There are none left: /companies/[id], /offices/[id], /tools/[id] and
+  // /tools/pdf2word — the last four pages that placed <AdSidebar> and
+  // <AdBottom> by hand — now render their slots through PublicPageShell's
+  // standard ad layout, which names canonical placements directly and needs no
+  // translation. The sweep is kept rather than deleted: the shim it guards is
+  // still mounted, and a page reintroducing a bare legacy slot must be caught
+  // the day it appears, not the day somebody notices an empty rail.
   const unresolved = uses.filter(
     (use) => !Object.prototype.hasOwnProperty.call(AD_PLACEMENTS, resolveLegacy(use.page, use.placement)),
   );

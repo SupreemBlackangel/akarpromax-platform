@@ -1,7 +1,8 @@
 ﻿'use client';
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { AdSidebar } from '@/components/advertising/placements/AdSidebar';
+import PublicPageShell from '@/src/components/PublicPageShell';
+import { useServicesPage } from '@/src/components/services/useServicesPage';
 
 const toolsMap: Record<string, { name: string; icon: string; fields: { label: string; key: string; unit: string; type: string }[]; calculate: (values: Record<string, number>) => { label: string; value: string; unit: string }[] }> = {
   'find-my-land': {
@@ -265,38 +266,43 @@ function ToolCalculator({ toolId, tool }: { toolId: string; tool: typeof toolsMa
 
 export default function ToolPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { locale, viewer, copy, dir, country, city, openLogin, handleLogout, AccountDialog } = useServicesPage();
   const toolId = resolvedParams.id;
   const tool = toolsMap[toolId];
-  const location = { country: 'السعودية', governorate: 'الرياض', city: 'الرياض' };
 
-  if (!tool) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center"><h1 className="text-2xl font-bold mb-4">اداة غير موجودة</h1><Link href="/tools" className="text-[var(--color-primary)] hover:underline">العودة للادوات</Link></div>
-      </div>
-    );
-  }
-
+  // The rails moved to the shell's standard ad layout, which asks once for
+  // every slot on the page instead of once per <AdSidebar>. The hard-coded
+  // "السعودية / الرياض" the sidebars were handed was dead in any case —
+  // AdSidebar reads the visitor's own location and ignored those props.
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <Link href="/tools" className="text-[var(--color-primary)] hover:underline mb-4 inline-block">&larr; العودة للادوات</Link>
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-4xl">{tool.icon}</span>
-          <h1 className="text-2xl font-bold">{tool.name}</h1>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="hidden lg:block lg:col-span-2">
-            <AdSidebar page="tools" placement="left_01" country={location.country} governorate={location.governorate} city={location.city} />
-          </div>
-          <div className="lg:col-span-8">
-            <ToolCalculator toolId={toolId} tool={tool} />
-          </div>
-          <div className="hidden lg:block lg:col-span-2">
-            <AdSidebar page="tools" placement="right_01" country={location.country} governorate={location.governorate} city={location.city} />
-          </div>
+    <PublicPageShell
+      locale={locale}
+      copy={copy}
+      viewer={viewer}
+      country={country}
+      city={city}
+      currentPath="/tools"
+      adLayout={{ mode: 'standard', family: 'tools' }}
+      onLogin={() => openLogin('login')}
+      onLogout={handleLogout}
+    >
+      <div dir={dir} className="py-6">
+        <div className="mx-auto w-full max-w-4xl px-4">
+          <Link href="/tools" className="text-[var(--color-primary)] hover:underline mb-4 inline-block">&larr; العودة للادوات</Link>
+          {tool ? (
+            <>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-4xl">{tool.icon}</span>
+                <h1 className="text-2xl font-bold">{tool.name}</h1>
+              </div>
+              <ToolCalculator toolId={toolId} tool={tool} />
+            </>
+          ) : (
+            <p className="py-16 text-center text-sm font-bold text-[var(--color-text-muted)]">اداة غير موجودة</p>
+          )}
         </div>
       </div>
-    </div>
+      {AccountDialog}
+    </PublicPageShell>
   );
 }

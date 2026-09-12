@@ -55,7 +55,17 @@ test("the standard ad layout never repeats the side slots below the content", as
   }
 });
 
-test("the legacy AdSidebar pages hide their rails below the desktop breakpoint", async () => {
+test("the four detail pages build no ad rails of their own", async () => {
+  // They used to: a hand-rolled twelve-column grid with an <AdSidebar> in each
+  // rail, which on a phone collapsed to one column and dropped its ad above or
+  // below the content. The fix at the time was to hide those wrappers below
+  // lg; they have since moved to PublicPageShell's standard ad layout, where
+  // the rails are the shell's to render and the admin's mobile default already
+  // decides whether a phone sees them at all.
+  //
+  // The rule this replaces is therefore stronger, not weaker: a page that
+  // places its own ad rail is the thing to catch, whether or not it remembers
+  // to hide it.
   const pages = [
     "app/offices/[id]/page.tsx",
     "app/companies/[id]/page.tsx",
@@ -64,14 +74,13 @@ test("the legacy AdSidebar pages hide their rails below the desktop breakpoint",
   ];
   for (const page of pages) {
     const source = await read(page);
-    const wrappers = source.match(/className="[^"]*lg:col-span-2[^"]*"/g) ?? [];
-    assert.ok(wrappers.length > 0, `${page}: expected the two-column rail wrappers`);
-    for (const wrapper of wrappers) {
-      assert.ok(
-        wrapper.includes("hidden lg:block"),
-        `${page}: the grid collapses to one column on a phone, so an un-hidden rail wrapper drops its ad above or below the content — ${wrapper}`,
-      );
-    }
+    assert.match(source, /adLayout=\{\{\s*mode: ['"]standard['"]/, `${page}: ads belong to the shell now`);
+    // Comments in these files name the old components on purpose, to record
+    // what was removed; reading that as the offence would teach the next
+    // person to delete the explanation.
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+    assert.doesNotMatch(code, /<Ad(Sidebar|Bottom|Hero)\b/, `${page}: places an ad component by hand`);
+    assert.doesNotMatch(code, /lg:col-span-2/, `${page}: still builds a rail column of its own`);
   }
 });
 
