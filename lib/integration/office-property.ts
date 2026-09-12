@@ -1,5 +1,6 @@
 import { getIntegrationDb } from "@/lib/integration/db";
 import { ACCEPTED_PROPERTY_CATEGORIES, ACCEPTED_PROPERTY_TYPES } from "@/lib/taxonomy/property-taxonomy";
+import { OFFICE_LISTING_STATUS_IDS } from "@/lib/integration/reference";
 
 /**
  * Office → website property publishing.
@@ -22,7 +23,46 @@ import { ACCEPTED_PROPERTY_CATEGORIES, ACCEPTED_PROPERTY_TYPES } from "@/lib/tax
  * copy that used to live here accepted sixteen types where the office offered
  * twenty-seven.
  */
-export const OFFICE_PROPERTY_DEAL_TYPES = ["sale", "rent"] as const;
+/**
+ * How a property is marketed, as the platform defines it.
+ *
+ * This was `["sale", "rent"]` while `property_offer_types` carried eleven, so a
+ * desktop that offered تقبيل or فروغ had its listing rejected with
+ * INVALID_FIELD — which is why the desktop only ever offered the two it knew
+ * would be accepted. The codes are the offer-type codes lowercased, so
+ * `/api/office/v1/reference` and this validator cannot disagree about what is
+ * publishable.
+ *
+ * Literal rather than derived from the database: this is a validator on a hot
+ * write path and must not depend on a query, and the two are held together by
+ * a test that fails if `propertyOfferTypesSeed` gains a code this list lacks.
+ * "sale" and "rent" keep working exactly as before — an older desktop is not
+ * broken by a list that only grew.
+ */
+export const OFFICE_PROPERTY_DEAL_TYPES = [
+  "sale",
+  "rent",
+  "taqbeel",
+  "faragh",
+  "investment",
+  "assignment",
+  "usufruct",
+  "lease_to_own",
+  "exchange",
+  "partnership",
+  "share_sale",
+] as const;
+
+/**
+ * The office's own filing status for a listing, from
+ * `lib/integration/reference.ts` so the drop-down the desktop renders and the
+ * validator that accepts it are one list.
+ *
+ * Optional: a desktop that has not been updated sends nothing and the column
+ * stays null, which is not the same as "active market" and must not be
+ * defaulted to one.
+ */
+export const OFFICE_PROPERTY_LISTING_STATUSES: readonly string[] = OFFICE_LISTING_STATUS_IDS;
 export const OFFICE_PROPERTY_CATEGORIES: readonly string[] = ACCEPTED_PROPERTY_CATEGORIES;
 export const OFFICE_PROPERTY_TYPES: readonly string[] = ACCEPTED_PROPERTY_TYPES;
 
@@ -75,6 +115,8 @@ export type OfficePropertyInput = {
   descriptionAr: string;
   descriptionEn: string;
   dealType: string;
+  /** The office's own filing status, or null when the desktop did not say. */
+  listingStatus?: string | null;
   category: string;
   propertyType: string;
   country: string;
@@ -97,6 +139,8 @@ export type OfficePropertyLink = {
   externalId: string;
   propertyId: string;
   status: string;
+  /** The office's own filing status, or null when the desktop did not say. */
+  listingStatus?: string | null;
 };
 
 function nowIso(): string {
@@ -114,6 +158,16 @@ function text(value: unknown, field: string, { required = false, max = 5000 } = 
 
 function enumValue(value: unknown, allowed: readonly string[], field: string): string {
   const raw = String(value ?? "").trim().toLowerCase();
+  if (!allowed.includes(raw)) {
+    throw new OfficePropertyError("INVALID_FIELD", `${field} must be one of ${allowed.join(", ")}`);
+  }
+  return raw;
+}
+
+/** Like `enumValue`, but absent stays absent instead of becoming a default. */
+function optionalEnum(value: unknown, allowed: readonly string[], field: string): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  const raw = String(value).trim().toLowerCase();
   if (!allowed.includes(raw)) {
     throw new OfficePropertyError("INVALID_FIELD", `${field} must be one of ${allowed.join(", ")}`);
   }
@@ -175,6 +229,10 @@ export function normalizeOfficeProperty(payload: Record<string, unknown>): Offic
     area: positiveNumber(body.area, "area"),
     bedrooms: countOrZero(body.bedrooms, "bedrooms"),
     bathrooms: countOrZero(body.bathrooms, "bathrooms"),
+    // Optional, and absent is not "active market": a desktop that predates this
+    // field sends nothing, and defaulting would put every old listing into a
+    // status its office never chose.
+    listingStatus: optionalEnum(body.listingStatus, OFFICE_PROPERTY_LISTING_STATUSES, "listingStatus"),
   };
 }
 
@@ -191,6 +249,7 @@ export async function getOfficePropertyLink(sponsorId: string, externalId: strin
     externalId: String(row.external_id),
     propertyId: String(row.property_id),
     status: String(row.status ?? "active"),
+    listingStatus: row.listing_status == null ? null : String(row.listing_status),
   };
 }
 
@@ -277,8 +336,8 @@ export async function upsertOfficeProperty(input: UpsertOfficePropertyInput): Pr
         )
         .run();
       await db
-        .prepare("UPDATE office_property_links SET status = 'active', device_id = ?1, updated_at = ?2 WHERE id = ?3")
-        .bind(input.deviceId ?? null, now, link.id)
+        .prepare("UPDATE office_property_links SET status = 'active', device_id = ?1, listing_status = ?2, updated_at = ?3 WHERE id = ?4")
+        .bind(input.deviceId ?? null, value.listingStatus ?? null, now, link.id)
         .run();
       return { propertyId: link.propertyId, created: false, status };
     }
@@ -310,17 +369,17 @@ export async function upsertOfficeProperty(input: UpsertOfficePropertyInput): Pr
 
   if (link) {
     await db
-      .prepare("UPDATE office_property_links SET property_id = ?1, status = 'active', device_id = ?2, updated_at = ?3 WHERE id = ?4")
-      .bind(propertyId, input.deviceId ?? null, now, link.id)
+      .prepare("UPDATE office_property_links SET property_id = ?1, status = 'active', device_id = ?2, listing_status = ?3, updated_at = ?4 WHERE id = ?5")
+      .bind(propertyId, input.deviceId ?? null, value.listingStatus ?? null, now, link.id)
       .run();
   } else {
     await db
       .prepare(
         `INSERT INTO office_property_links
-          (id, sponsor_id, device_id, external_id, property_id, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, 'active', ?6, ?7)`,
+          (id, sponsor_id, device_id, external_id, property_id, status, listing_status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, 'active', ?6, ?7, ?8)`,
       )
-      .bind(crypto.randomUUID(), sponsorId, input.deviceId ?? null, externalId, propertyId, now, now)
+      .bind(crypto.randomUUID(), sponsorId, input.deviceId ?? null, externalId, propertyId, value.listingStatus ?? null, now, now)
       .run();
   }
 

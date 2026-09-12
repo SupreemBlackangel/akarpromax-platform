@@ -150,6 +150,11 @@ export const INTEGRATION_TABLES_SQL: string[] = [
 export const INTEGRATION_ALTER_SQL: string[] = [
   `ALTER TABLE property_listings ADD COLUMN latitude REAL NULL`,
   `ALTER TABLE property_listings ADD COLUMN longitude REAL NULL`,
+  // How the office files this listing in its OWN workflow. Deliberately on the
+  // link row and not on `properties`: `properties.status` is the website's
+  // moderation state and stays the website's to set, while an office marking a
+  // listing "under management" is saying something about its own books.
+  `ALTER TABLE office_property_links ADD COLUMN listing_status VARCHAR(24) NULL`,
 ];
 
 export const INTEGRATION_INDEXES_SQL: string[] = [
