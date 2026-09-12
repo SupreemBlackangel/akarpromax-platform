@@ -31,10 +31,25 @@ export const SERVICES_MARKETPLACE_NEW_COLUMNS: string[] = [
   `ALTER TABLE service_listings ADD COLUMN media TEXT NULL`,
   `ALTER TABLE service_listings ADD COLUMN approved_at TEXT NULL`,
   `ALTER TABLE service_listings ADD COLUMN published_at TEXT NULL`,
+  // The review decision. Mirrors forward migration 0015 so the runtime schema
+  // and the Postgres one do not drift.
+  `ALTER TABLE service_listings ADD COLUMN reviewed_by TEXT NULL`,
+  `ALTER TABLE service_listings ADD COLUMN reviewed_at TEXT NULL`,
+  `ALTER TABLE service_listings ADD COLUMN review_note TEXT NULL`,
+  `ALTER TABLE service_listings ADD COLUMN archived_at TEXT NULL`,
   `ALTER TABLE service_listings ADD COLUMN is_promoted INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE service_listings ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0`,
 
   // service_requests
+  // The platform's own verdict on a request, kept apart from the customer's
+  // `status`. Mirrors forward migration 0016.
+  `ALTER TABLE service_requests ADD COLUMN review_status TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN reviewed_by TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN reviewed_at TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN review_note TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN assigned_to TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN assigned_at TEXT NULL`,
+  `ALTER TABLE service_requests ADD COLUMN closed_at TEXT NULL`,
   `ALTER TABLE service_requests ADD COLUMN title TEXT NULL`,
   `ALTER TABLE service_requests ADD COLUMN description TEXT NULL`,
   `ALTER TABLE service_requests ADD COLUMN urgency VARCHAR(16) NULL`,

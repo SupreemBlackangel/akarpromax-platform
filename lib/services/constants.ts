@@ -8,10 +8,16 @@ export const SERVICE_ERROR_CODES = {
   CATEGORY_HAS_CHILDREN: "services.category_has_children",
   CATEGORY_IN_USE: "services.category_in_use",
   LISTING_NOT_FOUND: "services.listing_not_found",
+  LISTING_STATUS_UNKNOWN: "services.listing_status_unknown",
+  LISTING_STATUS_INVALID: "services.listing_status_invalid",
+  LISTING_REVIEW_FORBIDDEN: "services.listing_review_forbidden",
+  LISTING_REVIEW_REASON_REQUIRED: "services.listing_review_reason_required",
   REQUEST_NOT_FOUND: "services.request_not_found",
   OFFER_NOT_FOUND: "services.offer_not_found",
   ORDER_NOT_FOUND: "services.order_not_found",
   REQUEST_NOT_OPEN: "services.request_not_open",
+  REQUEST_REVIEW_REASON_REQUIRED: "services.request_review_reason_required",
+  REQUEST_ASSIGNEE_REQUIRED: "services.request_assignee_required",
   OFFER_NOT_SENT: "services.offer_not_sent",
   OFFER_ALREADY_EXISTS: "services.offer_already_exists",
   SELF_OFFER_NOT_ALLOWED: "services.self_offer_not_allowed",
@@ -34,14 +40,89 @@ export const SERVICE_ERROR_CODES = {
 
 export type ServiceErrorCode = (typeof SERVICE_ERROR_CODES)[keyof typeof SERVICE_ERROR_CODES];
 
+/**
+ * A service listing's lifecycle.
+ *
+ * There was none. The vocabulary was draft/active/paused/removed, `createListing`
+ * forced "active" whatever the caller sent, and the public query serves
+ * "active" — so a listing was born public, with no state that means "waiting to
+ * be looked at" and nowhere to record who looked or why they said no. The
+ * schema had already been given `approved_at` and `published_at` columns that
+ * no status vocabulary ever set.
+ *
+ * The states below are the ones the product asks for. `approved` and `active`
+ * are deliberately distinct: approving is the reviewer's verdict, publishing is
+ * the provider's decision to go live with it — collapsing them would mean a
+ * reviewer's "yes" also chooses the moment a provider starts taking work.
+ */
 export const LISTING_STATUS = {
+  /** Being written. Only its owner sees it. */
   DRAFT: "draft",
+  /** Submitted, waiting for a reviewer. */
+  PENDING_APPROVAL: "pending_approval",
+  /** A reviewer asked for something to change before they will decide. */
+  CHANGES_REQUESTED: "changes_requested",
+  /** Cleared by a reviewer, not yet published by its owner. */
+  APPROVED: "approved",
+  /** Live in the public marketplace. This is the only publicly visible state. */
   ACTIVE: "active",
+  /** Taken down — by its owner (paused) or by a reviewer (suspended). */
   PAUSED: "paused",
+  /** A reviewer refused it. It may be resubmitted. */
+  REJECTED: "rejected",
+  /** Retired for good, kept for the record. */
+  ARCHIVED: "archived",
+  /** Legacy value: rows written before this lifecycle existed. Terminal. */
   REMOVED: "removed",
 } as const;
 
 export type ListingStatus = (typeof LISTING_STATUS)[keyof typeof LISTING_STATUS];
+
+/** The only state the public marketplace serves. */
+export const PUBLIC_LISTING_STATUS: ListingStatus = LISTING_STATUS.ACTIVE;
+
+/**
+ * Which moves are legal, from each state.
+ *
+ * Who may make a given move is a separate question — see `LISTING_REVIEWER_MOVES`.
+ * Both gates apply: a move must be in this table AND permitted for the actor.
+ */
+export const LISTING_FLOW: Record<string, ListingStatus[]> = {
+  [LISTING_STATUS.DRAFT]: [LISTING_STATUS.PENDING_APPROVAL, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.PENDING_APPROVAL]: [LISTING_STATUS.APPROVED, LISTING_STATUS.REJECTED, LISTING_STATUS.CHANGES_REQUESTED, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.CHANGES_REQUESTED]: [LISTING_STATUS.PENDING_APPROVAL, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.APPROVED]: [LISTING_STATUS.ACTIVE, LISTING_STATUS.PAUSED, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.ACTIVE]: [LISTING_STATUS.PAUSED, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.PAUSED]: [LISTING_STATUS.ACTIVE, LISTING_STATUS.ARCHIVED],
+  // A refused listing goes back through review, never straight to the public.
+  [LISTING_STATUS.REJECTED]: [LISTING_STATUS.PENDING_APPROVAL, LISTING_STATUS.ARCHIVED],
+  [LISTING_STATUS.ARCHIVED]: [],
+  [LISTING_STATUS.REMOVED]: [],
+};
+
+/**
+ * The verdicts only a reviewer may reach.
+ *
+ * An owner may write, submit, publish what was approved, pause and archive
+ * their own listing; they may not decide that it passed review. Suspending a
+ * live listing is the one move both can make — an owner pausing their own work
+ * and a moderator taking it down land on the same state, and the audit row
+ * records which of them did it.
+ */
+export const LISTING_REVIEWER_MOVES: ListingStatus[] = [
+  LISTING_STATUS.APPROVED,
+  LISTING_STATUS.REJECTED,
+  LISTING_STATUS.CHANGES_REQUESTED,
+];
+
+export function canTransitionListing(from: string, to: string): boolean {
+  return LISTING_FLOW[from]?.includes(to as ListingStatus) ?? false;
+}
+
+/** Whether this move is a reviewer's verdict rather than an owner's own choice. */
+export function isListingReviewerMove(to: string): boolean {
+  return LISTING_REVIEWER_MOVES.includes(to as ListingStatus);
+}
 
 export const REQUEST_STATUS = {
   DRAFT: "draft",

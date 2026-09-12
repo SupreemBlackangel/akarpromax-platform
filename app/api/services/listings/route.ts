@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
       price: cleanNumber(body.price) ?? 0,
       currency: currency.code,
       unit: clean(body.unit, 24) || "project",
-      status: clean(body.status, 24) || "active",
+      // No status here on purpose: a new listing starts at pending_approval and
+      // that is not the caller's to choose. See createListing.
       tags: Array.isArray(body.tags) ? body.tags.map(String).slice(0, 20) : [],
       latitude: cleanNumber(body.latitude),
       longitude: cleanNumber(body.longitude),

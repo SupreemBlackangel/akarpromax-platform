@@ -6,6 +6,9 @@ import {
   isListingStatus,
   isOrderStatus,
   canTransition,
+  canTransitionListing,
+  isListingReviewerMove,
+  LISTING_STATUS,
   REQUEST_STATUS,
   ORDER_STATUS,
   OFFER_STATUS,
@@ -89,7 +92,6 @@ export type NewListing = {
   price?: number;
   currency?: string;
   unit?: string;
-  status?: string;
   tags?: string[];
   latitude?: number | null;
   longitude?: number | null;
@@ -117,7 +119,12 @@ export async function createListing(input: NewListing, actor?: ActorContext): Pr
       input.price ?? 0,
       requireCurrencyCode(input.currency),
       input.unit ?? "project",
-      input.status ?? "active",
+      // A listing is not published by creating it. It used to be born 'active'
+      // — straight into the public marketplace, unread — and `input.status`
+      // let the caller name its own state, so "active" was one request body
+      // away no matter what any review rule said. The state a new listing
+      // starts in is not the caller's to choose.
+      LISTING_STATUS.PENDING_APPROVAL,
       input.tags ? JSON.stringify(input.tags) : null,
       nowMySqlDateTime(),
     ],
@@ -126,15 +133,82 @@ export async function createListing(input: NewListing, actor?: ActorContext): Pr
   return id;
 }
 
-export async function updateListingStatus(listingId: string, status: string, actor?: ActorContext): Promise<void> {
+/**
+ * Who is asking, and what they are allowed to decide.
+ *
+ * `isOwner` and `isReviewer` are resolved by the route from the session — this
+ * module does not read identity. Both may be true (a reviewer who happens to
+ * own the listing); neither may be, and then nothing is permitted.
+ */
+export type ListingActor = ActorContext & {
+  isOwner?: boolean;
+  isReviewer?: boolean;
+  /** Why it was refused, or what must change. Required for a reviewer's verdict. */
+  note?: string | null;
+};
+
+/**
+ * Move a listing through its lifecycle.
+ *
+ * This used to be a bare UPDATE: any status to any status, by anyone the route
+ * let through, with nothing recorded but the new value. The route treated
+ * SERVICES_UPDATE — the permission every `service_provider` carries so they can
+ * edit their OWN work — as a supervisory one, so any approved provider could
+ * publish, pause or bury another provider's listing.
+ *
+ * Three gates now, in the order that gives the caller the most useful refusal:
+ * the status must exist, the move must be legal from where the listing is, and
+ * the actor must be entitled to make that particular move.
+ */
+export async function updateListingStatus(listingId: string, status: string, actor?: ListingActor): Promise<void> {
   const db = await getServicesDb();
-  if (!isListingStatus(status)) throw new Error("ORDER_STATUS_INVALID");
+  if (!isListingStatus(status)) throw new Error("LISTING_STATUS_UNKNOWN");
+
+  const listing = await getListing(listingId);
+  if (!listing) throw new Error("LISTING_NOT_FOUND");
+
+  const from = String(listing.status ?? LISTING_STATUS.DRAFT);
+  if (from !== status && !canTransitionListing(from, status)) throw new Error("LISTING_STATUS_INVALID");
+
+  const reviewerMove = isListingReviewerMove(status);
+  if (reviewerMove && !actor?.isReviewer) throw new Error("LISTING_REVIEW_FORBIDDEN");
+  if (!reviewerMove && !actor?.isOwner && !actor?.isReviewer) throw new Error("LISTING_FORBIDDEN");
+
+  const now = nowMySqlDateTime();
+  // A refusal or a request for changes carries its reason forward; any other
+  // move clears it, so the note never explains a decision that has been
+  // superseded. The history of all of them is in audit_logs.
+  const note = reviewerMove ? actor?.note ?? null : null;
+  const fields = ["status = ?1", "updated_at = ?2", "review_note = ?3"];
+  const values: unknown[] = [status, now, note];
+  const stamp = (column: string) => {
+    values.push(now);
+    fields.push(`${column} = ?${values.length}`);
+  };
+  if (reviewerMove) {
+    values.push(actor?.userId ?? null);
+    fields.push(`reviewed_by = ?${values.length}`);
+    stamp("reviewed_at");
+  }
+  if (status === LISTING_STATUS.APPROVED) stamp("approved_at");
+  if (status === LISTING_STATUS.ACTIVE) stamp("published_at");
+  if (status === LISTING_STATUS.ARCHIVED) stamp("archived_at");
+  values.push(listingId);
+
   const res = await db
-    .prepare("UPDATE service_listings SET status = ?1, updated_at = ?2 WHERE id = ?3")
-    .bind(status, nowMySqlDateTime(), listingId)
+    .prepare(`UPDATE service_listings SET ${fields.join(", ")} WHERE id = ?${values.length}`)
+    .bind(...values)
     .run();
   if (Number(res.meta?.changes ?? 0) === 0) throw new Error("LISTING_NOT_FOUND");
-  await writeAudit({ action: `service_listing.status.${status}`, entityType: "service_listings", entityId: listingId, actorUserId: actor?.userId, ipAddress: actor?.ip });
+
+  await writeAudit({
+    action: `service_listing.status.${status}`,
+    entityType: "service_listings",
+    entityId: listingId,
+    metadata: { before: { status: from }, after: { status }, reason: note, byReviewer: Boolean(reviewerMove) },
+    actorUserId: actor?.userId,
+    ipAddress: actor?.ip,
+  });
 }
 
 export async function getListing(listingId: string): Promise<Record<string, unknown> | null> {

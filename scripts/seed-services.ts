@@ -65,7 +65,8 @@ const SEED_KEYS: Array<{ key: string; value: Record<Locale, string> }> = [
 
 async function main() {
   const { getRuntimeDb } = await import("@/lib/runtime-db");
-  const { createCategory, createListing, createRequest } = await import("@/lib/services/core");
+  const { createCategory, createListing, createRequest, updateListingStatus } = await import("@/lib/services/core");
+  const { LISTING_STATUS } = await import("@/lib/services/constants");
   const { upsertTranslations, invalidateTranslationCache } = await import("@/lib/i18n/db");
   const { LOCALES } = await import("@/lib/i18n/keys");
 
@@ -100,7 +101,7 @@ async function main() {
   for (const listing of LISTINGS) {
     const categoryId = categoryIds.get(listing.categoryCode);
     if (!categoryId) continue;
-    await createListing(
+    const listingId = await createListing(
       {
         providerUserId: ADMIN,
         categoryId,
@@ -111,13 +112,20 @@ async function main() {
         price: listing.price,
         currency: "OMR",
         unit: listing.unit,
-        status: "active",
         tags: [listing.categoryCode],
         latitude: 23.588,
         longitude: 58.3829,
       },
       { userId: "system-seed", ip: "seed" },
     );
+    // Seeded listings exist to be looked at, so they are carried through review
+    // rather than left in the queue. They go through the same two moves a real
+    // listing makes — and through the same guard — instead of being written
+    // straight to 'active', which is the shortcut that used to let any listing
+    // into the marketplace unread.
+    const seeder = { userId: "system-seed", ip: "seed", isReviewer: true, isOwner: true };
+    await updateListingStatus(listingId, LISTING_STATUS.APPROVED, seeder);
+    await updateListingStatus(listingId, LISTING_STATUS.ACTIVE, seeder);
   }
   console.log(`listings: ${LISTINGS.length} ensured.`);
 
