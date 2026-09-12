@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { Clock, Users, Gavel } from 'lucide-react';
 import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
 import EmptyState from "@/src/components/ui/EmptyState";
-import { Gavel } from "lucide-react";
 
 interface AuctionRow {
   id: string;

@@ -13,6 +13,7 @@ import { utmToWgs84 } from "../../lib/geo/utm.ts";
 
 const row = (easting: number, northing: number) => ({
   lineStart: "", lineEnd: "", easting, northing, raw: `${easting} ${northing}`,
+  northingToken: String(northing), eastingToken: String(easting),
 });
 
 /** Four corners of a small parcel around one point. */
@@ -96,6 +97,7 @@ const dhofar = (text: string, rows: { e: number; n: number }[]) =>
 
 const row_ = (easting: number, northing: number) => ({
   lineStart: "", lineEnd: "", easting, northing, raw: `${easting} ${northing}`,
+  northingToken: String(northing), eastingToken: String(easting),
 });
 
 test("a sheet that says WGS84 39N is read in 39, not in the default 40", () => {

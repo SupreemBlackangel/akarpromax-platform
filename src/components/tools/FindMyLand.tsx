@@ -61,6 +61,7 @@ import {
   type CopyFormat,
   type CopyRow,
 } from "@/src/lib/tools/fml-clipboard";
+import { suspectVertexIndices } from "@/src/lib/tools/fml-suspect-vertex";
 import {
   UTM_ZONE_MAX,
   UTM_ZONE_MIN,
@@ -2594,7 +2595,7 @@ export function FindMyLand({ locale }: Props) {
                   </div>
                 </div>
                 <ul className="fml-suspect-list">
-                  {suspectVertices.map((index) => {
+                  {suspectVertices.map((index: number) => {
                     const vertex = analysis.result.parcel?.vertices[index];
                     const sides = (analysis.result.parcel?.boundary.segments ?? [])
                       .filter((segment) => segment.fromIndex === index || segment.toIndex === index);
