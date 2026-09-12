@@ -272,6 +272,7 @@ export default function GeoTargetPicker({
               <button
                 key={`${field}:${value}`}
                 type="button"
+                aria-label={`إزالة ${value} من الاستهداف`}
                 onClick={() =>
                   toggle(field, field === "regionIds" ? regionIds : field === "cities" ? cities : districtIds, value)
                 }

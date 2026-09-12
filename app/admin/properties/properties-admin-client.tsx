@@ -244,7 +244,7 @@ export default function PropertiesAdminClient() {
         {section === "taxonomy" && message && (
           <div className="admin-message" role="status">
             {message}
-            <button type="button" onClick={() => setMessage("")}>×</button>
+            <button type="button" aria-label="إغلاق الرسالة" onClick={() => setMessage("")}>×</button>
           </div>
         )}
 
@@ -277,7 +277,7 @@ export default function PropertiesAdminClient() {
                     <div className="admin-row-actions">
                       <button type="button" onClick={() => openEdit("category", cat)}>تعديل</button>
                       <button type="button" onClick={() => openCreate("type", cat.id)}>+ نوع</button>
-                      <button type="button" className="danger" onClick={() => handleDelete("category", cat.id)}>حذف</button>
+                      <button type="button" className="danger" aria-label={`حذف التصنيف ${cat.label_ar}`} onClick={() => handleDelete("category", cat.id)}>حذف</button>
                       <button type="button" onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)}>
                         {expandedCat === cat.id ? "▲" : "▼"} {cat.types.length}
                       </button>
@@ -304,7 +304,7 @@ export default function PropertiesAdminClient() {
                                 <i className={typ.is_active ? "" : "disabled"}>{typ.is_active ? "نشط" : "معطل"}</i>
                                 <div className="admin-row-actions">
                                   <button type="button" onClick={() => openEdit("type", typ)}>تعديل</button>
-                                  <button type="button" className="danger" onClick={() => handleDelete("type", typ.id)}>حذف</button>
+                                  <button type="button" className="danger" aria-label={`حذف النوع ${typ.label_ar}`} onClick={() => handleDelete("type", typ.id)}>حذف</button>
                                 </div>
                               </article>
                             ))}

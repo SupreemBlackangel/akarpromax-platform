@@ -117,7 +117,7 @@ function OfferTypesAdmin() {
                 <td className="px-4 py-3">{t.allowAuction ? '✅' : '—'}</td>
                 <td className="px-4 py-3">{t.isActive ? <span className="text-green-600">نشط</span> : <span className="text-gray-400">معطل</span>}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => { setEditingId(t.id); setForm({ code: t.code, nameAr: t.nameAr, nameEn: t.nameEn, displayOrder: t.displayOrder, isActive: t.isActive, allowDirect: t.allowDirect, allowAuction: t.allowAuction, contractTemplateType: t.contractTemplateType || '' }); }} className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"><Edit className="w-4 h-4" /></button>
+                  <button onClick={() => { setEditingId(t.id); setForm({ code: t.code, nameAr: t.nameAr, nameEn: t.nameEn, displayOrder: t.displayOrder, isActive: t.isActive, allowDirect: t.allowDirect, allowAuction: t.allowAuction, contractTemplateType: t.contractTemplateType || '' }); }} className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]" aria-label={`تعديل ${t.nameAr}`}><Edit className="w-4 h-4" aria-hidden="true" /></button>
                 </td>
               </tr>
             ))}

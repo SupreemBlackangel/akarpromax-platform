@@ -940,7 +940,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
             {canAnalytics && <button className={activeView === "simulator" ? "active" : ""} type="button" onClick={() => setActiveView("simulator")}><span aria-hidden="true">◎</span>المحاكي</button>}
             {canEdit && <button className={activeView === "archived" ? "active" : ""} type="button" onClick={() => { setActiveView("archived"); void loadArchived().catch(() => setMessage("تعذر تحميل الأرشيف")); }}><span aria-hidden="true">▤</span>الأرشيف</button>}
           </nav>
-          {message && <div className="ads-admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
+          {message && <div className="ads-admin-message" role="status">{message}<button type="button" aria-label="إغلاق الرسالة" onClick={() => setMessage("")}>×</button></div>}
 
         <div className="ads-stat-grid">
           <article><span>الحملات النشطة</span><strong>{totals.active}</strong><small>حملة منشورة</small></article>
@@ -970,7 +970,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
                   <div><small>الاستهداف</small><strong>{campaign.targetAllCountries ? "جميع الدول" : campaign.countries.length ? campaign.countries.map(countryName).slice(0, 2).join("، ") : "جميع الدول"}</strong></div>
                   <div><small>الظهور / النقر / التحويل</small><strong>{campaign.totalImpressions.toLocaleString("ar")} / {campaign.totalClicks.toLocaleString("ar")} / {campaign.totalConversions.toLocaleString("ar")}</strong></div>
                   <div><small>ترتيب / وزن</small><strong>#{campaign.priority} / {campaign.weight}</strong>{!campaign.isActive && <div className="ads-campaign-paused">متوقفة مؤقتًا</div>}</div>
-                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canAnalytics && <button type="button" onClick={() => void openPerformance(campaign)}>الأداء</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}{canEdit && <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>}</div>
+                  <div className="ads-row-actions">{canApprove && campaign.approvalStatus !== "approved" && <button type="button" onClick={() => void setApproval(campaign.id, true)}>اعتماد</button>}{canApprove && campaign.approvalStatus === "pending" && <button type="button" onClick={() => void setApproval(campaign.id, false)}>رفض</button>}{canAnalytics && <button type="button" onClick={() => void openPerformance(campaign)}>الأداء</button>}{canEdit && <button type="button" onClick={() => startEdit(campaign)}>تعديل</button>}{canPublish && <button type="button" onClick={() => void toggleActive(campaign)}>{campaign.isActive ? "إيقاف" : "تفعيل"}</button>}{canEdit && <button className="danger" type="button" aria-label={`أرشفة حملة ${campaign.internalName}`} onClick={() => archiveCampaign(campaign.id)}>أرشفة</button>}{canEdit && <button className="danger" type="button" aria-label={`حذف حملة ${campaign.internalName} نهائيًا`} onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>}</div>
                 </article>)}
                 {!campaigns.length && <div className="ads-empty"><span>◇</span><strong>لا توجد حملات إعلانية بعد</strong><p>أنشئ أول حملة وحدد الوسائط والترجمات والمواضع والاستهداف والموازنة.</p>{canEdit && <button type="button" onClick={() => startCreate()}>إنشاء الحملة الأولى</button>}</div>}
               </div>
@@ -991,8 +991,8 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               <div className="ads-campaign-thumb">{campaign.mediaType === "video" ? <video src={campaign.mediaUrl} poster={campaign.posterUrl || undefined} muted preload="metadata" /> : <img src={campaign.mediaUrl} alt="" />}<span>مؤرشفة</span></div>
               <div className="ads-campaign-main"><strong>{campaign.internalName}</strong><small>{campaign.advertiserName}</small><small>{campaign.totalImpressions.toLocaleString("ar")} ظهور • {campaign.totalClicks.toLocaleString("ar")} نقرة</small></div>
               <div className="ads-row-actions">
-                <button type="button" onClick={() => void restoreCampaign(campaign.id, campaign.internalName)}>استرجاع</button>
-                <button className="danger" type="button" onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>
+                <button type="button" aria-label={`استرجاع حملة ${campaign.internalName}`} onClick={() => void restoreCampaign(campaign.id, campaign.internalName)}>استرجاع</button>
+                <button className="danger" type="button" aria-label={`حذف حملة ${campaign.internalName} نهائيًا`} onClick={() => void deleteCampaignForever(campaign.id, campaign.internalName)}>حذف نهائي</button>
               </div>
             </article>)}
             {!archivedCampaigns.length && <div className="ads-empty"><span>▤</span><strong>الأرشيف فارغ</strong><p>الحملات المؤرشفة تظهر هنا ويمكن استرجاعها كمسودة أو حذفها نهائيًا.</p></div>}
@@ -1002,7 +1002,7 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
         {activeView === "media" && <section className="ads-panel">
           <div className="ads-panel-title"><div><p>التخزين</p><h2>مكتبة الصور والفيديو</h2></div>{canUpload && <button type="button" onClick={() => fileInputRef.current?.click()}>رفع ملف</button>}</div>
           {canUpload && <div className={`ads-upload-zone${dragActive ? " drag-active" : ""}`} onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setDragActive(false)} onDrop={(event) => { event.preventDefault(); void uploadMedia(event.dataTransfer.files); }}><span>⬆</span><div><strong>{uploading ? "جارٍ رفع الملفات..." : "اسحب الصور والفيديوهات وأفلتها هنا"}</strong><small>رفع متعدد: صور حتى 8MB وفيديو حتى 25MB وبحد أقصى 15 ثانية.</small></div><button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>اختيار ملفات</button></div>}
-          <div className="ads-media-grid">{assets.map((asset) => <article key={asset.id}><div>{asset.mediaType === "video" ? <video src={asset.url} muted controls preload="metadata" /> : <img src={asset.url} alt={asset.fileName} />}</div><strong title={asset.fileName}>{asset.fileName}</strong><small>{asset.mediaType === "video" ? "فيديو" : "صورة"} • {formatSize(asset.size)}</small><footer>{canEdit && <button type="button" onClick={() => startCreate(asset)}>إنشاء حملة</button>}{canEdit && <button className="danger" type="button" onClick={() => deleteAsset(asset)}>حذف</button>}</footer></article>)}</div>
+          <div className="ads-media-grid">{assets.map((asset) => <article key={asset.id}><div>{asset.mediaType === "video" ? <video src={asset.url} muted controls preload="metadata" /> : <img src={asset.url} alt={asset.fileName} />}</div><strong title={asset.fileName}>{asset.fileName}</strong><small>{asset.mediaType === "video" ? "فيديو" : "صورة"} • {formatSize(asset.size)}</small><footer>{canEdit && <button type="button" onClick={() => startCreate(asset)}>إنشاء حملة</button>}{canEdit && <button className="danger" type="button" aria-label={`حذف ${asset.fileName}`} onClick={() => deleteAsset(asset)}>حذف</button>}</footer></article>)}</div>
           {!assets.length && <div className="ads-empty"><span>▧</span><strong>مكتبة الوسائط فارغة</strong><p>ارفع أول صورة أو فيديو لاستخدامه في الحملات.</p></div>}
         </section>}
 
@@ -1053,8 +1053,8 @@ export default function AdsAdminClient({ initialUser }: { initialUser: { email: 
               {form.creatives.map((creative, index) => (
                 <div className="ads-creative-row" key={index}>
                   <span style={{ fontWeight: 800, alignSelf: "center" }}>#{index + 1}</span>
-                  <button type="button" disabled={index === 0} title="تقديم الصورة" onClick={() => moveCreative(index, -1)}>▲</button>
-                  <button type="button" disabled={index === form.creatives.length - 1} title="تأخير الصورة" onClick={() => moveCreative(index, 1)}>▼</button>
+                  <button type="button" disabled={index === 0} title="تقديم الصورة" aria-label="تقديم الصورة" onClick={() => moveCreative(index, -1)}>▲</button>
+                  <button type="button" disabled={index === form.creatives.length - 1} title="تأخير الصورة" aria-label="تأخير الصورة" onClick={() => moveCreative(index, 1)}>▼</button>
                   <label>الرابط<input dir="ltr" value={creative.mediaUrl} placeholder="https://cdn.example.com/creative.jpg" onChange={(event) => updateCreative(index, "mediaUrl", event.target.value)} /></label>
                   <label>المدة (ثوانٍ)<input type="number" min={3} max={15} value={creative.durationSeconds} onChange={(event) => updateCreative(index, "durationSeconds", event.target.value)} /></label>
                   <label>نسخة الهاتف<input dir="ltr" value={creative.mobileMediaUrl} onChange={(event) => updateCreative(index, "mobileMediaUrl", event.target.value)} /></label>

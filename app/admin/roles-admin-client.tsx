@@ -429,7 +429,7 @@ export default function RolesAdminClient() {
           {usersMessage && (
             <div className="admin-message" role="status">
               {usersMessage}
-              <button type="button" onClick={() => setUsersMessage("")}>×</button>
+              <button type="button" aria-label="إغلاق الرسالة" onClick={() => setUsersMessage("")}>×</button>
             </div>
           )}
 
@@ -547,7 +547,7 @@ export default function RolesAdminClient() {
           {scopesMessage && (
             <div className="admin-message" role="status">
               {scopesMessage}
-              <button type="button" onClick={() => setScopesMessage("")}>×</button>
+              <button type="button" aria-label="إغلاق الرسالة" onClick={() => setScopesMessage("")}>×</button>
             </div>
           )}
 
@@ -611,7 +611,7 @@ export default function RolesAdminClient() {
                             <td style={{ fontSize: 8 }}>{scope.cityId ?? "—"}</td>
                             <td>
                               <div className="admin-row-actions">
-                                <button className="danger" type="button" onClick={() => removeScope(scope.id)} disabled={scopesBusy}>حذف</button>
+                                <button className="danger" type="button" aria-label={`حذف نطاق ${scope.module} لـ ${scope.userId}`} onClick={() => removeScope(scope.id)} disabled={scopesBusy}>حذف</button>
                               </div>
                             </td>
                           </tr>

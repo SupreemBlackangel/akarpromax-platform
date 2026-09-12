@@ -438,7 +438,7 @@ export default function I18nAdminClient({ initialUser }: { initialUser: { email:
         {addOpen && canEdit && (
           <div className="admin-dialog-backdrop" onClick={() => setAddOpen(false)}>
             <form className="admin-dialog admin-access-form" onSubmit={submitAddKey} onClick={(event) => event.stopPropagation()}>
-              <div className="admin-dialog-head"><div><p>ترجمات</p><h2>إضافة مفتاح جديد</h2></div><button type="button" onClick={() => setAddOpen(false)}>×</button></div>
+              <div className="admin-dialog-head"><div><p>ترجمات</p><h2>إضافة مفتاح جديد</h2></div><button type="button" aria-label="إغلاق" onClick={() => setAddOpen(false)}>×</button></div>
               <label>
                 Namespace
                 <select value={addForm.namespace} onChange={(event) => setAddForm({ ...addForm, namespace: event.target.value })}>

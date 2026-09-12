@@ -172,7 +172,7 @@ export default function AuctionOrganizersClient() {
         <div className="bg-[var(--color-surface)] rounded-xl border p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-[--brand-navy]">منح صلاحية جديدة</h2>
-            <button onClick={() => setShowGrantForm(false)} className="text-gray-400 hover:text-red-500 text-xl">✕</button>
+            <button type="button" aria-label="إغلاق" onClick={() => setShowGrantForm(false)} className="text-gray-400 hover:text-red-500 text-xl">✕</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -242,7 +242,7 @@ export default function AuctionOrganizersClient() {
         <div className="bg-[var(--color-surface)] rounded-xl border p-5 space-y-4 shadow-sm border-[var(--color-error)]/30">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-red-600">إلغاء صلاحية</h2>
-            <button onClick={() => setRevokeTarget(null)} className="text-gray-400 hover:text-red-500 text-xl">✕</button>
+            <button type="button" aria-label="إغلاق" onClick={() => setRevokeTarget(null)} className="text-gray-400 hover:text-red-500 text-xl">✕</button>
           </div>
           <p className="text-sm">
             هل أنت متأكد من إلغاء صلاحية <strong>{revokeTarget.userName ?? revokeTarget.userEmail}</strong> من منظمة <strong>{revokeTarget.organizationNameAr}</strong>؟

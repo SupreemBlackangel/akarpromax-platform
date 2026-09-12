@@ -288,7 +288,7 @@ export default function AdvertiserAdminClient({
         ))}
       </nav>
 
-        {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
+        {message && <div className="admin-message" role="status">{message}<button type="button" aria-label="إغلاق الرسالة" onClick={() => setMessage("")}>×</button></div>}
 
         <div className="admin-stat-grid">
           <article><span>المعلنون النشطون</span><strong>{totals.active}</strong><small>حملة منشورة</small></article>
@@ -311,7 +311,7 @@ export default function AdvertiserAdminClient({
                   <div className="admin-advertiser-main"><span className={`admin-status status-${advertiser.status}`}>{statusLabel(advertiser.status)}</span><strong>{advertiser.nameAr}</strong><small>{countryName(advertiser.countryCode)} • {advertiser.tier}</small></div>
                   <div><small>المواضع</small><strong>{advertiser.placements.length}</strong></div>
                   <div><small>الظهور / النقر</small><strong>{advertiser.impressions} / {advertiser.clicks}</strong></div>
-                  <div className="admin-row-actions">{canEdit && <button type="button" onClick={() => startEdit(advertiser)}>تعديل</button>}{canEdit && <button className="danger" type="button" onClick={() => archiveAdvertiser(advertiser.id)}>أرشفة</button>}</div>
+                  <div className="admin-row-actions">{canEdit && <button type="button" onClick={() => startEdit(advertiser)}>تعديل</button>}{canEdit && <button className="danger" type="button" aria-label={`أرشفة المعلن ${advertiser.nameAr}`} onClick={() => archiveAdvertiser(advertiser.id)}>أرشفة</button>}</div>
                 </article>
               ))}
               {!advertisers.length && <div className="admin-empty"><span>◇</span><strong>لا توجد حملات بعد</strong><p>أضف أول معلن وحدد الدولة وفترة الظهور والمواضع.</p>{canEdit && <button type="button" onClick={startCreate}>إضافة أول معلن</button>}</div>}

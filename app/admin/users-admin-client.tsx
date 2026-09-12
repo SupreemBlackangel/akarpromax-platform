@@ -165,7 +165,7 @@ export default function UsersAdminClient({
         </div>
       </header>
 
-        {message && <div className="admin-message" role="status">{message}<button type="button" onClick={() => setMessage("")}>×</button></div>}
+        {message && <div className="admin-message" role="status">{message}<button type="button" aria-label="إغلاق الرسالة" onClick={() => setMessage("")}>×</button></div>}
 
         <div className="admin-stat-grid">
           <article><span>إجمالي المستخدمين</span><strong>{users.length.toLocaleString("ar-EG")}</strong><small>حساب مسجل</small></article>
@@ -195,7 +195,7 @@ export default function UsersAdminClient({
                     <i className={user.status}>{user.status === "active" ? "نشط" : "معطل"}</i>
                     <div className="admin-row-actions">
                       {canWrite && <button type="button" onClick={() => openEditDialog(user)}>تعديل</button>}
-                      {canDelete && <button className="danger" type="button" onClick={() => deleteUser(user.id)}>إزالة</button>}
+                      {canDelete && <button className="danger" type="button" aria-label={`إزالة المستخدم ${user.displayName || user.email}`} onClick={() => deleteUser(user.id)}>إزالة</button>}
                     </div>
                   </article>
                   );
@@ -216,7 +216,7 @@ export default function UsersAdminClient({
         {dialogOpen && canWrite && (
           <div className="admin-dialog-backdrop" onClick={() => setDialogOpen(false)}>
             <form className="admin-dialog admin-access-form" onSubmit={saveUser} onClick={(event) => event.stopPropagation()}>
-              <div className="admin-dialog-head"><div><p>إضافة / تعديل</p><h2>بيانات المستخدم</h2></div><button type="button" onClick={() => setDialogOpen(false)}>×</button></div>
+              <div className="admin-dialog-head"><div><p>إضافة / تعديل</p><h2>بيانات المستخدم</h2></div><button type="button" aria-label="إغلاق" onClick={() => setDialogOpen(false)}>×</button></div>
               <label>الاسم<input value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
               <label>البريد الإلكتروني<input type="email" required dir="ltr" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
               <label>الدور<select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as SponsorRole })}>{assignableRoles.map((id) => <option value={id} key={id}>{roleNameAr(id)}</option>)}</select></label>
