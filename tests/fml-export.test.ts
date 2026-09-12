@@ -50,7 +50,10 @@ test("DXF: one closed polyline on PARCEL, a label per point, an area label", () 
   const dxf = buildParcelDxf(PARCEL);
   const entities = pairs(dxf).filter(([code]) => code === "0").map(([, value]) => value);
 
-  assert.equal(entities.filter((e) => e === "LWPOLYLINE").length, 1, "exactly one polyline");
+  // POLYLINE, not LWPOLYLINE: the header declares R12, where LWPOLYLINE does
+  // not exist (see the version test below).
+  assert.equal(entities.filter((e) => e === "POLYLINE").length, 1, "exactly one polyline");
+  assert.equal(entities.filter((e) => e === "SEQEND").length, 1, "the vertex list is terminated");
   // Four vertices, so four point labels, plus one for the area.
   assert.equal(entities.filter((e) => e === "TEXT").length, ROWS.length + 1);
   assert.equal(entities.filter((e) => e === "POINT").length, ROWS.length);
@@ -68,9 +71,9 @@ test("DXF: units are metres, or a receiving drawing in feet scales the parcel", 
 });
 
 test("DXF: the vertex count matches the ring, and a closing repeat is dropped", () => {
+  // R12 counts its vertices by emitting them, not with a group 90.
   const closed = buildParcelDxf({ ...PARCEL, rows: [...ROWS, { ...ROWS[0] }] });
-  const vertexCount = /\r\n90\r\n(\d+)\r\n/.exec(closed)?.[1];
-  assert.equal(vertexCount, "4", "the repeated first point is not a fifth vertex");
+  assert.equal((closed.match(/\r\nVERTEX\r\n/g) ?? []).length, 4, "the repeated first point is not a fifth vertex");
 });
 
 test("DXF: text height follows the parcel, never below half a metre", () => {
@@ -109,10 +112,10 @@ test("KML needs a geographic pair on every row", () => {
   assert.throws(() => buildParcelKml(projectedOnly), /NO_GEOGRAPHIC_PAIRS/);
 });
 
-test("CSV carries both coordinate systems in one file", () => {
+test("CSV carries the coordinates the table is showing, and only those", () => {
   const lines = buildParcelCsv(PARCEL).split("\n");
-  assert.equal(lines[0], "Point,Easting,Northing,Latitude,Longitude");
-  assert.equal(lines[1], "1,565150.500,2550415.280,23.06101050,57.63600630");
+  assert.equal(lines[0], "Point,Easting,Northing");
+  assert.equal(lines[1], "1,565150.500,2550415.280");
   assert.equal(lines.length, 1 + ROWS.length);
 });
 
@@ -132,4 +135,76 @@ test("nothing to export produces nothing, in every format", () => {
   for (const format of ["dxf", "kml", "csv"] as const) {
     assert.equal(canExport({ rows: [] }, format), false, format);
   }
+});
+
+// ---- the two faults a surveyor reported from the live tool -----------------
+
+test("the DXF contains nothing a reader of its own declared version cannot parse", () => {
+  // The header says AC1009 — R12 — and the boundary was written as an
+  // LWPOLYLINE carrying `100 AcDbEntity` / `100 AcDbPolyline`. Both are R13
+  // and later. A reader that believes the header meets an entity that cannot
+  // exist in the version it was told to expect and drops it, so the drawing
+  // opens EMPTY, which is exactly what was reported.
+  const dxf = buildParcelDxf({
+    rows: [
+      { label: "1", easting: 511606.45, northing: 2384968.87 },
+      { label: "2", easting: 511656.408, northing: 2384966.93 },
+      { label: "3", easting: 511658.348, northing: 2385016.888 },
+      { label: "4", easting: 511613.386, northing: 2385018.634 },
+    ],
+  });
+
+  assert.match(dxf, /AC1009/);
+  assert.ok(!dxf.includes("LWPOLYLINE"), "LWPOLYLINE does not exist in R12");
+  assert.ok(!dxf.includes("AcDb"), "subclass markers are R13 and later");
+});
+
+test("the boundary is a POLYLINE every CAD program has read since 1990", () => {
+  const dxf = buildParcelDxf({
+    rows: [
+      { label: "1", easting: 100, northing: 100 },
+      { label: "2", easting: 140, northing: 100 },
+      { label: "3", easting: 140, northing: 130 },
+    ],
+  });
+
+  assert.match(dxf, /\bPOLYLINE\b/);
+  // 66 = "vertices follow", which an R12 reader requires before it will look
+  // for them.
+  assert.match(dxf, /POLYLINE[\s\S]*?\n66\r?\n1\r?\n/);
+  assert.equal((dxf.match(/\nVERTEX\r?\n/g) ?? []).length, 3);
+  assert.match(dxf, /\bSEQEND\b/);
+});
+
+test("the CSV carries one coordinate system — the one on screen", () => {
+  // It used to put point, easting, northing, latitude AND longitude on every
+  // row. A total station is given eastings and a handheld GPS is given
+  // degrees; a column holding both has to be split by hand before either can
+  // use it.
+  const csv = buildParcelCsv({
+    rows: [
+      { label: "22122831", easting: 511606.45, northing: 2384968.87, lat: 21.56757382, lon: 39.11210615 },
+      { label: "22122834", easting: 511656.408, northing: 2384966.93, lat: 21.56755597, lon: 39.11258868 },
+    ],
+  });
+
+  assert.equal(csv.split("\n")[0], "Point,Easting,Northing");
+  assert.ok(!csv.includes("21.56757382"), "the degrees belong to the other export");
+  assert.equal(csv.split("\n")[1], "22122831,511606.450,2384968.870");
+});
+
+test("a document that has only degrees exports degrees, not NaN", () => {
+  // Every metric cell read `NaN` on every row of such a document.
+  const csv = buildParcelCsv({
+    rows: [
+      { label: "P1", easting: Number.NaN, northing: Number.NaN, lat: 21.56757382, lon: 39.11210615 },
+      { label: "P2", easting: Number.NaN, northing: Number.NaN, lat: 21.56755597, lon: 39.11258868 },
+    ],
+  });
+
+  assert.equal(csv.split("\n")[0], "Point,Latitude,Longitude");
+  assert.ok(!csv.includes("NaN"));
+  // The synthetic "P" prefix is stripped here as it is everywhere else: a
+  // column of coordinates is broken by a letter in the point number.
+  assert.equal(csv.split("\n")[1], "1,21.56757382,39.11210615");
 });

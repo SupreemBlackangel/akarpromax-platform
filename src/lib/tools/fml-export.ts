@@ -7,7 +7,7 @@
  * clipboard: the document's own values, Latin digits, no renumbering.
  */
 import { DXF_COLOR, DxfBuilder, dxfNumber } from "./dxf";
-import { formatPoints, type CopyRow } from "./fml-clipboard";
+import { formatPoints, normalizeLabel, type CopyRow } from "./fml-clipboard";
 
 export type ExportFormat = "dxf" | "kml" | "csv";
 
@@ -161,21 +161,40 @@ export function buildParcelKml(parcel: ParcelExport): string {
 }
 
 /**
- * The clipboard's CSV plus the geographic pair, so one file carries both the
- * working coordinates and something a map can open.
+ * The parcel as a spreadsheet — in ONE coordinate system, the one on screen.
+ *
+ * It used to put every form it had into one file: point, easting, northing,
+ * latitude AND longitude on every row. That is not a coordinate table, it is
+ * two tables printed on top of each other, and nothing downstream wants it. A
+ * total station is given eastings; a handheld GPS is given degrees; a
+ * spreadsheet that holds both is one somebody has to split by hand before it
+ * is of use to either.
+ *
+ * Worse, a document that carries only degrees produced `NaN,NaN` in the two
+ * metric columns, on every row.
+ *
+ * So it exports what the reader is looking at: a projected table gives
+ * Point/Easting/Northing, and a geographic-only one gives
+ * Point/Latitude/Longitude. Millimetres for metres and eight decimals for
+ * degrees — the precision each is actually surveyed to.
  */
 export function buildParcelCsv(parcel: ParcelExport): string {
-  const body = formatPoints(parcel.rows, "csv").split("\n");
-  if (body.length <= 1) return "";
-  const [, ...rows] = body;
+  const projected = parcel.rows.length > 0
+    && parcel.rows.every((row) => Number.isFinite(row.easting) && Number.isFinite(row.northing));
+
+  if (projected) {
+    const body = formatPoints(parcel.rows, "csv").split("\n");
+    if (body.length <= 1) return "";
+    const [, ...rows] = body;
+    return ["Point,Easting,Northing", ...rows].join("\n");
+  }
+
+  const geographic = parcel.rows.filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lon));
+  if (geographic.length === 0) return "";
   return [
-    "Point,Easting,Northing,Latitude,Longitude",
-    ...rows.map((line, index) => {
-      const row = parcel.rows[index];
-      const lat = Number.isFinite(row?.lat) ? (row.lat as number).toFixed(8) : "";
-      const lon = Number.isFinite(row?.lon) ? (row.lon as number).toFixed(8) : "";
-      return `${line},${lat},${lon}`;
-    }),
+    "Point,Latitude,Longitude",
+    ...geographic.map((row) =>
+      `${normalizeLabel(row.label)},${(row.lat as number).toFixed(8)},${(row.lon as number).toFixed(8)}`),
   ].join("\n");
 }
 

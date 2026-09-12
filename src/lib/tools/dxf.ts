@@ -74,14 +74,37 @@ export class DxfBuilder {
     this.pair("0", "SECTION", "2", "ENTITIES");
   }
 
-  /** A closed LWPOLYLINE. Group 70 bit 1 is the closed flag. */
+  /**
+   * A closed boundary, as POLYLINE / VERTEX / SEQEND.
+   *
+   * It was an LWPOLYLINE carrying `100 AcDbEntity` / `100 AcDbPolyline`. Both
+   * of those are R13-and-later constructs, and the header of this file says
+   * AC1009 — R12. A reader that believes the header meets an entity that cannot
+   * exist in the version it was told to expect, and the boundary is silently
+   * dropped: the drawing opens EMPTY. Which is what a surveyor reported.
+   *
+   * The old POLYLINE sequence is more verbose and is read by everything ever
+   * written, including the survey software these drawings actually go to.
+   * Group 70 bit 1 is the closed flag, and it is set on the POLYLINE header —
+   * the VERTEX entities carry bit 32 to mark them as polyline vertices.
+   */
   polyline(layer: string, vertices: readonly { x: number; y: number }[], closed = true): this {
     if (this.lines.length === 0) this.header();
-    this.pair("0", "LWPOLYLINE", "8", layer, "100", "AcDbEntity", "100", "AcDbPolyline");
-    this.pair("90", String(vertices.length), "70", closed ? "1" : "0");
+    this.pair(
+      "0", "POLYLINE", "8", layer,
+      // 66 = "vertices follow", required by R12 readers.
+      "66", "1",
+      "10", "0.000", "20", "0.000", "30", "0.000",
+      "70", closed ? "1" : "0",
+    );
     for (const vertex of vertices) {
-      this.pair("10", dxfNumber(vertex.x), "20", dxfNumber(vertex.y));
+      this.pair(
+        "0", "VERTEX", "8", layer,
+        "10", dxfNumber(vertex.x), "20", dxfNumber(vertex.y), "30", "0.000",
+        "70", "32",
+      );
     }
+    this.pair("0", "SEQEND", "8", layer);
     return this;
   }
 

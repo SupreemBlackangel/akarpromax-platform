@@ -42,7 +42,7 @@ const geographic = (value: number): string => value.toFixed(8);
  * pasting an invented `P` into a coordinate column breaks it. A real survey
  * number — `23915169`, or a `12-13` line id — is never touched.
  */
-function normalizeLabel(label: string): string {
+export function normalizeLabel(label: string): string {
   const synthetic = /^P(\d+)$/i.exec(label.trim());
   return synthetic ? synthetic[1] : label.trim();
 }
