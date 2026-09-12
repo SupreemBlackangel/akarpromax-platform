@@ -6,6 +6,7 @@ import { useProperties } from '@/hooks/useProperties';
 import OwnerPropertyCard from '@/components/properties/OwnerPropertyCard';
 import { PropertyFilters } from '@/components/properties/PropertyFilters';
 import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
+import { AlertTriangle, Home } from "lucide-react";
 
 export default function MyPropertiesPage() {
   const [filters, setFilters] = useState({ status: 'all', page: 1 });
@@ -36,7 +37,7 @@ export default function MyPropertiesPage() {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <div className="text-5xl mb-4">⚠️</div>
+            <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><AlertTriangle size={26} strokeWidth={1.75} /></span>
             <p className="text-[var(--color-text-secondary)] font-semibold">{error}</p>
             <button
               type="button"
@@ -50,7 +51,7 @@ export default function MyPropertiesPage() {
           <>
             {properties.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-5xl mb-4">🏠</div>
+                <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Home size={26} strokeWidth={1.75} /></span>
                 <p className="text-[var(--color-text-muted)] font-semibold">لا توجد عقارات بعد</p>
                 <Link
                   href="/dashboard/properties/new"

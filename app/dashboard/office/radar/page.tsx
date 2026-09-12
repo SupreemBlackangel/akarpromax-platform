@@ -125,7 +125,7 @@ export default function OfficeRadarPage() {
                       {String(target.kind)} · {String(target.cityId || target.countryCode)} · {Number(target.distanceKm).toFixed(1)}كم
                     </p>
                   </div>
-                  <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-black text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">
+                  <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[var(--text-xs)] font-black text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">
                     {Number(target.distanceKm).toFixed(1)} كم
                   </span>
                 </li>

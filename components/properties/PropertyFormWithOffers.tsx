@@ -849,9 +849,9 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
                 // eslint-disable-next-line @next/next/no-img-element -- preview of a runtime-managed URL
                 <img src={media.url} alt="" width={56} height={40} loading="lazy" decoding="async" className="h-10 w-14 shrink-0 rounded-lg object-cover bg-[var(--color-surface-muted)] border border-[var(--color-border)]" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
               ) : (
-                <span className="h-10 w-14 shrink-0 rounded-lg bg-[var(--color-surface-muted)] border border-[var(--color-border)] flex items-center justify-center text-[10px] font-bold text-[var(--color-text-muted)]">{media.type === 'video' ? 'فيديو' : '—'}</span>
+                <span className="h-10 w-14 shrink-0 rounded-lg bg-[var(--color-surface-muted)] border border-[var(--color-border)] flex items-center justify-center text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">{media.type === 'video' ? 'فيديو' : '—'}</span>
               )}
-              {index === 0 && <span className="shrink-0 rounded-full bg-[var(--color-primary-soft)] border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-black text-[var(--color-primary)]">غلاف</span>}
+              {index === 0 && <span className="shrink-0 rounded-full bg-[var(--color-primary-soft)] border border-[var(--color-border)] px-2 py-0.5 text-[var(--text-xs)] font-black text-[var(--color-primary)]">غلاف</span>}
               <input
                 type="text"
                 value={media.url}
@@ -895,7 +895,7 @@ export function PropertyFormWithOffers({ initialData, propertyId, onSuccess, onV
           >
             <Upload className="w-4 h-4" /> {uploadingImage ? 'جارٍ الرفع...' : 'رفع صور من جهازك'}
           </Button>
-          <p className="text-[11px] text-[var(--color-text-muted)]">تُحوَّل الصور تلقائيًا إلى WebP بمقاس موحد لسرعة التصفح.</p>
+          <p className="text-[var(--text-xs)] text-[var(--color-text-muted)] font-medium">تُحوَّل الصور تلقائيًا إلى WebP بمقاس موحد لسرعة التصفح.</p>
         </CardContent>
       </Card>
 

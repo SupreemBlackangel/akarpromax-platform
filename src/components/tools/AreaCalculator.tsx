@@ -249,7 +249,7 @@ export function AreaCalculator({ locale }: Props) {
                   }`}
                   onClick={() => setUnit(c.unit)}
                 >
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">{c.label}</div>
+                  <div className="text-[var(--text-xs)] text-gray-500 dark:text-gray-400 font-medium">{c.label}</div>
                   <div className="text-sm font-bold text-gray-900 dark:text-white font-mono">{formatNum(c.value)}</div>
                 </div>
               ))}

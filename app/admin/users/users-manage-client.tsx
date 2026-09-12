@@ -212,7 +212,7 @@ export default function UsersManageClient() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-start text-[11px] font-black uppercase text-[var(--color-text-muted)]">
+              <tr className="border-b border-[var(--color-border)] text-start text-[var(--text-xs)] font-black uppercase text-[var(--color-text-muted)]">
                 <th className="py-2 text-start">المستخدم</th>
                 <th className="py-2 text-start">الدور</th>
                 <th className="py-2 text-start">الحالة</th>
@@ -233,9 +233,9 @@ export default function UsersManageClient() {
                     </td>
                     <td className="py-3 text-xs font-bold text-[var(--color-text-secondary)]">{ROLE_LABELS[user.role] || user.role}</td>
                     <td className="py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${st[1]}`}>{st[0]}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-[var(--text-xs)] font-black ${st[1]}`}>{st[0]}</span>
                       {!user.isActive && (
-                        <span className="ms-1 rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-black text-red-700">محظور</span>
+                        <span className="ms-1 rounded-full bg-red-100 px-2.5 py-1 text-[var(--text-xs)] font-black text-red-700">محظور</span>
                       )}
                     </td>
                     <td className="py-3 text-xs font-bold">
@@ -248,37 +248,37 @@ export default function UsersManageClient() {
                     </td>
                     <td className="py-3">
                       <div className="flex flex-wrap gap-1.5">
-                        <button type="button" disabled={busy} onClick={() => openDetail(user, false)} title="معاينة" className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-[11px] font-black text-[var(--color-primary)] hover:bg-blue-100 disabled:opacity-50">
+                        <button type="button" disabled={busy} onClick={() => openDetail(user, false)} title="معاينة" className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-[var(--text-xs)] font-black text-[var(--color-primary)] hover:bg-blue-100 disabled:opacity-50">
                           <Eye className="h-3.5 w-3.5" /> معاينة
                         </button>
-                        <button type="button" disabled={busy} onClick={() => openDetail(user, true)} title="تعديل" className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[11px] font-black text-gray-700 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-200">
+                        <button type="button" disabled={busy} onClick={() => openDetail(user, true)} title="تعديل" className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-gray-700 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-200">
                           <Pencil className="h-3.5 w-3.5" /> تعديل
                         </button>
                         {user.status === "pending_verification" && (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "verify")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-emerald-700 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "verify")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-white hover:bg-emerald-700 disabled:opacity-50">
                             <CircleCheck className="h-3.5 w-3.5" /> تفعيل الحساب
                           </button>
                         )}
                         {user.status === "suspended" || user.status === "disabled" ? (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "activate")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "activate")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
                             <CircleCheck className="h-3.5 w-3.5" /> إعادة تنشيط
                           </button>
                         ) : user.status === "active" && (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "suspend", { title: "إيقاف الحساب", body: `سيُوقف حساب «${user.name || user.email}» مؤقتًا ولن يستطيع الدخول حتى يُعاد تفعيله.`, confirmLabel: "إيقاف", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "suspend", { title: "إيقاف الحساب", body: `سيُوقف حساب «${user.name || user.email}» مؤقتًا ولن يستطيع الدخول حتى يُعاد تفعيله.`, confirmLabel: "إيقاف", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50">
                             <PauseCircle className="h-3.5 w-3.5" /> إيقاف
                           </button>
                         )}
                         {user.isActive ? (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "block", { title: "حظر الحساب", body: `سيُحظر «${user.name || user.email}» من الدخول إلى المنصة. يمكن رفع الحظر لاحقًا من هذه اللوحة.`, confirmLabel: "حظر", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-black text-red-700 hover:bg-red-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "block", { title: "حظر الحساب", body: `سيُحظر «${user.name || user.email}» من الدخول إلى المنصة. يمكن رفع الحظر لاحقًا من هذه اللوحة.`, confirmLabel: "حظر", tone: "danger" })} className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-red-700 hover:bg-red-100 disabled:opacity-50">
                             <Ban className="h-3.5 w-3.5" /> حظر
                           </button>
                         ) : (
-                          <button type="button" disabled={busy} onClick={() => void act(user, "unblock")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void act(user, "unblock")} className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
                             <ShieldAlert className="h-3.5 w-3.5" /> إلغاء الحظر
                           </button>
                         )}
                         {user.status !== "deleted" && (
-                          <button type="button" disabled={busy} onClick={() => void deleteUser(user)} title="حذف" className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-red-700 disabled:opacity-50">
+                          <button type="button" disabled={busy} onClick={() => void deleteUser(user)} title="حذف" className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1.5 text-[var(--text-xs)] font-black text-white hover:bg-red-700 disabled:opacity-50">
                             <Trash2 className="h-3.5 w-3.5" /> حذف
                           </button>
                         )}
@@ -325,7 +325,7 @@ export default function UsersManageClient() {
                     ))}
                   </select>
                 </label>
-                <p className="text-[11px] text-[var(--color-text-muted)]">البريد الإلكتروني لا يُعدَّل من هنا حفاظًا على سلامة التحقق. منح «المدير العام» أو سحبه يتطلب مديرًا عامًا.</p>
+                <p className="text-[var(--text-xs)] text-[var(--color-text-muted)] font-medium">البريد الإلكتروني لا يُعدَّل من هنا حفاظًا على سلامة التحقق. منح «المدير العام» أو سحبه يتطلب مديرًا عامًا.</p>
                 <div className="flex gap-2 pt-2">
                   <button type="button" disabled={busyId === detail.user.id} onClick={() => void saveEdit()} className="flex-1 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-black text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
                     {busyId === detail.user.id ? "جارٍ الحفظ..." : "حفظ التعديلات"}

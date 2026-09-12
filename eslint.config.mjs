@@ -4,8 +4,17 @@ import nextTs from "eslint-config-next/typescript";
 import { readFileSync } from "node:fs";
 import { noRawColours } from "./eslint-rules/no-raw-colours.mjs";
 
-// Files that predate the raw-colour rule. See eslint-raw-colour-allowlist.json.
-const rawColourAllowlist = JSON.parse(readFileSync(new URL("./eslint-raw-colour-allowlist.json", import.meta.url), "utf8")).files;
+// Files that predate the raw-colour rule, as ignore PATTERNS.
+// See eslint-raw-colour-allowlist.json.
+//
+// The square brackets in a Next.js dynamic segment are a glob character class,
+// so "app/properties/[id]/page.tsx" matched every path with a p, an i or a d
+// there and never the file itself. Every allow-listed route with a dynamic
+// segment — around a third of the list — was therefore not exempt at all and
+// has been erroring since the rule landed. They are escaped here rather than
+// in the JSON so the list stays a list of paths a person can read.
+const rawColourAllowlist = JSON.parse(readFileSync(new URL("./eslint-raw-colour-allowlist.json", import.meta.url), "utf8"))
+  .files.map((file) => file.replace(/\[/g, "\\[").replace(/\]/g, "\\]"));
 
 const eslintConfig = defineConfig([
   ...nextVitals,

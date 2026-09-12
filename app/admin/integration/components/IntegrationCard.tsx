@@ -57,7 +57,7 @@ export default function IntegrationCard({ icon, name, description, status, lastS
         </div>
         {meta.map((m) => (
           <div key={m.label} className="min-w-0">
-            <dt className="text-[11px] text-[color:var(--color-text-secondary)]">{m.label}</dt>
+            <dt className="text-[var(--text-xs)] text-[color:var(--color-text-secondary)] font-medium">{m.label}</dt>
             <dd className="truncate font-semibold text-[color:var(--color-text-primary)]" dir={m.dir ?? "auto"} title={m.value}>{m.value}</dd>
           </div>
         ))}

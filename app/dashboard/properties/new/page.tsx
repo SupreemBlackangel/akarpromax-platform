@@ -233,7 +233,7 @@ export default function NewPropertyPage() {
                       >
                         {step.label}
                       </div>
-                      <div className="text-[10px] text-[var(--color-text-muted)] whitespace-nowrap">{step.description}</div>
+                      <div className="text-[var(--text-xs)] text-[var(--color-text-muted)] whitespace-nowrap font-medium">{step.description}</div>
                     </div>
                   </button>
                   {!isLast && (

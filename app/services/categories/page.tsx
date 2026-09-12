@@ -9,6 +9,7 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import { CategoryCard, type CategoryRow } from "@services-ui/ServiceCards";
 import SearchInput from "@/src/components/ui/SearchInput";
+import { Search } from "lucide-react";
 
 export default function ServiceCategoriesPage() {
   const { locale, viewer, t, dir, country, city, isGlobal, openLogin, handleLogout, AccountDialog, copy } = useServicesPage();
@@ -89,7 +90,7 @@ export default function ServiceCategoriesPage() {
             </Grid>
           ) : filteredCategories.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-5xl mb-4">🔍</div>
+              <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Search size={26} strokeWidth={1.75} /></span>
               <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{search ? t("services.noResults") ?? "لا توجد نتائج" : t("services.empty") ?? "لا توجد تصنيفات"}</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{search ? t("services.noResultsSub") ?? "جرب كلمات بحث مختلفة" : t("services.emptySub") ?? "لا توجد تصنيفات متاحة حالياً"}</p>
             </div>

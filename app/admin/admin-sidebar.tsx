@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/src/constants/permissions";
 import { roleNameAr } from "@/src/constants/roles";
 import type { UserIdentity } from "@/lib/identity-auth";
 import Icon, { type IconName } from "@/src/components/ui/Icon";
+import BrandMark from "@/src/components/ui/BrandMark";
 
 const countries: Record<string, string> = {
   om: "عُمان", sa: "السعودية", ae: "الإمارات", qa: "قطر", kw: "الكويت",
@@ -92,7 +93,9 @@ export default function AdminSidebar({ identity }: { identity: UserIdentity }) {
 
   return (
     <aside className="advertiser-admin-sidebar">
-      <Link className="admin-brand" href="/"><span>A</span><div><strong>عقار بروماكس</strong><small>Admin Control</small></div></Link>
+      {/* The mark, not a letter drawn in Georgia: docs/brand-identity.md forbids
+          redrawing the logo as text, and this was the last place doing it. */}
+      <Link className="admin-brand" href="/"><BrandMark size="md" name="عقار بروماكس" subtitle="Admin Control" /></Link>
       <nav className="admin-nav" aria-label="لوحة الإدارة">
         {navGroups.map((group) => {
           const items = group.items.filter((item) => canSee(item.permission, identity.permissions));

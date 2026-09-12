@@ -282,7 +282,7 @@ export default function ServicesHubPage() {
                 size="lg"
               />
               <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full border border-white/25 px-2 py-0.5 text-[10px] font-black text-white/70">{adLabel}</span>
+                <span className="inline-block rounded-full border border-white/25 px-2 py-0.5 text-[var(--text-xs)] font-black text-white/70">{adLabel}</span>
                 <h2 className="mt-2 truncate text-2xl font-black md:text-3xl">
                   {sponsoredProvider.business_name || nameFor(locale, sponsoredProvider.display_name_ar, sponsoredProvider.display_name_en, null, "مزوّد خدمة")}
                 </h2>

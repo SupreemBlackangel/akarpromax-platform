@@ -225,7 +225,7 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
 
   const selectClass =
     "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2 text-sm font-semibold text-[var(--color-text-primary)] outline-none transition-colors focus:border-[var(--color-primary)] disabled:opacity-45";
-  const labelClass = "mb-1 block text-[11px] font-bold text-[var(--color-text-muted)]";
+  const labelClass = "mb-1 block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]";
 
   return (
     <div className="relative">
@@ -253,7 +253,7 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-black text-[var(--color-text-primary)]">{t("popoverTitle", locale)}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-primary)]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[var(--text-xs)] font-bold text-[var(--color-primary)]">
                 {geo.source === "manual" ? t("manual", locale) : t("auto", locale)}
                 {geo.source !== "manual" && <Check className="h-3 w-3" aria-hidden="true" />}
               </span>
@@ -327,7 +327,7 @@ export default function LocationCluster({ locale }: { locale: Locale }) {
                   {t("backToAuto", locale)}
                 </button>
               )}
-              {message && <p className="text-center text-[11px] font-semibold text-[var(--color-text-muted)]">{message}</p>}
+              {message && <p className="text-center text-[var(--text-xs)] font-semibold text-[var(--color-text-muted)]">{message}</p>}
             </div>
           </div>
         </>

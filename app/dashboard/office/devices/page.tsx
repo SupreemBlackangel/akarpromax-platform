@@ -189,7 +189,7 @@ function OfficeDevicesPageInner() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${
+                      className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${
                         device.status === "active"
                           ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]"
                           : "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]"

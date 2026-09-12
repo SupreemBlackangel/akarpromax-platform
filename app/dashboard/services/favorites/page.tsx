@@ -8,6 +8,7 @@ import { ProviderCard, type ProviderRow } from "@services-ui/ServiceCards";
 import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import { usePathname } from "next/navigation";
+import { Star } from "lucide-react";
 
 export default function ServiceFavoritesPage() {
   const pathname = usePathname();
@@ -63,7 +64,7 @@ export default function ServiceFavoritesPage() {
           </Grid>
         ) : favorites.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-5xl mb-4">⭐</div>
+            <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Star size={26} strokeWidth={1.75} /></span>
             <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.noFavorites") ?? "لا توجد عناصر مفضلة"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noFavoritesSub") ?? "ابدأ بحفظ مقدمي الخدمات أو الطلبات التي تعجبك"}</p>
             <button onClick={() => window.location.href = "/services"} className="mt-4 px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-bold transition">

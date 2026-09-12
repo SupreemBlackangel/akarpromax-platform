@@ -339,8 +339,8 @@ export default function AdminPropertyModeration() {
                     {/* Image system: upload / delete / set-cover */}
                     <div>
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[11px] font-black text-[var(--color-text-secondary)]">الصور ({row.media?.length ?? 0})</span>
-                        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-primary)] px-3 py-1.5 text-[11px] font-black text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] ${busyId === row.id ? 'pointer-events-none opacity-50' : ''}`}>
+                        <span className="text-[var(--text-xs)] font-black text-[var(--color-text-secondary)]">الصور ({row.media?.length ?? 0})</span>
+                        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-primary)] px-3 py-1.5 text-[var(--text-xs)] font-black text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] ${busyId === row.id ? 'pointer-events-none opacity-50' : ''}`}>
                           <ImagePlus className="h-3.5 w-3.5" /> إضافة صورة
                           <input
                             type="file"
@@ -356,7 +356,7 @@ export default function AdminPropertyModeration() {
                             <div key={m.id} className="relative shrink-0">
                               {/* eslint-disable-next-line @next/next/no-img-element -- runtime-managed URL */}
                               <img src={m.url} alt="" width={144} height={96} loading="lazy" decoding="async" className={`h-24 w-36 rounded-xl object-cover bg-[var(--color-surface-muted)] ${m.isFeatured ? 'ring-2 ring-[var(--color-primary)]' : ''}`} />
-                              {m.isFeatured && <span className="absolute top-1 start-1 rounded-md bg-[var(--color-primary)] px-1.5 py-0.5 text-[9px] font-black text-white">الغلاف</span>}
+                              {m.isFeatured && <span className="absolute top-1 start-1 rounded-md bg-[var(--color-primary)] px-1.5 py-0.5 text-[var(--text-xs)] font-black text-white">الغلاف</span>}
                               <div className="absolute bottom-1 end-1 flex gap-1">
                                 {!m.isFeatured && (
                                   <button type="button" title="تعيين كغلاف" disabled={busyId === row.id} onClick={() => setCover(row.id, m.id)} className="grid h-6 w-6 place-items-center rounded-md bg-black/55 text-white transition hover:bg-black/75 disabled:opacity-50">
@@ -371,11 +371,11 @@ export default function AdminPropertyModeration() {
                           ))}
                         </div>
                       ) : (
-                        <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-[11px] font-bold text-[var(--color-text-muted)]">لا توجد صور — أضف صورة من الزر أعلاه</p>
+                        <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">لا توجد صور — أضف صورة من الزر أعلاه</p>
                       )}
                     </div>
                     <p className="text-xs leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">{row.descriptionAr || '—'}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-bold text-[var(--color-text-secondary)]">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[var(--text-xs)] font-bold text-[var(--color-text-secondary)]">
                       <span>غرف: {row.bedrooms ?? '—'}</span>
                       <span>حمامات: {row.bathrooms ?? '—'}</span>
                       <span>مرجع: {row.referenceNumber || '—'}</span>
@@ -383,7 +383,7 @@ export default function AdminPropertyModeration() {
                       {row.latitude && row.longitude && <span className="col-span-2">إحداثيات: {row.latitude}, {row.longitude}</span>}
                     </div>
                     {row.status === 'rejected' && row.rejectedReason && (
-                      <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2 text-[11px] font-bold text-red-700 dark:text-red-300">سبب الرفض السابق: {row.rejectedReason}</p>
+                      <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2 text-[var(--text-xs)] font-bold text-red-700 dark:text-red-300">سبب الرفض السابق: {row.rejectedReason}</p>
                     )}
 
                     {row.status === 'pending_review' && (

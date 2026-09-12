@@ -220,7 +220,7 @@ export function PointsToDxf({ locale }: Props) {
                     <p className="mt-1 text-xs text-[var(--color-success)]">{t("طبقات الملف المساحية:", "Survey layers:")}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5" dir="ltr">
                       {["CROSS", "NAME", "ELEV", "CODE"].map((layer) => (
-                        <span key={layer} className="rounded-md border border-emerald-200 bg-[var(--color-surface)]/70 px-2 py-1 font-mono text-[11px] font-bold text-emerald-800">
+                        <span key={layer} className="rounded-md border border-emerald-200 bg-[var(--color-surface)]/70 px-2 py-1 font-mono text-[var(--text-xs)] font-bold text-emerald-800">
                           {layer}
                         </span>
                       ))}

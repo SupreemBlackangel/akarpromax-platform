@@ -99,7 +99,7 @@ function OfficeSyncPageInner() {
                     <p className="text-xs text-gray-400">{op.entity_id ? op.entity_id.slice(0, 24) : "—"}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${STATUS_TONES[op.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${STATUS_TONES[op.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
                       {op.status}
                     </span>
                   </td>

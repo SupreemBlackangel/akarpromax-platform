@@ -8,6 +8,7 @@ import ServiceDashboardShell from "@services-ui/ServiceDashboardShell";
 import { OfferStatusPill } from "@services-ui/ServiceStatusBadges";
 import { apiFetch, formatMoney, formatDate } from "@services-client";
 import { getCurrency } from "@/lib/market/currency-registry";
+import { Lock } from "lucide-react";
 
 type OfferDetail = {
   id: string;
@@ -96,7 +97,7 @@ export default function OfferDetailPage({ id }: Props) {
   if (!viewer.authenticated) {
     return (
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath="/dashboard/services/offers" onLogin={() => openLogin("login")} onLogout={handleLogout}>
-        <div dir={dir} className="container py-24 text-center"><div className="text-5xl mb-4">🔒</div></div>
+        <div dir={dir} className="container py-24 text-center"><span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span></div>
       </PublicPageShell>
     );
   }

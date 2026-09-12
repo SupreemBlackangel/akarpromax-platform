@@ -77,7 +77,7 @@ export default function OfficeNotificationsPage() {
               <li key={d.id} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{d.title || d.event_type}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${STATUS_TONES[d.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${STATUS_TONES[d.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
                     {d.status}
                   </span>
                 </div>
@@ -110,7 +110,7 @@ export default function OfficeNotificationsPage() {
                   <td className="px-4 py-3 font-bold text-gray-800 dark:text-gray-200">{String(rule.event_type)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{String(rule.channel)}</td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${Number(rule.enabled) === 1 ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${Number(rule.enabled) === 1 ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
                       {Number(rule.enabled) === 1 ? "نعم" : "لا"}
                     </span>
                   </td>

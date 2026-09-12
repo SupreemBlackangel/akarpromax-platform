@@ -200,7 +200,7 @@ export function CategoryCard({ category, locale }: { category: CategoryRow; loca
         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition group-hover:bg-[var(--color-primary)] group-hover:text-white">
           <ServiceCategoryIcon name={category.icon} />
         </span>
-        <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
+        <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-[var(--text-xs)] font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
           {category.booking_mode === "both" || category.booking_mode === "instant" ? "حجز مباشر" : "طلب عروض"}
         </span>
       </div>
@@ -232,7 +232,7 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
           <h3 className="flex items-center gap-1.5 truncate font-black text-[var(--color-text-primary)] dark:text-white">{name}{provider.status === "approved" && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-label="موثّق" />}</h3>
           <RatingStars value={provider.rating_avg} count={provider.rating_count} locale={locale} />
         </div>
-        {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-[10px] font-black text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
+        {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-[var(--text-xs)] font-black text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
       </div>
       {bio && <p className="mt-3 text-sm text-[var(--color-text-secondary)] line-clamp-2">{bio}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">

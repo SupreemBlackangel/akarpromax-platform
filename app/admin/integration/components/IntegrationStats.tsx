@@ -52,7 +52,7 @@ export default function IntegrationStats({ stats, loading = false }: { stats: In
             <p className="mt-3 text-2xl font-black leading-none text-[color:var(--color-text-primary)]">{s.value}</p>
           )}
           <p className="mt-1.5 text-xs font-semibold text-[color:var(--color-text-secondary)]">{s.label}</p>
-          {s.hint && <p className="mt-0.5 text-[11px] text-[color:var(--color-text-secondary)]" dir="auto">{s.hint}</p>}
+          {s.hint && <p className="mt-0.5 text-[var(--text-xs)] text-[color:var(--color-text-secondary)] font-medium" dir="auto">{s.hint}</p>}
         </div>
       ))}
     </div>

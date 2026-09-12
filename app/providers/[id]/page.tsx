@@ -9,6 +9,7 @@ import Button from '@/src/components/ui/Button';
 import Skeleton from '@/src/components/ui/Skeleton';
 import PageContainer from '@/src/components/layout/PageContainer';
 import { RatingStars } from '@services-ui/ServiceCards';
+import { UserRound } from "lucide-react";
 
 type Review = {
   id: string;
@@ -360,7 +361,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
             {!loading && (error || !provider) && (
               <div className="grid min-h-[50vh] place-items-center">
                 <div className="text-center max-w-sm">
-                  <div className="text-5xl mb-4 opacity-40">🧑‍💼</div>
+                  <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><UserRound size={26} strokeWidth={1.75} /></span>
                   <h1 className="text-xl font-black text-[color:var(--color-text-primary)] mb-2">{t.notFound}</h1>
                   <p className="text-sm font-bold text-[color:var(--color-text-muted)] mb-5">{t.notFoundDesc}</p>
                   <Link href="/providers" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
@@ -412,7 +413,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                                 <p className="mt-1 text-sm font-bold text-[color:var(--color-primary)]">{service.instantPrice} {service.currency}</p>
                               )}
                             </div>
-                            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-[color:var(--color-text-muted)]">
+                            <span className="rounded-full bg-white px-2 py-1 text-[var(--text-xs)] font-black text-[color:var(--color-text-muted)]">
                               {service.bookingMode === 'both' ? (loc === 'ar' ? 'حجز أو عروض' : 'Book or quote') : service.bookingMode === 'instant' ? (loc === 'ar' ? 'حجز مباشر' : 'Instant') : (loc === 'ar' ? 'طلب عروض' : 'Quotes')}
                             </span>
                           </div>

@@ -4,7 +4,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { MapPin, Bed, Bath, Car, Maximize, ArrowRight, Heart, MessageCircle, Gavel, Timer, Phone, Building2, User } from "lucide-react";
+import { ArrowRight, Bath, Bed, Building2, Car, Gavel, Heart, HousePlus, MapPin, Maximize, MessageCircle, Phone, Timer, User } from "lucide-react";
 import PublicPageShell from "@/src/components/PublicPageShell";
 import { translations } from "@/src/data/translations";
 import { useGeo } from "@/src/contexts/GeoContext";
@@ -176,7 +176,7 @@ export default function PropertyPage({ params }: Props) {
       {!loading && !property && (
         <PageContainer className="grid min-h-[60vh] place-items-center py-8">
           <div className="text-center max-w-sm">
-            <div className="text-5xl mb-4 opacity-40">🏚️</div>
+            <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><HousePlus size={26} strokeWidth={1.75} /></span>
             <h1 className="text-xl font-black text-[color:var(--color-text-primary)] mb-2">{t.notFoundTitle}</h1>
             <p className="text-sm font-bold text-[color:var(--color-text-muted)] mb-5">{t.notFoundDesc}</p>
             <Link href="/properties" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
@@ -199,7 +199,7 @@ export default function PropertyPage({ params }: Props) {
                     <div className="relative aspect-[16/10] bg-[color:var(--color-surface-soft)]">
                       <img src={imageUrl} alt={property.title[locale]} width={1280} height={800} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[color:var(--color-accent)] px-3 py-1 text-[10px] font-black text-[color:var(--color-text-primary)] shadow-sm">{t.badge}</span>}
+                      {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[color:var(--color-accent)] px-3 py-1 text-[var(--text-xs)] font-black text-[color:var(--color-text-primary)] shadow-sm">{t.badge}</span>}
                     </div>
                     {secondaryImageUrl && (
                       <button
@@ -241,13 +241,13 @@ export default function PropertyPage({ params }: Props) {
                           ? (locale === "ar" ? "مزاد جارٍ الآن" : locale === "tr" ? "Müzayede devam ediyor" : "Live auction")
                           : (locale === "ar" ? "عقار بنظام المزاد" : locale === "tr" ? "Müzayedeli mülk" : "Auction listing")}
                       </span>
-                      <span className="text-[10px] font-black text-amber-700 dark:text-amber-300">
+                      <span className="text-[var(--text-xs)] font-black text-amber-700 dark:text-amber-300">
                         {auction.type === "fixed"
                           ? (locale === "ar" ? "مزاد مغلق" : locale === "tr" ? "Kapalı" : "Closed")
                           : (locale === "ar" ? "مزاد مفتوح" : locale === "tr" ? "Açık" : "Open")}
                       </span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80">
+                    <p className="text-[var(--text-xs)] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80">
                       {locale === "ar" ? "السعر الحالي" : locale === "tr" ? "Güncel fiyat" : "Current price"}
                     </p>
                     <p className="mt-0.5 flex items-baseline gap-2">
@@ -271,12 +271,12 @@ export default function PropertyPage({ params }: Props) {
                       const cell = (value: number, label: string) => (
                         <div className="rounded-xl bg-white/80 px-2 py-1.5 text-center shadow-sm dark:bg-black/20">
                           <b className="block text-lg font-black text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>{String(value).padStart(2, "0")}</b>
-                          <small className="text-[9px] font-black text-[color:var(--color-text-muted)]">{label}</small>
+                          <small className="text-[var(--text-xs)] font-black text-[color:var(--color-text-muted)]">{label}</small>
                         </div>
                       );
                       return (
                         <div className="mt-3">
-                          <p className="mb-1.5 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80"><Timer className="h-3 w-3" /> {locale === "ar" ? "الوقت المتبقي" : locale === "tr" ? "Kalan süre" : "Time left"}</p>
+                          <p className="mb-1.5 inline-flex items-center gap-1 text-[var(--text-xs)] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80"><Timer className="h-3 w-3" /> {locale === "ar" ? "الوقت المتبقي" : locale === "tr" ? "Kalan süre" : "Time left"}</p>
                           <div className="grid grid-cols-4 gap-1.5" dir="ltr">
                             {cell(d, locale === "ar" ? "يوم" : locale === "tr" ? "gün" : "days")}
                             {cell(h, locale === "ar" ? "ساعة" : locale === "tr" ? "saat" : "hrs")}
@@ -348,7 +348,7 @@ export default function PropertyPage({ params }: Props) {
                     {property.features[locale]?.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1.5">
                         {property.features[locale].map((feature) => (
-                          <span key={feature} className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--color-text-secondary)]">
+                          <span key={feature} className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[color:var(--color-text-secondary)]">
                             {feature}
                           </span>
                         ))}
@@ -366,10 +366,10 @@ export default function PropertyPage({ params }: Props) {
                     {(property.propertyType || property.listingType) && (
                       <div className="flex flex-wrap gap-1.5">
                         {property.propertyType && (
-                          <span className="rounded-full bg-[color:var(--color-primary-soft)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--color-primary)]">{property.propertyType}</span>
+                          <span className="rounded-full bg-[color:var(--color-primary-soft)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--color-primary)]">{property.propertyType}</span>
                         )}
                         {property.listingType && (
-                          <span className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--color-text-secondary)]">{property.listingType}</span>
+                          <span className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--color-text-secondary)]">{property.listingType}</span>
                         )}
                       </div>
                     )}
@@ -380,7 +380,7 @@ export default function PropertyPage({ params }: Props) {
                           {advertiser.type === "office" ? <Building2 className="h-4 w-4" /> : <User className="h-4 w-4" />}
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-[10px] font-medium text-[color:var(--color-text-muted)]">
+                          <span className="block text-[var(--text-xs)] font-medium text-[color:var(--color-text-muted)]">
                             {advertiser.type === "office"
                               ? (locale === "ar" ? "المكتب المعلن" : locale === "tr" ? "İlan veren ofis" : "Advertising office")
                               : (locale === "ar" ? "المعلن" : locale === "tr" ? "İlan sahibi" : "Advertiser")}
@@ -493,7 +493,7 @@ export default function PropertyPage({ params }: Props) {
           {similar.length > 0 && (
             <section className="border-t border-[color:var(--color-border)] bg-[var(--color-surface)]">
               <PageContainer className="py-8">
-                <p className="text-[11px] font-semibold text-[color:var(--color-primary)]">{t.similarLabel}</p>
+                <p className="text-[var(--text-xs)] font-semibold text-[color:var(--color-primary)]">{t.similarLabel}</p>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   {similar.map((item) => (
                     <Link key={item.id} href={`/properties/${item.slug || item.id}`} className="group overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[var(--color-surface)] shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -501,7 +501,7 @@ export default function PropertyPage({ params }: Props) {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                         <div className="absolute bottom-3 start-4 text-white">
                           <strong className="block text-sm font-bold">{item.price.toLocaleString(locale === "ar" ? "ar" : "en")}</strong>
-                          <span className="text-[10px] font-bold opacity-90">{item.currency}</span>
+                          <span className="text-[var(--text-xs)] font-bold opacity-90">{item.currency}</span>
                         </div>
                       </div>
                       <div className="p-4">

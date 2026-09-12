@@ -82,7 +82,7 @@ export default function InboxPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{label}</span>
                       {Number(thread.unread_count) > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">{thread.unread_count}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[var(--text-xs)] font-bold">{thread.unread_count}</span>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-gray-400">{formatDateTime(thread.last_message_at)}</p>

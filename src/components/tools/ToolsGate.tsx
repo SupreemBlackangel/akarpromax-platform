@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import type { Locale } from "@/src/types/site";
+import { AlertTriangle, Lock } from "lucide-react";
 
 export type ToolsGateState = "loading" | "unauthenticated" | "forbidden" | "granted";
 
@@ -27,7 +28,7 @@ export function ToolsGate({ locale, state, onRequestLogin, children }: ToolsGate
     return (
       <div dir="rtl" className="flex items-center justify-center min-h-[300px]">
         <div className="text-center max-w-sm">
-          <div className="text-5xl mb-4 opacity-40">🔒</div>
+          <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">تسجيل الدخول مطلوب</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-5">يجب تسجيل الدخول أولاً للوصول إلى الأدوات الهندسية.</p>
           <button
@@ -45,7 +46,7 @@ export function ToolsGate({ locale, state, onRequestLogin, children }: ToolsGate
     return (
       <div dir="rtl" className="flex items-center justify-center min-h-[300px]">
         <div className="text-center max-w-sm">
-          <div className="text-5xl mb-4 opacity-40">⚠️</div>
+          <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><AlertTriangle size={26} strokeWidth={1.75} /></span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">403 — ليس لديك صلاحية</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-3">حسابك مسجل لكن لا يملك صلاحية الوصول إلى الأدوات.</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs">اطلب من المدير العام منحك صلاحية tools.use</p>

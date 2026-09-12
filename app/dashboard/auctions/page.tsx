@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Clock, Users, Gavel } from 'lucide-react';
 import DashboardPageShell from '@/src/components/dashboard/DashboardPageShell';
+import EmptyState from "@/src/components/ui/EmptyState";
+import { Gavel } from "lucide-react";
 
 interface AuctionRow {
   id: string;
@@ -87,17 +89,19 @@ export default function AuctionsDashboardPage() {
           ) : error ? (
             <div className="p-8 text-center text-[var(--color-error)] font-semibold">{error}</div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-5xl mb-4">🔨</div>
-              <p className="text-gray-500 font-semibold">لا توجد مزادات بعد</p>
-              <Link
-                href="/dashboard/auctions/new"
-                className="mt-4 inline-block px-6 py-3 rounded-xl font-bold text-sm text-white"
-                style={{ background: 'var(--brand-gradient)' }}
-              >
-                أطلق مزادك الأول
-              </Link>
-            </div>
+            <EmptyState
+              icon={Gavel}
+              title="لا توجد مزادات بعد"
+              action={
+                <Link
+                  href="/dashboard/auctions/new"
+                  className="inline-block rounded-[var(--radius-control)] px-6 py-3 text-[var(--text-sm)] font-bold text-[color:var(--color-text-inverse)]"
+                  style={{ background: "var(--brand-gradient)" }}
+                >
+                  أطلق مزادك الأول
+                </Link>
+              }
+            />
           ) : (
             <div className="divide-y">
               {rows.map((auction) => {

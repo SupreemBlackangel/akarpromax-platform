@@ -200,7 +200,7 @@ export default function SettingsAdminClient() {
                     <span aria-hidden="true" className="mt-0.5 text-lg">{on ? "☑" : "☐"}</span>
                     <span className="min-w-0">
                       <span className="block text-sm font-black text-[var(--color-text-primary)]">{label}</span>
-                      <span className="block text-[11px] font-bold text-[var(--color-text-muted)]">{hint}</span>
+                      <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">{hint}</span>
                     </span>
                   </button>
                 );
@@ -228,7 +228,7 @@ export default function SettingsAdminClient() {
                 <span aria-hidden="true" className="mt-0.5 text-lg">{settings.display[device].allowThemeChange ? "☑" : "☐"}</span>
                 <span className="min-w-0">
                   <span className="block text-sm font-black text-[var(--color-text-primary)]">السماح للزائر بتغيير المظهر</span>
-                  <span className="block text-[11px] font-bold text-[var(--color-text-muted)]">عند الإيقاف يُثبَّت الوضع الافتراضي ويُخفى زر المظهر</span>
+                  <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">عند الإيقاف يُثبَّت الوضع الافتراضي ويُخفى زر المظهر</span>
                 </span>
               </button>
             </div>
@@ -285,7 +285,7 @@ export default function SettingsAdminClient() {
                     <span aria-hidden="true" className="mt-0.5 text-lg">{on ? "☑" : "☐"}</span>
                     <span className="min-w-0">
                       <span className="block text-sm font-black text-[var(--color-text-primary)]">{label}</span>
-                      <span className="block text-[11px] font-bold text-[var(--color-text-muted)]">{hint}</span>
+                      <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">{hint}</span>
                     </span>
                   </button>
                 );

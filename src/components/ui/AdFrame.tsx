@@ -47,7 +47,7 @@ export default function AdFrame({
     >
       <div className={cn("p-[var(--space-6)]", styles.body)}>{children}</div>
       <div className="flex items-center justify-center gap-[var(--space-2)] border-t border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-[var(--space-3)] py-[var(--space-2)]">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">{label}</span>
+        <span className="text-[var(--text-xs)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">{label}</span>
       </div>
     </aside>
   );

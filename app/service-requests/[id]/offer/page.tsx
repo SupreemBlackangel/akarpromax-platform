@@ -11,6 +11,7 @@ import PageContainer from "@/src/components/layout/PageContainer";
 import Grid from "@/src/components/layout/Grid";
 import Button from "@/src/components/ui/Button";
 import { CURRENCY_REGISTRY } from "@/lib/market/currency-registry";
+import { Lock } from "lucide-react";
 
 type Props = { id: string };
 
@@ -54,7 +55,7 @@ export default function NewOfferPage({ id }: Props) {
     return (
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} adLayout={{ mode: "safe-no-ads" }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <PageContainer dir={dir} className="py-24 max-w-md text-center">
-          <div className="text-5xl mb-4">🔒</div>
+          <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="primary" onClick={() => openLogin("login")}>{t("services.login") ?? "تسجيل الدخول"}</Button>

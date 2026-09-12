@@ -7,6 +7,7 @@ import { apiFetch, formatTime } from "@services-client";
 import { getSidebarConfig, type SidebarItem } from "@/src/config/sidebar";
 import { PERMISSIONS } from "@/src/constants/permissions";
 import Icon from "@/src/components/ui/Icon";
+import { Lock } from "lucide-react";
 
 type NotificationRow = {
   id: string;
@@ -61,7 +62,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
       >
         🔔
         {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)] px-1 text-[10px] font-black text-white">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)] px-1 text-[var(--text-xs)] font-black text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -91,7 +92,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">{n.title}</span>
-                      <span className="shrink-0 text-[10px] text-gray-400">{formatTime(n.created_at)}</span>
+                      <span className="shrink-0 text-[var(--text-xs)] text-gray-400 font-medium">{formatTime(n.created_at)}</span>
                     </div>
                     {n.body ? <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{n.body}</p> : null}
                   </Link>
@@ -176,7 +177,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
       <Icon name={item.icon} size="sm" />
       <span>{t(item.labelKey)}</span>
       {badgeValue > 0 && (
-        <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-[var(--color-error-soft)] rounded-full">
+        <span className="ml-auto px-2 py-0.5 text-[var(--text-xs)] font-bold text-white bg-[var(--color-error-soft)] rounded-full">
           {badgeValue > 99 ? "99+" : badgeValue}
         </span>
       )}
@@ -220,7 +221,7 @@ export default function ServiceDashboardShell({
   if (!viewer.authenticated) {
     return (
       <div dir={dir} className="container py-24 max-w-md text-center">
-        <div className="text-5xl mb-4">🔒</div>
+        <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
         <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginRequired") ?? "سجّل الدخول للوصول إلى لوحة التحكم"}</h1>
       </div>
     );

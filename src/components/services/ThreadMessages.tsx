@@ -89,7 +89,7 @@ export default function ThreadMessages({
                 }`}
               >
                 {message.body && <p className="whitespace-pre-line">{message.body}</p>}
-                <p className={`mt-1 text-[10px] ${mine ? "text-blue-200" : "text-gray-400"}`}>{formatTime(message.created_at)}</p>
+                <p className={`mt-1 text-[var(--text-xs)] font-medium ${mine ? "text-blue-200" : "text-gray-400"}`}>{formatTime(message.created_at)}</p>
               </div>
             </div>
           );

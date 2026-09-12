@@ -128,7 +128,7 @@ function SupervisorProvidersContent() {
             <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] text-start text-[11px] font-black uppercase text-[var(--color-text-muted)]">
+                  <tr className="border-b border-[var(--color-border)] text-start text-[var(--text-xs)] font-black uppercase text-[var(--color-text-muted)]">
                     <th className="px-4 py-3 text-start">{isArabic ? "المحترف" : "Professional"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "المدينة" : "City"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "الحالة" : "Status"}</th>
