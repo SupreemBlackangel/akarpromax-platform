@@ -305,10 +305,38 @@ export function validateCampaignPayload(payload: CampaignPayload): boolean {
   );
 }
 
+/**
+ * Country scoping on top of the ads permissions — not instead of them.
+ *
+ * Every caller has already checked ADS_VIEW, ADS_APPROVE or ADS_PUBLISH before
+ * asking this. What this adds is tenancy: a reviewer who belongs to one country
+ * does not decide another country's campaigns.
+ *
+ * Two things were wrong with it.
+ *
+ * `identity.countryCode` is hard-coded to null in lib/identity-auth.ts — the
+ * users table has no country column and the session token carries none — so the
+ * second line refused everybody who was not a super_admin or an ad_manager.
+ * `ads_reviewer` holds ADS_APPROVE and is refused every campaign on the
+ * platform: the role approves nothing at all. A control that is failing closed
+ * on a fact nobody records is not protecting anything; it is switching a
+ * feature off. When the platform does not know where a reviewer belongs, there
+ * is no tenancy to enforce and the permission is the gate. When it does know —
+ * the day a country reaches identity — the scoping below applies again without
+ * further change.
+ *
+ * And `countries.length === 1` refused a campaign that named the reviewer's own
+ * country twice as readily as one naming somebody else's. The question is
+ * whether every country on the campaign is theirs, not how many there are. A
+ * campaign with no countries at all targets everywhere, which is nobody's one
+ * country to manage.
+ */
 export function canManageTargets(identity: UserIdentity, countries: string[]): boolean {
   if (identity.role === "super_admin" || identity.role === "ad_manager") return true;
-  if (!identity.countryCode) return false;
-  return countries.length === 1 && countries[0] === identity.countryCode.toLowerCase();
+  if (!identity.countryCode) return true;
+  const mine = identity.countryCode.toLowerCase();
+  if (countries.length === 0) return false;
+  return countries.every((country) => country.toLowerCase() === mine);
 }
 
 export function resolveApprovalStatus(body: Record<string, unknown>, identity: UserIdentity): string {
