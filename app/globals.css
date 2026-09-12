@@ -250,12 +250,16 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 .header-account { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .header-register { padding: 8px 15px; border: 0; border-radius: 7px; background: var(--blue); color: #fff; cursor: pointer; }
 
-.news-ticker { position: relative; z-index: 1; border-bottom: 1px solid #0a5fe0; background: linear-gradient(90deg, var(--color-primary), #0e59d8); color: #fff; box-shadow: 0 4px 12px rgba(7,57,143,.18); }
+/* A quiet strip, not a second header. It was a saturated blue gradient with a
+   shadow under it — the loudest band on the page, above the page's own title,
+   for headlines nobody came for. Soft primary on the surface: still the
+   platform's colour, no longer competing with the content. */
+.news-ticker { position: relative; z-index: 1; border-block-end: 1px solid var(--color-border); background: var(--color-primary-soft); color: var(--color-text-primary); }
 .ticker-inner { min-height: 40px; display: flex; align-items: center; gap: 10px; overflow: hidden; }
-.ticker-label { padding: 3px 9px; border-radius: 5px; background: rgba(255,255,255,.15); color: #fff; font-size: 10px; font-weight: 800; white-space: nowrap; }
-.ticker-pulse { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.17); animation: ticker-pulse 1.4s ease-in-out infinite; }
-@keyframes ticker-pulse { 50% { box-shadow: 0 0 0 7px rgba(255,255,255,0); } }
-.ticker-track { display: flex; flex: 1; overflow: hidden; font-size: 11px; outline: none; }
+.ticker-label { padding: 3px 9px; border-radius: var(--radius-badge); background: var(--color-primary); color: var(--color-text-inverse); font-size: var(--text-xs); font-weight: 700; white-space: nowrap; }
+.ticker-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--color-primary); box-shadow: 0 0 0 4px var(--color-primary-soft); animation: ticker-pulse 1.4s ease-in-out infinite; }
+@keyframes ticker-pulse { 50% { box-shadow: 0 0 0 7px transparent; } }
+.ticker-track { display: flex; flex: 1; overflow: hidden; font-size: var(--text-xs); outline: none; }
 .ticker-marquee { display: flex; align-items: center; width: 100%; will-change: transform; transition: transform .5s ease; }
 .ticker-item { flex: 0 0 100%; display: inline-flex; align-items: center; white-space: nowrap; }
 .ticker-dot { margin-inline-start: 20px; opacity: .7; }
@@ -263,7 +267,7 @@ html[dir="ltr"] .theme-dropdown { right: auto; left: 0; }
 .ticker-link:hover, .ticker-link:focus-visible { text-decoration: underline; }
 .news-ticker.is-paused .ticker-marquee { transition: none; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.ticker-inner button { border: 0; background: transparent; color: #fff; font: 500 12px/1.4 var(--font-body-stack); cursor: pointer; }
+.ticker-inner button { border: 0; background: transparent; color: var(--color-text-secondary); font: 500 var(--text-xs)/1.4 var(--font-body-stack); cursor: pointer; }
 /* The ticker's three controls rendered 3x19 and 8x19 CSS pixels on a phone --
    the glyph's own size, with nothing around it. A control that small cannot be
    tapped: WCAG 2.5.8 sets 24x24 as the minimum and 2.5.5 asks for 44x44.
@@ -587,7 +591,7 @@ html[data-theme="dark"] .location-dropdown-title { color: var(--color-text-prima
 html[data-theme="dark"] .location-cancel { border-color: var(--color-border); background: var(--color-surface-input); color: var(--color-text-secondary); }
 html[data-theme="dark"] .location-cancel:hover { background: var(--color-surface-soft); }
 
-html[data-theme="dark"] .news-ticker { border-bottom-color: #1e3868; background: linear-gradient(90deg, #0e1e3e, #0a1530); box-shadow: 0 4px 15px rgba(0,0,0,.36); }
+html[data-theme="dark"] .news-ticker { border-block-end-color: var(--color-border); background: var(--color-primary-soft); }
 html[data-theme="dark"] .hero-ad { box-shadow: 0 16px 32px rgba(0,0,0,.42); }
 html[data-theme="dark"] .ad-slot { border-color: #2a4878; background: var(--color-surface); color: #7a9dc8; }
 html[data-theme="dark"] .ad-slot small { color: var(--color-text-placeholder); }
@@ -1103,26 +1107,49 @@ html[dir="ltr"] .cc-metric-note { text-align: right; }
   min-width: 0;
 }
 
-/* Empty inventory remains visible so every page keeps the same ad geometry. */
+/* The reading column. Text a visitor has to scan across 1600px of screen is
+   text nobody finishes; the rails may use the rest. */
+.standard-public-ad-content { max-width: 1100px; margin-inline: auto; }
+
+/* A rail with no frame left to draw takes no column. `:empty` is exact here —
+   a frame that renders nothing renders NO element, so the rail really is
+   empty rather than holding invisible children. */
+.standard-public-ad-rail:empty { display: none !important; }
+
+@media (min-width: 1280px) {
+  .standard-public-ad-grid > .standard-public-ad-rail {
+    position: sticky;
+    inset-block-start: var(--space-6);
+    align-self: start;
+  }
+}
+
+/* Unsold inventory: ONE invitation per page, and nothing where there is nothing.
+   Empty frames used to keep their geometry "so every page looks the same" — but
+   what they made the same was seven dashed grey boxes announcing that nobody
+   had bought this section. Which frame invites is decided in
+   src/components/ads/ad-invite.tsx; the rest render no element at all. */
+.public-ad-slot-collapsed { display: none; }
+
 .ad-slot-empty {
   display: grid;
   place-content: center;
-  gap: 4px;
+  gap: var(--space-1);
   width: 100%;
   min-width: 0;
   min-height: 96px;
-  border: 1px dashed #b7c8e6;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--sky) 72%, #fff);
-  color: #6f82a3;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-primary-soft);
+  color: var(--color-text-secondary);
   text-align: center;
 }
-.ad-slot-empty-label { font-size: 11px; font-weight: 800; }
-.ad-slot-empty-placement { font: 500 12px/1.4 var(--font-body-stack); opacity: .72; }
+.ad-slot-empty-label { font-size: var(--text-xs); font-weight: 700; }
+.ad-slot-empty-placement { font: 500 var(--text-xs)/1.4 var(--font-body-stack); opacity: .72; }
 html[data-theme="dark"] .ad-slot-empty {
-  border-color: #304566;
-  background: rgba(14, 26, 45, .72);
-  color: #9eb1cf;
+  border-color: var(--color-border);
+  background: var(--color-primary-soft);
+  color: var(--color-text-secondary);
 }
 
 /* Advertisement HERO: artwork uses its natural ratio, never cover/crop. */
@@ -1369,4 +1396,33 @@ html[data-ui-density="compact"] {
   --space-16: 34px;
   --space-20: 44px;
   --space-24: 64px;
+}
+
+/* ===== Disclosures that are only disclosures on small screens =====
+   One DOM for both sizes. A <details> is closed on a phone and, above the
+   breakpoint, the summary is hidden and the body forced visible — so a desktop
+   never sees a control it does not need and the markup is not duplicated for
+   two widths (two copies of the same switchers means two elements with the
+   same purpose and, eventually, two that disagree). */
+.disclosure-sm > summary,
+.disclosure-md > summary { list-style: none; }
+.disclosure-sm > summary::-webkit-details-marker,
+.disclosure-md > summary::-webkit-details-marker { display: none; }
+.disclosure-sm[open] > summary .disclosure-chevron,
+.disclosure-md[open] > summary .disclosure-chevron { transform: rotate(180deg); }
+.disclosure-chevron { transition: transform var(--motion-fast, 160ms) ease; }
+
+@media (min-width: 640px) {
+  .disclosure-sm > summary { pointer-events: none; }
+  .disclosure-sm:not([open]) > .disclosure-body { display: flex; }
+}
+
+@media (min-width: 768px) {
+  .disclosure-md > summary { display: none; }
+  .disclosure-md:not([open]) > .disclosure-body { display: flex; }
+}
+
+/* The fixed bar would otherwise sit on top of the last of the page. */
+@media (max-width: 767px) {
+  body:has(.mobile-bottom-nav) { padding-block-end: 64px; }
 }

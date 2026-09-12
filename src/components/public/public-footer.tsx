@@ -1,6 +1,8 @@
 import type { Translation } from "@/src/types/site";
 import PageContainer from "@/src/components/layout/PageContainer";
 import { FOOTER_COLUMNS, FOOTER_CONTACT, FOOTER_SOCIAL } from "@/src/config/footer-navigation";
+import { ChevronDown } from "lucide-react";
+
 import BrandMark from "@/src/components/ui/BrandMark";
 
 /**
@@ -29,12 +31,18 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
             </p>
           </div>
 
+          {/* Each column is a disclosure below sm and a plain column above it
+              (see .disclosure-sm in globals.css). Four open lists of links put
+              the copyright line four screens below the content on a phone, so
+              the footer was longer than most of the pages it sat under. */}
           {visibleColumns.map((column) => (
             <nav key={column.key} aria-label={labels[column.titleKey]}>
-              <h3 className="mb-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
-                {labels[column.titleKey]}
-              </h3>
-              <ul className="flex flex-col gap-[var(--space-2)]">
+              <details className="disclosure-sm">
+                <summary className="mb-[var(--space-3)] flex cursor-pointer items-center justify-between gap-2 text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
+                  {labels[column.titleKey]}
+                  <ChevronDown aria-hidden="true" className="disclosure-chevron size-4 shrink-0 sm:hidden" />
+                </summary>
+                <ul className="disclosure-body flex flex-col gap-[var(--space-2)] pb-[var(--space-4)] sm:pb-0">
                 {column.links.map((link) => (
                   <li key={link.key}>
                     <a
@@ -45,7 +53,8 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
                     </a>
                   </li>
                 ))}
-              </ul>
+                </ul>
+              </details>
             </nav>
           ))}
 

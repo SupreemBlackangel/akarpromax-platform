@@ -11,6 +11,7 @@ export type Translation = {
   sidebarAria: string;
   closeMenu: string;
   showMenu: string;
+  locationAndSettings: string;
   toolsAria: string;
   countryAria: string;
   cityAria: string;

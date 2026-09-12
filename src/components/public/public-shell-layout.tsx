@@ -16,6 +16,7 @@ import PublicHeader from "@/src/components/public/public-header";
 import PublicFooter from "@/src/components/public/public-footer";
 import PublicSidebar from "@/src/components/public/public-sidebar";
 import MobileNavigation from "@/src/components/public/mobile-navigation";
+import MobileBottomNav from "@/src/components/public/mobile-bottom-nav";
 import OfficeAppPromotion from "@/src/components/public/office-app-promotion";
 import CookieNotice from "@/src/components/public/cookie-notice";
 import ToastViewport from "@/src/components/ui/Toast";
@@ -318,6 +319,10 @@ export function PublicShellLayout({
           <PublicFooter labels={labels} />
         </div>
       </div>
+
+      {/* The five sections a thumb can reach, and the room for them: the bar is
+          fixed, so the page ends with padding rather than with content under it. */}
+      <MobileBottomNav items={navItems} currentPath={currentPath} labels={labels} />
 
       <ChatWidget locale={locale} authenticated={viewer.authenticated} onRequireLogin={onLogin} hideLauncherOnRail={showPublicSidebar} />
 

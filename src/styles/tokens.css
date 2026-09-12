@@ -159,7 +159,11 @@
   --leading-lg: 1.35;
   --leading-xl: 1.25;
   --leading-2xl: 1.15;
-  --font-size-xs: 11px;
+  /* 11px, and twenty-six components read it. Nothing in this product renders
+     below 12px (docs/brand-identity.md), so the floor is enforced HERE rather
+     than by finding each of them: the older scale keeps its name and stops
+     being a way around the rule. */
+  --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-md: 15px;
   --font-size-lg: 18px;

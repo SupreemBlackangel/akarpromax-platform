@@ -9,6 +9,7 @@ import Button from "@/src/components/ui/Button";
 import Card, { CardContent } from "@/src/components/ui/Card";
 import { ContentContainer } from "@/src/components/layout/Containers";
 import { OfficeCard } from "@/components/office/OfficeCard";
+import EmptyState from "@/src/components/ui/EmptyState";
 
 interface Office {
   id: string;
@@ -76,7 +77,7 @@ export default function OfficesPage() {
     >
       <div dir={dir} className="py-6">
         <ContentContainer>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row">
             <div className="flex-1 relative">
               <input
                 type="text"
@@ -87,8 +88,14 @@ export default function OfficesPage() {
               />
               <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             </div>
-            <Button variant="primary" onClick={() => router.push("/onboarding")}>
-              <Building2 className="w-4 h-4 mr-2" /> إضافة مكتب
+            {/* Outline, not filled: a visitor on this page came to LOOK at
+                offices; registering one is what a handful of them do instead,
+                and a filled button made the page's loudest control the one
+                almost nobody wants. Hidden on a phone — it appears under the
+                results instead (below), where it does not sit between the
+                search field and what the search found. */}
+            <Button variant="outline" className="hidden md:inline-flex" onClick={() => router.push("/onboarding")}>
+              <Building2 aria-hidden="true" className="size-4 me-2" /> إضافة مكتب
             </Button>
           </div>
 
@@ -100,10 +107,8 @@ export default function OfficesPage() {
             </div>
           ) : offices.length === 0 ? (
             <Card>
-              <CardContent className="p-12 text-center">
-                <Building2 className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                <h3 className="text-lg font-bold text-gray-700 mb-2">لا توجد مكاتب</h3>
-                <p className="text-gray-500 text-sm">لم يتم إضافة أي مكاتب عقارية بعد</p>
+              <CardContent className="p-[var(--space-8)]">
+                <EmptyState icon={Building2} title="لا توجد مكاتب" description="لم يُضف أي مكتب عقاري بعد" />
               </CardContent>
             </Card>
           ) : (
@@ -122,6 +127,13 @@ export default function OfficesPage() {
               ))}
             </div>
           )}
+
+          {/* The phone's copy of the action, after the results. */}
+          <div className="mt-[var(--space-6)] md:hidden">
+            <Button variant="outline" className="w-full" onClick={() => router.push("/onboarding")}>
+              <Building2 aria-hidden="true" className="size-4 me-2" /> إضافة مكتب
+            </Button>
+          </div>
         </ContentContainer>
       </div>
       {AccountDialog}

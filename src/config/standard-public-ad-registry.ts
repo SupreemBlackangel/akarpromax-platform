@@ -22,6 +22,15 @@ export type StandardPublicAdSlotDefinition = {
 /**
  * Single source of truth for every standard public-ad page family.
  * Consumers must derive labels, prefixes, sections, and HERO behavior from here.
+ *
+ * `heroEnabled: false` on the detail and the informational families, and the
+ * reason is the same for both. A DETAIL page already has a hero — the property's
+ * photographs, the office's cover — and putting an advertisement above it means
+ * a visitor who followed a link to a specific listing meets someone else's
+ * banner first. An INFORMATIONAL page (about, contact, advertise) is the
+ * platform speaking about itself, and selling the top of "اعلن معنا" to a third
+ * party is an odd first sentence. Both keep their rails and their bottom row:
+ * this removes the full-width band above the content, not the inventory.
  */
 export const STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS = {
   home: { section: "home", label: { ar: "الرئيسية", en: "Home", tr: "Ana Sayfa" }, prefix: "web_home", heroEnabled: true },
@@ -29,21 +38,21 @@ export const STANDARD_PUBLIC_AD_FAMILY_DEFINITIONS = {
   services: { section: "services", label: { ar: "الخدمات", en: "Services", tr: "Hizmetler" }, prefix: "web_services", heroEnabled: true },
   tools: { section: "tools", label: { ar: "الأدوات", en: "Tools", tr: "Araçlar" }, prefix: "web_tools", heroEnabled: true },
   providers: { section: "providers", label: { ar: "المحترفون", en: "Professionals", tr: "Uzmanlar" }, prefix: "web_providers", heroEnabled: true },
-  "provider-detail": { section: "providers", label: { ar: "تفاصيل المحترف", en: "Professional Detail", tr: "Uzman Detayı" }, prefix: "web_provider_detail", heroEnabled: true },
+  "provider-detail": { section: "providers", label: { ar: "تفاصيل المحترف", en: "Professional Detail", tr: "Uzman Detayı" }, prefix: "web_provider_detail", heroEnabled: false },
   offices: { section: "offices", label: { ar: "شركات و مكاتب عقارية", en: "Real Estate Companies & Offices", tr: "Emlak Sirketleri ve Ofisleri" }, prefix: "web_offices", heroEnabled: true },
-  "office-detail": { section: "offices", label: { ar: "تفاصيل المكتب العقاري", en: "Real Estate Office Detail", tr: "Emlak Ofisi Detayi" }, prefix: "web_office_detail", heroEnabled: true },
+  "office-detail": { section: "offices", label: { ar: "تفاصيل المكتب العقاري", en: "Real Estate Office Detail", tr: "Emlak Ofisi Detayi" }, prefix: "web_office_detail", heroEnabled: false },
   companies: { section: "companies", label: { ar: "شركات أخرى", en: "Other Companies", tr: "Diger Sirketler" }, prefix: "web_companies", heroEnabled: true },
-  "company-detail": { section: "companies", label: { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Sirket Detayi" }, prefix: "web_company_detail", heroEnabled: true },
+  "company-detail": { section: "companies", label: { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Sirket Detayi" }, prefix: "web_company_detail", heroEnabled: false },
   organizations: { section: "organizations", label: { ar: "الشركات", en: "Companies", tr: "Şirketler" }, prefix: "web_organizations", heroEnabled: true },
-  "organization-detail": { section: "organizations", label: { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Şirket Detayı" }, prefix: "web_organization_detail", heroEnabled: true },
+  "organization-detail": { section: "organizations", label: { ar: "تفاصيل الشركة", en: "Company Detail", tr: "Şirket Detayı" }, prefix: "web_organization_detail", heroEnabled: false },
   directory: { section: "directory", label: { ar: "الدليل", en: "Directory", tr: "Dizin" }, prefix: "web_directory", heroEnabled: true },
   community: { section: "community", label: { ar: "منتدى البناء و العقار", en: "Construction & Real Estate Forum", tr: "Insaat ve Gayrimenkul Forumu" }, prefix: "web_community", heroEnabled: true },
   knowledge: { section: "knowledge", label: { ar: "الكتب والبرامج", en: "Books & Software", tr: "Kitaplar ve Yazilimlar" }, prefix: "web_knowledge", heroEnabled: true },
-  about: { section: "about", label: { ar: "من نحن", en: "About Us", tr: "Hakkimizda" }, prefix: "web_about", heroEnabled: true },
-  contact: { section: "contact", label: { ar: "اتصل بنا", en: "Contact Us", tr: "Iletisim" }, prefix: "web_contact", heroEnabled: true },
-  advertise: { section: "advertise", label: { ar: "اعلن معنا", en: "Advertise with Us", tr: "Bizimle Reklam Verin" }, prefix: "web_advertise", heroEnabled: true },
+  about: { section: "about", label: { ar: "من نحن", en: "About Us", tr: "Hakkimizda" }, prefix: "web_about", heroEnabled: false },
+  contact: { section: "contact", label: { ar: "اتصل بنا", en: "Contact Us", tr: "Iletisim" }, prefix: "web_contact", heroEnabled: false },
+  advertise: { section: "advertise", label: { ar: "اعلن معنا", en: "Advertise with Us", tr: "Bizimle Reklam Verin" }, prefix: "web_advertise", heroEnabled: false },
   news: { section: "news", label: { ar: "الأخبار", en: "News", tr: "Haberler" }, prefix: "web_news", heroEnabled: true },
-  "property-detail": { section: "properties", label: { ar: "تفاصيل العقار", en: "Property Detail", tr: "Mülk Detayı" }, prefix: "web_property_detail", heroEnabled: true },
+  "property-detail": { section: "properties", label: { ar: "تفاصيل العقار", en: "Property Detail", tr: "Mülk Detayı" }, prefix: "web_property_detail", heroEnabled: false },
 } as const satisfies Record<string, StandardPublicAdFamilyDefinition>;
 
 /** Single source of truth for the eight canonical standard-shell slots. */

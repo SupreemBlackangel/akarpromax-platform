@@ -4,6 +4,7 @@ import type { PublicAdSlotConfig } from "@/src/config/ad-placements";
 import type { StandardPublicAdLayoutKey } from "@/src/config/standard-public-ad-layout";
 import { getStandardPublicAdLayout } from "@/src/config/standard-public-ad-layout";
 import PageContainer from "@/src/components/layout/PageContainer";
+import { AdInviteProvider } from "@/src/components/ads/ad-invite";
 import dynamic from "next/dynamic";
 
 const AdSlotFrame = dynamic(() => import("@/src/components/ads/ad-slot-frame"), { ssr: false });
@@ -65,6 +66,7 @@ export default function StandardPublicAdLayout({
   const renderHero = layout.heroEnabled !== false;
 
   return (
+    <AdInviteProvider>
     <div className="standard-public-ad-layout" data-standard-public-ad-layout={family}>
       {renderHero && (
         <PageContainer size="full" className="public-ad-layout-container standard-public-ad-band-hero pt-[var(--space-6)]">
@@ -74,12 +76,17 @@ export default function StandardPublicAdLayout({
 
       <PageContainer size="full" className="public-ad-layout-container standard-public-ad-band-main py-[var(--space-4)]">
         <div className="standard-public-ad-grid grid gap-4 xl:grid-cols-[176px_minmax(0,1fr)_176px] 2xl:grid-cols-[176px_minmax(0,1fr)_176px] xl:gap-4 2xl:gap-6">
+          {/* A rail whose frames all drew nothing is empty, and `:empty` collapses
+              it (see standard-public-ad-layout.css) — the content takes the width
+              back instead of sitting in a narrow lane between two absences. The
+              rails are sticky so a long page keeps them beside the reader rather
+              than scrolling them away in the first screenful. */}
           <div className="standard-public-ad-rail hidden xl:flex xl:flex-col xl:gap-4">
             <AdSlotFrame config={sideLeft01} className="standard-public-ad-rail" {...sharedSlotProps} />
             <AdSlotFrame config={sideLeft02} className="standard-public-ad-rail" {...sharedSlotProps} />
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="standard-public-ad-content min-w-0 flex-1">
             {children}
           </div>
 
@@ -103,5 +110,6 @@ export default function StandardPublicAdLayout({
         </div>
       </PageContainer>
     </div>
+    </AdInviteProvider>
   );
 }

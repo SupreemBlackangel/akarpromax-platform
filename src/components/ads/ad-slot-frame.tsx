@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useSyncExternalStore, useState } from "react";
 
+import { useAdInvite } from "@/src/components/ads/ad-invite";
+
 import type { DeviceType } from "@/src/constants/advertising";
 import AdSlot from "@/src/components/AdSlot";
 import type { PublicAdSlotConfig } from "@/src/config/ad-placements";
@@ -82,6 +84,19 @@ export default function AdSlotFrame({
   const [isEmpty, setIsEmpty] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(!config.lazy);
   const frameRef = useRef<HTMLElement | null>(null);
+  const invite = useAdInvite();
+
+  // Only one empty frame on a page says "advertise here"; the rest of the
+  // empties draw nothing. Seven dashed boxes telling a visitor that nobody has
+  // bought this section is not an advertisement for the section.
+  const slotKey = config.canonical ?? config.key;
+  const invited = isEmpty && !reviewMode ? invite.claim(slotKey) : false;
+
+  useEffect(() => {
+    if (!isEmpty) invite.release(slotKey);
+  }, [isEmpty, invite, slotKey]);
+
+  useEffect(() => () => invite.release(slotKey), [invite, slotKey]);
 
   useEffect(() => {
     if (!config.lazy || reviewMode || shouldLoad) return;
@@ -104,12 +119,13 @@ export default function AdSlotFrame({
     <section
       ref={frameRef}
       aria-label={label}
-      className={cn("public-ad-slot", className)}
+      className={cn("public-ad-slot", isEmpty && !reviewMode && !invited && "public-ad-slot-collapsed", className)}
       data-placement={config.placement}
-      data-canonical={config.canonical ?? config.key}
+      data-canonical={slotKey}
+      data-empty={isEmpty && !reviewMode ? "true" : undefined}
     >
       {isEmpty && !reviewMode ? (
-        onRequestAd ? (
+        invited && onRequestAd ? (
           <button
             type="button"
             className={`ad-slot ad-slot-${config.variant} ad-slot-empty ad-slot-requestable-empty`}
@@ -122,15 +138,9 @@ export default function AdSlotFrame({
             <span className="ad-slot-request-cta">{REQUEST_LABEL[locale]}</span>
           </button>
         ) : (
-          <div
-            className={`ad-slot ad-slot-${config.variant} ad-slot-empty`}
-            role="img"
-            aria-label={`${label}: ${config.placement}`}
-            data-slot-key={config.key}
-          >
-            <span className="ad-slot-empty-label">{REVIEW_LABEL[locale]}</span>
-            <span className="ad-slot-empty-placement">{config.canonical ?? config.key}</span>
-          </div>
+          // Empty and not the one invited: nothing at all, so the column it sits
+          // in collapses rather than reserving space for an absence.
+          null
         )
       ) : reviewMode ? (
         <div className="ad-slot-review" role="img" aria-label={`${label}: ${config.placement}`} data-slot-key={config.key}>
