@@ -25,8 +25,22 @@ body[data-tool-focus="on"] .standard-public-ad-rail {
   display: none !important;
 }
 
+/*
+ * Not "one column" — no columns at all.
+ *
+ * `grid-template-columns: minmax(0,1fr)` left the three tracks' arithmetic in
+ * play: the rails are display:none, but the 176px tracks they were laid into
+ * still sized the row, so the content kept roughly the width it had and focus
+ * mode gained about eighteen pixels. Making the band a plain block removes the
+ * track maths entirely, and the tool is simply as wide as the band.
+ */
 body[data-tool-focus="on"] .standard-public-ad-grid {
-  grid-template-columns: minmax(0, 1fr) !important;
+  display: block !important;
+}
+
+body[data-tool-focus="on"] .standard-public-ad-content {
+  width: 100%;
+  max-width: none;
 }
 
 /* The reading column is capped at 1100px so prose is not scanned across a
