@@ -8,8 +8,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { chooseInitialUtmZone, explicitUtmZoneFromText } from "../../lib/land/product-policy.ts";
-import { utmToWgs84 } from "../../lib/geo/utm.ts";
+import { chooseInitialUtmZone, explicitUtmZoneFromText } from "@/lib/land/product-policy";
+import { utmToWgs84 } from "@/lib/geo/utm";
 
 const row = (easting: number, northing: number) => ({
   lineStart: "", lineEnd: "", easting, northing, raw: `${easting} ${northing}`,

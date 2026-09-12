@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { suspectVertexIndices, SIDE_TOLERANCE_METERS } from "../../src/lib/tools/fml-suspect-vertex.ts";
+import { suspectVertexIndices, SIDE_TOLERANCE_METERS } from "@/src/lib/tools/fml-suspect-vertex";
 
 const side = (fromIndex: number, toIndex: number, lengthMeters: number, documentLengthMeters: number) => ({
   fromIndex,
