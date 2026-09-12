@@ -27,6 +27,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: SERVICE_ERROR_CODES.INVALID_BODY }, { status: 400 });
   }
   const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) || null : null;
+  // A refusal or a suspension the provider cannot act on is not a decision.
+  // Approving needs no words; the other two do, and the note is what the
+  // provider is shown and what the audit row carries.
+  if ((status === "rejected" || status === "suspended") && !note) {
+    return NextResponse.json({ error: SERVICE_ERROR_CODES.PROVIDER_REVIEW_REASON_REQUIRED }, { status: 400 });
+  }
   try {
     const actor = { userId: identity.email, ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null };
     if (status) await setProviderStatus(id, status as ProviderStatus, note, actor);
@@ -38,8 +44,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       }, actor);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === "PROVIDER_NOT_FOUND") {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "PROVIDER_NOT_FOUND") {
       return NextResponse.json({ error: SERVICE_ERROR_CODES.NOT_FOUND }, { status: 404 });
+    }
+    // PROVIDER_FLOW refused the move. This reached the browser as an unhandled
+    // 500 — the screen offered every status as a button regardless of where the
+    // provider stood, so an illegal move looked like the server falling over
+    // rather than like a rule.
+    if (code === "PROVIDER_STATUS_INVALID") {
+      return NextResponse.json({ error: SERVICE_ERROR_CODES.PROVIDER_STATUS_INVALID }, { status: 409 });
     }
     throw error;
   }

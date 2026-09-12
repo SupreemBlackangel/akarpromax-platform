@@ -22,6 +22,8 @@ export const SERVICE_ERROR_CODES = {
   OFFER_ALREADY_EXISTS: "services.offer_already_exists",
   SELF_OFFER_NOT_ALLOWED: "services.self_offer_not_allowed",
   PROVIDER_NOT_ELIGIBLE: "services.provider_not_eligible",
+  PROVIDER_STATUS_INVALID: "services.provider_status_invalid",
+  PROVIDER_REVIEW_REASON_REQUIRED: "services.provider_review_reason_required",
   DUPLICATE_OFFER: "services.duplicate_offer",
   ORDER_ALREADY_EXISTS: "services.order_already_exists",
   ORDER_STATUS_INVALID: "services.order_status_invalid",

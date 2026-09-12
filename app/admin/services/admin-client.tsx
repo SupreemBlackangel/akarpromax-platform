@@ -12,6 +12,12 @@ import { useServicesPage } from "@services-ui/useServicesPage";
 import { ServiceCategoryIcon, type CategoryRow } from "@services-ui/ServiceCards";
 import { apiFetch, formatDate, nameFor } from "@services-client";
 import { getCurrency } from "@/lib/market/currency-registry";
+import Dialog from "@/src/components/ui/Dialog";
+import {
+  canTransitionProvider,
+  PROVIDER_STATUS_VALUES,
+  REQUEST_REVIEW_STATUS,
+} from "@/lib/services/constants";
 
 type Overview = {
   pendingProviders: number; approvedProviders: number; publishedRequests: number;
@@ -54,7 +60,57 @@ function isTab(value: string | null): value is Tab {
 }
 
 const EMPTY_CATEGORY: CategoryForm = { code: "", parentId: "", nameAr: "", nameEn: "", descriptionAr: "", icon: "Wrench", bookingMode: "quotes", badgeAr: "", requiresLicense: false, requiresVisit: false, isFeatured: false, isActive: true, priceMin: "", priceMax: "", sortOrder: "0" };
-const STATUS_LABELS: Record<string, string> = { draft: "مسودة", submitted: "مُرسل", under_review: "قيد المراجعة", approved: "معتمد", rejected: "مرفوض", suspended: "موقوف" };
+const STATUS_LABELS: Record<string, string> = {
+  draft: "مسودة", submitted: "مُرسل", under_review: "قيد المراجعة", approved: "معتمد", rejected: "مرفوض", suspended: "موقوف",
+  pending: "بانتظار المراجعة", accepted: "مقبول", info_requested: "بانتظار العميل", closed: "مغلق",
+};
+
+/**
+ * What a reviewer is about to do, and what the server needs to hear.
+ *
+ * Every decision on this page goes through one of these rather than through a
+ * button that fires straight at an API. `window.confirm` and `window.prompt`
+ * were doing this job: a rejection was a click with no reason attached, and a
+ * report was resolved through a browser prompt.
+ */
+type Decision = {
+  title: string;
+  /** What is about to happen, in the reviewer's words, naming the subject. */
+  summary: string;
+  confirmLabel: string;
+  tone: "primary" | "danger";
+  /** When set, the dialog collects text; `required` refuses an empty one. */
+  input?: { label: string; placeholder: string; required: boolean; multiline: boolean };
+  done: string;
+  run: (text: string) => Promise<unknown>;
+};
+
+/** The moves a provider may make from where they stand, in review order. */
+const PROVIDER_DECISIONS: Array<{
+  to: string;
+  label: string;
+  tone: "primary" | "danger";
+  reason: "required" | "optional";
+}> = [
+  { to: PROVIDER_STATUS_VALUES.UNDER_REVIEW, label: "بدء المراجعة", tone: "primary", reason: "optional" },
+  { to: PROVIDER_STATUS_VALUES.APPROVED, label: "اعتماد", tone: "primary", reason: "optional" },
+  { to: PROVIDER_STATUS_VALUES.REJECTED, label: "رفض", tone: "danger", reason: "required" },
+  { to: PROVIDER_STATUS_VALUES.SUSPENDED, label: "تعليق", tone: "danger", reason: "required" },
+];
+
+/** The platform's decisions on a customer's request. */
+const REQUEST_DECISIONS: Array<{
+  action: string;
+  label: string;
+  tone: "primary" | "danger";
+  input?: { label: string; placeholder: string; required: boolean; multiline: boolean };
+}> = [
+  { action: "accept", label: "قبول", tone: "primary" },
+  { action: "reject", label: "رفض", tone: "danger", input: { label: "سبب الرفض", placeholder: "يُعرض على العميل ويُحفظ في سجل التدقيق", required: true, multiline: true } },
+  { action: "request-info", label: "طلب معلومات", tone: "primary", input: { label: "المطلوب من العميل", placeholder: "مثال: أرفق صورة للموقع", required: true, multiline: true } },
+  { action: "assign", label: "إسناد", tone: "primary", input: { label: "بريد الموظف المتابع", placeholder: "staff@example.com", required: true, multiline: false } },
+  { action: "close", label: "إغلاق", tone: "primary" },
+];
 
 
 /**
@@ -90,6 +146,10 @@ export default function ServicesAdminClient() {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState("");
   const [hasAccess, setHasAccess] = useState(true);
+  /** The decision waiting on the reviewer's confirmation, if any. */
+  const [decision, setDecision] = useState<Decision | null>(null);
+
+  const ask = (next: Decision) => setDecision(next);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -165,21 +225,71 @@ export default function ServicesAdminClient() {
     "تم تحديث التصنيف.",
   );
 
-  const removeCategory = (category: CategoryRow) => {
-    if (!window.confirm(`حذف «${category.name_ar || category.code}» نهائيًا؟`)) return;
-    void run(() => apiFetch(`/api/service-categories/${encodeURIComponent(category.id)}`, { method: "DELETE" }), "تم حذف التصنيف.");
-  };
+  const removeCategory = (category: CategoryRow) => ask({
+    title: "حذف تصنيف",
+    summary: `سيُحذف «${category.name_ar || category.code}» نهائيًا. لا يمكن التراجع.`,
+    confirmLabel: "حذف نهائيًا",
+    tone: "danger",
+    done: "تم حذف التصنيف.",
+    run: () => apiFetch(`/api/service-categories/${encodeURIComponent(category.id)}`, { method: "DELETE" }),
+  });
 
   const updateProvider = (provider: ProviderRow, patch: Record<string, unknown>) => run(
     () => apiFetch(`/api/service-providers/${encodeURIComponent(provider.id)}/status`, { method: "PATCH", body: JSON.stringify(patch) }),
     "تم تحديث ملف مقدم الخدمة.",
   );
 
-  const resolveReport = (report: ReportRow) => {
-    const resolution = window.prompt("اكتب قرار المعالجة والملاحظة الإدارية:");
-    if (!resolution?.trim()) return;
-    void run(() => apiFetch(`/api/service-reports/${encodeURIComponent(report.id)}/resolve`, { method: "POST", body: JSON.stringify({ resolution }) }), "تم إغلاق البلاغ.");
+  /** A provider's name as the reviewer sees it elsewhere on the page. */
+  const providerName = (provider: ProviderRow) =>
+    provider.business_name || nameFor(locale, provider.display_name_ar, provider.display_name_en, null, "مقدم خدمة");
+
+  const decideProvider = (provider: ProviderRow, move: (typeof PROVIDER_DECISIONS)[number]) => ask({
+    title: `${move.label}: ${providerName(provider)}`,
+    summary: `الحالة الآن «${STATUS_LABELS[provider.status] ?? provider.status}» وستصبح «${STATUS_LABELS[move.to] ?? move.to}».`,
+    confirmLabel: move.label,
+    tone: move.tone,
+    input: {
+      label: move.reason === "required" ? "السبب (إلزامي)" : "ملاحظة للسجل (اختيارية)",
+      placeholder: move.reason === "required" ? "يُعرض على مقدم الخدمة ويُحفظ في سجل التدقيق" : "",
+      required: move.reason === "required",
+      multiline: true,
+    },
+    done: "تم تحديث ملف مقدم الخدمة.",
+    run: (note) => apiFetch(`/api/service-providers/${encodeURIComponent(provider.id)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: move.to, note: note || undefined }),
+    }),
+  });
+
+  const decideRequest = (request: Record<string, unknown>, move: (typeof REQUEST_DECISIONS)[number]) => {
+    const label = String(request.title || request.reference_number || "طلب خدمة");
+    return ask({
+      title: `${move.label}: ${label}`,
+      summary: move.action === "assign"
+        ? "يُسنَد الطلب إلى موظف للمتابعة. لا يغيّر هذا قرار المراجعة."
+        : `قرار المنصة على الطلب سيصبح «${STATUS_LABELS[String(request.review_status ?? "pending")] ?? "بانتظار المراجعة"}» ← «${move.label}».`,
+      confirmLabel: move.label,
+      tone: move.tone,
+      input: move.input,
+      done: "تم تسجيل القرار.",
+      run: (text) => apiFetch(`/api/admin/service-requests/${encodeURIComponent(String(request.id))}/review`, {
+        method: "POST",
+        body: JSON.stringify(
+          move.action === "assign" ? { action: move.action, assignee: text } : { action: move.action, reason: text || undefined },
+        ),
+      }),
+    });
   };
+
+  const resolveReport = (report: ReportRow) => ask({
+    title: "معالجة بلاغ",
+    summary: String(report.reason || report.description || "بلاغ") + " — يُغلق البلاغ بقرار مكتوب.",
+    confirmLabel: "إغلاق البلاغ",
+    tone: "primary",
+    input: { label: "قرار المعالجة", placeholder: "ما الذي تقرر، ولماذا", required: true, multiline: true },
+    done: "تم إغلاق البلاغ.",
+    run: (resolution) => apiFetch(`/api/service-reports/${encodeURIComponent(report.id)}/resolve`, { method: "POST", body: JSON.stringify({ resolution }) }),
+  });
 
   const groups = useMemo(() => categories.filter((category) => !category.parent_id), [categories]);
   const filteredProviders = useMemo(() => providerStatus ? providers.filter((provider) => provider.status === providerStatus) : providers, [providerStatus, providers]);
@@ -220,14 +330,84 @@ export default function ServicesAdminClient() {
 
         {!loading && tab === "categories" && <section className="grid items-start gap-5 xl:grid-cols-[1fr_380px]"><AdminPanel title="شجرة المهن والتصنيفات" description={`${categories.length} تصنيفًا — يمكن إخفاء أي مهنة أو إبرازها فورًا.`}><div className="space-y-4">{groups.map((group) => <div key={group.id} className="rounded-2xl border border-[var(--color-border)] dark:border-[var(--color-border)]"><div className="flex items-center justify-between bg-[var(--color-surface-muted)] px-4 py-3 dark:bg-[var(--color-surface)]/70"><div className="flex items-center gap-2"><ServiceCategoryIcon name={group.icon} className="h-5 w-5 text-[var(--color-primary)]" /><p className="font-black text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">{nameFor(locale, group.name_ar, group.name_en, group.name_tr, group.code)}</p></div><button onClick={() => editCategory(group)} className="text-xs font-black text-[var(--color-primary)]">تعديل القسم</button></div><div className="divide-y divide-[var(--color-border)] dark:divide-[var(--color-border)]">{categories.filter((category) => category.parent_id === group.id).map((category) => <div key={category.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"><div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]"><ServiceCategoryIcon name={category.icon} className="h-4 w-4" /></span><div><p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface-muted)]">{nameFor(locale, category.name_ar, category.name_en, category.name_tr, category.code)}</p><p className="text-[11px] text-[var(--color-text-muted)]">{category.booking_mode === "both" ? "حجز مباشر + عروض" : category.booking_mode === "instant" ? "حجز مباشر" : "طلب عروض"} · {Number(category.provider_count ?? 0)} محترف</p></div></div><div className="flex items-center gap-2"><button title="إبراز" onClick={() => void updateCategory(category, { isFeatured: !category.is_featured })} className={`rounded-lg p-2 ${category.is_featured ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--color-background)] text-[var(--color-text-muted)] dark:bg-[var(--color-surface)]"}`}><Star className="h-4 w-4" /></button><button onClick={() => void updateCategory(category, { isActive: category.is_active === 0 })} className={`rounded-lg px-2.5 py-1.5 text-[11px] font-black ${category.is_active === 0 ? "bg-[var(--color-error-soft)] text-red-600" : "bg-[var(--color-success-soft)] text-[var(--color-success)]"}`}>{category.is_active === 0 ? "مخفي" : "ظاهر"}</button><button onClick={() => editCategory(category)} className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-[11px] font-black text-[var(--color-primary)]">تعديل</button><button onClick={() => removeCategory(category)} className="rounded-lg bg-[var(--color-error-soft)] px-2.5 py-1.5 text-[11px] font-black text-red-600">حذف</button></div></div>)}</div></div>)}</div></AdminPanel><AdminPanel id="category-editor" title={editingCategoryId ? "تعديل التصنيف" : "إضافة مهنة أو قسم"}><div className="space-y-3"><Field label="الرمز البرمجي" value={categoryForm.code} disabled={Boolean(editingCategoryId)} onChange={(value) => setCategoryForm({ ...categoryForm, code: value })} /><Field label="الاسم العربي" value={categoryForm.nameAr} onChange={(value) => setCategoryForm({ ...categoryForm, nameAr: value })} /><Field label="الاسم الإنجليزي" value={categoryForm.nameEn} onChange={(value) => setCategoryForm({ ...categoryForm, nameEn: value })} /><Field area label="وصف مختصر" value={categoryForm.descriptionAr} onChange={(value) => setCategoryForm({ ...categoryForm, descriptionAr: value })} /><label className="block text-xs font-black text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">القسم الأب<select value={categoryForm.parentId} onChange={(event) => setCategoryForm({ ...categoryForm, parentId: event.target.value })} className={`${inputClass} mt-1`}><option value="">قسم رئيسي</option>{groups.filter((group) => group.id !== editingCategoryId).map((group) => <option key={group.id} value={group.id}>{group.name_ar || group.code}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><Field label="اسم الأيقونة" value={categoryForm.icon} onChange={(value) => setCategoryForm({ ...categoryForm, icon: value })} /><Field label="شارة قصيرة" value={categoryForm.badgeAr} onChange={(value) => setCategoryForm({ ...categoryForm, badgeAr: value })} /></div><label className="block text-xs font-black text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">طريقة الطلب<select value={categoryForm.bookingMode} onChange={(event) => setCategoryForm({ ...categoryForm, bookingMode: event.target.value as CategoryForm["bookingMode"] })} className={`${inputClass} mt-1`}><option value="quotes">طلب عروض</option><option value="instant">حجز مباشر</option><option value="both">الطريقتان</option></select></label><div className="grid grid-cols-2 gap-3"><Field label="السعر من" value={categoryForm.priceMin} onChange={(value) => setCategoryForm({ ...categoryForm, priceMin: value })} /><Field label="السعر إلى" value={categoryForm.priceMax} onChange={(value) => setCategoryForm({ ...categoryForm, priceMax: value })} /></div><Field label="ترتيب العرض" value={categoryForm.sortOrder} onChange={(value) => setCategoryForm({ ...categoryForm, sortOrder: value })} /><div className="grid grid-cols-2 gap-2"><Toggle label="يتطلب ترخيصًا" checked={categoryForm.requiresLicense} onChange={(value) => setCategoryForm({ ...categoryForm, requiresLicense: value })} /><Toggle label="يتطلب معاينة" checked={categoryForm.requiresVisit} onChange={(value) => setCategoryForm({ ...categoryForm, requiresVisit: value })} /><Toggle label="مميّز" checked={categoryForm.isFeatured} onChange={(value) => setCategoryForm({ ...categoryForm, isFeatured: value })} /><Toggle label="نشط" checked={categoryForm.isActive} onChange={(value) => setCategoryForm({ ...categoryForm, isActive: value })} /></div><div className="flex gap-2"><button onClick={() => void saveCategory()} disabled={busy || !categoryForm.code.trim()} className="flex-1 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-black text-white disabled:opacity-50">{editingCategoryId ? "حفظ التعديل" : "إضافة التصنيف"}</button>{editingCategoryId && <button onClick={() => { setEditingCategoryId(null); setCategoryForm(EMPTY_CATEGORY); }} className="rounded-xl border border-[var(--color-border)] px-3 text-sm font-black dark:border-[var(--color-border)]">إلغاء</button>}</div></div></AdminPanel></section>}
 
-        {!loading && tab === "providers" && <AdminPanel title="إدارة الحرفيين ومقدمي الخدمات" description="اعتماد الملفات، تعليقها، إبرازها في الواجهة أو إيقاف استقبال الطلبات."><div className="mb-4 flex flex-wrap gap-2">{[["", "الكل"], ["submitted", "مُرسل"], ["under_review", "قيد المراجعة"], ["approved", "معتمد"], ["rejected", "مرفوض"], ["suspended", "موقوف"]].map(([value, label]) => <button key={value} onClick={() => setProviderStatusFilter(value)} className={`rounded-xl px-3 py-2 text-xs font-black ${providerStatus === value ? "bg-[var(--color-primary)] text-white" : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]"}`}>{label}</button>)}</div><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-sm"><thead><tr className="border-b border-[var(--color-border)] text-xs text-[var(--color-text-muted)] dark:border-[var(--color-border)]"><th className="px-3 py-3 text-start">مقدم الخدمة</th><th className="px-3 py-3 text-start">الموقع</th><th className="px-3 py-3 text-start">الحالة</th><th className="px-3 py-3 text-start">الظهور</th><th className="px-3 py-3 text-start">العمليات</th></tr></thead><tbody>{filteredProviders.map((provider) => <tr key={provider.id} className="border-b border-[var(--color-border)] last:border-0 dark:border-[var(--color-border)]"><td className="px-3 py-3"><Link href={`/providers/${provider.id}`} target="_blank" className="font-black text-[var(--color-primary)] hover:underline dark:text-[var(--color-primary)]">{provider.business_name || nameFor(locale, provider.display_name_ar, provider.display_name_en, null, "مقدم خدمة")}</Link><p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">{formatDate(provider.created_at)}</p></td><td className="px-3 py-3 text-[var(--color-text-muted)]">{provider.governorate || provider.city_id || "—"}</td><td className="px-3 py-3"><Status value={provider.status} /></td><td className="px-3 py-3"><div className="flex gap-2"><button onClick={() => void updateProvider(provider, { isFeatured: !provider.is_featured })} className={`rounded-lg p-2 ${provider.is_featured ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--color-background)] text-[var(--color-text-muted)] dark:bg-[var(--color-surface)]"}`}><Star className="h-4 w-4" /></button><button onClick={() => void updateProvider(provider, { isAcceptingRequests: !provider.is_accepting_requests })} className={`rounded-lg px-2 py-1 text-[10px] font-black ${provider.is_accepting_requests === 0 ? "bg-[var(--color-error-soft)] text-red-600" : "bg-[var(--color-success-soft)] text-[var(--color-success)]"}`}>{provider.is_accepting_requests === 0 ? "متوقف" : "يستقبل"}</button></div></td><td className="px-3 py-3"><div className="flex flex-wrap gap-1.5">{provider.status !== "approved" && <button onClick={() => void updateProvider(provider, { status: "approved" })} className="rounded-lg bg-[var(--color-success)] px-2.5 py-1.5 text-[11px] font-black text-white">اعتماد</button>}{provider.status === "approved" && <button onClick={() => void updateProvider(provider, { status: "suspended" })} className="rounded-lg bg-[var(--accent-soft)] px-2.5 py-1.5 text-[11px] font-black text-[var(--accent)]">تعليق</button>}{provider.status !== "rejected" && <button onClick={() => void updateProvider(provider, { status: "rejected" })} className="rounded-lg bg-[var(--color-error-soft)] px-2.5 py-1.5 text-[11px] font-black text-red-600">رفض</button>}</div></td></tr>)}</tbody></table>{filteredProviders.length === 0 && <p className="py-12 text-center text-sm font-bold text-[var(--color-text-muted)]">لا توجد ملفات في هذا القسم.</p>}</div></AdminPanel>}
+        {!loading && tab === "providers" && <AdminPanel title="إدارة الحرفيين ومقدمي الخدمات" description="اعتماد الملفات، تعليقها، إبرازها في الواجهة أو إيقاف استقبال الطلبات."><div className="mb-4 flex flex-wrap gap-2">{[["", "الكل"], ["submitted", "مُرسل"], ["under_review", "قيد المراجعة"], ["approved", "معتمد"], ["rejected", "مرفوض"], ["suspended", "موقوف"]].map(([value, label]) => <button key={value} onClick={() => setProviderStatusFilter(value)} className={`rounded-xl px-3 py-2 text-xs font-black ${providerStatus === value ? "bg-[var(--color-primary)] text-white" : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]"}`}>{label}</button>)}</div><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-sm"><thead><tr className="border-b border-[var(--color-border)] text-xs text-[var(--color-text-muted)] dark:border-[var(--color-border)]"><th className="px-3 py-3 text-start">مقدم الخدمة</th><th className="px-3 py-3 text-start">الموقع</th><th className="px-3 py-3 text-start">الحالة</th><th className="px-3 py-3 text-start">الظهور</th><th className="px-3 py-3 text-start">العمليات</th></tr></thead><tbody>{filteredProviders.map((provider) => <tr key={provider.id} className="border-b border-[var(--color-border)] last:border-0 dark:border-[var(--color-border)]"><td className="px-3 py-3"><Link href={`/providers/${provider.id}`} target="_blank" className="font-black text-[var(--color-primary)] hover:underline dark:text-[var(--color-primary)]">{provider.business_name || nameFor(locale, provider.display_name_ar, provider.display_name_en, null, "مقدم خدمة")}</Link><p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">{formatDate(provider.created_at)}</p></td><td className="px-3 py-3 text-[var(--color-text-muted)]">{provider.governorate || provider.city_id || "—"}</td><td className="px-3 py-3"><Status value={provider.status} /></td><td className="px-3 py-3"><div className="flex gap-2"><button onClick={() => void updateProvider(provider, { isFeatured: !provider.is_featured })} className={`rounded-lg p-2 ${provider.is_featured ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "bg-[var(--color-background)] text-[var(--color-text-muted)] dark:bg-[var(--color-surface)]"}`}><Star className="h-4 w-4" /></button><button onClick={() => void updateProvider(provider, { isAcceptingRequests: !provider.is_accepting_requests })} className={`rounded-lg px-2 py-1 text-[10px] font-black ${provider.is_accepting_requests === 0 ? "bg-[var(--color-error-soft)] text-red-600" : "bg-[var(--color-success-soft)] text-[var(--color-success)]"}`}>{provider.is_accepting_requests === 0 ? "متوقف" : "يستقبل"}</button></div></td><td className="px-3 py-3"><div className="flex flex-wrap gap-1.5">{/* The moves PROVIDER_FLOW allows from where this provider stands, and nothing else. The buttons were derived from `!== approved` and `!== rejected`, so the screen offered moves the server refuses — a suspended provider back to approved, a draft straight to approved — and the refusal arrived as an unhandled 500. */}{PROVIDER_DECISIONS.filter((move) => canTransitionProvider(provider.status, move.to)).map((move) => <button key={move.to} onClick={() => decideProvider(provider, move)} className={`rounded-lg px-2.5 py-1.5 text-[11px] font-black ${move.tone === "danger" ? "bg-[var(--color-error-soft)] text-[var(--color-error)]" : "bg-[var(--color-success-soft)] text-[var(--color-success)]"}`}>{move.label}</button>)}{PROVIDER_DECISIONS.every((move) => !canTransitionProvider(provider.status, move.to)) && <span className="text-[11px] font-bold text-[var(--color-text-muted)]">لا إجراء متاح</span>}</div></td></tr>)}</tbody></table>{filteredProviders.length === 0 && <p className="py-12 text-center text-sm font-bold text-[var(--color-text-muted)]">لا توجد ملفات في هذا القسم.</p>}</div></AdminPanel>}
 
-        {!loading && tab === "operations" && <section className="grid gap-5 xl:grid-cols-2"><AdminPanel title="أحدث طلبات الخدمات" description={`${overview?.totalRequests ?? 0} طلب إجمالي`}><SimpleRows rows={snapshot.recentRequests} empty="لا توجد طلبات" render={(row) => <><div><Link href={`/service-requests/${String(row.id)}`} target="_blank" className="text-sm font-black text-[var(--color-primary)] hover:underline dark:text-[var(--color-primary)]">{String(row.title || row.reference_number || "طلب خدمة")}</Link><p className="text-xs text-[var(--color-text-muted)]">{String(row.category_name_ar || "غير مصنف")} · {formatDate(String(row.created_at || ""))}</p></div><div className="text-end"><Status value={String(row.status || "")} /><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">{row.budget_min == null ? "ميزانية مفتوحة" : `${String(row.budget_min)}–${String(row.budget_max || "")} ${currencyLabel(row.currency)}`}</p></div></>} /></AdminPanel><AdminPanel title="المهام والأوامر" description={`${overview?.totalJobs ?? 0} مهمة إجمالية`}><SimpleRows rows={snapshot.recentOrders} empty="لا توجد مهام" render={(row) => <><div><p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface-muted)]">{String(row.request_title || row.reference_number || "مهمة خدمة")}</p><p className="text-xs text-[var(--color-text-muted)]">{formatDate(String(row.created_at || ""))} · {row.agreed_price == null ? "—" : `${String(row.agreed_price)} ${currencyLabel(row.currency)}`}</p></div><Status value={String(row.status || "")} /></>} /></AdminPanel></section>}
+        {!loading && tab === "operations" && <section className="grid gap-5 xl:grid-cols-2"><AdminPanel title="طلبات الخدمات" description={`${overview?.totalRequests ?? 0} طلب إجمالي — اقبل الطلب أو ارفضه أو اطلب معلومات أو أسنده لموظف`}><SimpleRows rows={snapshot.recentRequests} empty="لا توجد طلبات" render={(row) => <><div className="min-w-0"><Link href={`/service-requests/${String(row.id)}`} target="_blank" className="text-sm font-black text-[var(--color-primary)] hover:underline dark:text-[var(--color-primary)]">{String(row.title || row.reference_number || "طلب خدمة")}</Link><p className="text-xs text-[var(--color-text-muted)]">{String(row.category_name_ar || "غير مصنف")} · {formatDate(String(row.created_at || ""))}</p>{/* The reviewer's own note is what the customer was told; it belongs beside the decision, not only in the audit log. */}{Boolean(row.review_note) && <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">«{String(row.review_note)}»</p>}{Boolean(row.assigned_to) && <p className="mt-1 text-[11px] font-bold text-[var(--color-text-muted)]">المتابع: {String(row.assigned_to)}</p>}<div className="mt-2 flex flex-wrap gap-1.5">{REQUEST_DECISIONS.map((move) => <button key={move.action} onClick={() => decideRequest(row, move)} className={`rounded-lg px-2.5 py-1.5 text-[11px] font-black ${move.tone === "danger" ? "bg-[var(--color-error-soft)] text-[var(--color-error)]" : "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"}`}>{move.label}</button>)}</div></div><div className="shrink-0 text-end"><Status value={String(row.review_status || REQUEST_REVIEW_STATUS.PENDING)} /><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">دورة الطلب: {STATUS_LABELS[String(row.status || "")] ?? String(row.status || "—")}</p><p className="mt-1 text-[11px] text-[var(--color-text-muted)]">{row.budget_min == null ? "ميزانية مفتوحة" : `${String(row.budget_min)}–${String(row.budget_max || "")} ${currencyLabel(row.currency)}`}</p></div></>} /></AdminPanel><AdminPanel title="المهام والأوامر" description={`${overview?.totalJobs ?? 0} مهمة إجمالية`}><SimpleRows rows={snapshot.recentOrders} empty="لا توجد مهام" render={(row) => <><div><p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface-muted)]">{String(row.request_title || row.reference_number || "مهمة خدمة")}</p><p className="text-xs text-[var(--color-text-muted)]">{formatDate(String(row.created_at || ""))} · {row.agreed_price == null ? "—" : `${String(row.agreed_price)} ${currencyLabel(row.currency)}`}</p></div><Status value={String(row.status || "")} /></>} /></AdminPanel></section>}
 
         {!loading && tab === "reports" && <AdminPanel title="البلاغات والمراجعة" description="معالجة بلاغات الطلبات والملفات والمحادثات."><SimpleRows rows={reports} empty="لا توجد بلاغات" render={(report) => <><div><p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-surface-muted)]">{report.reason || report.description || "بلاغ"}</p><p className="text-xs text-[var(--color-text-muted)]">{report.target_type} · {formatDate(report.created_at)}</p></div><div className="flex items-center gap-2"><Status value={report.status || "open"} />{(report.status === "open" || report.status === "in_review") && <button onClick={() => resolveReport(report)} disabled={busy} className="rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-[11px] font-black text-white">معالجة</button>}</div></>} /></AdminPanel>}
       </main>
+      <DecisionDialog
+        decision={decision}
+        busy={busy}
+        onClose={() => setDecision(null)}
+        onConfirm={async (text) => {
+          const current = decision;
+          if (!current) return;
+          setDecision(null);
+          await run(() => current.run(text), current.done);
+        }}
+      />
       {AccountDialog}
     </>
+  );
+}
+
+/**
+ * One dialog for every decision on this page.
+ *
+ * It replaces `window.confirm` for approvals and deletions and `window.prompt`
+ * for the two places that needed words — neither of which could show what was
+ * about to change, and the second of which asked for a rejection reason in a
+ * browser prompt. The confirm button stays disabled until a required reason has
+ * been written, so a refusal the provider cannot act on cannot be sent at all.
+ */
+function DecisionDialog({
+  decision,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  decision: Decision | null;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (text: string) => void;
+}) {
+  const [text, setText] = useState("");
+  // Each decision opens on an empty field rather than the previous answer.
+  useEffect(() => { setText(""); }, [decision]);
+
+  if (!decision) return null;
+  const input = decision.input;
+  const missing = Boolean(input?.required) && !text.trim();
+  const fieldClass = "mt-1 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]";
+
+  return (
+    <Dialog open onClose={onClose} title={decision.title} closeLabel="إغلاق" size="md">
+      <p className="text-sm leading-relaxed text-[var(--color-text-secondary)]">{decision.summary}</p>
+      {input && (
+        <label className="mt-4 block text-xs font-black text-[var(--color-text-secondary)]">
+          {input.label}
+          {input.multiline ? (
+            <textarea rows={3} value={text} onChange={(event) => setText(event.target.value)} placeholder={input.placeholder} className={fieldClass} />
+          ) : (
+            <input value={text} onChange={(event) => setText(event.target.value)} placeholder={input.placeholder} className={fieldClass} />
+          )}
+        </label>
+      )}
+      <div className="mt-5 flex justify-end gap-2">
+        <button type="button" onClick={onClose} className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-black text-[var(--color-text-secondary)]">
+          إلغاء
+        </button>
+        <button
+          type="button"
+          disabled={busy || missing}
+          onClick={() => onConfirm(text.trim())}
+          className={`rounded-xl px-5 py-2.5 text-sm font-black text-white disabled:opacity-50 ${decision.tone === "danger" ? "bg-[var(--color-error)]" : "bg-[var(--color-primary)]"}`}
+        >
+          {decision.confirmLabel}
+        </button>
+      </div>
+    </Dialog>
   );
 }
 

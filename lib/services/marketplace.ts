@@ -2364,7 +2364,12 @@ export async function getAdminMarketplaceSnapshot(): Promise<{
        FROM service_provider_profiles p ORDER BY p.created_at DESC LIMIT 20`,
     ).all<Record<string, unknown>>(),
     db.prepare(
-      `SELECT r.id, r.reference_number, r.title, r.status, r.urgency, r.budget_min, r.budget_max,
+      // review_status and assigned_to travel with the row: the admin screen
+      // decides which actions to offer from them, and offering an action the
+      // server will refuse is the defect this panel is being given actions to
+      // fix.
+      `SELECT r.id, r.reference_number, r.title, r.status, r.review_status, r.assigned_to,
+              r.review_note, r.urgency, r.budget_min, r.budget_max,
               r.currency, r.created_at, c.name_ar AS category_name_ar
        FROM service_requests r LEFT JOIN service_categories c ON c.id = r.category_id
        ORDER BY r.created_at DESC LIMIT 20`,
