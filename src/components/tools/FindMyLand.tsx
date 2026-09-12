@@ -60,6 +60,10 @@ import {
   surveyVocabularyHits,
   type PageTextStats,
 } from "@/lib/land/ocr/page-evidence";
+import {
+  extractGeoEvidence,
+  extractZoneLessUtmRows,
+} from "@/lib/geo/evidence-extraction";
 import { chooseOcrLanguages, createOcrWorkerWithFallback } from "@/lib/land/ocr/languages";
 import { ToolCalculatorShell } from "./ToolCalculatorShell";
 
@@ -344,6 +348,7 @@ function confidenceLevelCopy(level: string, locale: Locale): string {
     MEDIUM: { ar: "متوسطة", en: "Medium", tr: "Orta" },
     LOW: { ar: "منخفضة", en: "Low", tr: "Düşük" },
     UNRESOLVED: { ar: "غير محسومة", en: "Unresolved", tr: "Çözümlenmedi" },
+    UNKNOWN: { ar: "غير معروفة", en: "Unknown", tr: "Bilinmiyor" },
   };
   return copy[level]?.[locale] ?? level;
 }
@@ -962,6 +967,14 @@ export function FindMyLand({ locale }: Props) {
             ),
             coordinateRows: extractTablesFromLayout(tables, { documentText: pageText })
               .reduce((total, reading) => total + reading.rows.length, 0),
+            // What the page gives up without column reconstruction. pdfjs
+            // joins a page's items with spaces, so a survey sheet can arrive
+            // as one long line that reconstructs into no table at all while
+            // the resolver reads every row of it. Counting both keeps such a
+            // page out of an OCR pass that could not add anything.
+            textLayerCoordinateRows:
+              extractGeoEvidence(pageText).explicitCoordinates.length
+              + extractZoneLessUtmRows(pageText).length,
             vocabularyHits: surveyVocabularyHits(pageText),
           });
           setProgress(5 + Math.round((pageNumber / pdf.numPages) * 25));
@@ -1235,9 +1248,12 @@ export function FindMyLand({ locale }: Props) {
 
   // Source rows stay untouched in the tables.  Automatic geometry, however,
   // must never treat an exact repeated coordinate as a second parcel corner.
+  // The rows travel with their labels so a corner keeps the number the
+  // document gave it. Once a user confirms a corner order the drawing is no
+  // longer in row order, and a positional 1..n would disagree with the tables.
   const automaticGeometryPoints = useMemo(
-    () => dedupeGeometryPoints(points),
-    [points],
+    () => dedupeGeometryPoints(coordinateRows),
+    [coordinateRows],
   );
 
   /**
@@ -1376,7 +1392,7 @@ export function FindMyLand({ locale }: Props) {
           fillOpacity: 1,
           weight: 3,
         });
-        marker.bindTooltip(`${index + 1}`, {
+        marker.bindTooltip(point.label || `${index + 1}`, {
           permanent: mapPreviewPoints.length <= 24,
           direction: "top",
           offset: [0, -8],
@@ -1746,7 +1762,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- What the document is --- */}
             {analysis.result.documentIntelligence && (
-              <section className="fml-doc-summary" data-document-intelligence hidden>
+              <section className="fml-doc-summary" data-document-intelligence>
                 <div className="fml-doc-item">
                   <span className="fml-doc-label">{t("الدولة", "Country", "Ülke")}</span>
                   <span className="fml-doc-value">
@@ -1755,7 +1771,12 @@ export function FindMyLand({ locale }: Props) {
                       : locale === "ar"
                         ? analysis.result.documentIntelligence.country.label.ar
                         : analysis.result.documentIntelligence.country.label.en}
-                    <em>{confidenceLevelCopy(analysis.result.documentIntelligence.country.level, locale)}</em>
+                    {/* "Undetermined" already says everything a confidence
+                        could add, and the tool never needs a country to place
+                        a parcel. */}
+                    {analysis.result.documentIntelligence.country.code !== "UNKNOWN" && (
+                      <em>{confidenceLevelCopy(analysis.result.documentIntelligence.country.level, locale)}</em>
+                    )}
                   </span>
                 </div>
                 <div className="fml-doc-item">
@@ -1837,7 +1858,6 @@ export function FindMyLand({ locale }: Props) {
               <section
                 className={`fml-area-check fml-area-check--${analysis.result.parcel.boundary.areaComparison.verdict.toLowerCase()}`}
                 data-area-comparison
-                hidden
               >
                 <div>
                   <span className="fml-area-label">{t("المساحة المحسوبة", "Calculated area", "Hesaplanan alan")}</span>
@@ -1863,7 +1883,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Suggested corner order, offered not applied --- */}
             {analysis.result.parcel?.boundary.suggestedSequence && (
-              <section className="fml-panel fml-panel--warning" data-suggested-sequence hidden>
+              <section className="fml-panel fml-panel--warning" data-suggested-sequence>
                 <div className="fml-panel-head">
                   <Layers size={19} />
                   <div>
@@ -2113,7 +2133,7 @@ export function FindMyLand({ locale }: Props) {
 
             {/* --- Review notes --- */}
             {analysis.result.warnings && analysis.result.warnings.length > 0 && (
-              <section className="fml-panel fml-panel--notes" hidden>
+              <section className="fml-panel fml-panel--notes">
                 <div className="fml-panel-head">
                   <AlertTriangle size={18} />
                   <div>

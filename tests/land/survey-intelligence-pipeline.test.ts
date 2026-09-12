@@ -250,6 +250,63 @@ describe("Boundary problems are surfaced, not repaired", () => {
     assert.equal(confirmed.parcel?.boundary.areaComparison?.verdict, "MATCH");
   });
 
+  it("draws the order the user confirmed, not the one on the page", async () => {
+    // The tables and the area used to follow a confirmed sequence while the
+    // geometry was still built from the document order, so the map kept
+    // showing the crossing the user had just resolved.
+    const text = ["LAND SURVEY - boundary schedule", "AREA = 508 SQ. M.", ...wgs84Rows(crossing)].join("\n");
+    const pending = await resolveLandDocument({ metadata: metadata(text) });
+    const proposal = pending.parcel?.boundary.suggestedSequence;
+    assert.ok(proposal);
+    assert.equal(pending.geometry, undefined, "a crossing document order yields no polygon");
+
+    const confirmed = await resolveLandDocument({
+      metadata: metadata(text),
+      confirmedOrder: proposal.order,
+    });
+    assert.equal(confirmed.geometry?.type, "polygon");
+    assert.doesNotMatch(confirmed.warnings.join(" "), /self-intersect/i);
+
+    // The drawing and the measured parcel are the same list of corners, in the
+    // confirmed sequence -- not two readings of the document that disagree.
+    const drawn = confirmed.geometry?.coordinates ?? [];
+    const measured = confirmed.parcel?.vertices ?? [];
+    assert.deepEqual(measured.map((vertex) => vertex.index), [...proposal.order]);
+    // A polygon repeats its first corner to close the ring.
+    assert.equal(drawn.length, measured.length + 1);
+    assert.deepEqual(drawn.at(-1), drawn[0]);
+    for (const [index, vertex] of measured.entries()) {
+      assert.deepEqual(drawn[index], vertex.point, `corner ${index}`);
+    }
+
+    // Nothing about the record is rewritten: every corner still carries the
+    // position it held on the page, and its text as printed.
+    assert.deepEqual(
+      [...(confirmed.parcel?.vertices ?? [])].sort((a, b) => a.index - b.index).map((vertex) => vertex.sourceText),
+      (pending.parcel?.vertices ?? []).map((vertex) => vertex.sourceText),
+    );
+  });
+
+  it("keeps the drawing and the measurements on the same sequence", async () => {
+    // A confirmed order that names only some corners is completed with the
+    // remaining ones in document order -- that is what the boundary analysis
+    // has always done, and the drawing has to agree with it rather than fall
+    // back to the page order on its own.
+    const text = ["LAND SURVEY - boundary schedule", ...wgs84Rows(crossing)].join("\n");
+    const partial = await resolveLandDocument({
+      metadata: metadata(text),
+      confirmedOrder: [1, 2],
+    });
+    assert.equal(partial.geometry?.type, "polygon");
+    const drawn = partial.geometry?.type === "polygon" ? partial.geometry.coordinates : [];
+    const measured = partial.parcel?.vertices ?? [];
+    assert.deepEqual(measured.map((vertex) => vertex.index), [1, 2, 0, 3]);
+    assert.equal(drawn.length, measured.length + 1);
+    for (const [index, vertex] of measured.entries()) {
+      assert.deepEqual(drawn[index], vertex.point, `corner ${index}`);
+    }
+  });
+
   it("reports an area that contradicts the document", async () => {
     const text = [
       "LAND SURVEY REPORT",

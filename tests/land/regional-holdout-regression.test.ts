@@ -20,6 +20,7 @@ import {
   surveyVocabularyHits,
   type PageTextStats,
 } from "@/lib/land/ocr/page-evidence";
+import { extractGeoEvidence, extractZoneLessUtmRows } from "@/lib/geo/evidence-extraction";
 import { chooseOcrLanguages, languageList } from "@/lib/land/ocr/languages";
 import { resolveLandDocument } from "@/lib/land/intelligence/resolver";
 
@@ -91,6 +92,8 @@ async function readDocument(name: string): Promise<ReadDocument> {
         0,
       ),
       coordinateRows: extractTablesFromLayout(tables, { documentText: pageText }).reduce((total, reading) => total + reading.rows.length, 0),
+      textLayerCoordinateRows:
+        extractGeoEvidence(pageText).explicitCoordinates.length + extractZoneLessUtmRows(pageText).length,
       vocabularyHits: surveyVocabularyHits(pageText),
     });
   }

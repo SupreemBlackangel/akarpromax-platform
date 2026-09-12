@@ -28,6 +28,19 @@ export interface PageTextStats {
   numericRows: number;
   /** Coordinate rows a table reader actually recovered from the native text. */
   coordinateRows: number;
+  /**
+   * Coordinate rows the flat text layer yields on its own, without the layout
+   * reconstruction.
+   *
+   * pdfjs joins a page's text items with spaces, so a survey sheet can arrive
+   * as a single line. Column reconstruction then finds no table at all while
+   * the resolver, which reads the run of numbers directly, reads every row.
+   * Judging sufficiency on the reconstruction alone sent such a page to OCR —
+   * a minute of work that cannot add anything the page had already given.
+   *
+   * Optional: a caller that does not compute it is treated as before.
+   */
+  textLayerCoordinateRows?: number;
   /** Survey vocabulary found on this page, as matched. */
   vocabularyHits: readonly string[];
 }
@@ -99,6 +112,17 @@ export function isNativeSurveyEvidenceSufficient(page: PageTextStats): NativeEvi
       rasterDominant,
     };
   }
+  // A page whose flat text already yields a full schedule needs no picture of
+  // itself. It is held to the same row count as the reconstruction, and a page
+  // that is mostly imagery still goes to OCR however its caption reads.
+  const flatRows = page.textLayerCoordinateRows ?? 0;
+  if (flatRows >= MINIMUM_COORDINATE_ROWS && !rasterDominant) {
+    return {
+      sufficient: true,
+      reasons: [`${flatRows} coordinate rows were read from the page's flat text layer`],
+      rasterDominant,
+    };
+  }
   if (page.coordinateRows > 0 && !rasterDominant) {
     return {
       sufficient: true,
@@ -107,7 +131,10 @@ export function isNativeSurveyEvidenceSufficient(page: PageTextStats): NativeEvi
     };
   }
 
-  if (page.coordinateRows === 0) reasons.push("no coordinate table was recovered from the text layer");
+  if (page.coordinateRows === 0 && flatRows === 0) reasons.push("no coordinate table was recovered from the text layer");
+  if (page.coordinateRows === 0 && flatRows > 0) {
+    reasons.push(`only ${flatRows} coordinate row(s) in the flat text layer, and no table could be reconstructed`);
+  }
   if (rasterDominant) reasons.push("the page is mostly imagery with a caption's worth of text");
   if (page.textChars < MINIMUM_SCHEDULE_CHARS) reasons.push(`only ${page.textChars} characters of native text`);
   if (page.numericRows > 0 && page.coordinateRows === 0) {

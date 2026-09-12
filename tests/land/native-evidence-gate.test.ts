@@ -39,6 +39,32 @@ describe("Whether a page's own text is enough", () => {
     assert.equal(verdict.rasterDominant, true);
   });
 
+  it("accepts a page whose flat text holds the schedule, table or no table", () => {
+    // pdfjs joins a page's items with spaces, so a survey sheet can arrive as
+    // one line: column reconstruction finds nothing while the resolver reads
+    // every row. Sending that page to OCR costs a minute and adds nothing.
+    const verdict = isNativeSurveyEvidenceSufficient(
+      page({ textChars: 191, textCoverage: 0.04, coordinateRows: 0, numericRows: 0, textLayerCoordinateRows: 4 }),
+    );
+    assert.equal(verdict.sufficient, true);
+    assert.match(verdict.reasons.join(" "), /flat text layer/);
+  });
+
+  it("still reads a picture whose caption happens to carry numbers", () => {
+    const verdict = isNativeSurveyEvidenceSufficient(
+      page({ textChars: 90, textCoverage: 0.03, imageOperations: 5, coordinateRows: 0, textLayerCoordinateRows: 4 }),
+    );
+    assert.equal(verdict.sufficient, false, "a raster-dominant page is read as a picture regardless");
+  });
+
+  it("does not accept a fragment of a schedule", () => {
+    const verdict = isNativeSurveyEvidenceSufficient(
+      page({ textChars: 140, textCoverage: 0.05, coordinateRows: 0, textLayerCoordinateRows: 2 }),
+    );
+    assert.equal(verdict.sufficient, false);
+    assert.match(verdict.reasons.join(" "), /only 2 coordinate row/);
+  });
+
   it("names the unread numeric structure it can see", () => {
     const verdict = isNativeSurveyEvidenceSufficient(page({ textChars: 718, textCoverage: 0.036, imageOperations: 13, numericRows: 2 }));
     assert.ok(verdict.reasons.some((reason) => /none could be read as coordinates/.test(reason)));
@@ -56,6 +82,13 @@ describe("Which pages get read as pictures", () => {
   it("skips a page whose text layer already carries the table", () => {
     const selection = selectPagesForOcr([page({ coordinateRows: 4, textChars: 3000, textCoverage: 0.2 })]);
     assert.deepEqual(selection, []);
+  });
+
+  it("skips a zone-less survey sheet that arrived as one line of text", () => {
+    const selection = selectPagesForOcr([
+      page({ page: 1, textChars: 191, textCoverage: 0.04, textLayerCoordinateRows: 4, vocabularyHits: ["easting", "northing", "survey"] }),
+    ]);
+    assert.deepEqual(selection, [], "survey vocabulary must not drag a readable page into OCR");
   });
 
   it("reaches a survey page late in a long document", () => {

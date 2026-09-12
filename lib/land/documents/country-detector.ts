@@ -73,6 +73,33 @@ function normalizeForMatching(text: string): string {
     .replace(/\s+/g, " ");
 }
 
+/** Latin letters and digits; a term made only of these needs word edges. */
+const LATIN_TERM = /^[a-z0-9][a-z0-9 .'-]*$/;
+
+/**
+ * Whether a normalised term occurs in the haystack as a term rather than as a
+ * run of letters inside a longer word.
+ *
+ * A plain substring test reads the Omani town `sur` inside the English word
+ * `survey`, so every survey sheet on earth carried evidence of Oman. Latin
+ * terms are therefore matched at word edges. Arabic keeps the substring test:
+ * it writes its prefixes and its definite article joined to the word, and a
+ * boundary rule there would lose far more than it saved.
+ */
+function containsTerm(haystack: string, needle: string): boolean {
+  if (!LATIN_TERM.test(needle)) return haystack.includes(needle);
+  let from = 0;
+  for (;;) {
+    const at = haystack.indexOf(needle, from);
+    if (at < 0) return false;
+    const before = at === 0 ? "" : haystack[at - 1];
+    const after = haystack[at + needle.length] ?? "";
+    const isWordChar = (character: string) => character !== "" && /[a-z0-9]/.test(character);
+    if (!isWordChar(before) && !isWordChar(after)) return true;
+    from = at + 1;
+  }
+}
+
 function matchTerms(
   haystack: string,
   terms: readonly string[],
@@ -83,7 +110,7 @@ function matchTerms(
   for (const term of terms) {
     if (hits.length >= limit) break;
     const needle = normalizeForMatching(term);
-    if (needle.length >= 3 && haystack.includes(needle)) {
+    if (needle.length >= 3 && containsTerm(haystack, needle)) {
       hits.push({ kind, term, weight: WEIGHTS[kind] });
     }
   }

@@ -323,6 +323,32 @@ function inferUtmCrs(
 }
 
 /**
+ * Applies a confirmed corner order to the parsed coordinate evidence.
+ *
+ * The evidence list holds two kinds of entry: candidate rows that never became
+ * a corner, and the corners themselves. Only the corners are permuted, and
+ * only into the slots corners already occupy, so the list keeps its length and
+ * a rejected row is not pushed around by a decision it had no part in.
+ */
+function reorderParsedDetails(
+  details: readonly CoordinateEvidenceDetail[],
+  orderedVertices: readonly SourceVertex[],
+): CoordinateEvidenceDetail[] {
+  const isCorner = (detail: CoordinateEvidenceDetail) =>
+    detail.rowIndex !== undefined && detail.parsedLat != null && detail.parsedLon != null;
+  const byRowIndex = new Map(
+    details.filter(isCorner).map((detail) => [detail.rowIndex as number, detail]),
+  );
+  const sequence = orderedVertices.flatMap((vertex) => byRowIndex.get(vertex.index) ?? []);
+  // `reorderVertices` backfills any corner the order left out, so a short
+  // sequence here means a vertex has no parsed evidence behind it. Rearranging
+  // on an incomplete map would drop a corner, so nothing moves.
+  if (sequence.length !== byRowIndex.size) return [...details];
+  let next = 0;
+  return details.map((detail) => (isCorner(detail) ? sequence[next++] : detail));
+}
+
+/**
  * Maps a character offset in the joined document text back to its page.
  *
  * Extraction runs over the whole document so a table split across a page break
@@ -963,7 +989,30 @@ export async function resolveLandDocument(input: ResolveInput): Promise<LandLoca
     }
   }
 
-  const evidence = buildLandGeoEvidence(coordinateDetails, hints);
+  // --- Parcel reconstruction -------------------------------------------
+  // The documented order is measured as written. A user-confirmed order is
+  // applied on top of it for the drawing, never in place of the record: every
+  // vertex keeps the `index` it had in the document.
+  const orderConfirmedByUser = Boolean(input.confirmedOrder && input.confirmedOrder.length > 0);
+  const analysedVertices = orderConfirmedByUser
+    ? reorderVertices(sourceVertices, input.confirmedOrder as number[])
+    : sourceVertices;
+
+  // The drawing has to follow the order the user accepted. Reading the corners
+  // in one order and drawing them in another is how a confirmed sequence used
+  // to leave the map crossed while the tables already showed the fixed ring.
+  //
+  // Only the parsed corners move, and only among the slots they already
+  // occupy: the unparsed candidate rows stay where they are so the evidence
+  // list still lines up with the document.
+  const orderedCoordinateDetails = orderConfirmedByUser
+    ? reorderParsedDetails(coordinateDetails, analysedVertices)
+    : coordinateDetails;
+  if (orderConfirmedByUser) {
+    steps.push(`corner order confirmed by the user: ${analysedVertices.map((vertex) => vertex.label).join(" -> ")}`);
+  }
+
+  const evidence = buildLandGeoEvidence(orderedCoordinateDetails, hints);
   const geometryResult = buildLandGeometry(evidence.coordinatePairs, deps.adapter);
   warnings.push(...geometryResult.warnings);
 
@@ -986,13 +1035,6 @@ export async function resolveLandDocument(input: ResolveInput): Promise<LandLoca
   const coordinateGroups = filteredCoordinates.groups.length > 0 ? filteredCoordinates.groups : undefined;
   const coordinateGroupSelectionRequired = filteredCoordinates.selectionRequired || undefined;
 
-  // --- Parcel reconstruction -------------------------------------------
-  // The documented order is measured as written. A user-confirmed order is
-  // applied on top of it for the drawing, never in place of the record.
-  const orderConfirmedByUser = Boolean(input.confirmedOrder && input.confirmedOrder.length > 0);
-  const analysedVertices = orderConfirmedByUser
-    ? reorderVertices(sourceVertices, input.confirmedOrder as number[])
-    : sourceVertices;
   // Edge lengths printed per corner pair are exact evidence and outrank the
   // cardinal side descriptions when both are present.
   const documentedEdges = zoneLessRows.length >= 2

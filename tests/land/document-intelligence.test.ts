@@ -132,6 +132,31 @@ describe("Country profile registry", () => {
 });
 
 describe("Country detection", () => {
+  it("does not read a place name out of the middle of an English word", () => {
+    // `sur` is a town in Oman and the first three letters of `survey`, so a
+    // plain substring test put evidence of Oman on every survey sheet on
+    // earth. These coordinates are in western Saudi Arabia.
+    const detection = detectDocumentCountry({
+      text: "SAFE SYNTHETIC LAND SURVEY LINE NORTHING EASTING DIST (m) 1 2 2533105.07 559322.22 20.00",
+    });
+    assert.equal(detection.countryCode, "UNKNOWN");
+    assert.equal(detection.level, "UNKNOWN");
+    assert.deepEqual(detection.evidence, []);
+  });
+
+  it("still reads a Latin place name written as its own word", () => {
+    const detection = detectDocumentCountry({ text: "Sultanate of Oman - Wilayat Sur - survey plan" });
+    assert.equal(detection.countryCode, "OM");
+    assert.match(detection.evidence.map((hit) => hit.term).join(" "), /sur/i);
+  });
+
+  it("keeps matching Arabic terms that are written joined to a prefix", () => {
+    // Arabic joins the definite article and prepositions to the word itself,
+    // so the boundary rule must not apply there.
+    const detection = detectDocumentCountry({ text: "وزارة العدل بالمملكة العربية السعودية - صك إلكتروني - الرياض" });
+    assert.equal(detection.countryCode, "SA");
+  });
+
   it("detects Saudi Arabia from its authority with high confidence", () => {
     const detection = detectDocumentCountry({
       text: "المملكة العربية السعودية - وزارة العدل - صك إلكتروني - مدينة الرياض - رقم القطعة 1173",

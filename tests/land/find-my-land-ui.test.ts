@@ -50,13 +50,14 @@ describe("Find My Land launch visuals", () => {
     assert.doesNotMatch(source, /ماذا تستخرج الأداة؟/);
   });
 
-  it("yields the page chrome to the tool, always", async () => {
+  it("opens focused, and lets the reader bring the page chrome back", async () => {
     const source = await readComponent();
-    // A survey map and a coordinate table need the full content width. The
-    // toggle that let a reader bring the rails back lived in the verdict
-    // banner and went with it, so the focused view is the only view.
-    assert.match(source, /const focusMode = true/);
-    assert.doesNotMatch(source, /setFocusMode/);
+    // A survey map and a coordinate table need the full content width, so the
+    // tool opens focused. The toggle that restores the rails now lives in the
+    // map card's header, which is the only heading the result still has.
+    assert.match(source, /useState\(true\)/);
+    assert.match(source, /setFocusMode\(\(current\) => !current\)/);
+    assert.match(source, /aria-pressed=\{focusMode\}/);
     assert.match(source, /dataset\.toolFocus = "on"/);
     assert.match(source, /fml-root--focus/);
 
@@ -79,18 +80,34 @@ describe("Find My Land launch visuals", () => {
     assert.match(styles, /\.fml-root--focus \.fml-map[\s\S]*?height: clamp\(420px, 68vh, 760px\)/);
   });
 
-  it("orders the result as summary, map, coordinates, actions, with no verdict banner above them", async () => {
+  it("orders the result as document, map, coordinates, actions, with no verdict banner above them", async () => {
     const source = await readComponent();
-    // The banner that used to head the result — a verdict, the focus toggle
-    // and an "analyze again" button — is gone; the numbers come first.
+    // The banner that used to head the result — a verdict, a focus toggle and
+    // an "analyze again" button — is gone, and so are the four summary cards
+    // that repeated what the table already says. What the document is comes
+    // first, then the parcel itself.
     assert.doesNotMatch(source, /fml-verdict/);
-    const order = ["fml-summary", "fml-map-card", "fml-coords", "fml-actions"];
+    assert.doesNotMatch(source, /fml-summary-card/);
+    const order = ["fml-doc-summary", "fml-map-card", "fml-coords", "fml-actions"];
     let cursor = -1;
     for (const marker of order) {
       const index = source.indexOf(marker, cursor + 1);
       assert.ok(index > cursor, `${marker} is out of order in the result layout`);
       cursor = index;
     }
+  });
+
+  it("leaves no result section rendered but permanently hidden", async () => {
+    const source = await readComponent();
+    // A section carrying `hidden` in its JSX is unreachable however the
+    // analysis turns out. The proposed-corner-order panel holds the only
+    // button that accepts the proposal, and the review notes hold every
+    // warning the engine raised, so hiding either one removes a feature
+    // rather than tidying the page.
+    const hiddenSections = [...source.matchAll(/<section[^>]*\shidden(?:\s|>)/g)].map((match) => match[0]);
+    assert.deepEqual(hiddenSections, [], `hidden result sections: ${hiddenSections.join(", ")}`);
+    assert.match(source, /data-suggested-sequence>/);
+    assert.match(source, /data-document-intelligence>/);
   });
 
   it("switches the coordinate table between WGS84 and UTM instead of stacking both", async () => {

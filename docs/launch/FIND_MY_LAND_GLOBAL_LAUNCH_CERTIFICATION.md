@@ -478,3 +478,196 @@ One test documents a limit honestly: reading the same eastings in the wrong UTM 
 - **Real Saudi PDFs were not re-tested.** They are deliberately not in the repository, and the row-recall acceptance in the brief needs the originals.
 - **Not implemented:** QR as a secondary evidence channel; image preprocessing (deskew, thresholding); ROI-targeted OCR and multi-pass OCR reconciliation; the cross-channel consensus scorer.
 - **Not run:** production build, runtime E2E. TypeScript `--noEmit` across the whole project was started and had not finished when this was written; the two new files are lint-clean and the suite that exercises them passes.
+
+---
+
+# The confirmed corner order reaches the drawing (2026-09-12)
+
+## What was wrong
+
+Three defects, found by running the tool rather than by reading it. All three
+were in code that already had passing tests.
+
+**1. Four result sections were rendered and then hidden.** A shared-component
+commit had added a `hidden` attribute to `[data-document-intelligence]`,
+`[data-suggested-sequence]`, `[data-area-comparison]` and the review-notes
+panel. The presence-only tests still passed — the markup was there. The
+features were not: `[data-suggested-sequence]` is the only place the
+«اعتماد الترتيب المقترح» button lives, so a user with a crossing corner order
+had no way to accept the proposal, and `[data-area-comparison]` is where
+computed area meets registered area.
+
+**2. Accepting a corner order did not move the map.** The resolver built
+`evidence`, `geometry` and `center` from the coordinate rows in document
+order, and only afterwards applied `confirmedOrder` — to the boundary analysis
+alone. So after the user accepted a proposal the tables re-ordered, the area
+was re-measured and the verdict changed, while the drawn polygon kept the
+crossing the user had just resolved. The document-order warning stayed too,
+which made the panel contradict the table beside it.
+
+**3. Map markers were numbered by position.** The tooltip was `index + 1`,
+which happens to match the document while nothing is reordered and diverges
+the moment anything is. After a confirmed order the map said "1" over the
+corner the tables and the deed both call "2".
+
+## What changed
+
+`lib/land/intelligence/resolver.ts`
+- `orderConfirmedByUser` and `analysedVertices` move above `buildLandGeoEvidence`,
+  so the geometry, the centre and the geometry warnings are all built from the
+  sequence the user accepted.
+- New `reorderParsedDetails`: applies that sequence to the parsed coordinate
+  evidence. Only corners move, and only into slots corners already occupy, so
+  rejected candidate rows stay where the document put them. If a vertex has no
+  parsed evidence behind it the permutation is incomplete and nothing moves at
+  all — rearranging on an incomplete map would drop a corner.
+- The confirmed sequence is written into `steps` for the audit trail.
+
+`src/components/tools/FindMyLand.tsx`
+- The four `hidden` attributes are gone.
+- `dedupeGeometryPoints` now receives the labelled rows instead of bare
+  `{lat, lon}` pairs, and the marker tooltip renders `point.label`. A corner
+  keeps the number the document gave it, in every order.
+
+`tests/land/find-my-land-ui.test.ts`
+- Two stale assertions rewritten to describe the tool as it is (focus mode opens
+  on, with its toggle in the map header; result order `fml-doc-summary →
+  fml-map-card → fml-coords → fml-actions`, no verdict banner, no summary cards).
+- New guard: **"leaves no result section rendered but permanently hidden"** —
+  asserts no `<section … hidden>` survives in the component, so a feature can
+  never again be hidden while its test still finds the markup.
+
+`tests/land/survey-intelligence-pipeline.test.ts`
+- **"draws the order the user confirmed, not the one on the page"** — a crossing
+  document yields no polygon; after confirmation `geometry.type === "polygon"`,
+  the drawn ring is corner-for-corner the measured parcel, the self-intersection
+  warning is gone, and every vertex still carries its source text and its
+  original index.
+- **"keeps the drawing and the measurements on the same sequence"** — a partial
+  confirmed order is completed in document order (what the boundary analysis has
+  always done) and the drawing follows the same completed list rather than
+  falling back to page order on its own.
+
+## What is deliberately unchanged
+
+- `boundary.documentSequence` reports the analysed order, not the page order,
+  when a user has confirmed one. It is an audit field, rendered nowhere, and
+  each vertex still carries its document `index`. Renaming it is a separate
+  change and was not made here.
+- The proposal is still a proposal. Nothing is reordered without the button.
+
+## Measured
+
+| Check | Result |
+|---|---|
+| `tsc --noEmit` over the project | clean, exit 0 |
+| `tests/land/*.test.ts` + `tests/geo/*.test.ts` | **806 / 806** (804 baseline + 2 new) |
+
+Browser, `next dev` on 3015, viewport 1440×900, RTL:
+
+| Scenario | Before | After |
+|---|---|---|
+| Reference sheet `09-line-topology-utm.pdf` | — | map 1096×612, labels 1·2·3·4 matching both tables, closed ring, area 300.25 vs 300.00 = 0.08% «متطابقة تقريبًا», no proposal offered |
+| Crossing corner table, on load | path `M558 296 L537 316 L546 320 L550 291` — open, crossing | proposal panel visible with «اعتماد الترتيب المقترح»: `P2 → P3 → P1 → P4`, area ٣٠٠٫٢٥ م² |
+| Same, after accepting | tables reordered, **map unchanged**, note read «عُرض كما ورد دون تغيير» | path `M537 316 L546 320 L558 296 L550 291 z` — closed, in the accepted order; map labels 2·3·1·4 matching the tables; proposal panel gone; document-order note gone; area comparison MATCH |
+
+No horizontal overflow. `POST /api/land/resolve` answered 200 on every run. The
+`503`s in the console are `GET /api/geo?type=cities` from the public shell's
+location picker, which has no database in this environment; they predate this
+change and are unrelated to the tool.
+
+## Not done
+
+- Production build. It is still run on the VPS, not locally.
+
+---
+
+# The zone-less projected sheet: 60 s abort → 0.5 s (2026-09-12)
+
+Scope of this pass: the path that matters for locating a parcel — extract the
+coordinates, establish the CRS, convert, place it on the map. Nothing else.
+
+## What was wrong
+
+**1. A readable text sheet was sent to OCR and the analysis died there.**
+`04-zone-less-utm.pdf` is pure text: zero image XObjects, one embedded font,
+and a `LINE NORTHING EASTING DIST` table with four rows. Uploading it produced,
+after 60.6 s: «استغرق التحليل أكثر من دقيقة فتوقف بأمان. جرّب ملفًا أصغر أو أوضح.»
+Reproduced twice, and a manually chosen zone did not prevent it.
+
+The cause is the OCR gate. `PageTextStats.coordinateRows` counts rows recovered
+by *layout reconstruction*, and pdfjs joins a page's text items with spaces, so
+this sheet arrives as a single line and reconstructs into nothing:
+
+```
+coordinateRows: 0, numericRows: 0  →  sufficient: false
+OCR PAGES >>> [{"page":1,"score":6,"reasons":["survey vocabulary: easting, northing, survey"]}]
+```
+
+The survey vocabulary that should have marked the page as *readable* was instead
+the score that dragged it into OCR. Meanwhile the resolver, reading the same
+flat text, answered instantly and perfectly:
+
+```
+RESOLVE zone=37 >>> status RESOLVED_EXPLICIT_COORDINATES, 4 points,
+                    EPSG:32637, geometry polygon, warnings []
+```
+
+So the pipeline could always read this document. The gate never let it try.
+
+**2. Every survey sheet on earth carried evidence of Oman.** `sur` is a town in
+Oman and the first three letters of `survey`. Country terms were matched as
+plain substrings, so this Saudi parcel (22.90 N, 39.58 E — near Rabigh) was
+labelled «الدولة: سلطنة عُمان».
+
+**3. An undetermined country still printed a confidence.** With the detector
+fixed, the summary read «غير محددة UNKNOWN» — a raw token, and a confidence
+about nothing.
+
+## What changed
+
+`lib/land/ocr/page-evidence.ts`
+- New optional `PageTextStats.textLayerCoordinateRows`: what the flat text
+  yields without column reconstruction.
+- `isNativeSurveyEvidenceSufficient` accepts a page on that count, held to the
+  same `MINIMUM_COORDINATE_ROWS = 3` threshold, **and only when the page is not
+  raster-dominant** — a scan whose caption happens to carry numbers still goes
+  to OCR. A fragment (1–2 rows) is not accepted, and says so.
+
+`src/components/tools/FindMyLand.tsx`, `tests/land/regional-holdout-regression.test.ts`
+- Both stat builders populate it from `extractGeoEvidence(pageText).explicitCoordinates`
+  plus `extractZoneLessUtmRows(pageText)` — the same readers the resolver uses.
+
+`lib/land/documents/country-detector.ts`
+- New `containsTerm`: a Latin term must sit at word edges. Arabic keeps the
+  substring test, because Arabic joins its article and prepositions to the word
+  and a boundary rule there would lose far more than it saved.
+
+`src/components/tools/FindMyLand.tsx`
+- No confidence chip when the country is undetermined; `UNKNOWN` also gained a
+  translation for anywhere else it surfaces.
+
+## Measured
+
+| Check | Result |
+|---|---|
+| `tsc --noEmit` | clean |
+| `tests/land/*` + `tests/geo/*` | **813 / 813** (806 + 7 new) |
+
+Browser, `04-zone-less-utm.pdf`, dev on 3015:
+
+| | Before | After |
+|---|---|---|
+| Upload → verdict | **60.6 s**, aborted, 0 rows | **0.31 s**, «حدد منطقة UTM لإكمال التحويل» |
+| Choose Zone 37 N → «تأكيد والتحويل» | never reached | **0.15 s** |
+| Result | — | 4 corners, each row stamped `37N`, map 1096×612, closed ring `M533 312 L536 294 L563 300 L559 318 z` |
+| Country | «سلطنة عُمان» | «غير محددة» |
+
+`POST /api/land/resolve` served both calls in 53 ms and 58 ms.
+
+## Still true, and still the gap
+
+No real Saudi or Omani document has been through this. The holdout corpus
+(`H01–H06`) is not on this machine, so its six suites skip and contribute
+**0 tests** to the 813. What is proven is the machinery; what is unproven is
+this machinery against those files.
