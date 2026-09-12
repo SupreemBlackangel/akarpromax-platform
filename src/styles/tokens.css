@@ -62,6 +62,29 @@
   --color-info-soft: #eef4ff;
   --color-info-foreground: #ffffff;
 
+  /* ---- Aliases the components were written against ----
+     docs/brand-identity.md named the gold `--accent` and the error colour
+     `--color-error`, and the components were written to the document. This file
+     shipped `--color-accent` and `--color-danger`. Neither side was wrong; they
+     simply never met, so `var(--color-error)` resolved to nothing in 48 files
+     and `var(--accent)` in 24 — an invalid declaration is dropped, which means
+     every error state on the platform rendered with no red at all and every
+     gold badge with no gold.
+
+     Defined once, here, rather than in each theme block: a custom property
+     whose value is a `var()` is substituted where it is USED, so these pick up
+     whichever `--color-danger` and `--color-accent` are in force on the element
+     — the dark block redefines those two and these follow without repeating.
+
+     `--accent-soft` had no counterpart to alias at all, so it is derived from
+     the accent and the surface it sits on, which keeps it correct in both
+     themes and tied to the brand rather than to a hand-picked hex. */
+  --accent: var(--color-accent);
+  --accent-soft: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  --color-accent-soft: var(--accent-soft);
+  --color-error: var(--color-danger);
+  --color-error-soft: var(--color-danger-soft);
+
   /* ---- Color: state ---- */
   --color-disabled: #a0afc5;
   --color-disabled-surface: #eef2f8;

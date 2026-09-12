@@ -70,7 +70,7 @@ function AccountProfileForm() {
           {(me?.name ?? viewer.displayName).charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
-          <p className="text-lg font-bold text-[color:var(--color-text)]">{me?.name ?? viewer.displayName}</p>
+          <p className="text-lg font-bold text-[color:var(--color-text-primary)]">{me?.name ?? viewer.displayName}</p>
           <p className="text-sm text-[color:var(--color-text-secondary)]">{me?.email ?? viewer.email}</p>
           <span className="mt-1 inline-block rounded-full bg-[color:var(--color-accent-soft)] px-3 py-0.5 text-xs font-bold text-[color:var(--color-accent)]">
             {roleLabel}
@@ -81,21 +81,21 @@ function AccountProfileForm() {
       <dl className="mt-6 space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] p-[var(--space-4)] text-sm">
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[color:var(--color-text-secondary)]">{t.emailLabel ?? "البريد الإلكتروني"}</dt>
-          <dd className="font-semibold text-[color:var(--color-text)]" dir="ltr">{me?.email ?? "—"}</dd>
+          <dd className="font-semibold text-[color:var(--color-text-primary)]" dir="ltr">{me?.email ?? "—"}</dd>
         </div>
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[color:var(--color-text-secondary)]">{t.phoneLabel ?? "رقم الهاتف"}</dt>
-          <dd className="font-semibold text-[color:var(--color-text)]" dir="ltr">{me?.phone ?? "—"}</dd>
+          <dd className="font-semibold text-[color:var(--color-text-primary)]" dir="ltr">{me?.phone ?? "—"}</dd>
         </div>
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[color:var(--color-text-secondary)]">{t.emailVerification ?? "توثيق البريد"}</dt>
-          <dd className="font-semibold text-[color:var(--color-text)]">
+          <dd className="font-semibold text-[color:var(--color-text-primary)]">
             {me?.emailVerified ? "✓ مؤكّد" : me?.emailVerified === false ? "غير مؤكّد" : "—"}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[color:var(--color-text-secondary)]">{t.registerDate ?? "تاريخ التسجيل"}</dt>
-          <dd className="font-semibold text-[color:var(--color-text)]">
+          <dd className="font-semibold text-[color:var(--color-text-primary)]">
             {me?.createdAt ? new Date(me.createdAt).toLocaleDateString("ar") : "—"}
           </dd>
         </div>

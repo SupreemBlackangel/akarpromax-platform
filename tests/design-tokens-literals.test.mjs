@@ -37,6 +37,14 @@ const ALLOWED = new Map([
     "The same Facebook and Google brand colours as the sign-in page.",
   ],
   [
+    "app/properties/[id]/page.tsx",
+    "WhatsApp's brand green on the button that hands the visitor to WhatsApp. " +
+      "It is the colour people recognise the service by, specified in " +
+      "WhatsApp's own brand guidelines, and it must stay itself in both " +
+      "themes — a token would make it follow this platform's palette, which " +
+      "is exactly what it must not do.",
+  ],
+  [
     "app/global-error.tsx",
     "The global error boundary. It renders when the application has failed, " +
       "possibly before the stylesheet loaded, so it cannot depend on a CSS " +
