@@ -20,6 +20,8 @@ import {
   MessageCircle,
   Minimize2,
   Navigation,
+  Pencil,
+  RefreshCw,
   RotateCcw,
   Satellite,
   ScanLine,
@@ -1003,6 +1005,8 @@ export function FindMyLand({ locale }: Props) {
   const [pasteZone, setPasteZone] = useState("40");
   const [pasteHemisphere, setPasteHemisphere] = useState<"N" | "S">("N");
   const [utmZoneInput, setUtmZoneInput] = useState("");
+  /** Open when the reader disputes the zone the analysis chose. */
+  const [zoneEditorOpen, setZoneEditorOpen] = useState(false);
   const [utmHemisphereInput, setUtmHemisphereInput] = useState<"N" | "S">("N");
   const [crsMode, setCrsMode] = useState<CrsMode>("auto");
   // The tool opens in focus mode: a survey map and a coordinate table need the
@@ -1635,6 +1639,36 @@ export function FindMyLand({ locale }: Props) {
     if (utmRows.length > 0 && sourceProjectedRows.length === 0) return "utm";
     return "wgs84";
   }, [coordinateViewOverride, sourceProjectedRows.length, utmRows.length]);
+
+  /**
+   * The grid these numbers belong to, said next to them.
+   *
+   * An easting of 597113.520 means nothing on its own: the same number is a
+   * different place in every one of the sixty UTM zones, and a surveyor typing
+   * it into a total station has to know which. The table showed the values and
+   * not the grid, so the one fact that makes them usable was the one fact the
+   * reader had to remember from elsewhere.
+   *
+   * The ORIGINAL view reports the document's own zone — from the vertices the
+   * resolver preserved, or from the CRS the analysis settled on. The UTM view
+   * reports the zone everything was projected into, which is not always the
+   * same one: a parcel near a boundary is put on a single grid deliberately.
+   */
+  const coordinateZoneLabel = useMemo(() => {
+    const fromDocument = sourceProjectedRows.find((row) => typeof row.zone === "number")?.zone;
+    const selection = analysis?.result.crsSelection;
+    const zone = coordinateView === "utm"
+      ? utmProjection?.zone
+      : fromDocument ?? selection?.zone ?? utmProjection?.zone;
+    if (typeof zone !== "number" || !Number.isFinite(zone)) return "";
+    const hemisphere = coordinateView === "utm"
+      ? utmProjection?.hemisphere
+      : selection?.hemisphere ?? utmProjection?.hemisphere;
+    // Latin digits and the N/S letter: a zone is written the same way on every
+    // grid in the world, and it is copied into instruments that read it that way.
+    return `${zone}${hemisphere === "S" ? "S" : "N"}`;
+  }, [analysis, coordinateView, sourceProjectedRows, utmProjection]);
+
 
 
   const activeOmanZone = analysis?.result.crsSelection?.zone === 39 ? 39 : 40;
@@ -2573,6 +2607,29 @@ export function FindMyLand({ locale }: Props) {
                         ? t("الإحداثيات الأصلية (من المستند)", "Original coordinates (from document)", "Özgün koordinatlar (belgeden)")
                         : t("إحداثيات ماركيتور العالمي (UTM)", "Universal Transverse Mercator coordinates (UTM)", "UTM koordinatları")}
                     </h3>
+                    {coordinateZoneLabel && (
+                      <button
+                        type="button"
+                        className={`fml-zone-badge${zoneEditorOpen ? " fml-zone-badge--open" : ""}`}
+                        aria-expanded={zoneEditorOpen}
+                        title={t("نطاق UTM — اضغط لتصحيحه", "UTM zone — press to correct it", "UTM dilimi — düzeltmek için basın")}
+                        onClick={() => {
+                          if (!zoneEditorOpen) {
+                            // Open on the zone in force, not on an empty box: the
+                            // reader is correcting a value, and the first thing
+                            // they need to see is the value being corrected.
+                            const current = Number.parseInt(coordinateZoneLabel, 10);
+                            if (Number.isFinite(current)) setUtmZoneInput(String(current));
+                            if (coordinateZoneLabel.endsWith("S")) setUtmHemisphereInput("S");
+                            else setUtmHemisphereInput("N");
+                          }
+                          setZoneEditorOpen((open) => !open);
+                        }}
+                      >
+                        {t("النطاق", "Zone", "Dilim")} <bdi>{coordinateZoneLabel}</bdi>
+                        <Pencil size={12} aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                   {utmRows.length > 0 && (
                     <div role="tablist" className="fml-coords-tabs" aria-label={t("عرض الإحداثيات", "Coordinate view", "Koordinat görünümü")}>
@@ -2611,6 +2668,75 @@ export function FindMyLand({ locale }: Props) {
                     </label>
                   )}
                 </div>
+
+                {/* --- The zone, when the analysis got it wrong ---
+                    The zone was only ever askable when the document failed to
+                    state one. A document that stated the WRONG one, or that the
+                    reader knows is 39 rather than 40, had no way back: the
+                    parcel simply landed a few hundred kilometres east and the
+                    only recourse was to upload it again. An easting means
+                    nothing without its zone, so correcting the zone is
+                    correcting the reading, and it re-projects by the same route
+                    every other correction takes. */}
+                {zoneEditorOpen && (
+                  <div className="fml-zone-editor">
+                    <label className="fml-field">
+                      <span className="fml-field-label">{t("نطاق UTM", "UTM zone", "UTM dilimi")}</span>
+                      <select
+                        className="fml-select"
+                        value={utmZoneInput}
+                        onChange={(event) => setUtmZoneInput(event.target.value)}
+                        aria-label={t("نطاق UTM", "UTM zone", "UTM dilimi")}
+                      >
+                        <option value="">{t("اختر النطاق", "Select zone", "Zon seçin")}</option>
+                        {zoneOptions.map((zone) => <option key={zone} value={zone}>{zone}</option>)}
+                      </select>
+                    </label>
+                    <label className="fml-field">
+                      <span className="fml-field-label">{t("نصف الكرة", "Hemisphere", "Yarımküre")}</span>
+                      <select
+                        className="fml-select"
+                        value={utmHemisphereInput}
+                        onChange={(event) => setUtmHemisphereInput(event.target.value as "N" | "S")}
+                        aria-label={t("نصف الكرة UTM", "UTM hemisphere", "UTM yarımküresi")}
+                      >
+                        <option value="N">N — {t("شمالي", "North", "Kuzey")}</option>
+                        <option value="S">S — {t("جنوبي", "South", "Güney")}</option>
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      className="fml-primary-btn"
+                      onClick={() => {
+                        const zone = Number.parseInt(utmZoneInput, 10);
+                        if (!isSelectableZone(zone)) {
+                          setActionError(t(
+                            "اختر نطاق UTM صالحًا من 1 إلى 60.",
+                            "Select a valid UTM zone from 1 to 60.",
+                            "1 ile 60 arasında geçerli bir UTM zonu seçin.",
+                          ));
+                          return;
+                        }
+                        setZoneEditorOpen(false);
+                        void reanalyze({ mode: "utm", zone, hemisphere: utmHemisphereInput });
+                      }}
+                    >
+                      <RefreshCw size={15} />
+                      {t("أعد الإسقاط", "Re-project", "Yeniden yansıt")}
+                    </button>
+                    <button type="button" className="fml-ghost-btn" onClick={() => setZoneEditorOpen(false)}>
+                      {t("إلغاء", "Cancel", "İptal")}
+                    </button>
+                    <p className="fml-zone-editor-note">
+                      {t(
+                        "عُمان بين النطاقين 39 و40. إن ظهرت الأرض بعيدة عن موقعها الحقيقي فالنطاق هو السبب في الغالب.",
+                        "Oman spans zones 39 and 40. If the parcel lands far from where it should be, the zone is usually why.",
+                        "Umman 39 ve 40 dilimleri arasındadır. Parsel olması gereken yerden uzağa düşüyorsa sebebi genellikle dilimdir.",
+                      )}
+                    </p>
+                  </div>
+                )}
+
                 <div className="fml-table-wrap">
                   {coordinateView === "wgs84" ? (
                     sourceProjectedRows.length > 0 ? (
