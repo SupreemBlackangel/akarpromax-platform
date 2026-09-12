@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Copy,
+  Download,
   ExternalLink,
   FileText,
   Globe2,
@@ -33,6 +34,13 @@ import {
   parseProjectedSourceRows,
   sourcePointLabel,
 } from "@/src/lib/tools/fml-display-policy";
+import {
+  EXPORT_MIME,
+  buildParcelExport,
+  canExport,
+  parcelFileName,
+  type ExportFormat,
+} from "@/src/lib/tools/fml-export";
 import {
   canFormat,
   formatPoints,
@@ -350,6 +358,28 @@ const COPY_FORMAT_OPTIONS: readonly { value: CopyFormat; label: string }[] = [
   { value: "acad", label: "AutoCAD PLINE" },
   { value: "wgs84", label: "WGS84" },
 ];
+
+/** File formats, named after what opens them. */
+const EXPORT_OPTIONS: readonly { value: ExportFormat; label: string }[] = [
+  { value: "dxf", label: "DXF" },
+  { value: "kml", label: "KML" },
+  { value: "csv", label: "CSV" },
+];
+
+/**
+ * Hands the browser a file. Revoked on a timer rather than immediately: Safari
+ * has not started the download by the time the click handler returns.
+ */
+function downloadFile(content: string, fileName: string, mime: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 5_000);
+}
 
 function areaVerdictCopy(verdict: string, locale: Locale): string {
   const copy: Record<string, { ar: string; en: string; tr: string }> = {
@@ -1527,6 +1557,31 @@ export function FindMyLand({ locale }: Props) {
     return `${t("قيم الوثيقة", "document values", "belge değerleri")} · ${points}`;
   }, [coordinateView, t, utmRows, visibleRows.length]);
 
+  /**
+   * What a file export describes. The rows are the ones on screen, so a DXF
+   * carries the same eastings the table does; the area and the parcel number
+   * come from the reading rather than being recomputed.
+   */
+  const parcelExport = useMemo(() => ({
+    rows: visibleRows,
+    areaSquareMeters:
+      analysis?.result.parcel?.boundary.areaComparison?.computedSquareMeters
+      ?? analysis?.result.parcel?.boundary.areaSquareMeters,
+    zone: utmRows[0]?.zone,
+    hemisphere: utmRows[0]?.hemisphere,
+    name: analysis?.result.parcelIdentifiers?.parcelId
+      ?? analysis?.result.parcelIdentifiers?.planId
+      ?? analysis?.result.parcelIdentifiers?.plotId,
+  }), [analysis, utmRows, visibleRows]);
+
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("dxf");
+  const exportParcel = useCallback((format: ExportFormat) => {
+    if (!canExport(parcelExport, format)) return;
+    downloadFile(buildParcelExport(parcelExport, format), parcelFileName(parcelExport, format), EXPORT_MIME[format]);
+    setCopiedTarget("export");
+    window.setTimeout(() => setCopiedTarget((current) => (current === "export" ? null : current)), 1800);
+  }, [parcelExport]);
+
   /** One row, in the format the button is set to. */
   const copyRow = useCallback((row: CopyRow) => {
     void copyText(formatPoints([row], copyFormat), "row");
@@ -2232,6 +2287,34 @@ export function FindMyLand({ locale }: Props) {
                     >
                       {COPY_FORMAT_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value} disabled={!canFormat(visibleRows, option.value)}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} aria-hidden="true" />
+                  </label>
+                </div>
+                <div className="fml-copy-group">
+                  <button
+                    type="button"
+                    onClick={() => exportParcel(exportFormat)}
+                    className="fml-action fml-copy-group__button"
+                    disabled={!canExport(parcelExport, exportFormat)}
+                  >
+                    {copiedTarget === "export" ? <CheckCircle2 size={16} /> : <Download size={16} />}
+                    {copiedTarget === "export"
+                      ? t("تم التنزيل", "Downloaded", "İndirildi")
+                      : t("تصدير", "Export", "Dışa aktar")}
+                  </button>
+                  <label className="fml-copy-group__format">
+                    <span className="fml-sr-only">{t("صيغة التصدير", "Export format", "Dışa aktarma biçimi")}</span>
+                    <select
+                      value={exportFormat}
+                      onChange={(event) => setExportFormat(event.target.value as ExportFormat)}
+                      dir="ltr"
+                    >
+                      {EXPORT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value} disabled={!canExport(parcelExport, option.value)}>
                           {option.label}
                         </option>
                       ))}
