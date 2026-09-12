@@ -124,6 +124,24 @@ export const INTEGRATION_TABLES_SQL: string[] = [
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  // One row per office. The sections are JSON because their shapes belong to
+  // the desktop app and change with its releases; the server validates each
+  // section's size and the fields it actually uses, and stores the rest
+  // verbatim rather than pretending to model a UI it does not own.
+  `CREATE TABLE IF NOT EXISTS office_settings (
+    sponsor_id VARCHAR(80) PRIMARY KEY NOT NULL,
+    branding TEXT NULL,
+    system TEXT NULL,
+    lists TEXT NULL,
+    save_paths TEXT NULL,
+    backup TEXT NULL,
+    license TEXT NULL,
+    currencies TEXT NULL,
+    site_integration TEXT NULL,
+    version INTEGER NOT NULL DEFAULT 0,
+    updated_by_device_id VARCHAR(36) NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
   `CREATE TABLE IF NOT EXISTS office_property_media_links (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     sponsor_id VARCHAR(80) NOT NULL,

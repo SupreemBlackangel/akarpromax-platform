@@ -9,6 +9,7 @@ import Card, { CardContent, CardDescription, CardHeader, CardTitle } from "@/src
 import { ErrorState } from "@/src/components/ui/Feedback";
 import OfficeSubscriptionsPanel from "./office-subscriptions-panel";
 import OfficeNotificationsPanel from "./office-notifications-panel";
+import OfficeSettingsPanel from "./office-settings-panel";
 import IntegrationStats, { STAT_ICONS, type IntegrationStat } from "./components/IntegrationStats";
 import IntegrationCard, { IntegrationCardSkeleton } from "./components/IntegrationCard";
 import EmptyIntegrationsState from "./components/EmptyIntegrationsState";
@@ -173,6 +174,10 @@ export default function AdminIntegrationClient() {
 
       <div id="office-notifications" className="mt-6 scroll-mt-6">
         <OfficeNotificationsPanel />
+      </div>
+
+      <div id="office-settings" className="mt-6 scroll-mt-6">
+        <OfficeSettingsPanel />
       </div>
 
       {/* ---- radar: recent geo scans, secondary ---- */}

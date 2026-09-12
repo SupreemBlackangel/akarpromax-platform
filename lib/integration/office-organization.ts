@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
+import { getIntegrationDb } from "@/lib/integration/db";
 
 /**
  * Auto-register a desktop office as a platform organization, and link its
@@ -124,4 +125,75 @@ export async function ensureOfficeOrganizationForUser(
   } finally {
     await end();
   }
+}
+
+/**
+ * Push an office's branding onto its public organisation row.
+ *
+ * The desktop's branding pane is where a firm writes its own name, description
+ * and contact details, and the public office page is the one place customers
+ * read them — keeping two copies means one of them is wrong.
+ *
+ * Not `patchProfile` from lib/amrs/workspace-profile-api.ts, though it is the
+ * same field list: that function authenticates a browser session and resolves
+ * the organisation from a signed-in user's membership, and there is no session
+ * here — the caller is a paired device. The sponsor's own organisation is
+ * resolved from its email instead, which is the identity the device actually
+ * proved.
+ *
+ * Returns false, rather than throwing, when the office has no organisation yet:
+ * a settings save is the office's own record and must not fail because the
+ * projection of part of it had nowhere to land.
+ */
+export async function applyOfficeBrandingToProfile(
+  sponsorId: string,
+  patch: Record<string, string>,
+): Promise<boolean> {
+  const fields = Object.keys(patch);
+  if (!sponsorId || fields.length === 0) return false;
+
+  const db = await getIntegrationDb();
+  const user = await db
+    .prepare("SELECT id FROM users WHERE email = ?1 LIMIT 1")
+    .bind(String(sponsorId))
+    .first<{ id: string }>();
+  if (!user?.id) return false;
+
+  // Two point lookups rather than a join. An office belongs to one or two
+  // organisations, so the N+1 is one or two indexed reads; the join was also
+  // the only query in this module the integration DB's test double could not
+  // run, which made the one branch that matters here untestable.
+  const memberships = await db
+    .prepare("SELECT organization_id FROM organization_members WHERE user_id = ?1")
+    .bind(String(user.id))
+    .all<{ organization_id: string }>();
+
+  let organizationId: string | null = null;
+  let earliest: string | null = null;
+  for (const membership of memberships?.results ?? []) {
+    const candidate = await db
+      .prepare("SELECT id, created_at FROM organizations WHERE id = ?1 AND type = 'real_estate' LIMIT 1")
+      .bind(String(membership.organization_id))
+      .first<{ id: string; created_at: string | null }>();
+    if (!candidate?.id) continue;
+    const createdAt = candidate.created_at == null ? "" : String(candidate.created_at);
+    // The oldest real_estate organisation is the office's own; a later one is
+    // a firm it joined, and its branding is not this office's to rewrite.
+    if (organizationId === null || earliest === null || createdAt < earliest) {
+      organizationId = candidate.id;
+      earliest = createdAt;
+    }
+  }
+  if (!organizationId) return false;
+
+  // `snake_case` columns from `camelCase` field names, and only the fields the
+  // caller passed — a branding save that mentions the phone must not blank a
+  // description the office set on the website.
+  const columns = fields.map((field) => field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`));
+  const assignments = columns.map((column, index) => `${column} = ?${index + 2}`).join(", ");
+  await db
+    .prepare(`UPDATE organizations SET ${assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?1`)
+    .bind(organizationId, ...fields.map((field) => patch[field]))
+    .run();
+  return true;
 }
