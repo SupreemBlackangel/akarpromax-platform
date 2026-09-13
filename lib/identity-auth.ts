@@ -82,10 +82,10 @@ async function identityFromSession(): Promise<UserIdentity | null> {
 
   try {
     const { db, end } = getDb();
-    let user: { email: string | null; name: string | null } | undefined;
+    let user: { email: string | null; name: string | null; role: string | null } | undefined;
     try {
       const rows = await db
-        .select({ email: pgUsers.email, name: pgUsers.name })
+        .select({ email: pgUsers.email, name: pgUsers.name, role: pgUsers.role })
         .from(pgUsers)
         .where(eq(pgUsers.id, session.userId))
         .limit(1);
@@ -95,10 +95,27 @@ async function identityFromSession(): Promise<UserIdentity | null> {
     }
     if (!user?.email) return null;
 
-    const role = mapSessionRole(session.role);
+    /*
+     * The role comes from the ROW, not from the cookie.
+     *
+     * It used to come from `session.role` — stamped into the session when the
+     * person signed in and never looked at again. So promoting somebody to
+     * super_admin did nothing until they happened to log out: they were an
+     * administrator in the database, carrying a token that said otherwise, and
+     * the console told them they had no permission. Nothing anywhere said the
+     * cure was to sign out and back in.
+     *
+     * The row is already being read, three lines up, for the email and the
+     * name. Reading the role from it costs nothing and means a role change
+     * takes effect on the next request. The session's own role remains the
+     * fallback for a row that somehow carries none.
+     */
+    const storedRole = (user.role ?? "").trim();
+    const effectiveRole = storedRole || session.role;
+    const role = mapSessionRole(effectiveRole);
     const permissions = await augmentPermissionsForServiceProviderCapability(
       user.email.trim().toLowerCase(),
-      permissionsForSessionRole(session.role),
+      permissionsForSessionRole(effectiveRole),
     );
     return {
       authenticated: true,
