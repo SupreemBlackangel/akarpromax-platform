@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, LogIn, Menu, SlidersHorizontal, User } from "lucide-react";
+import { LogIn, Menu, User } from "lucide-react";
 import type { Translation, ViewerContext } from "@/src/types/site";
 import { isNavItemActive, type PublicNavItem } from "@/src/config/public-navigation";
 import { cn } from "@/src/utils/cn";
@@ -104,18 +104,13 @@ export default function PublicHeader({
       {/* Row 2 — tool clusters + account actions. Country/language pin to
           this row's outer edges (start/end); everything else stays centered
           between them, per the requested layout. */}
-      {/* Below md this row is a disclosure behind one button: on a 390px screen
-          the country, the location, the theme, the search and the language wrap
-          onto three lines, so the header alone took a third of the first
-          screenful before the page had said anything. Above md the CSS hides the
-          summary and shows the row, so a desktop sees no disclosure at all —
-          and no JavaScript decides any of it. */}
-      <details className="disclosure-md border-t border-[color:var(--color-border)]/60">
-        <summary className="flex cursor-pointer items-center justify-between gap-2 px-[var(--space-4)] py-2 text-[var(--text-sm)] font-semibold text-[color:var(--color-text-secondary)] md:hidden">
-          <span className="inline-flex items-center gap-2"><SlidersHorizontal aria-hidden="true" className="size-4 text-[color:var(--color-primary)]" />{labels.locationAndSettings}</span>
-          <ChevronDown aria-hidden="true" className="disclosure-chevron size-4 shrink-0" />
-        </summary>
-        <PageContainer size="wide" className="disclosure-body flex flex-wrap items-center gap-2 py-1.5">
+      {/* The country / location / theme / search / language row, always on and
+          always open. It was briefly folded behind a "الموقع والإعدادات" button
+          on phones to save vertical space; these are the controls that tell the
+          platform WHERE the visitor is, and a control that decides what a whole
+          site shows is not one to hide behind a disclosure. */}
+      <div className="border-t border-[color:var(--color-border)]/60">
+        <PageContainer size="wide" className="flex flex-wrap items-center gap-2 py-1.5">
           {/* Right (RTL start): the geo + appearance controls, grouped and
               each carrying its own icon — country → location → theme. */}
           <div className="header-tool-cluster">
@@ -158,7 +153,7 @@ export default function PublicHeader({
             <LanguageSwitcher labels={labels} />
           </div>
         </PageContainer>
-      </details>
+      </div>
     </header>
   );
 }
