@@ -84,21 +84,21 @@ export default function MobileNavigation({
 
   const account: ReactNode = viewer.authenticated ? (
     <>
-      <span className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
+      <span className="truncate text-body-sm font-semibold text-[color:var(--color-text-primary)]">
         {viewer.displayName || viewer.email}
       </span>
       {onLogout ? (
         <button
           type="button"
           onClick={onLogout}
-          className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
         >
           {labels.logout}
         </button>
       ) : (
         <a
           href="/account/security"
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-transparent px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-medium text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
         >
           {labels.navAccount}
         </a>
@@ -109,7 +109,7 @@ export default function MobileNavigation({
       <button
         type="button"
         onClick={onLogin}
-        className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+        className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
       >
         {labels.login}
       </button>
@@ -134,7 +134,7 @@ export default function MobileNavigation({
         <div className="flex items-center justify-between gap-[var(--space-4)] border-b border-[color:var(--color-border)] p-[var(--space-5)]">
           <div className="flex min-w-0 items-center gap-[var(--space-3)]">
             <BrandMark size="sm" />
-            <h2 id={titleId} className="truncate text-[var(--text-md)] font-semibold text-[color:var(--color-text-primary)]">
+            <h2 id={titleId} className="truncate text-body font-semibold text-[color:var(--color-text-primary)]">
               {labels.mainNavAria}
             </h2>
           </div>
@@ -168,7 +168,7 @@ export default function MobileNavigation({
           </nav>
           {display.allowThemeChange && (
             <section aria-label={labels.themeAria} className="flex flex-col gap-[var(--space-2)]">
-              <h3 className="text-[var(--font-size-xs)] font-black text-[color:var(--color-text-muted)]">{labels.themeAria}</h3>
+              <h3 className="text-label font-bold text-[color:var(--color-text-muted)]">{labels.themeAria}</h3>
               {/* A phone has no room for the header dropdown, so the appearance
                   choice lives here as three plain rows. */}
               <div className="grid grid-cols-3 gap-[var(--space-2)]">
@@ -180,7 +180,7 @@ export default function MobileNavigation({
                       type="button"
                       aria-pressed={active}
                       onClick={() => selectThemeMode(option.id)}
-                      className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border px-[var(--space-2)] py-[var(--space-2)] text-[var(--font-size-xs)] font-bold transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] ${
+                      className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border px-[var(--space-2)] py-[var(--space-2)] text-label font-bold transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] ${
                         active
                           ? "border-[color:var(--color-primary)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"
                           : "border-[color:var(--color-border)] bg-transparent text-[color:var(--color-text-secondary)] hover:bg-[color:var(--color-surface-muted)]"
@@ -197,7 +197,7 @@ export default function MobileNavigation({
           {searchHref && (
             <a
               href={searchHref}
-              className="inline-flex min-h-11 items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-muted)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+              className="inline-flex min-h-11 items-center gap-[var(--space-2)] rounded-[var(--radius-md)] px-[var(--space-4)] py-[var(--space-2)] text-body-sm font-medium text-[color:var(--color-text-muted)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] hover:text-[color:var(--color-text-primary)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
             >
               <span aria-hidden="true">🔍</span>
               <span>{labels.searchAria}</span>

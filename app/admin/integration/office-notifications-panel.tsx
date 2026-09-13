@@ -134,7 +134,7 @@ export default function OfficeNotificationsPanel() {
               <Send className="size-4" aria-hidden="true" />
               {busy ? "جارٍ الإرسال…" : "إرسال الإشعار"}
             </Button>
-            {message && <span role="status" className="self-center text-xs font-extrabold text-[color:var(--color-primary)]">{message}</span>}
+            {message && <span role="status" className="self-center text-xs font-bold text-[color:var(--color-primary)]">{message}</span>}
           </div>
         </div>
 

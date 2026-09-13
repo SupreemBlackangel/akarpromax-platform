@@ -122,7 +122,7 @@ function OfficeDevicesPageInner() {
 
       {activeTab === "pairing" ? (
         <div className="max-w-2xl rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">ربط تطبيق المكتب</h2>
+          <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">ربط تطبيق المكتب</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             أنشئ رمز ربط لمرة واحدة (صالح 15 دقيقة). أدخله في تطبيق AkarPromax Office على الجهاز.
             لا يُستخدم الرمز للمصادقة الدائمة — يتسلم الجهاز رمزًا مخولًا بصلاحيات محدودة.
@@ -131,20 +131,20 @@ function OfficeDevicesPageInner() {
           <button
             type="button"
             onClick={() => void startPairing()}
-            className="mt-4 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[var(--color-primary-hover)]"
+            className="mt-4 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]"
           >
             {code ? "إنشاء رمز جديد" : "إنشاء رمز الربط"}
           </button>
 
           {code && (
             <div className="mt-5 rounded-2xl border-2 border-dashed border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] p-6 text-center dark:border-blue-700 dark:bg-[var(--color-primary-soft)]/20">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--color-primary)] dark:text-[var(--color-primary)]">رمز الربط</p>
-              <p className="mt-2 select-all text-4xl font-black tracking-[0.4em] text-blue-800 dark:text-blue-200">{code.code}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-primary)] dark:text-[var(--color-primary)]">رمز الربط</p>
+              <p className="mt-2 select-all text-4xl font-bold tracking-[0.4em] text-blue-800 dark:text-blue-200">{code.code}</p>
               <p className="mt-2 text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)]">صالح حتى {code.expiresAt}</p>
               <button
                 type="button"
                 onClick={() => void copyCode()}
-                className="mt-3 rounded-lg bg-[var(--color-primary)] px-4 py-1.5 text-xs font-black text-white hover:bg-[var(--color-primary-hover)]"
+                className="mt-3 rounded-lg bg-[var(--color-primary)] px-4 py-1.5 text-xs font-bold text-white hover:bg-[var(--color-primary-hover)]"
               >
                 نسخ الرمز
               </button>
@@ -153,7 +153,7 @@ function OfficeDevicesPageInner() {
 
           {pairings.length > 0 && (
             <div className="mt-6">
-              <h3 className="mb-2 text-sm font-black text-gray-700 dark:text-gray-300">الرموز السابقة</h3>
+              <h3 className="mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">الرموز السابقة</h3>
               <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                 {pairings.slice(0, 6).map((row) => (
                   <li key={row.id} className="flex items-center justify-between py-2 text-sm">
@@ -167,7 +167,7 @@ function OfficeDevicesPageInner() {
       ) : (
         <div className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] dark:border-gray-800 dark:bg-gray-900">
           <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">الأجهزة المتصلة</h2>
+            <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">الأجهزة المتصلة</h2>
           </div>
           {loading ? (
             <p className="px-5 py-10 text-center text-sm text-gray-500">جارٍ التحميل…</p>
@@ -189,7 +189,7 @@ function OfficeDevicesPageInner() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${
+                      className={`rounded-full px-2 py-0.5 text-label font-bold uppercase ${
                         device.status === "active"
                           ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]"
                           : "bg-red-100 text-[var(--color-error)] dark:bg-red-900/40 dark:text-[var(--color-error)]"

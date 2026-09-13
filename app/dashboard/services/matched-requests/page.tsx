@@ -46,7 +46,7 @@ export default function MatchedRequestsPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="matched-requests">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.matchedRequests") ?? "طلبات مناسبة لي"}</h2>
 
         {!loading && hasProfile === false && (
           <div className="mb-4 rounded-xl bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/40 p-5 text-sm text-[var(--color-warning)]">

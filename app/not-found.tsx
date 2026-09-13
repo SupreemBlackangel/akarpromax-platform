@@ -8,8 +8,8 @@ export default function NotFound() {
   return (
     <main className="grid min-h-[70vh] place-items-center bg-[var(--color-background)] px-6 py-20">
       <div className="w-full max-w-md rounded-[var(--radius-2xl)] border border-[var(--color-border)] bg-[var(--color-surface)] p-10 text-center shadow-[var(--shadow-card)]">
-        <p className="text-sm font-black tracking-widest text-[var(--color-primary)]">404</p>
-        <h1 className="mt-3 text-2xl font-black text-[var(--color-text-primary)]">
+        <p className="text-sm font-bold tracking-widest text-[var(--color-primary)]">404</p>
+        <h1 className="mt-3 text-2xl font-bold text-[var(--color-text-primary)]">
           الصفحة غير موجودة
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-secondary)]">
@@ -21,7 +21,7 @@ export default function NotFound() {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/"
-            className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-black text-[var(--color-primary-foreground)] transition hover:bg-[var(--color-primary-hover)]"
+            className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-[var(--color-primary-foreground)] transition hover:bg-[var(--color-primary-hover)]"
           >
             العودة للرئيسية
           </Link>

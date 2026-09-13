@@ -72,7 +72,7 @@ export default function AuctionsDashboardPage() {
                 {stat.icon}
               </div>
               <div>
-                <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
                 <div className="text-xs text-gray-500 font-semibold">{stat.label}</div>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function AuctionsDashboardPage() {
               action={
                 <Link
                   href="/dashboard/auctions/new"
-                  className="inline-block rounded-[var(--radius-control)] px-6 py-3 text-[var(--text-sm)] font-bold text-[color:var(--color-text-inverse)]"
+                  className="inline-block rounded-[var(--radius-control)] px-6 py-3 text-body-sm font-bold text-[color:var(--color-text-inverse)]"
                   style={{ background: "var(--brand-gradient)" }}
                 >
                   أطلق مزادك الأول

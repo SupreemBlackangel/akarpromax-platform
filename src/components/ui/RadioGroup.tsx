@@ -25,7 +25,7 @@ export default function RadioGroup({
   return (
     <div className="flex flex-col gap-[var(--space-2)]" role="radiogroup" aria-labelledby={label ? `${groupId}-label` : undefined} aria-describedby={[errorId, hintId].filter(Boolean).join(" ") || undefined}>
       {label && (
-        <span id={`${groupId}-label`} className="text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)]">
+        <span id={`${groupId}-label`} className="text-body-sm font-medium text-[color:var(--color-text-primary)]">
           {label}
         </span>
       )}
@@ -35,12 +35,12 @@ export default function RadioGroup({
           : children}
       </div>
       {hint && (
-        <span id={hintId} className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">
+        <span id={hintId} className="text-label text-[color:var(--color-text-muted)]">
           {hint}
         </span>
       )}
       {error && (
-        <span id={errorId} role="alert" className="text-[var(--font-size-xs)] font-medium text-[color:var(--color-danger)]">
+        <span id={errorId} role="alert" className="text-label font-medium text-[color:var(--color-danger)]">
           {error}
         </span>
       )}
@@ -63,7 +63,7 @@ export function RadioOption({ value, label, name, disabled, className = "" }: Ra
   return (
     <label
       htmlFor={optionId}
-      className={`inline-flex cursor-pointer items-center gap-[var(--space-3)] text-[var(--font-size-md)] text-[color:var(--color-text-primary)] ${disabled ? "cursor-not-allowed text-[color:var(--color-disabled)]" : ""} ${className}`.trim()}
+      className={`inline-flex cursor-pointer items-center gap-[var(--space-3)] text-body text-[color:var(--color-text-primary)] ${disabled ? "cursor-not-allowed text-[color:var(--color-disabled)]" : ""} ${className}`.trim()}
     >
       <input
         id={optionId}

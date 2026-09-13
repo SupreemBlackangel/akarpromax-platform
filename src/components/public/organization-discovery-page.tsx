@@ -153,7 +153,7 @@ export default function OrganizationDiscoveryPage({ mode }: { mode: Organization
                     <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-[var(--color-primary)] dark:bg-blue-900/40 dark:text-[var(--color-primary)]">{item.type}</span>
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{item.classification}</span>
                   </div>
-                  <h2 className="text-xl font-black text-gray-900 dark:text-white">{pick(locale, item, "name")}</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{pick(locale, item, "name")}</h2>
                   <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, item, "description") || item.slug}</p>
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
                     <span>{item.countryCode}{item.cityId ? ` • ${item.cityId}` : ""}</span>

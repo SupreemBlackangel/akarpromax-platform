@@ -66,7 +66,7 @@ function AccountProfileForm() {
       <p className="auth-subtitle mt-2 text-sm text-[color:var(--color-text-secondary)]">{t.accountDescription}</p>
 
       <div className="mt-6 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-2xl font-black text-[var(--color-primary)]">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-2xl font-bold text-[var(--color-primary)]">
           {(me?.name ?? viewer.displayName).charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">

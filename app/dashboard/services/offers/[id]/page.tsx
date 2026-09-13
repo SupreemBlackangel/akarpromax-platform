@@ -127,7 +127,7 @@ export default function OfferDetailPage({ id }: Props) {
         ) : (
           <div className="mt-4 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h1 className="text-xl font-black text-gray-900 dark:text-white">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                 {String(requestRow?.title ?? requestRow?.reference_number ?? "عرض")}
               </h1>
               <OfferStatusPill status={status} locale={locale} />
@@ -144,12 +144,12 @@ export default function OfferDetailPage({ id }: Props) {
               {offer.visit_fee != null && <div><span className="block text-xs text-gray-500 dark:text-gray-400">رسوم المعاينة</span><span className="text-gray-800 dark:text-gray-100">{formatMoney(offer.visit_fee, offer.currency)}</span></div>}
             </div>
 
-            {offer.offer_notes && <div className="mt-5"><h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-1">تفاصيل العرض</h3><p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{offer.offer_notes}</p></div>}
-            {offer.terms && <div className="mt-4"><h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-1">الشروط</h3><p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{offer.terms}</p></div>}
+            {offer.offer_notes && <div className="mt-5"><h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">تفاصيل العرض</h3><p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{offer.offer_notes}</p></div>}
+            {offer.terms && <div className="mt-4"><h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">الشروط</h3><p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{offer.terms}</p></div>}
 
             {revisions.length > 0 && (
               <div className="mt-6 border-t border-gray-100 dark:border-gray-800 pt-4">
-                <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-2">المراجعات ({revisions.length})</h3>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">المراجعات ({revisions.length})</h3>
                 <div className="space-y-2">
                   {revisions.map((rev) => (
                     <div key={String(rev.id)} className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm">

@@ -18,12 +18,12 @@ export function ToolResultCard({ metrics, note }: ToolResultCardProps) {
       <div className={`grid gap-3 ${metrics.length <= 3 ? "grid-cols-3" : metrics.length <= 5 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`}>
         {metrics.map((m, i) => (
           <div key={i} className="bg-[var(--color-surface)] dark:bg-gray-900 rounded-lg p-3 text-center border border-gray-200 dark:border-gray-800">
-            <div className="text-[var(--text-xs)] text-gray-500 dark:text-gray-400 font-medium">{m.label}</div>
+            <div className="text-label text-gray-500 dark:text-gray-400 font-medium">{m.label}</div>
             <div className={`${m.primary ? "text-xl" : "text-lg"} font-bold text-gray-900 dark:text-white font-mono`}>
               {m.value}
             </div>
             {m.warning && (
-              <div className="text-[var(--text-xs)] text-[var(--color-warning)] mt-0.5 font-medium">{m.warning}</div>
+              <div className="text-label text-[var(--color-warning)] mt-0.5 font-medium">{m.warning}</div>
             )}
           </div>
         ))}

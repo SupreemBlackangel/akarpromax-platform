@@ -111,9 +111,9 @@ export default function SettingsAdminClient() {
       ) : (
         <div className="space-y-6" dir="rtl">
           <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-black text-[var(--color-text-primary)]">عمولة الخدمات</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">عمولة الخدمات</h2>
             <p className="mb-4 text-xs text-[var(--color-text-muted)]">نسبة المنصة من قيمة كل مهمة خدمات مكتملة. تُطبَّق على المهام الجديدة فور الحفظ.</p>
-            <label className="block max-w-xs text-xs font-black text-[var(--color-text-secondary)]">
+            <label className="block max-w-xs text-xs font-bold text-[var(--color-text-secondary)]">
               النسبة المئوية (%)
               <input
                 type="number" min={0} max={100} step={0.1}
@@ -125,10 +125,10 @@ export default function SettingsAdminClient() {
           </section>
 
           <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-black text-[var(--color-text-primary)]">تسعير الإعلانات</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">تسعير الإعلانات</h2>
             <p className="mb-4 text-xs text-[var(--color-text-muted)]">اضبط عملة الفوترة، وسعر النقرة (CPC)، والسعر الشهري الثابت لكل موضع. تُستخدم هذه الأسعار في احتساب تكلفة الحملات.</p>
             <div className="mb-5 grid max-w-md grid-cols-2 gap-4">
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 العملة
                 <select
                   value={settings.adPricing.currency}
@@ -138,7 +138,7 @@ export default function SettingsAdminClient() {
                   {CURRENCIES.map((code) => <option key={code} value={code}>{code}</option>)}
                 </select>
               </label>
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 سعر النقرة CPC ({settings.adPricing.currency})
                 <input
                   type="number" min={0} step={0.01}
@@ -148,10 +148,10 @@ export default function SettingsAdminClient() {
                 />
               </label>
             </div>
-            <h3 className="mb-2 text-sm font-black text-[var(--color-text-secondary)]">السعر الشهري الثابت لكل موضع ({settings.adPricing.currency})</h3>
+            <h3 className="mb-2 text-sm font-bold text-[var(--color-text-secondary)]">السعر الشهري الثابت لكل موضع ({settings.adPricing.currency})</h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {PLACEMENT_LABELS.map(([key, label]) => (
-                <label key={key} className="block text-xs font-black text-[var(--color-text-secondary)]">
+                <label key={key} className="block text-xs font-bold text-[var(--color-text-secondary)]">
                   {label}
                   <input
                     type="number" min={0} step={1}
@@ -165,7 +165,7 @@ export default function SettingsAdminClient() {
           </section>
 
           <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-black text-[var(--color-text-primary)]">طريقة العرض</h2>
+            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">طريقة العرض</h2>
             <p className="mb-4 text-xs text-[var(--color-text-muted)]">
               لكل جهاز إعداداته الخاصة. الفاصل بين الجهازين هو عرض 1024 بكسل: أي شاشة أضيق تأخذ إعدادات الجوال، وتُطبَّق فورًا عند تغيير حجم النافذة.
             </p>
@@ -176,7 +176,7 @@ export default function SettingsAdminClient() {
                   key={key}
                   type="button"
                   onClick={() => setDevice(key)}
-                  className={`rounded-lg px-5 py-2 text-sm font-black transition ${
+                  className={`rounded-lg px-5 py-2 text-sm font-bold transition ${
                     device === key ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)]"
                   }`}
                 >
@@ -185,7 +185,7 @@ export default function SettingsAdminClient() {
               ))}
             </div>
 
-            <h3 className="mb-2 text-sm font-black text-[var(--color-text-secondary)]">المساحات الإعلانية</h3>
+            <h3 className="mb-2 text-sm font-bold text-[var(--color-text-secondary)]">المساحات الإعلانية</h3>
             <div className="mb-6 grid gap-3 sm:grid-cols-3">
               {AD_BAND_LABELS.map(([band, label, hint]) => {
                 const on = settings.display[device].ads[band];
@@ -199,17 +199,17 @@ export default function SettingsAdminClient() {
                   >
                     <span aria-hidden="true" className="mt-0.5 text-lg">{on ? "☑" : "☐"}</span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-black text-[var(--color-text-primary)]">{label}</span>
-                      <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">{hint}</span>
+                      <span className="block text-sm font-bold text-[var(--color-text-primary)]">{label}</span>
+                      <span className="block text-label font-bold text-[var(--color-text-muted)]">{hint}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            <h3 className="mb-2 text-sm font-black text-[var(--color-text-secondary)]">المظهر (الثيم)</h3>
+            <h3 className="mb-2 text-sm font-bold text-[var(--color-text-secondary)]">المظهر (الثيم)</h3>
             <div className="mb-6 grid max-w-lg gap-4 sm:grid-cols-2">
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 الوضع الافتراضي للزائر
                 <select
                   value={settings.display[device].themeMode}
@@ -227,15 +227,15 @@ export default function SettingsAdminClient() {
               >
                 <span aria-hidden="true" className="mt-0.5 text-lg">{settings.display[device].allowThemeChange ? "☑" : "☐"}</span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-black text-[var(--color-text-primary)]">السماح للزائر بتغيير المظهر</span>
-                  <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">عند الإيقاف يُثبَّت الوضع الافتراضي ويُخفى زر المظهر</span>
+                  <span className="block text-sm font-bold text-[var(--color-text-primary)]">السماح للزائر بتغيير المظهر</span>
+                  <span className="block text-label font-bold text-[var(--color-text-muted)]">عند الإيقاف يُثبَّت الوضع الافتراضي ويُخفى زر المظهر</span>
                 </span>
               </button>
             </div>
 
-            <h3 className="mb-2 text-sm font-black text-[var(--color-text-secondary)]">عرض القوائم والكثافة</h3>
+            <h3 className="mb-2 text-sm font-bold text-[var(--color-text-secondary)]">عرض القوائم والكثافة</h3>
             <div className="mb-6 grid max-w-2xl gap-4 sm:grid-cols-3">
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 شكل القوائم
                 <select
                   value={settings.display[device].listingLayout}
@@ -246,7 +246,7 @@ export default function SettingsAdminClient() {
                   <option value="list">قائمة بصف واحد</option>
                 </select>
               </label>
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 عدد الأعمدة
                 <select
                   value={settings.display[device].listingColumns}
@@ -257,7 +257,7 @@ export default function SettingsAdminClient() {
                   {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </label>
-              <label className="block text-xs font-black text-[var(--color-text-secondary)]">
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)]">
                 كثافة الواجهة
                 <select
                   value={settings.display[device].density}
@@ -270,7 +270,7 @@ export default function SettingsAdminClient() {
               </label>
             </div>
 
-            <h3 className="mb-2 text-sm font-black text-[var(--color-text-secondary)]">عناصر الواجهة</h3>
+            <h3 className="mb-2 text-sm font-bold text-[var(--color-text-secondary)]">عناصر الواجهة</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {CHROME_LABELS.map(([flag, label, hint]) => {
                 const on = settings.display[device][flag];
@@ -284,8 +284,8 @@ export default function SettingsAdminClient() {
                   >
                     <span aria-hidden="true" className="mt-0.5 text-lg">{on ? "☑" : "☐"}</span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-black text-[var(--color-text-primary)]">{label}</span>
-                      <span className="block text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">{hint}</span>
+                      <span className="block text-sm font-bold text-[var(--color-text-primary)]">{label}</span>
+                      <span className="block text-label font-bold text-[var(--color-text-muted)]">{hint}</span>
                     </span>
                   </button>
                 );
@@ -297,7 +297,7 @@ export default function SettingsAdminClient() {
             type="button"
             onClick={() => void save()}
             disabled={saving}
-            className="rounded-xl bg-[var(--color-primary)] px-8 py-3 text-sm font-black text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+            className="rounded-xl bg-[var(--color-primary)] px-8 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
           >
             {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
           </button>

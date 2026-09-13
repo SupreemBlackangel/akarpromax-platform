@@ -61,7 +61,7 @@ export default function MobileBottomNav({ items, currentPath, labels, locale = "
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-[56px] flex-col items-center justify-center gap-[var(--space-1)] px-1 py-[var(--space-2)] text-[var(--text-xs)] font-medium transition-colors",
+                  "flex min-h-[56px] flex-col items-center justify-center gap-[var(--space-1)] px-1 py-[var(--space-2)] text-label font-medium transition-colors",
                   active
                     ? "text-[color:var(--color-primary)]"
                     : "text-[color:var(--color-text-secondary)]",

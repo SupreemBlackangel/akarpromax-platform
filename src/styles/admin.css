@@ -3,7 +3,7 @@
 .ads-wizard, .ads-wizard input, .ads-wizard select, .ads-wizard textarea, .ads-wizard button { font-family: var(--font-family-arabic); }
 .ads-wizard-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); }
 .ads-wizard-head p { margin: 0 0 4px; color: var(--color-primary); font-size: 13px; font-weight: 700; }
-.ads-wizard-head h2 { margin: 0; color: var(--color-text-primary); font-size: 23px; font-weight: 700; letter-spacing: -.02em; }
+.ads-wizard-head h2 { margin: 0; color: var(--color-text-primary); font: var(--type-h2); }
 .ads-wizard-head > button, .ads-wizard-actions > button { padding: 10px 14px; border: 1px solid var(--color-border-strong); border-radius: 8px; background: #fff; color: var(--color-text-secondary); cursor: pointer; font: 700 var(--text-xs) var(--font-body-stack); }
 .ads-wizard-steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 20px 0; }
 .ads-wizard-steps button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 7px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); color: #6d7f97; cursor: pointer; font-size: 14px; font-weight: 700; }
@@ -13,7 +13,7 @@
 .ads-wizard-steps button.done { color: var(--color-primary); }
 .ads-wizard-message { margin-bottom: 14px; padding: 11px 13px; border: 1px solid var(--color-border-strong); border-radius: 9px; background: var(--color-primary-soft); color: var(--color-primary); font-size: 13px; font-weight: 700; }
 .ads-wizard .ads-form-section { margin-top: 0; min-height: 280px; padding: 26px; }
-.ads-wizard .ads-form-section h3 { font-size: 17px; font-weight: 700; }
+.ads-wizard .ads-form-section h3 { font: var(--type-h3); }
 .ads-wizard .ads-form-grid label, .ads-wizard .ads-language-columns label, .ads-wizard .ads-wide-field { font-size: 12px; }
 .ads-wizard .ads-form-grid input, .ads-wizard .ads-form-grid select, .ads-wizard .ads-language-columns input, .ads-wizard .ads-language-columns textarea, .ads-wizard .ads-wide-field input { min-height: 46px; font-size: 13px; }
 .ads-wizard-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
@@ -62,7 +62,7 @@ html[data-theme="dark"] .ads-wizard-steps button.active { background: #143b70; c
 .advertiser-admin-canvas { width: calc(100% - 244px); max-width: 1500px; margin: 0 auto; padding: 28px 34px 55px; }
 .advertiser-admin-header { display: flex; align-items: center; justify-content: space-between; gap: 25px; margin-bottom: 25px; }
 .advertiser-admin-header p, .admin-panel-title p, .admin-dialog-head p { color: var(--color-primary); font-size: 12px; font-weight: 700; }
-.advertiser-admin-header h1 { margin-top: 3px; color: var(--color-text-primary); font-size: clamp(24px, 3vw, 36px); letter-spacing: -.03em; }
+.advertiser-admin-header h1 { margin-top: 3px; color: var(--color-text-primary); font-size: clamp(24px, 3vw, 36px); }
 .admin-header-actions { display: flex; align-items: center; gap: 10px; }
 .admin-header-actions a, .admin-header-actions button, .admin-primary { padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; font-weight: 700; }
 .admin-header-actions button, .admin-primary { border-color: var(--color-primary); background: var(--color-primary); color: #fff; box-shadow: 0 8px 16px rgba(23,105,255,.18); }
@@ -76,7 +76,7 @@ html[data-theme="dark"] .ads-wizard-steps button.active { background: #143b70; c
 .admin-stat-grid small { color: var(--color-text-muted); font-size: var(--text-xs); }
 .admin-panel { padding: 20px; border: 1px solid var(--color-border); border-radius: 13px; background: #fff; box-shadow: 0 2px 10px rgba(20,50,96,.03); }
 .admin-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.admin-panel-title h2, .admin-dialog-head h2 { margin-top: 2px; color: var(--color-text-primary); font-size: 20px; letter-spacing: -.02em; }
+.admin-panel-title h2, .admin-dialog-head h2 { margin-top: 2px; color: var(--color-text-primary); font-size: 20px; }
 .admin-panel-title > span { padding: 4px 9px; border-radius: 20px; background: var(--color-primary-soft); color: var(--color-primary); font-size: 12px; font-weight: 700; }
 .advertiser-admin-list { display: grid; gap: 8px; }
 .advertiser-admin-list > article { display: grid; grid-template-columns: 100px minmax(180px, 1fr) 85px 100px auto; align-items: center; gap: 14px; min-height: 76px; padding: 9px; border: 1px solid var(--color-border); border-radius: 10px; }
@@ -348,7 +348,7 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
 /* Advertising control center */
 .ads-admin-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .ads-admin-header p, .ads-panel-title p, .ads-dialog-head p { color: var(--color-primary); font-size: 12px; font-weight: 700; }
-.ads-admin-header h1 { margin-top: 3px; color: var(--color-text-primary); font-size: clamp(25px, 3vw, 37px); line-height: 1.25; letter-spacing: -.03em; }
+.ads-admin-header h1 { margin-top: 3px; color: var(--color-text-primary); font-size: clamp(25px, 3vw, 37px); line-height: 1.25; }
 .ads-admin-header > div:last-child { display: flex; gap: 9px; }
 .ads-admin-header a, .ads-admin-header button, .ads-panel-title > button { padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; font-weight: 700; }
 .ads-admin-header button, .ads-panel-title > button { border-color: var(--color-primary); background: var(--color-primary); color: #fff; box-shadow: 0 8px 16px rgba(23,105,255,.16); }
@@ -361,7 +361,7 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
 .ads-stat-grid small { color: var(--color-text-muted); font-size: var(--text-xs); }
 .ads-panel { padding: 20px; border: 1px solid var(--color-border); border-radius: 14px; background: #fff; box-shadow: 0 8px 20px rgba(20,50,96,.04); }
 .ads-panel-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.ads-panel-title h2, .ads-dialog-head h2 { margin-top: 2px; color: var(--color-text-primary); font-size: 21px; letter-spacing: -.02em; }
+.ads-panel-title h2, .ads-dialog-head h2 { margin-top: 2px; color: var(--color-text-primary); font-size: 21px; }
 .ads-panel-title > span { padding: 4px 9px; border-radius: 20px; background: var(--color-primary-soft); color: var(--color-primary); font-size: 12px; font-weight: 700; }
 .ads-campaign-list { display: grid; gap: 8px; }
 .ads-campaign-list > article { display: grid; grid-template-columns: 118px minmax(190px, 1fr) minmax(110px, .55fr) 120px auto; align-items: center; gap: 14px; min-height: 82px; padding: 10px; border: 1px solid var(--color-border); border-radius: 11px; }
@@ -415,7 +415,7 @@ html[data-theme="dark"] .reports-chart { border-color: #263a5a; }
 .ads-form-section { margin-top: 16px; padding: 18px; border: 1px solid var(--color-border); border-radius: 13px; background: var(--color-surface); }
 .ads-form-section > div:first-child { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
 .ads-form-section > div:first-child > span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; background: var(--color-primary); color: #fff; font: 700 var(--text-xs) var(--font-body-stack); }
-.ads-form-section h3 { color: var(--color-text-primary); font-size: 14px; }
+.ads-form-section h3 { color: var(--color-text-primary); font: var(--type-h4); }
 .ads-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
 .ads-form-grid label, .ads-language-columns label, .ads-wide-field { display: grid; gap: 5px; color: var(--color-text-secondary); font-size: 12px; font-weight: 700; }
 .ads-form-grid input, .ads-form-grid select, .ads-language-columns input, .ads-language-columns textarea, .ads-wide-field input { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 8px; outline: 0; background: #fff; color: var(--color-text-primary); font-size: 13px; }
@@ -505,7 +505,7 @@ html[data-theme="dark"] .ads-form-grid input, html[data-theme="dark"] .ads-form-
 @media (max-width: 780px) {
   .ads-wizard-shell { padding: 12px; margin: -19px -14px; }
   .ads-wizard { padding: 15px; border-radius: 12px; }
-  .ads-wizard-head h2 { font-size: 16px; }
+  /* The scale already shrinks this heading on a phone; the override fought it. */
   .ads-wizard-steps { grid-template-columns: repeat(3, 1fr); }
   .ads-wizard .ads-form-section { min-height: 0; }
   .ads-admin-header { align-items: flex-start; flex-direction: column; }

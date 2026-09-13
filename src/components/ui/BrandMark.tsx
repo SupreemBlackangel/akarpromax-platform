@@ -29,8 +29,8 @@ export default function BrandMark({ size = "md", name, subtitle, className }: Br
       <img src="/brand/logo.svg" alt="" aria-hidden="true" width={dims.px} height={dims.px} className={cn("shrink-0", dims.className)} />
       {name ? (
         <span className="flex min-w-0 flex-col leading-tight">
-          <strong className="truncate font-[family-name:var(--font-heading-stack)] text-[var(--text-md)] font-extrabold text-[color:var(--color-text-primary)]">{name}</strong>
-          {subtitle ? <small className="truncate text-[var(--text-xs)] font-medium text-[color:var(--color-primary)]">{subtitle}</small> : null}
+          <strong className="truncate font-[family-name:var(--font-heading-stack)] text-body font-extrabold text-[color:var(--color-text-primary)]">{name}</strong>
+          {subtitle ? <small className="truncate text-label font-medium text-[color:var(--color-primary)]">{subtitle}</small> : null}
         </span>
       ) : null}
     </span>

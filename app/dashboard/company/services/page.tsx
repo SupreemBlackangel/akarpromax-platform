@@ -47,7 +47,7 @@ export default async function CompanyServicesPage({ searchParams }: { searchPara
     <CompanyWorkspaceShell activeTab="services">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">الخدمات والمنتجات</h2>
+          <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">الخدمات والمنتجات</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">الخدمات المقدمة عبر أعضاء {company.nameAr ?? company.nameEn}</p>
         </div>
 

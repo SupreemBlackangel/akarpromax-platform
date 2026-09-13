@@ -89,7 +89,7 @@ export function DropdownMenuItem({ onSelect, disabled, className = "", children 
       tabIndex={-1}
       onClick={onSelect}
       className={cn(
-        "block w-full rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-start text-[var(--font-size-sm)] text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] disabled:pointer-events-none disabled:text-[color:var(--color-disabled)]",
+        "block w-full rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-start text-body-sm text-[color:var(--color-text-primary)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-surface-muted)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] disabled:pointer-events-none disabled:text-[color:var(--color-disabled)]",
         className,
       )}
     >

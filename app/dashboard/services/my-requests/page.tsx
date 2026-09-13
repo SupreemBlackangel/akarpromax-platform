@@ -41,7 +41,7 @@ export default function MyRequestsPage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="my-requests">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.myRequests") ?? "طلباتي"}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.myRequests") ?? "طلباتي"}</h2>
           <Link href="/service-requests/new" className="px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition">➕ {t("services.postRequest") ?? "طلب جديد"}</Link>
         </div>
 

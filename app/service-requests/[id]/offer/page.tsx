@@ -56,7 +56,7 @@ export default function NewOfferPage({ id }: Props) {
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} adLayout={{ mode: "safe-no-ads" }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <PageContainer dir={dir} className="py-24 max-w-md text-center">
           <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("services.loginToOffer") ?? "سجّل الدخول لتقديم عرض"}</h1>
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="primary" onClick={() => openLogin("login")}>{t("services.login") ?? "تسجيل الدخول"}</Button>
             <Button variant="secondary" onClick={() => openLogin("register")}>{t("services.register") ?? "إنشاء حساب"}</Button>
@@ -122,7 +122,7 @@ export default function NewOfferPage({ id }: Props) {
     >
       <PageContainer dir={dir} className="py-8">
         <Link href={`/service-requests/${id}`} className="text-sm font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">← {t("services.back") ?? "العودة للطلب"}</Link>
-        <h1 className="mt-3 text-3xl font-black text-gray-900 dark:text-white">{t("services.makeOffer") ?? "تقديم عرض"}</h1>
+        <h1 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">{t("services.makeOffer") ?? "تقديم عرض"}</h1>
 
         {loading ? (
           <div className="mt-6 h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />

@@ -74,7 +74,7 @@ export default function OfficeIntegrationPage() {
             <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg ${toneClasses[card.tone]}`}>
               {card.icon}
             </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{loading ? "…" : card.value}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{loading ? "…" : card.value}</p>
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400">{card.label}</p>
           </Link>
         ))}
@@ -83,7 +83,7 @@ export default function OfficeIntegrationPage() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">أحدث الأجهزة</h2>
+            <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">أحدث الأجهزة</h2>
             <Link href="/dashboard/office/devices" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               إدارة
             </Link>
@@ -103,7 +103,7 @@ export default function OfficeIntegrationPage() {
                     <p className="text-xs text-gray-400">{String(device.os ?? "unknown")} · {String(device.last_seen_at ?? "—")}</p>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${
+                    className={`rounded-full px-2 py-0.5 text-label font-bold uppercase ${
                       device.status === "active"
                         ? "bg-emerald-100 text-[var(--color-success)] dark:bg-[var(--color-success-soft)]/40 dark:text-[var(--color-success)]"
                         : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
@@ -119,7 +119,7 @@ export default function OfficeIntegrationPage() {
 
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">آخر التنبيهات</h2>
+            <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">آخر التنبيهات</h2>
             <Link href="/dashboard/office/notifications" className="text-xs font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
               الكل
             </Link>

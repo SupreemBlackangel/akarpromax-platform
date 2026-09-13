@@ -59,7 +59,7 @@ export default function InboxPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="inbox">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.inbox") ?? "صندوق الرسائل"}</h2>
 
         {loading ? (
           <div className="h-64 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
@@ -82,7 +82,7 @@ export default function InboxPage() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{label}</span>
                       {Number(thread.unread_count) > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[var(--text-xs)] font-bold">{thread.unread_count}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-label font-bold">{thread.unread_count}</span>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-gray-400">{formatDateTime(thread.last_message_at)}</p>

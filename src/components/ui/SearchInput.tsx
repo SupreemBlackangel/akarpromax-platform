@@ -18,7 +18,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function Sear
   return (
     <div className="flex flex-col gap-[var(--space-2)]">
       {label && (
-        <label htmlFor={inputId} className="text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)]">
+        <label htmlFor={inputId} className="text-body-sm font-medium text-[color:var(--color-text-primary)]">
           {label}
         </label>
       )}
@@ -32,7 +32,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function Sear
           id={inputId}
           type="search"
           className={cn(
-            "h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] ps-[var(--space-10)] pe-[var(--space-4)] text-[var(--font-size-md)] text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus:outline-none focus:shadow-[var(--shadow-focus)] focus:border-[color:var(--color-border-focus)] disabled:bg-[color:var(--color-disabled-surface)] disabled:text-[color:var(--color-disabled)]",
+            "h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] ps-[var(--space-10)] pe-[var(--space-4)] text-body text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus:outline-none focus:shadow-[var(--shadow-focus)] focus:border-[color:var(--color-border-focus)] disabled:bg-[color:var(--color-disabled-surface)] disabled:text-[color:var(--color-disabled)]",
             error && "border-[color:var(--color-danger)]",
             className,
           )}
@@ -42,7 +42,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function Sear
         />
       </div>
       {error && (
-        <span id={errorId} role="alert" className="text-[var(--font-size-xs)] font-medium text-[color:var(--color-danger)]">
+        <span id={errorId} role="alert" className="text-label font-medium text-[color:var(--color-danger)]">
           {error}
         </span>
       )}

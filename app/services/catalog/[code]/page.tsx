@@ -105,7 +105,7 @@ export default function CategoryDetailPage() {
           <div className="mt-3 flex items-center gap-4">
             <span className="h-16 w-16 grid place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] dark:bg-blue-900/30 dark:text-[var(--color-primary)]"><ServiceCategoryIcon name={category?.icon} className="h-8 w-8" /></span>
             <div>
-              <h1 className="text-3xl font-black text-gray-900 dark:text-white">{name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{name}</h1>
               {description && <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">{description}</p>}
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function CategoryDetailPage() {
         </div>
 
         <section>
-          <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.providers") ?? "مقدمو الخدمات"}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t("services.providers") ?? "مقدمو الخدمات"}</h2>
           <Grid columns={3}>
             {providers.map((provider, i) => <ProviderCard key={provider.id} provider={provider} locale={locale} index={i} />)}
             {!loading && providers.length === 0 && (
@@ -136,7 +136,7 @@ export default function CategoryDetailPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.requests") ?? "الطلبات المنشورة"}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t("services.requests") ?? "الطلبات المنشورة"}</h2>
           <Grid columns={3}>
             {requests.map((request) => <RequestCard key={request.id} request={request} locale={locale} categoryMap={categoryMap} />)}
             {!loading && requests.length === 0 && (

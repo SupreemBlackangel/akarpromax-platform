@@ -50,7 +50,7 @@ export default function CommunityPage() {
     >
       <div className="container mx-auto p-4 max-w-4xl">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-black text-[color:var(--color-text-primary)]">{t.title}</h1>
+          <h1 className="text-2xl font-bold text-[color:var(--color-text-primary)]">{t.title}</h1>
           <button onClick={() => router.push('/community/new')} className="rounded-xl bg-[color:var(--color-primary)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[color:var(--color-primary-hover)]">{t.newTopic}</button>
         </div>
         {loading ? <p>جاري التحميل...</p> : topics.length === 0 ? (

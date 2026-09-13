@@ -106,12 +106,12 @@ export default function OrganizationProfilePage({ params }: { params: { id: stri
                 <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{organization.classification}</span>
                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[var(--color-success)] dark:bg-emerald-900/40 dark:text-emerald-300">{organization.status}</span>
               </div>
-              <h2 className="text-xl font-black text-gray-900 dark:text-white">{pick(locale, organization, "name")}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{pick(locale, organization, "name")}</h2>
               <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, organization, "description") || organization.slug}</p>
             </section>
 
             <aside className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-black text-gray-900 dark:text-white">{locale === "ar" ? "ملخص الحضور" : locale === "tr" ? "Varlık Özeti" : "Presence Summary"}</h3>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">{locale === "ar" ? "ملخص الحضور" : locale === "tr" ? "Varlık Özeti" : "Presence Summary"}</h3>
               <div className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300">
                 <p>{locale === "ar" ? "الدولة" : locale === "tr" ? "Ülke" : "Country"}: <strong>{organization.countryCode}</strong></p>
                 <p>{locale === "ar" ? "المدينة" : locale === "tr" ? "Şehir" : "City"}: <strong>{organization.cityId || "—"}</strong></p>

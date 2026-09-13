@@ -68,7 +68,7 @@ export function PressableCardAction({ label, className = "", ...props }: Pressab
   return (
     <button
       className={cn(
-        "relative z-[var(--layer-sticky)] rounded-[var(--radius-sm)] text-[var(--font-size-sm)] font-medium text-[color:var(--color-primary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
+        "relative z-[var(--layer-sticky)] rounded-[var(--radius-sm)] text-body-sm font-medium text-[color:var(--color-primary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
         className,
       )}
       {...props}

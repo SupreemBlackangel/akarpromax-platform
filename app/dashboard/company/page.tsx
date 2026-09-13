@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
   if (!ctx) return <CompanyWorkspaceShell activeTab="dashboard"><div className="rounded-2xl border bg-[var(--color-surface)] p-10">لا توجد عضوية شركة مخولة.</div></CompanyWorkspaceShell>;
   const overview = await getCompanyOverview(ctx.organization.id);
   return <CompanyWorkspaceShell activeTab="dashboard"><div data-org-id={ctx.organization.id}>
-    <h2 className="text-xl font-black">{ctx.organization.nameAr ?? ctx.organization.nameEn}</h2>
+    <h2 className="text-xl font-bold">{ctx.organization.nameAr ?? ctx.organization.nameEn}</h2>
     <p className="mt-1 text-sm text-gray-500">{ctx.organization.status} · {ctx.organization.verifiedAt ? "موثقة" : "غير موثقة"}</p>
     <div className="mt-5 grid grid-cols-2 gap-4"><div className="rounded-2xl border bg-[var(--color-surface)] p-5"><strong className="text-2xl">{overview.memberCount}</strong><p>الأعضاء</p></div><div className="rounded-2xl border bg-[var(--color-surface)] p-5"><strong className="text-2xl">{overview.branchCount}</strong><p>الفروع</p></div></div>
     <div className="mt-5 flex flex-wrap gap-3"><Link href={`/dashboard/company/profile?org=${ctx.organization.id}`}>الملف</Link><Link href={`/dashboard/company/members?org=${ctx.organization.id}`}>الأعضاء</Link><Link href={`/dashboard/company/branches?org=${ctx.organization.id}`}>الفروع</Link><Link href={`/dashboard/company/services?org=${ctx.organization.id}`}>الخدمات</Link></div>

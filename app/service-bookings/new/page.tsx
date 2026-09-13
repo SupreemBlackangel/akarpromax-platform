@@ -108,23 +108,23 @@ export default function NewDirectBookingPage() {
       <PublicPageShell locale={locale} copy={copy} viewer={viewer} country={country} city={city} currentPath="/service-bookings/new" adLayout={{ mode: "standard", family: "services" }} onLogin={() => openLogin("login")} onLogout={handleLogout}>
         <main dir={dir} className="space-y-5 pb-12 pt-6">
           <section className="rounded-3xl bg-gradient-to-l from-[color:var(--brand-navy)] to-[color:var(--color-primary)] p-6 text-white md:p-8">
-            <div className="flex items-center gap-2 text-sm font-black text-blue-100"><CalendarClock className="h-5 w-5" />{isArabic ? "الحجز المباشر" : "Direct booking"}</div>
-            <h1 className="mt-3 text-2xl font-black md:text-3xl">{isArabic ? `احجز موعدًا مع ${providerName}` : `Book an appointment with ${providerName}`}</h1>
+            <div className="flex items-center gap-2 text-sm font-bold text-blue-100"><CalendarClock className="h-5 w-5" />{isArabic ? "الحجز المباشر" : "Direct booking"}</div>
+            <h1 className="mt-3 text-2xl font-bold md:text-3xl">{isArabic ? `احجز موعدًا مع ${providerName}` : `Book an appointment with ${providerName}`}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-blue-100">{isArabic ? "اختر الموعد والموقع، وسيُثبت السعر الظاهر الآن داخل الحجز حتى لو تغيّر سعر الخدمة لاحقًا." : "Choose a time and location. The current price is captured and will not change later."}</p>
           </section>
 
           {loading ? <div className="h-72 animate-pulse rounded-3xl bg-[var(--color-surface-muted)]" /> : !payload || eligible.length === 0 ? (
             <section className="rounded-3xl border border-dashed border-[var(--color-border)] p-10 text-center">
               <ShieldCheck className="mx-auto h-10 w-10 text-[var(--color-text-muted)]" />
-              <h2 className="mt-3 font-black">{isArabic ? "الحجز المباشر غير متاح لهذه الخدمة" : "Direct booking is unavailable"}</h2>
-              <Link href="/service-requests/new" className="mt-4 inline-block font-black text-[var(--color-primary)]">{isArabic ? "أنشئ طلب عروض بدلًا من ذلك" : "Create an RFQ instead"}</Link>
+              <h2 className="mt-3 font-bold">{isArabic ? "الحجز المباشر غير متاح لهذه الخدمة" : "Direct booking is unavailable"}</h2>
+              <Link href="/service-requests/new" className="mt-4 inline-block font-bold text-[var(--color-primary)]">{isArabic ? "أنشئ طلب عروض بدلًا من ذلك" : "Create an RFQ instead"}</Link>
             </section>
           ) : (
             <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
               <section className="space-y-5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 md:p-6">
                 {message && <div className="rounded-xl bg-[var(--color-error-soft)] px-4 py-3 text-sm font-bold text-[var(--color-error)]">{message}</div>}
                 <div>
-                  <label className="text-xs font-black text-[var(--color-text-secondary)]">{isArabic ? "الخدمة" : "Service"}</label>
+                  <label className="text-xs font-bold text-[var(--color-text-secondary)]">{isArabic ? "الخدمة" : "Service"}</label>
                   <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className={`${inputClass} mt-1`}>
                     {eligible.map((item) => <option key={item.id} value={item.category_id}>{(isArabic ? item.category_name_ar : item.category_name_en) || item.category_name_ar || item.category_name_en}</option>)}
                   </select>
@@ -132,28 +132,28 @@ export default function NewDirectBookingPage() {
                 {selected?.booking_mode === "both" && (
                   <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--color-primary-soft)] p-4 text-sm">
                     <span className="font-bold">{isArabic ? "هذه الخدمة تدعم الحجز المباشر وطلب العروض." : "This service supports booking and RFQ."}</span>
-                    <Link href={`/service-requests/new?category=${encodeURIComponent(selected.category_id)}`} className="font-black text-[var(--color-primary)]">{isArabic ? "استخدم طلب العروض" : "Use RFQ"}</Link>
+                    <Link href={`/service-requests/new?category=${encodeURIComponent(selected.category_id)}`} className="font-bold text-[var(--color-primary)]">{isArabic ? "استخدم طلب العروض" : "Use RFQ"}</Link>
                   </div>
                 )}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><label className="text-xs font-black">{isArabic ? "المدينة/الولاية" : "City"}</label><input value={cityId} onChange={(event) => setCityId(event.target.value)} className={`${inputClass} mt-1`} required /></div>
-                  <div><label className="text-xs font-black">{isArabic ? "الحي" : "District"}</label><input value={districtId} onChange={(event) => setDistrictId(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                  <div><label className="text-xs font-bold">{isArabic ? "المدينة/الولاية" : "City"}</label><input value={cityId} onChange={(event) => setCityId(event.target.value)} className={`${inputClass} mt-1`} required /></div>
+                  <div><label className="text-xs font-bold">{isArabic ? "الحي" : "District"}</label><input value={districtId} onChange={(event) => setDistrictId(event.target.value)} className={`${inputClass} mt-1`} /></div>
                 </div>
-                <div><label className="text-xs font-black">{isArabic ? "العنوان التفصيلي" : "Detailed address"}</label><input value={shortAddress} onChange={(event) => setShortAddress(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                <div><label className="text-xs font-bold">{isArabic ? "العنوان التفصيلي" : "Detailed address"}</label><input value={shortAddress} onChange={(event) => setShortAddress(event.target.value)} className={`${inputClass} mt-1`} /></div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><label className="text-xs font-black">Latitude</label><input type="number" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={`${inputClass} mt-1`} /></div>
-                  <div><label className="text-xs font-black">Longitude</label><input type="number" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                  <div><label className="text-xs font-bold">Latitude</label><input type="number" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                  <div><label className="text-xs font-bold">Longitude</label><input type="number" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={`${inputClass} mt-1`} /></div>
                 </div>
-                <div><label className="text-xs font-black">{isArabic ? "التاريخ والوقت" : "Date and time"}</label><input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                <div><label className="text-xs font-bold">{isArabic ? "التاريخ والوقت" : "Date and time"}</label><input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className={`${inputClass} mt-1`} /></div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><label className="text-xs font-black">{isArabic ? "طريقة التواصل" : "Contact method"}</label><select value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={`${inputClass} mt-1`}><option value="platform">{isArabic ? "داخل المنصة" : "Platform"}</option><option value="phone">{isArabic ? "هاتف" : "Phone"}</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></div>
-                  <div><label className="text-xs font-black">{isArabic ? "رقم التواصل" : "Contact phone"}</label><input value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                  <div><label className="text-xs font-bold">{isArabic ? "طريقة التواصل" : "Contact method"}</label><select value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={`${inputClass} mt-1`}><option value="platform">{isArabic ? "داخل المنصة" : "Platform"}</option><option value="phone">{isArabic ? "هاتف" : "Phone"}</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></div>
+                  <div><label className="text-xs font-bold">{isArabic ? "رقم التواصل" : "Contact phone"}</label><input value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} className={`${inputClass} mt-1`} /></div>
                 </div>
-                <div><label className="text-xs font-black">Email</label><input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} className={`${inputClass} mt-1`} /></div>
+                <div><label className="text-xs font-bold">Email</label><input type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} className={`${inputClass} mt-1`} /></div>
               </section>
 
               <aside className="h-fit rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
-                <h2 className="font-black">{isArabic ? "ملخص الحجز" : "Booking summary"}</h2>
+                <h2 className="font-bold">{isArabic ? "ملخص الحجز" : "Booking summary"}</h2>
                 <div className="mt-4 space-y-3 text-sm">
                   <div className="flex items-center justify-between"><span className="text-[var(--color-text-muted)]">{isArabic ? "مقدم الخدمة" : "Provider"}</span><strong>{providerName}</strong></div>
                   <div className="flex items-center justify-between"><span className="text-[var(--color-text-muted)]">{isArabic ? "السعر المثبت" : "Price snapshot"}</span><strong className="text-[var(--color-primary)]">{selected?.instant_price} {selected?.currency}</strong></div>
@@ -161,7 +161,7 @@ export default function NewDirectBookingPage() {
                   <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><MapPin className="h-4 w-4" />{isArabic ? "الموقع الدقيق لا يظهر للمقدم قبل قبول الحجز" : "Exact location is hidden until acceptance"}</div>
                   <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]"><WalletCards className="h-4 w-4" />{isArabic ? "لا يتم إنشاء طلب عروض أو عرض وهمي" : "No synthetic RFQ or offer is created"}</div>
                 </div>
-                <button onClick={() => void submit()} disabled={busy || !cityId.trim() || !scheduledAt || !selected} className="mt-5 w-full rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-black text-white disabled:opacity-50">{viewer.authenticated ? (isArabic ? "تأكيد الحجز" : "Confirm booking") : (isArabic ? "سجل الدخول للحجز" : "Sign in to book")}</button>
+                <button onClick={() => void submit()} disabled={busy || !cityId.trim() || !scheduledAt || !selected} className="mt-5 w-full rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{viewer.authenticated ? (isArabic ? "تأكيد الحجز" : "Confirm booking") : (isArabic ? "سجل الدخول للحجز" : "Sign in to book")}</button>
               </aside>
             </div>
           )}

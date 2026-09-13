@@ -55,7 +55,7 @@ function SupervisorRequestsContent() {
         <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="all-requests">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{isArabic ? "كل طلبات الخدمات" : "All service requests"}</h1>
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{isArabic ? "كل طلبات الخدمات" : "All service requests"}</h1>
               <p className="text-sm text-[var(--color-text-muted)]">{isArabic ? "متابعة كل الطلبات في المنصة بأي حالة" : "Every request on the platform, any status"}</p>
             </div>
             <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-bold outline-none">
@@ -77,7 +77,7 @@ function SupervisorRequestsContent() {
             <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] text-start text-[var(--text-xs)] font-black uppercase text-[var(--color-text-muted)]">
+                  <tr className="border-b border-[var(--color-border)] text-start text-label font-bold uppercase text-[var(--color-text-muted)]">
                     <th className="px-4 py-3 text-start">{isArabic ? "الطلب" : "Request"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "الموقع" : "Location"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "الحالة" : "Status"}</th>
@@ -91,7 +91,7 @@ function SupervisorRequestsContent() {
                       <td className="max-w-[280px] truncate px-4 py-3 font-bold text-[var(--color-text-primary)]">{(row.title as string) || row.id}</td>
                       <td className="px-4 py-3 text-[var(--color-text-muted)]">{[row.city_id, row.country_code].filter(Boolean).join("، ") || "—"}</td>
                       <td className="px-4 py-3">
-                        <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-black text-[var(--color-primary)]">
+                        <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-primary)]">
                           {isArabic ? STATUS_AR[(row.status as string) ?? ""] ?? row.status : row.status}
                         </span>
                       </td>
@@ -99,7 +99,7 @@ function SupervisorRequestsContent() {
                         {row.created_at ? new Date(row.created_at as string).toLocaleDateString(isArabic ? "ar" : locale) : "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <Link href={`/service-requests/${row.id}`} className="text-xs font-black text-[var(--color-primary)] hover:underline">
+                        <Link href={`/service-requests/${row.id}`} className="text-xs font-bold text-[var(--color-primary)] hover:underline">
                           {isArabic ? "فتح" : "Open"}
                         </Link>
                       </td>

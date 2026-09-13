@@ -77,11 +77,11 @@ function ToastCard({ item }: { item: ToastItem }) {
   return (
     <div
       className={cn(
-        "pointer-events-auto flex items-center gap-[var(--space-3)] rounded-[var(--radius-md)] border px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-bold shadow-[var(--shadow-lg)]",
+        "pointer-events-auto flex items-center gap-[var(--space-3)] rounded-[var(--radius-md)] border px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-medium shadow-[var(--shadow-lg)]",
         VARIANT_STYLES[item.variant],
       )}
     >
-      <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-current text-[var(--font-size-xs)] leading-none">
+      <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-current text-label leading-none">
         {VARIANT_GLYPH[item.variant]}
       </span>
       <span className="flex-1">{item.message}</span>

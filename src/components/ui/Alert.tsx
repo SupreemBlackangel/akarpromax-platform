@@ -60,7 +60,7 @@ export default function Alert({
             <Info className="size-4" />
           ))}
       </span>
-      <div className="flex flex-col gap-[var(--space-2)] text-[var(--font-size-sm)] text-[color:var(--color-text-primary)]">
+      <div className="flex flex-col gap-[var(--space-2)] text-body-sm text-[color:var(--color-text-primary)]">
         {title && <span className="font-semibold">{title}</span>}
         {children}
       </div>

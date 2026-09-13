@@ -108,7 +108,7 @@ function SupervisorProvidersContent() {
         <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="providers">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{isArabic ? "مقدمو الخدمات" : "Service providers"}</h1>
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{isArabic ? "مقدمو الخدمات" : "Service providers"}</h1>
               <p className="text-sm text-[var(--color-text-muted)]">{isArabic ? "مراجعة واعتماد وإيقاف ملفات المحترفين" : "Review, approve and suspend professional profiles"}</p>
             </div>
             <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-bold outline-none">
@@ -128,7 +128,7 @@ function SupervisorProvidersContent() {
             <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] text-start text-[var(--text-xs)] font-black uppercase text-[var(--color-text-muted)]">
+                  <tr className="border-b border-[var(--color-border)] text-start text-label font-bold uppercase text-[var(--color-text-muted)]">
                     <th className="px-4 py-3 text-start">{isArabic ? "المحترف" : "Professional"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "المدينة" : "City"}</th>
                     <th className="px-4 py-3 text-start">{isArabic ? "الحالة" : "Status"}</th>
@@ -143,20 +143,20 @@ function SupervisorProvidersContent() {
                       </td>
                       <td className="px-4 py-3 text-[var(--color-text-muted)]">{(row.city_id as string) || "—"}</td>
                       <td className="px-4 py-3">
-                        <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-black text-[var(--color-primary)]">{isArabic ? STATUS_AR[row.status] ?? row.status : row.status}</span>
+                        <span className="rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-primary)]">{isArabic ? STATUS_AR[row.status] ?? row.status : row.status}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1.5">
                           {row.status !== "approved" && (
-                            <button onClick={() => void setProviderStatus(row.id, "approved")} disabled={busy} className="rounded-lg bg-[var(--color-success)] px-3 py-1.5 text-xs font-black text-white disabled:opacity-50">{isArabic ? "اعتماد" : "Approve"}</button>
+                            <button onClick={() => void setProviderStatus(row.id, "approved")} disabled={busy} className="rounded-lg bg-[var(--color-success)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">{isArabic ? "اعتماد" : "Approve"}</button>
                           )}
                           {row.status !== "rejected" && (
-                            <button onClick={() => void setProviderStatus(row.id, "rejected")} disabled={busy} className="rounded-lg bg-[var(--color-error-soft)] px-3 py-1.5 text-xs font-black text-[var(--color-error)] disabled:opacity-50">{isArabic ? "رفض" : "Reject"}</button>
+                            <button onClick={() => void setProviderStatus(row.id, "rejected")} disabled={busy} className="rounded-lg bg-[var(--color-error-soft)] px-3 py-1.5 text-xs font-bold text-[var(--color-error)] disabled:opacity-50">{isArabic ? "رفض" : "Reject"}</button>
                           )}
                           {row.status === "approved" && (
-                            <button onClick={() => void setProviderStatus(row.id, "suspended")} disabled={busy} className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-700 disabled:opacity-50">{isArabic ? "إيقاف" : "Suspend"}</button>
+                            <button onClick={() => void setProviderStatus(row.id, "suspended")} disabled={busy} className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700 disabled:opacity-50">{isArabic ? "إيقاف" : "Suspend"}</button>
                           )}
-                          <button onClick={() => void openDocs(row)} disabled={busy} className="rounded-lg bg-[var(--color-primary-soft)] px-3 py-1.5 text-xs font-black text-[var(--color-primary)] disabled:opacity-50">{isArabic ? "المستندات" : "Documents"}</button>
+                          <button onClick={() => void openDocs(row)} disabled={busy} className="rounded-lg bg-[var(--color-primary-soft)] px-3 py-1.5 text-xs font-bold text-[var(--color-primary)] disabled:opacity-50">{isArabic ? "المستندات" : "Documents"}</button>
                         </div>
                       </td>
                     </tr>
@@ -192,11 +192,11 @@ function SupervisorProvidersContent() {
                         </small>
                       </span>
                       <span style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-xs font-black text-[var(--color-primary)]">{isArabic ? "فتح" : "Open"}</a>
+                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="rounded-lg bg-[var(--color-primary-soft)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-primary)]">{isArabic ? "فتح" : "Open"}</a>
                         {Number(doc.verified) === 1 ? (
-                          <button type="button" onClick={() => void setDocVerified(String(doc.id), false)} className="rounded-lg bg-amber-100 px-2.5 py-1.5 text-xs font-black text-amber-700">{isArabic ? "إلغاء التوثيق" : "Unverify"}</button>
+                          <button type="button" onClick={() => void setDocVerified(String(doc.id), false)} className="rounded-lg bg-amber-100 px-2.5 py-1.5 text-xs font-bold text-amber-700">{isArabic ? "إلغاء التوثيق" : "Unverify"}</button>
                         ) : (
-                          <button type="button" onClick={() => void setDocVerified(String(doc.id), true)} className="rounded-lg bg-[var(--color-success)] px-2.5 py-1.5 text-xs font-black text-white">{isArabic ? "توثيق" : "Verify"}</button>
+                          <button type="button" onClick={() => void setDocVerified(String(doc.id), true)} className="rounded-lg bg-[var(--color-success)] px-2.5 py-1.5 text-xs font-bold text-white">{isArabic ? "توثيق" : "Verify"}</button>
                         )}
                       </span>
                     </li>

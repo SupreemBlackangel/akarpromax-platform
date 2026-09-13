@@ -128,7 +128,7 @@ export default function SupervisorDashboardPage() {
     <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active={active}>
       <PageContainer dir={dir} className="py-8">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.supervisorDashboard") ?? "لوحة مشرف الخدمات"}</h1>
         </div>
 
         {message && <div className="mb-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{message}</div>}
@@ -148,7 +148,7 @@ export default function SupervisorDashboardPage() {
             {stats.map(([label, value]) => (
               <div key={label} className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
                 <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-                <p className="mt-1 text-3xl font-black text-[var(--color-primary)] dark:text-[var(--color-primary)]">{value}</p>
+                <p className="mt-1 text-3xl font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)]">{value}</p>
               </div>
             ))}
           </div>
@@ -230,7 +230,7 @@ export default function SupervisorDashboardPage() {
         {tab === "categories" && (
           <div className="grid lg:grid-cols-2 gap-4 items-start">
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.currentCategories") ?? "التصنيفات الحالية"}</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.currentCategories") ?? "التصنيفات الحالية"}</h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {categories.map((c) => (
                   <div key={c.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
@@ -241,7 +241,7 @@ export default function SupervisorDashboardPage() {
               </div>
             </div>
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.addCategory") ?? "إضافة تصنيف"}</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.addCategory") ?? "إضافة تصنيف"}</h3>
               <CategoryForm t={t} onSubmit={load} />
             </div>
           </div>
@@ -249,21 +249,21 @@ export default function SupervisorDashboardPage() {
 
         {tab === "requests" && (
           <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
-            <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.allRequests") ?? "جميع طلبات الخدمات"}</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.allRequests") ?? "جميع طلبات الخدمات"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.requestsComingSoon") ?? "قائمة الطلبات الكاملة مع فلاتر متقدمة — قيد التطوير"}</p>
           </div>
         )}
 
         {tab === "offers" && (
           <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
-            <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.allOffers") ?? "جميع العروض"}</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.allOffers") ?? "جميع العروض"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.offersComingSoon") ?? "قائمة العروض الكاملة مع فلاتر متقدمة — قيد التطوير"}</p>
           </div>
         )}
 
         {tab === "disputes" && (
           <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
-            <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.disputes") ?? "النزاعات"}</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.disputes") ?? "النزاعات"}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.disputesComingSoon") ?? "إدارة النزاعات وسير العمل — قيد التطوير"}</p>
           </div>
         )}

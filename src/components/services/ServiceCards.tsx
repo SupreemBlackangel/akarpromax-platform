@@ -181,7 +181,7 @@ export function RatingStars({ value, count }: { value?: number | null; count?: n
   const stars = Array.from({ length: 5 }, (_, i) => (i < filled ? "★" : "☆"));
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="text-[var(--accent)] tracking-tight" dir="ltr">{stars.join("")}</span>
+      <span className="text-[var(--accent)]" dir="ltr">{stars.join("")}</span>
       <span className="text-xs font-semibold text-[var(--color-text-primary)]">{v.toFixed(1)}</span>
       {count != null && <span className="text-xs text-[var(--color-text-secondary)]">({count})</span>}
     </span>
@@ -200,11 +200,11 @@ export function CategoryCard({ category, locale }: { category: CategoryRow; loca
         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] transition group-hover:bg-[var(--color-primary)] group-hover:text-white">
           <ServiceCategoryIcon name={category.icon} />
         </span>
-        <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-[var(--text-xs)] font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
+        <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-label font-bold text-[var(--color-text-secondary)] dark:bg-[var(--color-surface)] dark:text-[var(--color-text-muted)]">
           {category.booking_mode === "both" || category.booking_mode === "instant" ? "حجز مباشر" : "طلب عروض"}
         </span>
       </div>
-      <h3 className="mt-4 font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] dark:text-white dark:group-hover:text-[var(--color-primary)]">{name}</h3>
+      <h3 className="mt-4 font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] dark:text-white dark:group-hover:text-[var(--color-primary)]">{name}</h3>
       {description && <p className="mt-1.5 min-h-10 text-sm leading-5 text-[var(--color-text-muted)] line-clamp-2 dark:text-[var(--color-text-muted)]">{description}</p>}
       {/* CURRENCY POLICY: service_categories carries price_min/price_max but NO
           currency column, so an indicative price here could only be rendered by
@@ -229,10 +229,10 @@ export function ProviderCard({ provider, locale, index = 0 }: { provider: Provid
       <div className="flex items-center gap-3">
         <Avatar name={name} src={provider.logo_url} index={index} />
         <div className="min-w-0 flex-1">
-          <h3 className="flex items-center gap-1.5 truncate font-black text-[var(--color-text-primary)] dark:text-white">{name}{provider.status === "approved" && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-label="موثّق" />}</h3>
+          <h3 className="flex items-center gap-1.5 truncate font-bold text-[var(--color-text-primary)] dark:text-white">{name}{provider.status === "approved" && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--color-primary)]" aria-label="موثّق" />}</h3>
           <RatingStars value={provider.rating_avg} count={provider.rating_count} locale={locale} />
         </div>
-        {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-[var(--text-xs)] font-black text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
+        {provider.is_featured ? <span className="rounded-full bg-[var(--accent-soft)] px-2 py-1 text-label font-bold text-[var(--accent)] dark:bg-amber-950/40 dark:text-[var(--accent)]">مميّز</span> : <ProviderStatusPill status={provider.status} locale={locale} />}
       </div>
       {bio && <p className="mt-3 text-sm text-[var(--color-text-secondary)] line-clamp-2">{bio}</p>}
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">

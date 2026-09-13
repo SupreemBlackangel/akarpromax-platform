@@ -156,7 +156,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
              <span className="text-xs text-gray-400">{formatDate(request.created_at)}</span>
            </div>
 
-           <h1 className="mt-3 text-2xl font-black text-gray-900 dark:text-white">{request.title || "طلب خدمة"}</h1>
+           <h1 className="mt-3 text-2xl font-bold text-gray-900 dark:text-white">{request.title || "طلب خدمة"}</h1>
 
            <div className="mt-4 flex flex-wrap gap-2 text-sm">
              {request.budget_min != null && (
@@ -177,14 +177,14 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
            {request.description && (
              <div className="mt-6">
-               <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-2">{t("services.description") ?? "التفاصيل"}</h2>
+               <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">{t("services.description") ?? "التفاصيل"}</h2>
                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">{request.description}</p>
              </div>
            )}
 
            {answers.length > 0 && (
              <div className="mt-6">
-               <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-2">{t("services.details") ?? "تفاصيل إضافية"}</h2>
+               <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">{t("services.details") ?? "تفاصيل إضافية"}</h2>
                <dl className="grid sm:grid-cols-2 gap-3">
                  {answers.map((a) => (
                    <div key={String(a.key ?? a.label)} className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
@@ -198,7 +198,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
            {request.attachments && request.attachments.length > 0 && (
              <div className="mt-6">
-               <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-2">{t("services.attachments") ?? "المرفقات"}</h2>
+               <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">{t("services.attachments") ?? "المرفقات"}</h2>
                <div className="flex flex-wrap gap-2">
                  {request.attachments.map((att, i) => (
                    <a
@@ -227,7 +227,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
            {isCustomer && request.offers && request.offers.length > 0 && (
              <div className="mt-8">
-               <h2 className="text-lg font-black text-gray-900 dark:text-white mb-3">{t("services.offers") ?? "العروض المقدمة"} ({request.offers.length})</h2>
+               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t("services.offers") ?? "العروض المقدمة"} ({request.offers.length})</h2>
                <div className="space-y-3">
                  {request.offers.map((offer) => {
                    const o = offer as Record<string, unknown>;
@@ -261,7 +261,7 @@ export default function ServiceRequestDetailPage({ id }: Props) {
 
          {isCustomer && isPublished && (
            <div className="mt-4 rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-             <h2 className="text-sm font-black text-gray-900 dark:text-white">{"لم تتفق مع أحد؟"}</h2>
+             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{"لم تتفق مع أحد؟"}</h2>
              <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                {renewalsLeft > 0
                  ? `أرسلنا طلبك إلى ثلاثة مزودين. يمكنك طلب ثلاثة غيرهم ${renewalsLeft === 2 ? "مرتين" : "مرة واحدة"} بعد أن يعتذر الحاليون أو تنتهي صلاحية عروضهم.`

@@ -55,14 +55,14 @@ export default function DownloadOfficeAppPage() {
                 <Monitor className="h-10 w-10" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-2xl font-black text-[var(--color-text-primary)]">AkarProMax Office</h2>
+                <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">AkarProMax Office</h2>
                 <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
                   لنظام Windows 10 / 11 — مثبّت واحد (18 ميغابايت) — مجاني لمكاتب المنصة
                 </p>
               </div>
               <a
                 href={SETUP_URL}
-                className="inline-flex shrink-0 items-center justify-center gap-2.5 rounded-2xl bg-[var(--color-primary)] px-7 py-4 text-base font-black text-white shadow-lg shadow-[var(--color-primary)]/25 transition hover:bg-[var(--color-primary-hover)]"
+                className="inline-flex shrink-0 items-center justify-center gap-2.5 rounded-2xl bg-[var(--color-primary)] px-7 py-4 text-base font-bold text-white shadow-lg shadow-[var(--color-primary)]/25 transition hover:bg-[var(--color-primary-hover)]"
               >
                 <Download className="h-5 w-5" aria-hidden="true" />
                 تحميل المثبّت (Setup)
@@ -77,14 +77,14 @@ export default function DownloadOfficeAppPage() {
 
           {/* Features */}
           <section className="mt-12">
-            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">ماذا يقدم لك التطبيق؟</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">ماذا يقدم لك التطبيق؟</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {FEATURES.map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                   <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <h3 className="mt-3 font-black text-[var(--color-text-primary)]">{title}</h3>
+                  <h3 className="mt-3 font-bold text-[var(--color-text-primary)]">{title}</h3>
                   <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">{desc}</p>
                 </div>
               ))}
@@ -93,7 +93,7 @@ export default function DownloadOfficeAppPage() {
 
           {/* Linking steps */}
           <section className="mt-12">
-            <h2 className="text-2xl font-black text-[var(--color-text-primary)]">ربط التطبيق بحسابك في المنصة</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">ربط التطبيق بحسابك في المنصة</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
               حسابك في المنصة هو مفتاح التطبيق: التسجيل والموافقة على الشروط يتمان على الموقع، ثم يقترن التطبيق بحسابك بكود لمرة واحدة — دون إدخال كلمة مرورك في التطبيق أبدًا.
             </p>
@@ -102,13 +102,13 @@ export default function DownloadOfficeAppPage() {
                 <li key={title} className="flex gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                   <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white">
                     <Icon className="h-5 w-5" aria-hidden="true" />
-                    <span className="absolute -top-2 -start-2 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-primary)] text-[var(--text-xs)] font-black text-[var(--color-text-primary)]">{index + 1}</span>
+                    <span className="absolute -top-2 -start-2 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-primary)] text-label font-bold text-[var(--color-text-primary)]">{index + 1}</span>
                   </span>
                   <div className="min-w-0">
-                    <h3 className="font-black text-[var(--color-text-primary)]">{title}</h3>
+                    <h3 className="font-bold text-[var(--color-text-primary)]">{title}</h3>
                     <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">{desc}</p>
                     {href && (
-                      <Link href={href} className="mt-2 inline-block text-sm font-black text-[var(--color-primary)] hover:underline">
+                      <Link href={href} className="mt-2 inline-block text-sm font-bold text-[var(--color-primary)] hover:underline">
                         {linkLabel} ←
                       </Link>
                     )}

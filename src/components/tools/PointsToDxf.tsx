@@ -116,7 +116,7 @@ export function PointsToDxf({ locale }: Props) {
       <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
         <section className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
           <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 sm:px-5">
-            <div className="flex items-center gap-2 text-sm font-black text-[var(--color-text-primary)]">
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-primary)]">
               <FileSpreadsheet className="text-[var(--color-primary)]" size={18} />
               {t("صيغة ملف النقاط", "Points file format")}
             </div>
@@ -126,7 +126,7 @@ export function PointsToDxf({ locale }: Props) {
               <p className="text-sm font-bold text-[var(--color-text-secondary)]">{t("ترتيب الأعمدة المطلوب:", "Required column order:")}</p>
               <div className="mt-2 flex flex-wrap gap-2" dir="ltr">
                 {["N", "X", "Y", "Z", "Code"].map((column, index) => (
-                  <span key={column} className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3 py-1.5 font-mono text-xs font-black text-blue-800">
+                  <span key={column} className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3 py-1.5 font-mono text-xs font-bold text-blue-800">
                     {index + 1}. {column}
                   </span>
                 ))}
@@ -171,7 +171,7 @@ export function PointsToDxf({ locale }: Props) {
         )}
 
         <div>
-          <label htmlFor="survey-points-text" className="mb-2 block text-sm font-black text-[var(--color-text-primary)]">
+          <label htmlFor="survey-points-text" className="mb-2 block text-sm font-bold text-[var(--color-text-primary)]">
             {t("أو الصق النقاط مباشرة", "Or paste points directly")}
           </label>
           <textarea
@@ -206,7 +206,7 @@ export function PointsToDxf({ locale }: Props) {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-[var(--color-success)]" />
                   <div>
-                    <p className="font-black text-emerald-950">
+                    <p className="font-bold text-emerald-950">
                       {t(
                         `تمت قراءة ${parsed.points.length} ${parsed.points.length === 1 ? "نقطة" : "نقاط"} بنجاح`,
                         `${parsed.points.length} points parsed successfully`,
@@ -220,7 +220,7 @@ export function PointsToDxf({ locale }: Props) {
                     <p className="mt-1 text-xs text-[var(--color-success)]">{t("طبقات الملف المساحية:", "Survey layers:")}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5" dir="ltr">
                       {["CROSS", "NAME", "ELEV", "CODE"].map((layer) => (
-                        <span key={layer} className="rounded-md border border-emerald-200 bg-[var(--color-surface)]/70 px-2 py-1 font-mono text-[var(--text-xs)] font-bold text-emerald-800">
+                        <span key={layer} className="rounded-md border border-emerald-200 bg-[var(--color-surface)]/70 px-2 py-1 font-mono text-label font-bold text-emerald-800">
                           {layer}
                         </span>
                       ))}
@@ -230,7 +230,7 @@ export function PointsToDxf({ locale }: Props) {
                 <button
                   type="button"
                   onClick={downloadDxf}
-                  className="flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-6 text-sm font-black text-white shadow-lg shadow-blue-200 transition hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
+                  className="flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-6 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[var(--color-primary-hover)] active:scale-[0.98]"
                 >
                   {downloaded ? <CheckCircle2 size={18} /> : <Download size={18} />}
                   {downloaded
@@ -244,7 +244,7 @@ export function PointsToDxf({ locale }: Props) {
 
             <section className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
-                <h3 className="text-sm font-black text-[var(--color-text-primary)]">{t("معاينة النقاط", "Points preview")}</h3>
+                <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{t("معاينة النقاط", "Points preview")}</h3>
                 <span className="text-xs font-semibold text-[var(--color-text-muted)]">
                   {t(`عرض ${Math.min(parsed.points.length, 100)} من ${parsed.points.length}`, `Showing ${Math.min(parsed.points.length, 100)} of ${parsed.points.length}`)}
                 </span>
@@ -261,7 +261,7 @@ export function PointsToDxf({ locale }: Props) {
                   <tbody className="divide-y divide-slate-100">
                     {parsed.points.slice(0, 100).map((point, index) => (
                       <tr key={`${point.sourceLine}-${index}`} className="hover:bg-[var(--color-primary-soft)]/60">
-                        <td className="px-4 py-2.5 font-black text-[var(--color-text-primary)]">{point.name || "—"}</td>
+                        <td className="px-4 py-2.5 font-bold text-[var(--color-text-primary)]">{point.name || "—"}</td>
                         <td className="px-4 py-2.5 text-[var(--color-primary)]">{point.x.toFixed(3)}</td>
                         <td className="px-4 py-2.5 text-[var(--color-success)]">{point.y.toFixed(3)}</td>
                         <td className="px-4 py-2.5 text-[var(--color-warning)]">{point.z.toFixed(3)}</td>
@@ -275,7 +275,7 @@ export function PointsToDxf({ locale }: Props) {
 
             {codeGroups.length > 0 && (
               <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5">
-                <p className="text-xs font-black text-[var(--color-text-secondary)]">{t("رموز النقاط", "Point codes")}</p>
+                <p className="text-xs font-bold text-[var(--color-text-secondary)]">{t("رموز النقاط", "Point codes")}</p>
                 <div className="mt-3 flex flex-wrap gap-2" dir="ltr">
                   {codeGroups.map(([code, count]) => (
                     <span key={code} className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 font-mono text-xs font-bold text-purple-800">

@@ -62,7 +62,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
       >
         🔔
         {unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)] px-1 text-[var(--text-xs)] font-black text-white">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-error-soft)] px-1 text-label font-bold text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -72,7 +72,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 z-50 mt-2 w-80 rounded-2xl border border-gray-200 dark:border-gray-800 bg-[var(--color-surface)] dark:bg-gray-900 shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-4 py-3">
-              <span className="text-sm font-black text-gray-900 dark:text-white">التنبيهات</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">التنبيهات</span>
               <button type="button" onClick={() => void markAll()} className="text-xs font-bold text-[var(--color-primary)] dark:text-blue-400 hover:underline">
                 تحديد الكل كمقروء
               </button>
@@ -92,7 +92,7 @@ function NotificationsBell({ locale }: { locale: Locale }) {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">{n.title}</span>
-                      <span className="shrink-0 text-[var(--text-xs)] text-gray-400 font-medium">{formatTime(n.created_at)}</span>
+                      <span className="shrink-0 text-label text-gray-400 font-medium">{formatTime(n.created_at)}</span>
                     </div>
                     {n.body ? <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{n.body}</p> : null}
                   </Link>
@@ -177,7 +177,7 @@ function renderNavItem(item: SidebarItem, active: string, t: (key: string) => st
       <Icon name={item.icon} size="sm" />
       <span>{t(item.labelKey)}</span>
       {badgeValue > 0 && (
-        <span className="ml-auto px-2 py-0.5 text-[var(--text-xs)] font-bold text-white bg-[var(--color-error-soft)] rounded-full">
+        <span className="ml-auto px-2 py-0.5 text-label font-bold text-white bg-[var(--color-error-soft)] rounded-full">
           {badgeValue > 99 ? "99+" : badgeValue}
         </span>
       )}
@@ -222,7 +222,7 @@ export default function ServiceDashboardShell({
     return (
       <div dir={dir} className="container py-24 max-w-md text-center">
         <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.loginRequired") ?? "سجّل الدخول للوصول إلى لوحة التحكم"}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("services.loginRequired") ?? "سجّل الدخول للوصول إلى لوحة التحكم"}</h1>
       </div>
     );
   }
@@ -231,7 +231,7 @@ export default function ServiceDashboardShell({
     <div dir={dir} className="container py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{t("services.dashboard") ?? "لوحة خدماتي"}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("services.dashboard") ?? "لوحة خدماتي"}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{viewer.displayName} • {viewer.email}</p>
         </div>
         <div className="flex items-center gap-3">

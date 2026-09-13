@@ -169,7 +169,7 @@ export default function ChatWidget({ locale, authenticated, onRequireLogin, hide
                 <ArrowRight className="h-4 w-4" />
               </button>
             )}
-            <p className="min-w-0 flex-1 truncate text-sm font-black">{activeThread ? activeThread.title : t.title}</p>
+            <p className="min-w-0 flex-1 truncate text-sm font-bold">{activeThread ? activeThread.title : t.title}</p>
             <button type="button" aria-label="×" onClick={() => setOpen(false)} className="grid h-8 w-8 place-items-center rounded-full transition hover:bg-white/15">
               <X className="h-4 w-4" />
             </button>
@@ -246,7 +246,7 @@ export default function ChatWidget({ locale, authenticated, onRequireLogin, hide
                       onClick={() => setActiveThread({ id: row.message_threads.id, title })}
                       className="flex w-full items-center gap-3 border-b border-gray-50 px-4 py-3 text-start transition hover:bg-blue-50/60 dark:border-gray-800 dark:hover:bg-gray-800"
                     >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-sm font-black text-white">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-sm font-bold text-white">
                         {title.slice(0, 1)}
                       </span>
                       <span className="min-w-0 flex-1">

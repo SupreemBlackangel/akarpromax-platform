@@ -113,7 +113,7 @@ export default function NewAuctionPage() {
             <span className="text-white/40">←</span>
             <span className="text-sm font-semibold">إنشاء مزاد جديد</span>
           </div>
-          <h1 className="text-3xl font-black mb-2">إنشاء مزاد عقاري</h1>
+          <h1 className="text-3xl font-bold mb-2">إنشاء مزاد عقاري</h1>
           <p className="text-white/80 text-sm">
             أطلق مزاداً على عقارك المعتمد — مغلق أو مفتوح
           </p>

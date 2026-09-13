@@ -199,7 +199,7 @@ export default function ServicesHubPage() {
                       <ServiceCategoryIcon name={typeof selectedGroup?.icon === "string" ? selectedGroup.icon : null} className="h-5 w-5" />
                     </span>
                     <div>
-                      <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                         {selectedGroup ? nameFor(locale, selectedGroup.name_ar, selectedGroup.name_en, selectedGroup.name_tr, selectedGroup.code) : ""}
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -282,8 +282,8 @@ export default function ServicesHubPage() {
                 size="lg"
               />
               <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full border border-white/25 px-2 py-0.5 text-[var(--text-xs)] font-black text-white/70">{adLabel}</span>
-                <h2 className="mt-2 truncate text-2xl font-black md:text-3xl">
+                <span className="inline-block rounded-full border border-white/25 px-2 py-0.5 text-label font-bold text-white/70">{adLabel}</span>
+                <h2 className="mt-2 truncate text-2xl font-bold md:text-3xl">
                   {sponsoredProvider.business_name || nameFor(locale, sponsoredProvider.display_name_ar, sponsoredProvider.display_name_en, null, "مزوّد خدمة")}
                 </h2>
                 {nameFor(locale, sponsoredProvider.bio_ar, sponsoredProvider.bio_en, null, "") && (
@@ -300,7 +300,7 @@ export default function ServicesHubPage() {
             </Link>
           ) : (
             <div className="p-8 text-center text-white md:p-12">
-              <h2 className="text-2xl font-black md:text-3xl">{sponsorSlotLabel}</h2>
+              <h2 className="text-2xl font-bold md:text-3xl">{sponsorSlotLabel}</h2>
               <p className="mx-auto mt-3 max-w-lg text-sm text-gray-300">{sponsorSlotSubLabel}</p>
               <Link href="/advertise" className="mt-6 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-amber-300">
                 {sponsorSlotCtaLabel}

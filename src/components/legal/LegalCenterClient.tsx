@@ -66,7 +66,7 @@ export default function LegalCenterClient({ slug }: Props) {
         <div className="mt-6 space-y-6">
           {doc.sections.map((section) => (
             <section key={section.heading} className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-              <h2 className="text-xl font-black text-gray-900 dark:text-white">{section.heading}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{section.heading}</h2>
               <div className="mt-3 space-y-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
                 {section.paragraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>

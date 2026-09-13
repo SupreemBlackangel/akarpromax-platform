@@ -1589,8 +1589,8 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                       <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <td className="px-4 py-3">
                           <div className="font-medium text-gray-900 dark:text-[var(--color-text-primary)]">
-                            {item.isBreaking && <span className="inline-block px-1.5 py-0.5 text-[var(--text-xs)] bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded mr-1 font-medium">عاجل</span>}
-                            {item.isPinned && <span className="inline-block px-1.5 py-0.5 text-[var(--text-xs)] bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded mr-1 font-medium">مثبت</span>}
+                            {item.isBreaking && <span className="inline-block px-1.5 py-0.5 text-label bg-[var(--color-error-soft)] dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded mr-1 font-medium">عاجل</span>}
+                            {item.isPinned && <span className="inline-block px-1.5 py-0.5 text-label bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] rounded mr-1 font-medium">مثبت</span>}
                             {item.titleAr}
                           </div>
                           <div className="text-xs text-gray-400">{item.titleEn}{item.category !== "GENERAL" ? ` • ${categoryLabels[item.category] ?? item.category}` : ""}</div>
@@ -1609,7 +1609,7 @@ export default function NewsAdminClient({ initialUser }: { initialUser: { email:
                             {statusLabels[item.status] ?? item.status}
                           </span>
                           {item.reviewStatus !== "APPROVED" && (
-                            <div className={`text-[var(--text-xs)] font-medium mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-[var(--color-warning)]"}`}>
+                            <div className={`text-label font-medium mt-1 ${item.reviewStatus === "REJECTED" ? "text-red-500 dark:text-red-400" : "text-[var(--color-warning)]"}`}>
                               {reviewLabels[item.reviewStatus] ?? item.reviewStatus}
                             </div>
                           )}

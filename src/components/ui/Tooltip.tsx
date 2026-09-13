@@ -35,7 +35,7 @@ export default function Tooltip({
       <span
         id={id}
         role="tooltip"
-        className={`pointer-events-none absolute z-[var(--layer-tooltip)] hidden rounded-[var(--radius-md)] bg-[color:var(--color-text-primary)] px-[var(--space-3)] py-[var(--space-2)] text-[var(--font-size-xs)] font-medium text-[color:var(--color-text-inverse)] shadow-[var(--shadow-md)] whitespace-nowrap group-hover/tt:block group-focus-within/tt:block ${SIDES[side]}`.trim()}
+        className={`pointer-events-none absolute z-[var(--layer-tooltip)] hidden rounded-[var(--radius-md)] bg-[color:var(--color-text-primary)] px-[var(--space-3)] py-[var(--space-2)] text-label font-medium text-[color:var(--color-text-inverse)] shadow-[var(--shadow-md)] whitespace-nowrap group-hover/tt:block group-focus-within/tt:block ${SIDES[side]}`.trim()}
       >
         {content}
       </span>

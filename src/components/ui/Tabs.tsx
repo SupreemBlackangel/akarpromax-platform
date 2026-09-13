@@ -53,7 +53,7 @@ export default function Tabs({ items, activeId, onSelect, ariaLabel, className =
               tabIndex={active ? 0 : -1}
               onClick={() => onSelect(item.id)}
               className={cn(
-                "rounded-[var(--radius-sm)] px-[var(--space-4)] py-[var(--space-2)] text-[var(--font-size-sm)] font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
+                "rounded-[var(--radius-sm)] px-[var(--space-4)] py-[var(--space-2)] text-body-sm font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
                 active
                   ? "bg-[color:var(--color-surface)] text-[color:var(--color-text-primary)] shadow-[var(--shadow-sm)]"
                   : "text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text-primary)]",

@@ -60,7 +60,7 @@ export default function Switch({
 
   return (
     <label htmlFor={switchId} className={`inline-flex items-center gap-[var(--space-3)] ${disabled ? "cursor-not-allowed" : "cursor-pointer"} ${className}`.trim()}>
-      <span id={switchId} className="text-[var(--font-size-md)] text-[color:var(--color-text-primary)]">
+      <span id={switchId} className="text-body text-[color:var(--color-text-primary)]">
         {label}
       </span>
       {control}

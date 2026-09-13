@@ -29,7 +29,7 @@ export default async function OrgMembershipsPage({ kind }: Props) {
   if (!session?.userId) {
     return (
       <main className="mx-auto max-w-5xl p-6" dir="rtl">
-        <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{copy.title}</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{copy.title}</h1>
         <p className="mt-4 text-[var(--color-text-secondary)]">سجّل الدخول لعرض عضوياتك.</p>
         <Link href="/dashboard" className="mt-4 inline-block text-sm font-bold text-[var(--color-primary)] hover:underline">← لوحة التحكم</Link>
       </main>
@@ -41,7 +41,7 @@ export default async function OrgMembershipsPage({ kind }: Props) {
   return (
     <main className="mx-auto max-w-5xl p-6" dir="rtl">
       <Link href="/dashboard" className="mb-2 inline-block text-xs font-bold text-[var(--color-primary)] hover:underline">← لوحة التحكم</Link>
-      <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{copy.title}</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{copy.title}</h1>
       <p className="mt-1 text-sm text-[var(--color-text-muted)]">{copy.subtitle}</p>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {rows.map(({ organization, membership }) => (

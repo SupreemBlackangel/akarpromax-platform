@@ -116,7 +116,7 @@ html[data-theme="dark"] .tc-skeleton-icon, html[data-theme="dark"] .tc-skeleton-
 
 /* Tool inner layout */
 .tc-tool-inner { max-width: 860px; margin: 0 auto; }
-.tc-calculator-title { margin: 0 0 5px; color: var(--ink); font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.015em; }
+.tc-calculator-title { margin: 0 0 5px; color: var(--ink); font-size: 19px; font-weight: 700; line-height: 1.45; }
 .tc-calculator-subtitle { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.75; }
 .tc-tool-heading { margin: 0 0 6px; color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; }
 .tc-tool-sub { margin: 0 0 18px; color: var(--muted); font-size: 12px; text-align: center; }

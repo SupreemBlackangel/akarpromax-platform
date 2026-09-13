@@ -88,7 +88,7 @@ function OrgWorkspaceShellContent({ kind, activeTab, children }: ShellProps) {
         </aside>
         <main className="min-w-0 flex-1">
           <div className="mb-5">
-            <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{copy.title[locale]}</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{copy.title[locale]}</h1>
             <p className="text-sm text-[var(--color-text-muted)]">{copy.subtitle[locale]}</p>
           </div>
           {children}

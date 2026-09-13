@@ -55,10 +55,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
               // eslint-disable-next-line @next/next/no-img-element
               <img src={org.logoUrl} alt="" className="h-16 w-16 rounded-2xl bg-white/90 object-contain p-1" />
             ) : (
-              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/15 text-2xl font-black">{initials}</div>
+              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/15 text-2xl font-bold">{initials}</div>
             )}
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-2xl font-black">{name}</h2>
+              <h2 className="truncate text-2xl font-bold">{name}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                 <span className="rounded-full bg-white/15 px-3 py-0.5 font-bold">{STATUS_LABEL[String(org.status)] ?? org.status}</span>
                 <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 font-bold ${verified ? "bg-emerald-400/25" : "bg-white/10"}`}>
@@ -88,7 +88,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
                 </span>
                 <ArrowLeft size={16} className="text-[var(--color-text-secondary)] opacity-0 transition group-hover:opacity-100" />
               </div>
-              <strong className="mt-3 block text-3xl font-black text-[var(--color-text-primary)]">{values[key] ?? 0}</strong>
+              <strong className="mt-3 block text-3xl font-bold text-[var(--color-text-primary)]">{values[key] ?? 0}</strong>
               <p className="text-sm text-[var(--color-text-secondary)]">{label}</p>
             </Link>
           ))}
@@ -96,7 +96,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
 
         {/* Quick links */}
         <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-          <h3 className="mb-3 text-sm font-black text-[var(--color-text-secondary)]">اختصارات</h3>
+          <h3 className="mb-3 text-sm font-bold text-[var(--color-text-secondary)]">اختصارات</h3>
           <div className="flex flex-wrap gap-2">
             {[
               ["الملف", "/dashboard/office/profile"],

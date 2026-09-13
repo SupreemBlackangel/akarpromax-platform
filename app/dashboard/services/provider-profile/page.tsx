@@ -309,7 +309,7 @@ export default function ProviderProfilePage() {
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={rawT} active="provider-profile">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.providerProfile") ?? "ملف مقدم الخدمة"}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.providerProfile") ?? "ملف مقدم الخدمة"}</h2>
           {profile && <ProviderStatusPill status={profile.status} locale={locale} />}
         </div>
 
@@ -321,7 +321,7 @@ export default function ProviderProfilePage() {
           <>
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
               <div className="rounded-xl border border-blue-100 bg-[var(--color-primary-soft)] p-4 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/30">
-                <p className="text-sm font-black text-[var(--color-text-primary)] dark:text-[var(--color-primary)]/80">بيانات هذا النموذج هي نفسها التي تظهر في سوق الخدمات</p>
+                <p className="text-sm font-bold text-[var(--color-text-primary)] dark:text-[var(--color-primary)]/80">بيانات هذا النموذج هي نفسها التي تظهر في سوق الخدمات</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--color-primary)] dark:text-[var(--color-primary)]">المهنة والموقع ونطاق الخدمة والأسعار تُستخدم لمطابقة ملفك مع طلبات العملاء؛ أكملها بدقة قبل إرسال الملف للمراجعة.</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -383,7 +383,7 @@ export default function ProviderProfilePage() {
                 </div>
               </div>
               <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-black text-gray-800 dark:text-gray-100">مركز نطاق الخدمة</p><p className="text-xs text-gray-500">تُستخدم الإحداثيات مع النطاق أعلاه لإرسال الطلبات القريبة إليك.</p></div><button type="button" onClick={useCurrentLocation} className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3 py-2 text-xs font-black text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">استخدم موقعي الحالي</button></div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-bold text-gray-800 dark:text-gray-100">مركز نطاق الخدمة</p><p className="text-xs text-gray-500">تُستخدم الإحداثيات مع النطاق أعلاه لإرسال الطلبات القريبة إليك.</p></div><button type="button" onClick={useCurrentLocation} className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3 py-2 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">استخدم موقعي الحالي</button></div>
                 <div className="grid gap-3 sm:grid-cols-2"><div><label className={labelCls}>خط العرض</label><input inputMode="decimal" value={latitude} onChange={(event) => setLatitude(event.target.value)} className={inputCls} placeholder="23.5880" dir="ltr" /></div><div><label className={labelCls}>خط الطول</label><input inputMode="decimal" value={longitude} onChange={(event) => setLongitude(event.target.value)} className={inputCls} placeholder="58.3829" dir="ltr" /></div></div>
               </div>
               <div>
@@ -411,7 +411,7 @@ export default function ProviderProfilePage() {
             </div>
 
             <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.myCategories") ?? "تصنيفاتي"}</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.myCategories") ?? "تصنيفاتي"}</h3>
               <div className="flex flex-wrap gap-2 mb-4">
                 {myCategories.map((cat) => (
                   <span key={String(cat.id)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-primary-soft)] dark:bg-[var(--color-primary-soft)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] text-sm font-semibold">
@@ -451,7 +451,7 @@ export default function ProviderProfilePage() {
             </div>
 
             <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-1">مستندات التحقق</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">مستندات التحقق</h3>
               <p className="text-xs text-gray-500 mb-3">ارفع سجلك التجاري أو هويتك (PDF أو صورة) — التوثيق يرفع ثقة العملاء ويُسرّع اعتماد ملفك.</p>
               <div className="flex flex-wrap items-center gap-2">
                 {/* Driven by the shared vocabulary, so a document the platform
@@ -477,9 +477,9 @@ export default function ProviderProfilePage() {
                       </span>
                       <span className="flex items-center gap-2">
                         {Number(doc.verified) === 1
-                          ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[var(--text-xs)] font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">موثّق ✓</span>
-                          : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[var(--text-xs)] font-black text-amber-700 dark:bg-amber-950 dark:text-amber-300">بانتظار المراجعة</span>}
-                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="text-xs font-black text-[var(--color-primary)] hover:underline">فتح</a>
+                          ? <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-label font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">موثّق ✓</span>
+                          : <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-label font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">بانتظار المراجعة</span>}
+                        <a href={`/api/service-providers/documents/${String(doc.id)}/file`} target="_blank" rel="noreferrer" className="text-xs font-bold text-[var(--color-primary)] hover:underline">فتح</a>
                       </span>
                     </li>
                   ))}
@@ -488,7 +488,7 @@ export default function ProviderProfilePage() {
             </div>
 
             <div className="mt-6 bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.portfolio") ?? "أعمال سابقة"}</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.portfolio") ?? "أعمال سابقة"}</h3>
               <div className="grid sm:grid-cols-3 gap-3">
                 <input value={portfolioTitle} onChange={(e) => setPortfolioTitle(e.target.value)} placeholder={t("services.portfolioTitle") ?? "عنوان العمل"} className={inputCls} />
                 <input value={portfolioImage} onChange={(e) => setPortfolioImage(e.target.value)} placeholder="https://.../image.jpg" className={inputCls} />

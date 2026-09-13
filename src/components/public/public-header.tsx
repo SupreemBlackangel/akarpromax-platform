@@ -70,8 +70,8 @@ export default function PublicHeader({
           <a href="/" aria-label={labels.brandTitle} className="inline-flex min-w-0 items-center gap-2.5">
             <BrandMark size="md" />
             <span className="flex min-w-0 flex-col leading-tight">
-              <strong className="truncate font-[family-name:var(--font-heading-stack)] text-[var(--text-md)] font-extrabold text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
-              <small className="hidden truncate text-[var(--text-xs)] font-medium text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>
+              <strong className="truncate font-[family-name:var(--font-heading-stack)] text-body font-bold text-[color:var(--color-text-primary)]">{labels.brandTitle}</strong>
+              <small className="hidden truncate text-label font-medium text-[color:var(--color-primary)] sm:block">{labels.brandSubtitle}</small>
             </span>
           </a>
         </div>

@@ -138,13 +138,13 @@ export default function AuthPageShell({ children }: { children: React.ReactNode 
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
             <img src="/brand/logo.svg" alt="" aria-hidden="true" width={44} height={44} className="size-11" />
             <span className="flex flex-col leading-tight">
-              <strong className="text-lg font-black">{translations[locale].brandTitle}</strong>
+              <strong className="text-lg font-bold">{translations[locale].brandTitle}</strong>
               <small className="text-xs opacity-80">{translations[locale].brandSubtitle}</small>
             </span>
           </Link>
 
           <div className="relative z-10 my-[var(--space-10)]">
-            <h2 className="text-3xl font-black leading-snug">{pitch.headline}</h2>
+            <h2 className="text-3xl font-bold leading-snug">{pitch.headline}</h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed opacity-85">{pitch.sub}</p>
             <ul className="mt-8 space-y-3">
               {pitch.points.map((point, i) => {

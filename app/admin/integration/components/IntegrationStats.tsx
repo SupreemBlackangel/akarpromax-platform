@@ -49,10 +49,10 @@ export default function IntegrationStats({ stats, loading = false }: { stats: In
           {s.value === null ? (
             <p className="mt-3 text-[15px] font-bold text-[color:var(--color-text-secondary)]">لا توجد بيانات</p>
           ) : (
-            <p className="mt-3 text-2xl font-black leading-none text-[color:var(--color-text-primary)]">{s.value}</p>
+            <p className="mt-3 text-2xl font-bold leading-none text-[color:var(--color-text-primary)]">{s.value}</p>
           )}
           <p className="mt-1.5 text-xs font-semibold text-[color:var(--color-text-secondary)]">{s.label}</p>
-          {s.hint && <p className="mt-0.5 text-[var(--text-xs)] text-[color:var(--color-text-secondary)] font-medium" dir="auto">{s.hint}</p>}
+          {s.hint && <p className="mt-0.5 text-label text-[color:var(--color-text-secondary)] font-medium" dir="auto">{s.hint}</p>}
         </div>
       ))}
     </div>

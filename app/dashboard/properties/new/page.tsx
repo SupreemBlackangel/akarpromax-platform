@@ -162,7 +162,7 @@ export default function NewPropertyPage() {
                 <Sparkles className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                 معالج إضافة عقار
               </div>
-              <h1 className="text-3xl md:text-4xl font-black mb-2">إضافة عقار جديد</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">إضافة عقار جديد</h1>
               <p className="text-white/80 text-sm md:text-base max-w-xl">
                 أكمل الخطوات الخمس لإدراج عقارك. كلما كانت البيانات أكثر دقة، زادت فرص التفاعل.
               </p>
@@ -198,7 +198,7 @@ export default function NewPropertyPage() {
                   >
                     <div
                       className={`
-                        relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-black
+                        relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
                         border-2 transition-all duration-300 shrink-0
                         ${isActive
                           ? 'border-white text-white shadow-lg scale-110'
@@ -233,7 +233,7 @@ export default function NewPropertyPage() {
                       >
                         {step.label}
                       </div>
-                      <div className="text-[var(--text-xs)] text-[var(--color-text-muted)] whitespace-nowrap font-medium">{step.description}</div>
+                      <div className="text-label text-[var(--color-text-muted)] whitespace-nowrap font-medium">{step.description}</div>
                     </div>
                   </button>
                   {!isLast && (

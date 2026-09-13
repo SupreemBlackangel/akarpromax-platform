@@ -204,7 +204,7 @@ function AuctionDetailInner() {
                 <CardContent className="p-6">
                   <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
-                      <h1 className="text-2xl font-black text-gray-900">{auction.titleAr}</h1>
+                      <h1 className="text-2xl font-bold text-gray-900">{auction.titleAr}</h1>
                       <p className="mt-1 text-sm text-gray-500">{auction.auctionType === 'fixed' ? 'مزاد مغلق' : 'مزاد مفتوح'}</p>
                     </div>
                     <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--color-primary)]">
@@ -222,7 +222,7 @@ function AuctionDetailInner() {
                     <div className="flex items-start gap-3">
                       <ShieldCheck className="mt-1 h-5 w-5 text-[var(--color-primary)]" />
                       <div className="flex-1">
-                        <h2 className="font-black text-gray-900">اعتماد البائع</h2>
+                        <h2 className="font-bold text-gray-900">اعتماد البائع</h2>
                         <p className="mt-1 text-sm text-gray-600">الجهة المنظمة أنشأت المزاد، ولن يبدأ قبل موافقتك كمالك للعقار على شروط المزاد.</p>
                         <Button
                           className="mt-4"
@@ -242,7 +242,7 @@ function AuctionDetailInner() {
               {auction.viewerActions?.canDecideOpenAuction && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="font-black text-gray-900">قرار البائع في المزاد المفتوح</h2>
+                    <h2 className="font-bold text-gray-900">قرار البائع في المزاد المفتوح</h2>
                     <p className="mt-2 text-sm text-gray-600">انتهى الوقت. قبول النتيجة ينشئ Award ثابتاً وعقداً بينك وبين صاحب أعلى مزايدة. الرفض لا يولد عقداً.</p>
                     <div className="mt-4 flex gap-3">
                       <Button loading={busy} onClick={async () => {
@@ -269,7 +269,7 @@ function AuctionDetailInner() {
 
               <Card>
                 <CardContent className="p-6">
-                  <h2 className="mb-4 flex items-center gap-2 font-black text-gray-900">
+                  <h2 className="mb-4 flex items-center gap-2 font-bold text-gray-900">
                     <TrendingUp className="h-5 w-5" /> سجل المزايدات
                   </h2>
                   {auction.bids.length === 0 ? (
@@ -300,7 +300,7 @@ function AuctionDetailInner() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">السعر الحالي</span>
-                      <span className="text-xl font-black text-[var(--color-primary)]">{Number(auction.auctionCurrentPrice || auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span>
+                      <span className="text-xl font-bold text-[var(--color-primary)]">{Number(auction.auctionCurrentPrice || auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-500">سعر البداية</span><span>{Number(auction.auctionStartPrice || 0).toLocaleString()} {auction.currency}</span></div>
                     <div className="flex items-center justify-between text-sm"><span className="text-gray-500">عدد المزايدات</span><span>{auction.auctionBidCount || 0}</span></div>
@@ -314,7 +314,7 @@ function AuctionDetailInner() {
               {isActive && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="mb-4 flex items-center gap-2 font-black text-gray-900"><Gavel className="h-5 w-5" /> المزايدة</h2>
+                    <h2 className="mb-4 flex items-center gap-2 font-bold text-gray-900"><Gavel className="h-5 w-5" /> المزايدة</h2>
                     <form onSubmit={placeBid} className="space-y-3">
                       <input
                         type="number"
@@ -344,7 +344,7 @@ function AuctionDetailInner() {
               {auction.contract && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="flex items-center gap-2 font-black text-gray-900"><FileText className="h-5 w-5" /> العقد الناتج</h2>
+                    <h2 className="flex items-center gap-2 font-bold text-gray-900"><FileText className="h-5 w-5" /> العقد الناتج</h2>
                     <p className="mt-2 text-sm text-gray-600">رقم العقد: {auction.contract.contractNumber}</p>
                     <p className="mt-1 break-all text-xs text-gray-400">SHA-256: {auction.contract.contentHash}</p>
                     <a href={`/api/auctions/${id}/contract?download=1`} className="mt-4 inline-flex rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white">تنزيل سجل العقد</a>

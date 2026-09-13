@@ -362,9 +362,9 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
               <div className="grid min-h-[50vh] place-items-center">
                 <div className="text-center max-w-sm">
                   <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><UserRound size={26} strokeWidth={1.75} /></span>
-                  <h1 className="text-xl font-black text-[color:var(--color-text-primary)] mb-2">{t.notFound}</h1>
+                  <h1 className="text-xl font-bold text-[color:var(--color-text-primary)] mb-2">{t.notFound}</h1>
                   <p className="text-sm font-bold text-[color:var(--color-text-muted)] mb-5">{t.notFoundDesc}</p>
-                  <Link href="/providers" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
+                  <Link href="/providers" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-bold text-white">{t.notFoundCta}</Link>
                 </div>
               </div>
             )}
@@ -379,11 +379,11 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                 <div className="mt-5 overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[var(--color-surface)] shadow-sm">
                   <div className="relative h-40 bg-gradient-to-l from-[color:var(--color-primary)] via-[color:var(--color-primary-hover)] to-[color:var(--color-primary-active)]">
                     <div className="absolute bottom-0 left-0 right-0 flex items-end gap-4 p-4">
-                      <div className="grid h-20 w-20 place-items-center rounded-full border-4 border-white bg-[var(--color-surface)]/20 text-4xl font-black text-white">
+                      <div className="grid h-20 w-20 place-items-center rounded-full border-4 border-white bg-[var(--color-surface)]/20 text-4xl font-bold text-white">
                         {displayName ? displayName.slice(0, 1) : '👤'}
                       </div>
                       <div className="pb-1 text-white">
-                        <h1 className="text-2xl font-black">{provider.businessName}</h1>
+                        <h1 className="text-2xl font-bold">{provider.businessName}</h1>
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           {provider.category?.nameAr && <span className="rounded-full bg-[var(--color-surface)]/20 px-2 py-0.5 text-xs">{provider.category.nameAr}</span>}
                           {provider.isVerified && (
@@ -408,23 +408,23 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                         <div key={service.id} className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <h3 className="font-black text-[color:var(--color-text-primary)]">{service.name}</h3>
+                              <h3 className="font-bold text-[color:var(--color-text-primary)]">{service.name}</h3>
                               {service.instantPrice != null && service.currency && (
                                 <p className="mt-1 text-sm font-bold text-[color:var(--color-primary)]">{service.instantPrice} {service.currency}</p>
                               )}
                             </div>
-                            <span className="rounded-full bg-white px-2 py-1 text-[var(--text-xs)] font-black text-[color:var(--color-text-muted)]">
+                            <span className="rounded-full bg-white px-2 py-1 text-label font-bold text-[color:var(--color-text-muted)]">
                               {service.bookingMode === 'both' ? (loc === 'ar' ? 'حجز أو عروض' : 'Book or quote') : service.bookingMode === 'instant' ? (loc === 'ar' ? 'حجز مباشر' : 'Instant') : (loc === 'ar' ? 'طلب عروض' : 'Quotes')}
                             </span>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {(service.bookingMode === 'instant' || service.bookingMode === 'both') && service.instantPrice != null && service.currency && (
-                              <Link href={`/service-bookings/new?provider=${encodeURIComponent(provider.id)}&category=${encodeURIComponent(service.categoryId)}`} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-4 py-2 text-xs font-black text-white">
+                              <Link href={`/service-bookings/new?provider=${encodeURIComponent(provider.id)}&category=${encodeURIComponent(service.categoryId)}`} className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-4 py-2 text-xs font-bold text-white">
                                 <Calendar className="h-4 w-4" />{loc === 'ar' ? 'احجز الآن' : 'Book now'}
                               </Link>
                             )}
                             {(service.bookingMode === 'quotes' || service.bookingMode === 'both') && (
-                              <Link href={`/service-requests/new?category=${encodeURIComponent(service.categoryId)}`} className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--color-border-strong)] px-4 py-2 text-xs font-black text-[color:var(--color-text-primary)]">
+                              <Link href={`/service-requests/new?category=${encodeURIComponent(service.categoryId)}`} className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--color-border-strong)] px-4 py-2 text-xs font-bold text-[color:var(--color-text-primary)]">
                                 {loc === 'ar' ? 'اطلب عروضًا' : 'Request quotes'}
                               </Link>
                             )}
@@ -455,7 +455,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                       <div className="space-y-4">
                         {provider.specialties.length > 0 && (
                           <div>
-                            <h3 className="mb-2 text-sm font-black text-[color:var(--color-text-primary)]">{t.specialties}</h3>
+                            <h3 className="mb-2 text-sm font-bold text-[color:var(--color-text-primary)]">{t.specialties}</h3>
                             <div className="flex flex-wrap gap-2">
                               {provider.specialties.map((s) => (
                                 <span key={s} className="rounded-full bg-[color:var(--color-primary-soft)] px-3 py-1 text-xs font-bold text-[color:var(--color-primary)]">{s}</span>
@@ -464,12 +464,12 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                           </div>
                         )}
                         <div>
-                          <h3 className="mb-2 text-sm font-black text-[color:var(--color-text-primary)]">{t.about}</h3>
+                          <h3 className="mb-2 text-sm font-bold text-[color:var(--color-text-primary)]">{t.about}</h3>
                           <p className="leading-relaxed text-[color:var(--color-text-secondary)]">{provider.bio || t.noBio}</p>
                         </div>
                         {provider.workingHours && Object.keys(provider.workingHours).length > 0 && (
                           <div>
-                            <h3 className="mb-2 text-sm font-black text-[color:var(--color-text-primary)]">{t.workHours}</h3>
+                            <h3 className="mb-2 text-sm font-bold text-[color:var(--color-text-primary)]">{t.workHours}</h3>
                             <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                               {Object.entries(provider.workingHours).map(([day, hours]) => (
                                 <div key={day} className="flex justify-between border-b border-[color:var(--color-border)] pb-1">
@@ -498,7 +498,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                                 </div>
                               )}
                               <div className="p-3">
-                                <h4 className="text-sm font-black text-[color:var(--color-text-primary)]">{item.title}</h4>
+                                <h4 className="text-sm font-bold text-[color:var(--color-text-primary)]">{item.title}</h4>
                                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                                   {item.category && <span className="font-bold text-[color:var(--color-primary)]">{item.category}</span>}
                                   {item.year && <span className="font-bold text-[color:var(--color-text-muted)]">{item.year}</span>}
@@ -520,7 +520,7 @@ export default function ProviderDetailPage({ params }: { params: Promise<{ id: s
                             <div key={review.id} className="rounded-2xl border border-[color:var(--color-border)] p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <div className="grid h-8 w-8 place-items-center rounded-full bg-[color:var(--color-primary-soft)] text-sm font-black text-[color:var(--color-primary)]">
+                                  <div className="grid h-8 w-8 place-items-center rounded-full bg-[color:var(--color-primary-soft)] text-sm font-bold text-[color:var(--color-primary)]">
                                     {(review.reviewerName || t.client).slice(0, 1)}
                                   </div>
                                   <div>

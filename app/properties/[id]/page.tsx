@@ -177,9 +177,9 @@ export default function PropertyPage({ params }: Props) {
         <PageContainer className="grid min-h-[60vh] place-items-center py-8">
           <div className="text-center max-w-sm">
             <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><HousePlus size={26} strokeWidth={1.75} /></span>
-            <h1 className="text-xl font-black text-[color:var(--color-text-primary)] mb-2">{t.notFoundTitle}</h1>
+            <h1 className="text-xl font-bold text-[color:var(--color-text-primary)] mb-2">{t.notFoundTitle}</h1>
             <p className="text-sm font-bold text-[color:var(--color-text-muted)] mb-5">{t.notFoundDesc}</p>
-            <Link href="/properties" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-black text-white">{t.notFoundCta}</Link>
+            <Link href="/properties" className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--color-primary)] px-5 py-2.5 text-xs font-bold text-white">{t.notFoundCta}</Link>
           </div>
         </PageContainer>
       )}
@@ -199,7 +199,7 @@ export default function PropertyPage({ params }: Props) {
                     <div className="relative aspect-[16/10] bg-[color:var(--color-surface-soft)]">
                       <img src={imageUrl} alt={property.title[locale]} width={1280} height={800} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[color:var(--color-accent)] px-3 py-1 text-[var(--text-xs)] font-black text-[color:var(--color-text-primary)] shadow-sm">{t.badge}</span>}
+                      {property.isFeatured && <span className="absolute start-4 top-4 rounded-full bg-[color:var(--color-accent)] px-3 py-1 text-label font-bold text-[color:var(--color-text-primary)] shadow-sm">{t.badge}</span>}
                     </div>
                     {secondaryImageUrl && (
                       <button
@@ -235,26 +235,26 @@ export default function PropertyPage({ params }: Props) {
               {auction && (
                   <div className="overflow-hidden rounded-3xl border border-amber-300/60 bg-gradient-to-br from-amber-50 via-white to-amber-100/60 p-6 shadow-sm dark:border-amber-600/40 dark:from-amber-950/40 dark:via-transparent dark:to-amber-900/20">
                     <div className="mb-3 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-black text-white shadow">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white shadow">
                         <Gavel className="h-3.5 w-3.5" />
                         {auction.status === "active"
                           ? (locale === "ar" ? "مزاد جارٍ الآن" : locale === "tr" ? "Müzayede devam ediyor" : "Live auction")
                           : (locale === "ar" ? "عقار بنظام المزاد" : locale === "tr" ? "Müzayedeli mülk" : "Auction listing")}
                       </span>
-                      <span className="text-[var(--text-xs)] font-black text-amber-700 dark:text-amber-300">
+                      <span className="text-label font-bold text-amber-700 dark:text-amber-300">
                         {auction.type === "fixed"
                           ? (locale === "ar" ? "مزاد مغلق" : locale === "tr" ? "Kapalı" : "Closed")
                           : (locale === "ar" ? "مزاد مفتوح" : locale === "tr" ? "Açık" : "Open")}
                       </span>
                     </div>
-                    <p className="text-[var(--text-xs)] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80">
+                    <p className="text-label font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80">
                       {locale === "ar" ? "السعر الحالي" : locale === "tr" ? "Güncel fiyat" : "Current price"}
                     </p>
                     <p className="mt-0.5 flex items-baseline gap-2">
-                      <strong className="text-3xl font-black text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      <strong className="text-3xl font-bold text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>
                         {auction.currentPrice.toLocaleString(locale === "ar" ? "ar" : "en")}
                       </strong>
-                      <span className="text-sm font-extrabold text-[color:var(--color-text-muted)]">{property.currency}</span>
+                      <span className="text-sm font-bold text-[color:var(--color-text-muted)]">{property.currency}</span>
                     </p>
                     <p className="mt-1 text-xs font-bold text-[color:var(--color-text-muted)]">
                       {auction.bidCount} {locale === "ar" ? "مزايدة" : locale === "tr" ? "teklif" : "bids"}
@@ -262,7 +262,7 @@ export default function PropertyPage({ params }: Props) {
                     {auction.endDate && (() => {
                       const remaining = new Date(auction.endDate).getTime() - now;
                       if (remaining <= 0) {
-                        return <p className="mt-3 rounded-xl bg-amber-100 px-3 py-2 text-center text-xs font-black text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{locale === "ar" ? "انتهى وقت المزاد" : locale === "tr" ? "Müzayede sona erdi" : "Auction ended"}</p>;
+                        return <p className="mt-3 rounded-xl bg-amber-100 px-3 py-2 text-center text-xs font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">{locale === "ar" ? "انتهى وقت المزاد" : locale === "tr" ? "Müzayede sona erdi" : "Auction ended"}</p>;
                       }
                       const d = Math.floor(remaining / 86_400_000);
                       const h = Math.floor((remaining % 86_400_000) / 3_600_000);
@@ -270,13 +270,13 @@ export default function PropertyPage({ params }: Props) {
                       const sec = Math.floor((remaining % 60_000) / 1000);
                       const cell = (value: number, label: string) => (
                         <div className="rounded-xl bg-white/80 px-2 py-1.5 text-center shadow-sm dark:bg-black/20">
-                          <b className="block text-lg font-black text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>{String(value).padStart(2, "0")}</b>
-                          <small className="text-[var(--text-xs)] font-black text-[color:var(--color-text-muted)]">{label}</small>
+                          <b className="block text-lg font-bold text-amber-700 dark:text-amber-300" style={{ fontVariantNumeric: "tabular-nums" }}>{String(value).padStart(2, "0")}</b>
+                          <small className="text-label font-bold text-[color:var(--color-text-muted)]">{label}</small>
                         </div>
                       );
                       return (
                         <div className="mt-3">
-                          <p className="mb-1.5 inline-flex items-center gap-1 text-[var(--text-xs)] font-black uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80"><Timer className="h-3 w-3" /> {locale === "ar" ? "الوقت المتبقي" : locale === "tr" ? "Kalan süre" : "Time left"}</p>
+                          <p className="mb-1.5 inline-flex items-center gap-1 text-label font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-300/80"><Timer className="h-3 w-3" /> {locale === "ar" ? "الوقت المتبقي" : locale === "tr" ? "Kalan süre" : "Time left"}</p>
                           <div className="grid grid-cols-4 gap-1.5" dir="ltr">
                             {cell(d, locale === "ar" ? "يوم" : locale === "tr" ? "gün" : "days")}
                             {cell(h, locale === "ar" ? "ساعة" : locale === "tr" ? "saat" : "hrs")}
@@ -288,7 +288,7 @@ export default function PropertyPage({ params }: Props) {
                     })()}
                     <Link
                       href={`/auctions/${property.id}`}
-                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-600"
+                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-600"
                     >
                       <Gavel className="h-4 w-4" />
                       {locale === "ar" ? "ادخل المزاد وزايد الآن" : locale === "tr" ? "Müzayedeye katıl" : "Enter the auction"}
@@ -309,7 +309,7 @@ export default function PropertyPage({ params }: Props) {
                     </p>
                   </div>
                   <p className="flex items-baseline gap-1.5">
-                    <strong className="text-2xl font-bold tracking-tight text-[color:var(--color-primary)]">{localePrice}</strong>
+                    <strong className="text-2xl font-bold text-[color:var(--color-primary)]">{localePrice}</strong>
                     <span className="text-xs font-semibold text-[color:var(--color-text-muted)]">{property.currency}</span>
                   </p>
                 </div>
@@ -348,7 +348,7 @@ export default function PropertyPage({ params }: Props) {
                     {property.features[locale]?.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1.5">
                         {property.features[locale].map((feature) => (
-                          <span key={feature} className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[color:var(--color-text-secondary)]">
+                          <span key={feature} className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-label font-medium text-[color:var(--color-text-secondary)]">
                             {feature}
                           </span>
                         ))}
@@ -366,10 +366,10 @@ export default function PropertyPage({ params }: Props) {
                     {(property.propertyType || property.listingType) && (
                       <div className="flex flex-wrap gap-1.5">
                         {property.propertyType && (
-                          <span className="rounded-full bg-[color:var(--color-primary-soft)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--color-primary)]">{property.propertyType}</span>
+                          <span className="rounded-full bg-[color:var(--color-primary-soft)] px-2.5 py-1 text-label font-semibold text-[color:var(--color-primary)]">{property.propertyType}</span>
                         )}
                         {property.listingType && (
-                          <span className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--color-text-secondary)]">{property.listingType}</span>
+                          <span className="rounded-full bg-[color:var(--color-surface-muted)] px-2.5 py-1 text-label font-semibold text-[color:var(--color-text-secondary)]">{property.listingType}</span>
                         )}
                       </div>
                     )}
@@ -380,7 +380,7 @@ export default function PropertyPage({ params }: Props) {
                           {advertiser.type === "office" ? <Building2 className="h-4 w-4" /> : <User className="h-4 w-4" />}
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-[var(--text-xs)] font-medium text-[color:var(--color-text-muted)]">
+                          <span className="block text-label font-medium text-[color:var(--color-text-muted)]">
                             {advertiser.type === "office"
                               ? (locale === "ar" ? "المكتب المعلن" : locale === "tr" ? "İlan veren ofis" : "Advertising office")
                               : (locale === "ar" ? "المعلن" : locale === "tr" ? "İlan sahibi" : "Advertiser")}
@@ -412,7 +412,7 @@ export default function PropertyPage({ params }: Props) {
                   >
                     <Phone className="h-4 w-4" />
                     {locale === "ar" ? "تواصل عبر واتساب" : locale === "tr" ? "WhatsApp ile iletişim" : "Contact on WhatsApp"}
-                    <span dir="ltr" className="font-extrabold opacity-90">{contact.whatsapp}</span>
+                    <span dir="ltr" className="font-bold opacity-90">{contact.whatsapp}</span>
                   </a>
                 ) : (
                 <button
@@ -493,7 +493,7 @@ export default function PropertyPage({ params }: Props) {
           {similar.length > 0 && (
             <section className="border-t border-[color:var(--color-border)] bg-[var(--color-surface)]">
               <PageContainer className="py-8">
-                <p className="text-[var(--text-xs)] font-semibold text-[color:var(--color-primary)]">{t.similarLabel}</p>
+                <p className="text-label font-semibold text-[color:var(--color-primary)]">{t.similarLabel}</p>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   {similar.map((item) => (
                     <Link key={item.id} href={`/properties/${item.slug || item.id}`} className="group overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[var(--color-surface)] shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -501,7 +501,7 @@ export default function PropertyPage({ params }: Props) {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                         <div className="absolute bottom-3 start-4 text-white">
                           <strong className="block text-sm font-bold">{item.price.toLocaleString(locale === "ar" ? "ar" : "en")}</strong>
-                          <span className="text-[var(--text-xs)] font-bold opacity-90">{item.currency}</span>
+                          <span className="text-label font-bold opacity-90">{item.currency}</span>
                         </div>
                       </div>
                       <div className="p-4">

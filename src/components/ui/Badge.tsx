@@ -29,7 +29,7 @@ export default function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-1)] text-[var(--font-size-xs)] font-semibold leading-none",
+        "inline-flex items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-1)] text-label font-semibold leading-none",
         VARIANTS[variant],
         className,
       )}

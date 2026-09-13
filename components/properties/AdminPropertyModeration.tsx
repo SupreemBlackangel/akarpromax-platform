@@ -275,7 +275,7 @@ export default function AdminPropertyModeration() {
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] ps-9 pe-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
         </div>
-        <button type="submit" className="rounded-xl bg-[var(--color-surface-muted)] px-4 py-2 text-xs font-black text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition">
+        <button type="submit" className="rounded-xl bg-[var(--color-surface-muted)] px-4 py-2 text-xs font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-soft)] transition">
           بحث
         </button>
       </form>
@@ -339,8 +339,8 @@ export default function AdminPropertyModeration() {
                     {/* Image system: upload / delete / set-cover */}
                     <div>
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[var(--text-xs)] font-black text-[var(--color-text-secondary)]">الصور ({row.media?.length ?? 0})</span>
-                        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-primary)] px-3 py-1.5 text-[var(--text-xs)] font-black text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] ${busyId === row.id ? 'pointer-events-none opacity-50' : ''}`}>
+                        <span className="text-label font-bold text-[var(--color-text-secondary)]">الصور ({row.media?.length ?? 0})</span>
+                        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-primary)] px-3 py-1.5 text-label font-bold text-[var(--color-primary)] transition hover:bg-[var(--color-primary-soft)] ${busyId === row.id ? 'pointer-events-none opacity-50' : ''}`}>
                           <ImagePlus className="h-3.5 w-3.5" /> إضافة صورة
                           <input
                             type="file"
@@ -356,7 +356,7 @@ export default function AdminPropertyModeration() {
                             <div key={m.id} className="relative shrink-0">
                               {/* eslint-disable-next-line @next/next/no-img-element -- runtime-managed URL */}
                               <img src={m.url} alt="" width={144} height={96} loading="lazy" decoding="async" className={`h-24 w-36 rounded-xl object-cover bg-[var(--color-surface-muted)] ${m.isFeatured ? 'ring-2 ring-[var(--color-primary)]' : ''}`} />
-                              {m.isFeatured && <span className="absolute top-1 start-1 rounded-md bg-[var(--color-primary)] px-1.5 py-0.5 text-[var(--text-xs)] font-black text-white">الغلاف</span>}
+                              {m.isFeatured && <span className="absolute top-1 start-1 rounded-md bg-[var(--color-primary)] px-1.5 py-0.5 text-label font-bold text-white">الغلاف</span>}
                               <div className="absolute bottom-1 end-1 flex gap-1">
                                 {!m.isFeatured && (
                                   <button type="button" title="تعيين كغلاف" disabled={busyId === row.id} onClick={() => setCover(row.id, m.id)} className="grid h-6 w-6 place-items-center rounded-md bg-black/55 text-white transition hover:bg-black/75 disabled:opacity-50">
@@ -371,11 +371,11 @@ export default function AdminPropertyModeration() {
                           ))}
                         </div>
                       ) : (
-                        <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-[var(--text-xs)] font-bold text-[var(--color-text-muted)]">لا توجد صور — أضف صورة من الزر أعلاه</p>
+                        <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-4 text-center text-label font-bold text-[var(--color-text-muted)]">لا توجد صور — أضف صورة من الزر أعلاه</p>
                       )}
                     </div>
                     <p className="text-xs leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">{row.descriptionAr || '—'}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[var(--text-xs)] font-bold text-[var(--color-text-secondary)]">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-label font-bold text-[var(--color-text-secondary)]">
                       <span>غرف: {row.bedrooms ?? '—'}</span>
                       <span>حمامات: {row.bathrooms ?? '—'}</span>
                       <span>مرجع: {row.referenceNumber || '—'}</span>
@@ -383,7 +383,7 @@ export default function AdminPropertyModeration() {
                       {row.latitude && row.longitude && <span className="col-span-2">إحداثيات: {row.latitude}, {row.longitude}</span>}
                     </div>
                     {row.status === 'rejected' && row.rejectedReason && (
-                      <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2 text-[var(--text-xs)] font-bold text-red-700 dark:text-red-300">سبب الرفض السابق: {row.rejectedReason}</p>
+                      <p className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2 text-label font-bold text-red-700 dark:text-red-300">سبب الرفض السابق: {row.rejectedReason}</p>
                     )}
 
                     {row.status === 'pending_review' && (
@@ -392,7 +392,7 @@ export default function AdminPropertyModeration() {
                           type="button"
                           disabled={busyId === row.id}
                           onClick={() => review(row.id, 'approve')}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-green-600 px-5 py-2.5 text-xs font-black text-white hover:bg-green-700 disabled:opacity-50 transition"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-green-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-50 transition"
                         >
                           <CheckCircle2 className="h-4 w-4" /> اعتماد ونشر
                         </button>
@@ -407,7 +407,7 @@ export default function AdminPropertyModeration() {
                             type="button"
                             disabled={busyId === row.id}
                             onClick={() => review(row.id, 'reject')}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-black text-white hover:bg-red-700 disabled:opacity-50 transition"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50 transition"
                           >
                             <XCircle className="h-4 w-4" /> رفض
                           </button>
@@ -418,18 +418,18 @@ export default function AdminPropertyModeration() {
                     {/* Full control: activate / deactivate / delete — any status */}
                     <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-3">
                       {row.status === 'archived' ? (
-                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'approved' }, 'تم تفعيل العقار ونشره.')} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-success)] px-4 py-2 text-xs font-black text-white hover:opacity-90 disabled:opacity-50 transition">
+                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'approved' }, 'تم تفعيل العقار ونشره.')} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-success)] px-4 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50 transition">
                           <Power className="h-4 w-4" /> تفعيل ونشر
                         </button>
                       ) : row.status === 'approved' ? (
-                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'archived' }, 'تم تعطيل العقار (غير نشط).')} className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-xs font-black text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50 transition">
+                        <button type="button" disabled={busyId === row.id} onClick={() => patchProperty(row.id, { status: 'archived' }, 'تم تعطيل العقار (غير نشط).')} className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-xs font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50 transition">
                           <PowerOff className="h-4 w-4" /> تعطيل (غير نشط)
                         </button>
                       ) : null}
-                      <a href={`/dashboard/properties/${row.id}/edit`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-primary)] px-4 py-2 text-xs font-black text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition">
+                      <a href={`/dashboard/properties/${row.id}/edit`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-primary)] px-4 py-2 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] transition">
                         <Pencil className="h-4 w-4" /> تعديل كامل
                       </a>
-                      <button type="button" disabled={busyId === row.id} onClick={() => removeProperty(row.id)} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-danger-soft)] px-4 py-2 text-xs font-black text-[var(--color-danger)] hover:opacity-90 disabled:opacity-50 transition">
+                      <button type="button" disabled={busyId === row.id} onClick={() => removeProperty(row.id)} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-danger-soft)] px-4 py-2 text-xs font-bold text-[var(--color-danger)] hover:opacity-90 disabled:opacity-50 transition">
                         <Trash2 className="h-4 w-4" /> حذف نهائي
                       </button>
                     </div>

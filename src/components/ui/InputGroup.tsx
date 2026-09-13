@@ -13,14 +13,14 @@ export default function InputGroup({ label, hint, error, className = "", childre
   return (
     <div className={cn("flex flex-col gap-[var(--space-2)]", className)}>
       {label && (
-        <span className="text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)]">{label}</span>
+        <span className="text-body-sm font-medium text-[color:var(--color-text-primary)]">{label}</span>
       )}
       <div className="flex items-stretch overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus-within:border-[color:var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus)]">
         {children}
       </div>
-      {hint && <span className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{hint}</span>}
+      {hint && <span className="text-label text-[color:var(--color-text-muted)]">{hint}</span>}
       {error && (
-        <span role="alert" className="text-[var(--font-size-xs)] font-medium text-[color:var(--color-danger)]">
+        <span role="alert" className="text-label font-medium text-[color:var(--color-danger)]">
           {error}
         </span>
       )}
@@ -30,7 +30,7 @@ export default function InputGroup({ label, hint, error, className = "", childre
 
 export function InputGroupAddon({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center border-e border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-muted)] px-[var(--space-4)] text-[var(--font-size-sm)] text-[color:var(--color-text-muted)] last:border-e-0 last:border-s", className)}>
+    <span className={cn("inline-flex items-center border-e border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-muted)] px-[var(--space-4)] text-body-sm text-[color:var(--color-text-muted)] last:border-e-0 last:border-s", className)}>
       {children}
     </span>
   );

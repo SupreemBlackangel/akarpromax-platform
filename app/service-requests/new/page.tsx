@@ -320,11 +320,11 @@ export default function NewServiceRequestPage() {
         <Link href="/services" className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">← {t("services.back") ?? "العودة للسوق"}</Link>
 
         <div className="mt-4">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.postRequest") ?? "انشر طلباً جديداً"}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">املأ ما ينطبق على طلبك. تُحفظ البيانات على جهازك أولاً بأول.</p>
         </div>
 
-        {!viewer.authenticated && <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-4 py-3 text-sm text-blue-800 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-blue-200"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-black">أكمل الطلب الآن دون تسجيل</p><p className="mt-0.5 text-xs leading-5">سنحفظ كل ما تدخله على جهازك، ولن نطلب تسجيل الدخول إلا عند الإرسال النهائي.</p></div></div>}
+        {!viewer.authenticated && <div className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-4 py-3 text-sm text-blue-800 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/40 dark:text-blue-200"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-bold">أكمل الطلب الآن دون تسجيل</p><p className="mt-0.5 text-xs leading-5">سنحفظ كل ما تدخله على جهازك، ولن نطلب تسجيل الدخول إلا عند الإرسال النهائي.</p></div></div>}
 
         {error && <div className="mt-4 px-4 py-3 bg-[var(--color-error-soft)] dark:bg-red-900/30 text-[var(--color-error)] dark:text-[var(--color-error)] rounded-lg text-sm">{error}</div>}
         {draftSaved && <div className="mt-4 px-4 py-3 bg-[var(--color-success-soft)] dark:bg-[var(--color-success-soft)]/30 text-[var(--color-success)] dark:text-[var(--color-success)] rounded-lg text-sm">{t("services.draftSaved") ?? "تم حفظ المسودة تلقائياً"}</div>}
@@ -337,7 +337,7 @@ export default function NewServiceRequestPage() {
           </div>
 
           <section id="section-category" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"التصنيف"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"التصنيف"}</h2>
             <div className="space-y-5">
               <div>
                 <label className={labelCls}>{t("services.category") ?? "التصنيف"} *</label>
@@ -364,7 +364,7 @@ export default function NewServiceRequestPage() {
           </section>
 
           <section id="section-details" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"تفاصيل الطلب"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"تفاصيل الطلب"}</h2>
             <div className="space-y-5">
               <div className="sm:col-span-2">
                 <label className={labelCls}>{t("services.title") ?? "عنوان الطلب"} *</label>
@@ -376,7 +376,7 @@ export default function NewServiceRequestPage() {
               </div>
               {dynamicFields.length > 0 && (
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-5">
-                  <h2 className="text-sm font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-3">{t("services.details") ?? "تفاصيل إضافية"}</h2>
                   <Grid columns={2}>
                     {dynamicFields.map((field) => {
                       const label = field.label ?? field.label_ar ?? field.label_en ?? field.key;
@@ -415,10 +415,10 @@ export default function NewServiceRequestPage() {
           </section>
 
           <section id="section-location" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"الموقع"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"الموقع"}</h2>
             <div className="space-y-5">
               <div className="rounded-2xl border border-blue-100 bg-[var(--color-primary-soft)] p-4 dark:border-[var(--color-primary)]/30 dark:bg-[var(--color-primary-soft)]/30">
-                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white"><MapPin className="h-5 w-5" /></span><div><p className="text-sm font-black text-blue-950 dark:text-[var(--color-primary)]/80">حدّد مكان تنفيذ الخدمة بدقة</p><p className="mt-0.5 text-xs leading-5 text-[var(--color-primary)] dark:text-[var(--color-primary)]">الموقع الدقيق يحسّن مطابقة الطلب مع الحرفيين القريبين. لا يظهر للعامة، بل للمحترفين المطابقين فقط.</p></div></div><button type="button" onClick={locateMe} className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-black text-[var(--color-primary)] shadow-sm hover:bg-[var(--color-primary-soft)] dark:bg-blue-950 dark:text-blue-200"><LocateFixed className="h-4 w-4" />استخدم موقعي</button></div>
+                <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-primary)] text-white"><MapPin className="h-5 w-5" /></span><div><p className="text-sm font-bold text-blue-950 dark:text-[var(--color-primary)]/80">حدّد مكان تنفيذ الخدمة بدقة</p><p className="mt-0.5 text-xs leading-5 text-[var(--color-primary)] dark:text-[var(--color-primary)]">الموقع الدقيق يحسّن مطابقة الطلب مع الحرفيين القريبين. لا يظهر للعامة، بل للمحترفين المطابقين فقط.</p></div></div><button type="button" onClick={locateMe} className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-bold text-[var(--color-primary)] shadow-sm hover:bg-[var(--color-primary-soft)] dark:bg-blue-950 dark:text-blue-200"><LocateFixed className="h-4 w-4" />استخدم موقعي</button></div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label className={labelCls}>{t("services.city") ?? "الولاية / المدينة"} *</label><input value={draft.cityId} onChange={(e) => updateField("cityId", e.target.value)} className={inputCls} placeholder="مثال: بوشر" /></div>
@@ -444,7 +444,7 @@ export default function NewServiceRequestPage() {
           </section>
 
           <section id="section-attachments" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"المرفقات"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"المرفقات"}</h2>
             <div className="space-y-5">
               <div className="flex gap-2">
                 <input value={draft.attachmentUrl} onChange={(e) => updateField("attachmentUrl", e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAttachment(); } }} className={inputCls} placeholder="https://example.com/photo.jpg" />
@@ -467,7 +467,7 @@ export default function NewServiceRequestPage() {
           </section>
 
           <section id="section-schedule" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"الموعد"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"الموعد"}</h2>
             <Grid columns={2} className="space-y-5">
               <div>
                 <label className={labelCls}>{t("services.preferredDate") ?? "التاريخ المفضل"}</label>
@@ -511,7 +511,7 @@ export default function NewServiceRequestPage() {
           </section>
 
           <section id="section-contact" className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900 md:p-8">
-            <h2 className="mb-5 text-base font-black text-gray-900 dark:text-[var(--color-text-primary)]">{"التواصل"}</h2>
+            <h2 className="mb-5 text-base font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{"التواصل"}</h2>
             <div className="space-y-5">
               <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
                 <input type="radio" name="contactPreference" value="phone" checked={draft.contactPreference === "phone"} onChange={() => updateField("contactPreference", "phone")} className="h-4 w-4 text-[var(--color-primary)]" />

@@ -65,7 +65,7 @@ export default function CustomerDisputesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.disputes") ?? "نزاعاتي"}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.disputes") ?? "نزاعاتي"}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t("services.disputesSub") ?? "إدارة النزاعات المرتبطة بطلباتك"}</p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function CustomerDisputesPage() {
         ) : disputes.length === 0 ? (
           <div className="text-center py-16">
             <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Scale size={26} strokeWidth={1.75} /></span>
-            <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.noDisputes") ?? "لا توجد نزاعات"}</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.noDisputesSub") ?? "ستظهر النزاعات هنا عند وجودها"}</p>
           </div>
         ) : (

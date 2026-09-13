@@ -53,24 +53,24 @@ export default function OfficeRadarPage() {
     <OfficeWorkspaceShell activeTab="radar">
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">مسح الرادار الجغرافي</h2>
+          <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">مسح الرادار الجغرافي</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             يبحث عن العقارات ومزودي الخدمات ضمن نصف قطر (حتى 100 كم) باستخدام مسافة هافرساين.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <label className="block text-xs font-black text-gray-600 dark:text-gray-300">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-300">
               خط العرض
               <input value={lat} onChange={(e) => setLat(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
             </label>
-            <label className="block text-xs font-black text-gray-600 dark:text-gray-300">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-300">
               خط الطول
               <input value={lng} onChange={(e) => setLng(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
             </label>
-            <label className="block text-xs font-black text-gray-600 dark:text-gray-300">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-300">
               نصف القطر (كم)
               <input value={radius} onChange={(e) => setRadius(e.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
             </label>
-            <label className="block text-xs font-black text-gray-600 dark:text-gray-300">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-300">
               النوع
               <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
                 <option value="properties">عقارات</option>
@@ -79,14 +79,14 @@ export default function OfficeRadarPage() {
               </select>
             </label>
           </div>
-          <button type="button" onClick={() => void scan()} className="mt-4 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-black text-white hover:bg-[var(--color-primary-hover)]">
+          <button type="button" onClick={() => void scan()} className="mt-4 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[var(--color-primary-hover)]">
             تنفيذ المسح
           </button>
           {error && <p className="mt-3 text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">سجل عمليات المسح</h2>
+          <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">سجل عمليات المسح</h2>
           {loading ? (
             <p className="py-8 text-center text-sm text-gray-500">جارٍ التحميل…</p>
           ) : queries.length === 0 ? (
@@ -110,7 +110,7 @@ export default function OfficeRadarPage() {
 
       {result && (
         <section className="mt-5 rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">
+          <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">
             النتائج — {result.targets.length} نتيجة (استعلام {result.queryId.slice(0, 8)})
           </h2>
           {result.targets.length === 0 ? (
@@ -125,7 +125,7 @@ export default function OfficeRadarPage() {
                       {String(target.kind)} · {String(target.cityId || target.countryCode)} · {Number(target.distanceKm).toFixed(1)}كم
                     </p>
                   </div>
-                  <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-[var(--text-xs)] font-black text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">
+                  <span className="rounded-full bg-[var(--color-primary-soft)] px-2 py-0.5 text-label font-bold text-[var(--color-primary)] dark:bg-[var(--color-primary-soft)]/40 dark:text-[var(--color-primary)]">
                     {Number(target.distanceKm).toFixed(1)} كم
                   </span>
                 </li>

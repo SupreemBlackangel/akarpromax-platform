@@ -62,7 +62,7 @@ export default function Pagination({
                 aria-current={item === page ? "page" : undefined}
                 aria-label={`Page ${item}`}
                 className={cn(
-                  "inline-flex h-9 min-w-9 items-center justify-center rounded-[var(--radius-md)] px-[var(--space-2)] text-[var(--font-size-sm)] font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
+                  "inline-flex h-9 min-w-9 items-center justify-center rounded-[var(--radius-md)] px-[var(--space-2)] text-body-sm font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]",
                   item === page
                     ? "bg-[color:var(--color-primary)] text-[color:var(--color-primary-foreground)]"
                     : "border border-[color:var(--color-border)] text-[color:var(--color-text-primary)] hover:bg-[color:var(--color-surface-muted)]",

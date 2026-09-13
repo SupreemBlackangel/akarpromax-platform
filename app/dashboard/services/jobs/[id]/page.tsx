@@ -147,7 +147,7 @@ export default function JobDetailPage({ id }: Props) {
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-black text-gray-900 dark:text-white">
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                     {String(job.service_title_snapshot ?? request?.title ?? job.reference_number ?? `مهمة #${String(job.id).slice(0, 8)}`)}
                   </h1>
                   <p className="mt-1 text-xs text-gray-400">أنشئت في {formatDateTime(job.created_at)} • آخر تحديث {formatDateTime(job.updated_at)}</p>
@@ -167,7 +167,7 @@ export default function JobDetailPage({ id }: Props) {
 
             {nextStatuses.length > 0 && (
               <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.updateStatus") ?? "تحديث حالة المهمة"}</h2>
+                <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.updateStatus") ?? "تحديث حالة المهمة"}</h2>
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -185,7 +185,7 @@ export default function JobDetailPage({ id }: Props) {
             )}
 
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.timeline") ?? "سجل المهمة"}</h2>
+              <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.timeline") ?? "سجل المهمة"}</h2>
               {(job.timeline ?? []).length === 0 ? (
                 <p className="text-sm text-gray-400">{t("services.empty")}</p>
               ) : (
@@ -208,13 +208,13 @@ export default function JobDetailPage({ id }: Props) {
             </div>
 
             <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.messages") ?? "الرسائل"}</h2>
+              <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.messages") ?? "الرسائل"}</h2>
               <ThreadMessages threadType="order" threadId={job.id} viewerEmail={viewer.email} t={t} />
             </div>
 
             {canReview && (
               <div className="bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                <h2 className="text-sm font-black text-gray-700 dark:text-gray-200 mb-3">{t("services.leaveReview") ?? "قيم الخدمة"}</h2>
+                <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">{t("services.leaveReview") ?? "قيم الخدمة"}</h2>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-sm text-gray-600 dark:text-gray-300">التقييم:</span>
                   <div className="flex gap-1 text-2xl">

@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
   if (ctx.organization.type !== "real_estate") return <OfficeWorkspaceShell activeTab="property-requests"><div data-org-id={ctx.organization.id} className="rounded-2xl border bg-[var(--color-surface)] p-10">طلبات العقار متاحة للمكاتب العقارية فقط.</div></OfficeWorkspaceShell>;
   const rows = await getOfficePropertyRequests(ctx.organization.id);
   return <OfficeWorkspaceShell activeTab="property-requests"><div data-org-id={ctx.organization.id}>
-    <h2 className="mb-4 text-xl font-black">طلبات العقار المرتبطة بالمكتب</h2>
+    <h2 className="mb-4 text-xl font-bold">طلبات العقار المرتبطة بالمكتب</h2>
     <div className="space-y-3">{rows.map(({request,offer}) => <div key={offer.id} className="rounded-2xl border bg-[var(--color-surface)] p-5"><strong>{request.propertyType} · {request.city}</strong><p className="mt-2 text-sm text-gray-500">حالة الطلب: {request.status} · حالة عرض المكتب: {offer.status}</p></div>)}</div>
     {rows.length === 0 && <p className="rounded-2xl border bg-[var(--color-surface)] p-8 text-gray-500">لا توجد طلبات مرتبطة بعروض هذا المكتب.</p>}
   </div></OfficeWorkspaceShell>;

@@ -26,7 +26,7 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
             <a href="/" aria-label={labels.brandTitle} className="inline-flex items-center gap-[var(--space-2)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]">
               <BrandMark size="md" name={labels.brandTitle} subtitle={labels.brandSubtitle} />
             </a>
-            <p className="max-w-prose text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)]">
+            <p className="max-w-prose text-body-sm text-[color:var(--color-text-secondary)]">
               {labels.footerDescription}
             </p>
           </div>
@@ -38,7 +38,7 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
           {visibleColumns.map((column) => (
             <nav key={column.key} aria-label={labels[column.titleKey]}>
               <details className="disclosure-sm">
-                <summary className="mb-[var(--space-3)] flex cursor-pointer items-center justify-between gap-2 text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
+                <summary className="mb-[var(--space-3)] flex cursor-pointer items-center justify-between gap-2 text-body-sm font-semibold text-[color:var(--color-text-primary)]">
                   {labels[column.titleKey]}
                   <ChevronDown aria-hidden="true" className="disclosure-chevron size-4 shrink-0 sm:hidden" />
                 </summary>
@@ -47,7 +47,7 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
                   <li key={link.key}>
                     <a
                       href={link.href}
-                      className="text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
+                      className="text-body-sm text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
                     >
                       {labels[link.labelKey]}
                     </a>
@@ -59,16 +59,16 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
           ))}
 
           <div className="flex flex-col gap-[var(--space-3)]">
-            <h3 className="text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">
+            <h3 className="text-body-sm font-semibold text-[color:var(--color-text-primary)]">
               {labels.contactTitle}
             </h3>
             <address className="flex flex-col gap-[var(--space-2)] not-italic">
-              <span className="text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)]">
+              <span className="text-body-sm text-[color:var(--color-text-secondary)]">
                 {labels.contactLocation}
               </span>
               <a
                 href={FOOTER_CONTACT.mailto}
-                className="text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
+                className="text-body-sm text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
               >
                 {labels.contactEmail}
               </a>
@@ -82,7 +82,7 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
               <li key={link.key}>
                 <a
                   href={link.href}
-                  className="text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
+                  className="text-body-sm text-[color:var(--color-text-secondary)] transition-colors duration-[var(--motion-fast)] hover:text-[color:var(--color-primary)] focus-visible:outline-none focus-visible:rounded-[var(--radius-sm)] focus-visible:shadow-[var(--shadow-focus)]"
                 >
                   {labels[link.labelKey]}
                 </a>
@@ -92,8 +92,8 @@ export default function PublicFooter({ labels }: PublicFooterProps) {
         )}
 
         <div className="mt-[var(--space-8)] flex flex-col gap-[var(--space-2)] border-t border-[color:var(--color-border)] pt-[var(--space-5)] sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.footerRights}</p>
-          <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.footerTagline}</p>
+          <p className="text-label text-[color:var(--color-text-muted)]">{labels.footerRights}</p>
+          <p className="text-label text-[color:var(--color-text-muted)]">{labels.footerTagline}</p>
         </div>
       </PageContainer>
     </footer>

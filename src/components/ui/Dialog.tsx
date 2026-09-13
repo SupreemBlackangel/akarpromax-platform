@@ -89,12 +89,12 @@ export default function Dialog({
           <div className="flex items-start justify-between gap-[var(--space-4)] border-b border-[color:var(--color-border)] p-[var(--space-6)]">
             <div className="flex flex-col gap-[var(--space-2)]">
               {title && (
-                <h2 id={titleId} className="text-[var(--font-size-lg)] font-semibold text-[color:var(--color-text-primary)]">
+                <h2 id={titleId} className="text-h3 font-semibold text-[color:var(--color-text-primary)]">
                   {title}
                 </h2>
               )}
               {description && (
-                <p id={descriptionId} className="text-[var(--font-size-sm)] text-[color:var(--color-text-muted)]">
+                <p id={descriptionId} className="text-body-sm text-[color:var(--color-text-muted)]">
                   {description}
                 </p>
               )}

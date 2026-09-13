@@ -67,8 +67,8 @@ function OfficeSyncPageInner() {
   return (
     <OfficeWorkspaceShell activeTab="sync">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-black text-gray-900 dark:text-[var(--color-text-primary)]">عمليات المزامنة</h2>
-        <button type="button" onClick={() => void retry()} className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-xs font-black text-white hover:bg-[var(--color-primary-hover)]">
+        <h2 className="font-bold text-gray-900 dark:text-[var(--color-text-primary)]">عمليات المزامنة</h2>
+        <button type="button" onClick={() => void retry()} className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white hover:bg-[var(--color-primary-hover)]">
           إعادة محاولة الفاشلة
         </button>
       </div>
@@ -82,7 +82,7 @@ function OfficeSyncPageInner() {
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[var(--color-surface)] dark:border-gray-800 dark:bg-gray-900">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs font-black uppercase text-gray-400 dark:bg-gray-800/60">
+            <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-400 dark:bg-gray-800/60">
               <tr>
                 <th className="px-4 py-3 text-start">العملية</th>
                 <th className="px-4 py-3 text-start">الحالة</th>
@@ -99,7 +99,7 @@ function OfficeSyncPageInner() {
                     <p className="text-xs text-gray-400">{op.entity_id ? op.entity_id.slice(0, 24) : "—"}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[var(--text-xs)] font-black uppercase ${STATUS_TONES[op.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-label font-bold uppercase ${STATUS_TONES[op.status] ?? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"}`}>
                       {op.status}
                     </span>
                   </td>

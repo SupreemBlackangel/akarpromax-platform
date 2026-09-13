@@ -100,7 +100,7 @@ export default function LuxuryPropertyCard({ property, className = "" }: { prope
         {/* السعر فوق الصورة */}
         <div className="absolute bottom-3 right-3 text-white">
           <p className="text-xs font-light text-[var(--color-surface-muted)]">السعر المطلوب</p>
-          <p className="text-xl font-bold tracking-tight text-white">
+          <p className="text-xl font-bold text-white">
             {typeof property.price === "number" ? property.price.toLocaleString("ar") : property.price} <span className="text-xs font-normal text-[var(--color-primary)]">{currencyLabel}</span>
           </p>
         </div>

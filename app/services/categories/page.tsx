@@ -65,7 +65,7 @@ export default function ServiceCategoriesPage() {
           ← {t("services.back") ?? "العودة للسوق"}
         </Link>
         <div className="mt-6">
-          <h1 className="text-3xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.categories") ?? "جميع التصنيفات"}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{t("services.categories") ?? "جميع التصنيفات"}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("services.categoriesSub") ?? "استعرض جميع تصنيفات الخدمات المتاحة واختر ما يناسبك"}</p>
         </div>
 
@@ -91,7 +91,7 @@ export default function ServiceCategoriesPage() {
           ) : filteredCategories.length === 0 ? (
             <div className="text-center py-16">
               <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Search size={26} strokeWidth={1.75} /></span>
-              <h2 className="text-xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">{search ? t("services.noResults") ?? "لا توجد نتائج" : t("services.empty") ?? "لا توجد تصنيفات"}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">{search ? t("services.noResults") ?? "لا توجد نتائج" : t("services.empty") ?? "لا توجد تصنيفات"}</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{search ? t("services.noResultsSub") ?? "جرب كلمات بحث مختلفة" : t("services.emptySub") ?? "لا توجد تصنيفات متاحة حالياً"}</p>
             </div>
           ) : (

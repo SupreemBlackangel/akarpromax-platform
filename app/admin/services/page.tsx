@@ -21,7 +21,7 @@ async function ServicesAdminGate() {
       <div dir="rtl" className="min-h-[50vh] grid place-items-center px-4">
         <div className="text-center max-w-md">
           <span aria-hidden="true" className="mx-auto mb-[var(--space-4)] grid size-14 place-items-center rounded-[var(--radius-card)] bg-[color:var(--color-primary-soft)] text-[color:var(--color-primary)]"><Lock size={26} strokeWidth={1.75} /></span>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-[var(--color-text-primary)]">403 — صلاحية مطلوبة</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-[var(--color-text-primary)]">403 — صلاحية مطلوبة</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             حسابك مسجّل لكنه لا يملك صلاحيات إدارة سوق الخدمات. اطلب من المدير العام منحك الصلاحية المناسبة.
           </p>

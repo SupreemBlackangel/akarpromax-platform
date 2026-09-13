@@ -40,7 +40,7 @@ export default function MyOffersPage() {
       onLogout={handleLogout}
     >
       <ServiceDashboardShell viewer={viewer} locale={locale} dir={dir} t={t} active="offers">
-        <h2 className="text-lg font-black text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.offers") ?? "العروض"}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-[var(--color-text-primary)] mb-4">{t("services.offers") ?? "العروض"}</h2>
 
         {loading ? (
           <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-28 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}</div>

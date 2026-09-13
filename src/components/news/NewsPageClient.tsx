@@ -158,7 +158,7 @@ export default function NewsPageClient() {
                           <span className="rounded-full bg-[var(--color-warning-soft)] px-2.5 py-1 text-[var(--color-warning)]">{locale === "ar" ? "مثبت" : locale === "tr" ? "Sabit" : "Pinned"}</span>
                         )}
                       </div>
-                      <h2 className="text-xl font-black text-gray-900 dark:text-white">{title}</h2>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
                       <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{summary}</p>
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
                         <span>{formatNewsDate(item.updatedAt, locale)}</span>

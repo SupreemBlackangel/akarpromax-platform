@@ -153,7 +153,7 @@ export function PublicShellLayout({
       type="button"
       aria-label={labels.chatAria}
       onClick={() => window.dispatchEvent(new CustomEvent("akar:chat:open"))}
-      className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+      className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
     >
       <MessageCircle aria-hidden="true" className="size-5 shrink-0" />
       {locale === "ar" ? "الدردشة" : locale === "tr" ? "Sohbet" : "Chat"}
@@ -162,8 +162,8 @@ export function PublicShellLayout({
   const sidebarFooter = viewer.authenticated ? (
     <div className="flex flex-col gap-[var(--space-3)]">
       <div className="min-w-0">
-        <p className="truncate text-[var(--font-size-sm)] font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
-        <p className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
+        <p className="truncate text-body-sm font-semibold text-[color:var(--color-text-primary)]">{viewer.displayName || viewer.email}</p>
+        <p className="text-label text-[color:var(--color-text-muted)]">{labels.navAccount}</p>
       </div>
       {sidebarChatButton}
     </div>
@@ -173,7 +173,7 @@ export function PublicShellLayout({
           carries the Google/Facebook options and the register link. */}
       <Link
         href="/login"
-        className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[var(--font-size-sm)] font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+        className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-[color:var(--color-primary)] px-[var(--space-4)] py-[var(--space-3)] text-body-sm font-semibold text-[color:var(--color-primary-foreground)] transition-colors duration-[var(--motion-fast)] hover:bg-[color:var(--color-primary-hover)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
       >
         <LogIn className="size-4" aria-hidden="true" />
         {labels.login}
@@ -204,7 +204,7 @@ export function PublicShellLayout({
     <div className="public-page-shell" data-sidebar-state={sidebarCollapsed ? "collapsed" : "expanded"}>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:inset-x-0 focus:top-0 focus:z-[var(--layer-toast)] focus:bg-[color:var(--color-primary)] focus:px-[var(--space-5)] focus:py-[var(--space-3)] focus:text-center focus:text-[var(--font-size-md)] focus:font-semibold focus:text-[color:var(--color-primary-foreground)]"
+        className="sr-only focus:not-sr-only focus:fixed focus:inset-x-0 focus:top-0 focus:z-[var(--layer-toast)] focus:bg-[color:var(--color-primary)] focus:px-[var(--space-5)] focus:py-[var(--space-3)] focus:text-center focus:text-body focus:font-semibold focus:text-[color:var(--color-primary-foreground)]"
       >
         {labels.skipToContent}
       </a>

@@ -26,7 +26,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function 
   return (
     <div className="flex flex-col gap-[var(--space-2)]">
       {label && (
-        <label htmlFor={inputId} className="text-[var(--font-size-sm)] font-medium text-[color:var(--color-text-primary)]">
+        <label htmlFor={inputId} className="text-body-sm font-medium text-[color:var(--color-text-primary)]">
           {label}
         </label>
       )}
@@ -36,7 +36,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function 
           id={inputId}
           type={visible ? "text" : "password"}
           className={cn(
-            "h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-4)] pe-[var(--space-10)] text-[var(--font-size-md)] text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus:outline-none focus:shadow-[var(--shadow-focus)] focus:border-[color:var(--color-border-focus)] disabled:bg-[color:var(--color-disabled-surface)] disabled:text-[color:var(--color-disabled)]",
+            "h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-strong)] bg-[color:var(--color-surface-input)] px-[var(--space-4)] pe-[var(--space-10)] text-body text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)] transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus:outline-none focus:shadow-[var(--shadow-focus)] focus:border-[color:var(--color-border-focus)] disabled:bg-[color:var(--color-disabled-surface)] disabled:text-[color:var(--color-disabled)]",
             error && "border-[color:var(--color-danger)]",
             className,
           )}
@@ -57,12 +57,12 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function 
         )}
       </div>
       {hint && (
-        <span id={hintId} className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">
+        <span id={hintId} className="text-label text-[color:var(--color-text-muted)]">
           {hint}
         </span>
       )}
       {error && (
-        <span id={errorId} role="alert" className="text-[var(--font-size-xs)] font-medium text-[color:var(--color-danger)]">
+        <span id={errorId} role="alert" className="text-label font-medium text-[color:var(--color-danger)]">
           {error}
         </span>
       )}

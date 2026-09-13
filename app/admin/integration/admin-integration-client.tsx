@@ -108,7 +108,7 @@ export default function AdminIntegrationClient() {
       {/* ---- the integrations themselves: one card per connected office app ---- */}
       <section aria-labelledby="integrations-heading" className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="integrations-heading" className="text-base font-black text-[color:var(--color-text-primary)]">تطبيقات المكاتب المتصلة</h2>
+          <h2 id="integrations-heading" className="text-base font-bold text-[color:var(--color-text-primary)]">تطبيقات المكاتب المتصلة</h2>
           {data && devices.length > 0 && <span className="text-xs text-[color:var(--color-text-secondary)]">{devices.length} تكامل</span>}
         </div>
         {error ? (

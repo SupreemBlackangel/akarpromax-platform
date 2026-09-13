@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
         {/* header */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
           <div>
-            <h2 className="text-xl font-black text-[var(--color-text-primary)]">عقارات {name}</h2>
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)]">عقارات {name}</h2>
             <p className="text-sm text-[var(--color-text-secondary)]">{rows.length} عقار · {approved} معتمد</p>
           </div>
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[color:color-mix(in_oklab,var(--color-primary),transparent_88%)] text-[var(--color-primary)]">
@@ -71,7 +71,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
                       <Building2 size={16} />
                     </span>
                   </div>
-                  <strong className="line-clamp-2 text-[15px] font-black text-[var(--color-text-primary)]">{String(p.titleAr ?? "عقار")}</strong>
+                  <strong className="line-clamp-2 text-[15px] font-bold text-[var(--color-text-primary)]">{String(p.titleAr ?? "عقار")}</strong>
                   {p.city ? (
                     <p className="mt-2 inline-flex items-center gap-1 text-sm text-[var(--color-text-secondary)]">
                       <MapPin size={13} /> {String(p.city)}

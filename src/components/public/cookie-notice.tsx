@@ -26,10 +26,10 @@ export default function CookieNotice({ labels, visible, onAccept, onReject, onMa
     >
       <PageContainer className="flex flex-col gap-[var(--space-4)] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-[var(--space-2)]">
-          <h2 className="text-[var(--font-size-md)] font-semibold text-[color:var(--color-text-primary)]">
+          <h2 className="text-body font-semibold text-[color:var(--color-text-primary)]">
             {labels.cookieTitle}
           </h2>
-          <p className="max-w-prose text-[var(--font-size-sm)] text-[color:var(--color-text-secondary)]">
+          <p className="max-w-prose text-body-sm text-[color:var(--color-text-secondary)]">
             {labels.cookieDescription}
           </p>
         </div>

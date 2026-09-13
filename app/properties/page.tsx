@@ -255,7 +255,7 @@ export default function PropertiesPage() {
               ["maxArea", locale === "ar" ? "المساحة إلى" : locale === "tr" ? "Alan (max)" : "Max area"],
               ["bedrooms", locale === "ar" ? "الغرف" : locale === "tr" ? "Oda" : "Beds"],
             ] as Array<[keyof typeof adv, string]>).map(([key, label]) => (
-              <label key={key} className="flex flex-col gap-1 text-[var(--text-xs)] font-bold text-gray-500 dark:text-gray-400">
+              <label key={key} className="flex flex-col gap-1 text-label font-bold text-gray-500 dark:text-gray-400">
                 {label}
                 <input
                   type="number"

@@ -112,7 +112,7 @@ export default function DashboardHomePage() {
             <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
               <LayoutDashboard className="h-7 w-7" />
             </span>
-            <h1 className="mb-2 text-2xl font-black text-[var(--color-text-primary)]">{loginTitle[locale]}</h1>
+            <h1 className="mb-2 text-2xl font-bold text-[var(--color-text-primary)]">{loginTitle[locale]}</h1>
             <p className="mb-6 text-sm text-[var(--color-text-muted)]">{loginBody[locale]}</p>
             <button
               type="button"
@@ -125,7 +125,7 @@ export default function DashboardHomePage() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{heading[locale]}</h1>
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{heading[locale]}</h1>
               <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                 {viewer.displayName} • {viewer.email}
               </p>
@@ -134,7 +134,7 @@ export default function DashboardHomePage() {
             <div className="space-y-9">
               {sections.map((section) => (
                 <section key={section.key}>
-                  <h2 className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--color-primary)]">
+                  <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
                     {section.title[locale]}
                   </h2>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -156,7 +156,7 @@ export default function DashboardHomePage() {
                             <Icon className="h-5 w-5" />
                           </span>
                           <span className="min-w-0">
-                            <span className="block font-black text-[var(--color-text-primary)] transition group-hover:text-[var(--color-primary)]">
+                            <span className="block font-bold text-[var(--color-text-primary)] transition group-hover:text-[var(--color-primary)]">
                               {card.title[locale]}
                             </span>
                             <span className="mt-0.5 block text-xs leading-5 text-[var(--color-text-muted)]">

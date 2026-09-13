@@ -147,7 +147,7 @@ export default function OrganizationProfilePage({ mode, id }: { mode: Organizati
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-gray-800 dark:text-gray-300">{organization.classification}</span>
                     <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[var(--color-success)] dark:bg-emerald-900/40 dark:text-emerald-300">{organization.status}</span>
                   </div>
-                  <h1 className="text-2xl font-black text-gray-900 dark:text-white">{pick(locale, organization, "name")}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{pick(locale, organization, "name")}</h1>
                   <p className={`mt-1 text-xs font-bold uppercase tracking-wide ${identity.heading}`}>{identity.titleNote[locale]}</p>
                   <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{pick(locale, organization, "description") || organization.slug}</p>
                 </div>
@@ -156,7 +156,7 @@ export default function OrganizationProfilePage({ mode, id }: { mode: Organizati
 
             <div className="grid gap-6 md:grid-cols-[1fr,2fr]">
               <aside className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-                <h3 className="text-sm font-black text-gray-900 dark:text-white">{locale === "ar" ? "ملخص الحضور" : locale === "tr" ? "Varlik Ozeti" : "Presence Summary"}</h3>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">{locale === "ar" ? "ملخص الحضور" : locale === "tr" ? "Varlik Ozeti" : "Presence Summary"}</h3>
                 <div className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300">
                   <p>{locale === "ar" ? "الدولة" : locale === "tr" ? "Ulke" : "Country"}: <strong>{organization.countryCode}</strong></p>
                   <p>{locale === "ar" ? "المدينة" : locale === "tr" ? "Sehir" : "City"}: <strong>{organization.cityId || "—"}</strong></p>
@@ -167,7 +167,7 @@ export default function OrganizationProfilePage({ mode, id }: { mode: Organizati
               </aside>
 
               <section className="rounded-2xl border border-gray-200 bg-[var(--color-surface)] p-6 dark:border-gray-800 dark:bg-gray-900">
-                <h3 className="text-sm font-black text-gray-900 dark:text-white">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   {mode === "offices"
                     ? (locale === "ar" ? "بيانات التواصل" : locale === "tr" ? "Iletisim" : "Contact")
                     : (locale === "ar" ? "بيانات الشركة" : locale === "tr" ? "Sirket Bilgileri" : "Company Details")}

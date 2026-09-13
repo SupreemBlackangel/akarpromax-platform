@@ -56,7 +56,7 @@ export function LandDetailClient({ id }: { id: string }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="text-6xl">🏗️</div>
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white">Land Parcel Not Found</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Land Parcel Not Found</h1>
         <Link href="/land" className="text-[var(--color-primary)] hover:underline">Back to Search</Link>
       </div>
     );
@@ -72,7 +72,7 @@ export function LandDetailClient({ id }: { id: string }) {
         <div className="bg-[var(--color-surface)] dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white">{parcel.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{parcel.title}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {parcel.district ? `${parcel.district}, ` : ''}{parcel.city}, {parcel.governorate}, {parcel.country}
               </p>

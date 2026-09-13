@@ -26,7 +26,7 @@ export default function Checkbox({
       <label
         htmlFor={checkboxId}
         className={cn(
-          "inline-flex items-start gap-[var(--space-3)] text-[var(--font-size-md)] text-[color:var(--color-text-primary)]",
+          "inline-flex items-start gap-[var(--space-3)] text-body text-[color:var(--color-text-primary)]",
           props.disabled && "cursor-not-allowed text-[color:var(--color-disabled)]",
         )}
       >
@@ -46,12 +46,12 @@ export default function Checkbox({
         {label && <span className="select-none leading-normal">{label}</span>}
       </label>
       {hint && (
-        <span id={hintId} className="text-[var(--font-size-xs)] text-[color:var(--color-text-muted)]">
+        <span id={hintId} className="text-label text-[color:var(--color-text-muted)]">
           {hint}
         </span>
       )}
       {error && (
-        <span id={errorId} role="alert" className="text-[var(--font-size-xs)] font-medium text-[color:var(--color-danger)]">
+        <span id={errorId} role="alert" className="text-label font-medium text-[color:var(--color-danger)]">
           {error}
         </span>
       )}

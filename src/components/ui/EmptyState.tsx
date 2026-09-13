@@ -53,16 +53,16 @@ export default function EmptyState({
       >
         <Icon size={26} strokeWidth={1.75} />
       </span>
-      <h2 className="font-[family-name:var(--font-heading-stack)] text-[var(--text-md)] font-bold text-[color:var(--color-text-primary)]">
+      <h2 className="font-[family-name:var(--font-heading-stack)] text-body font-bold text-[color:var(--color-text-primary)]">
         {title}
       </h2>
       {description ? (
-        <p className="mt-[var(--space-2)] text-[var(--text-sm)] leading-[var(--leading-md)] text-[color:var(--color-text-secondary)]">
+        <p className="mt-[var(--space-2)] text-body-sm leading-[var(--leading-md)] text-[color:var(--color-text-secondary)]">
           {description}
         </p>
       ) : null}
       {action ? <div className="mt-[var(--space-5)] flex flex-wrap items-center justify-center gap-[var(--space-2)]">{action}</div> : null}
-      {hint ? <p className="mt-[var(--space-3)] text-[var(--text-xs)] text-[color:var(--color-text-muted)]">{hint}</p> : null}
+      {hint ? <p className="mt-[var(--space-3)] text-label text-[color:var(--color-text-muted)]">{hint}</p> : null}
     </div>
   );
 }

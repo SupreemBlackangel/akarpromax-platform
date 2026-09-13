@@ -43,12 +43,12 @@ export default function HomeFeaturedProviders({ locale }: { locale: Locale }) {
     <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:py-16">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-primary">
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
             <span className="h-0.5 w-5 rounded-full bg-primary" />
             <Users className="h-3.5 w-3.5" />
             سوق الخدمات
           </span>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-[var(--color-text-primary)] sm:text-4xl">حرفيون مميزون</h2>
+          <h2 className="mt-2 text-3xl font-bold text-[var(--color-text-primary)] sm:text-4xl">حرفيون مميزون</h2>
         </div>
         <Link href="/providers" className="inline-flex items-center gap-1.5 text-sm font-bold text-primary transition hover:text-primary-hover">
           عرض الكل

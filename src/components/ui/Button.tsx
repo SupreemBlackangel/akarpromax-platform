@@ -15,7 +15,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   "aria-label"?: string;
 };
 
-const base = "inline-flex select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-[var(--radius-md)] font-medium leading-none transition-[background-color,box-shadow,color,border-color,opacity] duration-[var(--motion-fast)] ease-[var(--easing-standard)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] disabled:pointer-events-none disabled:opacity-60";
+const base = "inline-flex select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-[var(--radius-control)] text-button leading-none transition-[background-color,box-shadow,color,border-color,opacity] duration-[var(--motion-fast)] ease-[var(--easing-standard)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)] disabled:pointer-events-none disabled:opacity-60";
 
 const variants: Record<ButtonVariant, string> = {
   primary: "bg-[color:var(--color-primary)] text-[color:var(--color-primary-foreground)] hover:bg-[color:var(--color-primary-hover)] active:bg-[color:var(--color-primary-active)]",
@@ -26,10 +26,10 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
-  xs: "h-6 px-[var(--space-3)] text-[var(--font-size-xs)]",
-  sm: "h-8 px-[var(--space-4)] text-[var(--font-size-sm)]",
-  md: "h-10 px-[var(--space-5)] text-[var(--font-size-md)]",
-  lg: "h-12 px-[var(--space-8)] text-[var(--font-size-lg)]",
+  xs: "h-6 px-[var(--space-3)] text-label",
+  sm: "h-8 px-[var(--space-4)] text-label",
+  md: "h-10 px-[var(--space-5)] text-button",
+  lg: "h-12 px-[var(--space-8)] text-button",
   icon: "h-9 w-9",
 };
 

@@ -11,7 +11,7 @@ import { cn } from "@/src/utils/cn";
 export function Table({ className = "", children, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
     <div className="w-full overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)]">
-      <table className={cn("w-full border-collapse text-start text-[var(--font-size-sm)]", className)} {...props}>
+      <table className={cn("w-full border-collapse text-start text-table tabular-nums", className)} {...props}>
         {children}
       </table>
     </div>
@@ -51,7 +51,7 @@ export function HeadCell({ className = "", children, ...props }: ThHTMLAttribute
   return (
     <th
       className={cn(
-        "px-[var(--space-4)] py-[var(--space-3)] text-start text-[var(--font-size-xs)] font-bold uppercase tracking-wide text-[var(--color-text-muted)] whitespace-nowrap",
+        "px-[var(--space-4)] py-[var(--space-3)] text-start text-table-head uppercase tracking-wide text-[var(--color-text-muted)] whitespace-nowrap",
         className,
       )}
       {...props}
@@ -79,7 +79,7 @@ export function Cell({ className = "", children, ...props }: TdHTMLAttributes<HT
 export function EmptyRow({ colSpan, children }: { colSpan: number; children: React.ReactNode }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-[var(--space-4)] py-[var(--space-12)] text-center text-[var(--font-size-sm)] text-[var(--color-text-muted)]">
+      <td colSpan={colSpan} className="px-[var(--space-4)] py-[var(--space-12)] text-center text-body-sm text-[var(--color-text-muted)]">
         {children}
       </td>
     </tr>

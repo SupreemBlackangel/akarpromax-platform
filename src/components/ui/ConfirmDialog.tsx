@@ -69,7 +69,7 @@ export function useConfirm(): [(request: ConfirmRequest) => Promise<boolean>, Re
         <button
           type="button"
           onClick={() => settle(false)}
-          className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-black text-[var(--color-text-secondary)]"
+          className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-bold text-[var(--color-text-secondary)]"
         >
           {pending.cancelLabel ?? "إلغاء"}
         </button>
@@ -77,7 +77,7 @@ export function useConfirm(): [(request: ConfirmRequest) => Promise<boolean>, Re
           type="button"
           autoFocus
           onClick={() => settle(true)}
-          className={`rounded-xl px-5 py-2.5 text-sm font-black text-white ${
+          className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white ${
             pending.tone === "danger" ? "bg-[var(--color-danger)]" : "bg-[var(--color-primary)]"
           }`}
         >

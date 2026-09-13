@@ -49,7 +49,7 @@ export default function DashboardPageShell({ currentPath, title, description, ac
               <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
                 <Lock className="h-7 w-7" />
               </span>
-              <h1 className="mb-2 text-2xl font-black text-[var(--color-text-primary)]">{COMMON.loginTitle[locale]}</h1>
+              <h1 className="mb-2 text-2xl font-bold text-[var(--color-text-primary)]">{COMMON.loginTitle[locale]}</h1>
               <p className="mb-6 text-sm text-[var(--color-text-muted)]">{COMMON.loginBody[locale]}</p>
               <button type="button" onClick={() => openLogin("login")} className="rounded-xl bg-[var(--color-primary)] px-6 py-3 text-sm font-bold text-white transition hover:bg-[var(--color-primary-hover)]">
                 {COMMON.loginCta[locale]}
@@ -82,7 +82,7 @@ export default function DashboardPageShell({ currentPath, title, description, ac
             <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
               <Lock className="h-7 w-7" />
             </span>
-            <h1 className="mb-2 text-2xl font-black text-[var(--color-text-primary)]">{COMMON.loginTitle[locale]}</h1>
+            <h1 className="mb-2 text-2xl font-bold text-[var(--color-text-primary)]">{COMMON.loginTitle[locale]}</h1>
             <p className="mb-6 text-sm text-[var(--color-text-muted)]">{COMMON.loginBody[locale]}</p>
             <button
               type="button"
@@ -103,7 +103,7 @@ export default function DashboardPageShell({ currentPath, title, description, ac
               )}
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl font-black text-[var(--color-text-primary)]">{title[locale]}</h1>
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{title[locale]}</h1>
                   {description && <p className="mt-1 text-sm text-[var(--color-text-muted)]">{description[locale]}</p>}
                 </div>
                 {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

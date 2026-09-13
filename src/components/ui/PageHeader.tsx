@@ -27,7 +27,7 @@ export default function PageHeader({
       <div className="flex flex-wrap items-end justify-between gap-[var(--space-4)]">
         <div className="flex min-w-0 flex-col gap-[var(--space-2)]">
           {showEyebrow && (
-            <span className="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[color:var(--color-primary-hover)]">
+            <span className="text-label font-semibold uppercase tracking-wide text-[color:var(--color-primary-hover)]">
               {eyebrow}
             </span>
           )}
@@ -41,7 +41,7 @@ export default function PageHeader({
             {title}
           </h1>
           {description && (
-            <p className="max-w-prose text-[var(--text-sm)] text-[color:var(--color-text-secondary)]">{description}</p>
+            <p className="max-w-prose text-body-sm text-[color:var(--color-text-secondary)]">{description}</p>
           )}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-[var(--space-3)]">{actions}</div>}

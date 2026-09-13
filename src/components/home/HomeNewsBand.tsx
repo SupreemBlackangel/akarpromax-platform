@@ -48,11 +48,11 @@ export default function HomeNewsBand() {
       <div className="mx-auto w-full max-w-6xl px-5 py-12">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <span className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-primary">
+            <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
               <span className="h-0.5 w-5 rounded-full bg-primary" />
               آخر المستجدات
             </span>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--color-text-primary)] sm:text-3xl">أخبار القطاع العقاري</h2>
+            <h2 className="mt-2 text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">أخبار القطاع العقاري</h2>
           </div>
         </div>
 

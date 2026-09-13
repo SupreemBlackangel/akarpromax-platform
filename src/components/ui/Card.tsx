@@ -53,7 +53,7 @@ export function CardHeader({ className = "", children, ...props }: HTMLAttribute
 
 export function CardTitle({ as: Tag = "h3", className = "", children, ...props }: { as?: ElementType } & HTMLAttributes<HTMLElement>) {
   return (
-    <Tag className={cn("text-[var(--font-size-lg)] font-semibold text-[color:var(--color-text-primary)]", className)} {...props}>
+    <Tag className={cn("text-h3 font-semibold text-[color:var(--color-text-primary)]", className)} {...props}>
       {children}
     </Tag>
   );
@@ -61,7 +61,7 @@ export function CardTitle({ as: Tag = "h3", className = "", children, ...props }
 
 export function CardDescription({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("text-[var(--font-size-sm)] text-[color:var(--color-text-muted)]", className)} {...props}>
+    <div className={cn("text-body-sm text-[color:var(--color-text-muted)]", className)} {...props}>
       {children}
     </div>
   );
