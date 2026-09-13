@@ -10,7 +10,7 @@ import {
 
 import { useServicesPage } from "@services-ui/useServicesPage";
 import { ServiceCategoryIcon, type CategoryRow } from "@services-ui/ServiceCards";
-import { apiFetch, formatDate, nameFor } from "@services-client";
+import { apiFetch, formatDate, nameFor, ServiceError } from "@services-client";
 import { getCurrency } from "@/lib/market/currency-registry";
 import Dialog from "@/src/components/ui/Dialog";
 import {
@@ -146,6 +146,8 @@ export default function ServicesAdminClient() {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState("");
   const [hasAccess, setHasAccess] = useState(true);
+  /** A server-side failure, which is not the same as being refused. */
+  const [loadError, setLoadError] = useState("");
   /** The decision waiting on the reviewer's confirmation, if any. */
   const [decision, setDecision] = useState<Decision | null>(null);
 
@@ -165,7 +167,26 @@ export default function ServicesAdminClient() {
       setSnapshot(adminResult.value.snapshot ?? { recentProviders: [], recentRequests: [], recentOrders: [], recentReports: [] });
       setSettings(adminResult.value.settings);
       setHasAccess(true);
-    } else setHasAccess(false);
+      setLoadError("");
+    } else {
+      /*
+       * A refusal and a failure are not the same thing, and this told the
+       * reader they were.
+       *
+       * Any rejection at all set "you do not have permission". So when the
+       * overview query hit a column production did not have, the platform's
+       * own owner was told he lacked permission to his own console — with the
+       * providers table loading correctly two inches below, because THAT
+       * request had succeeded. He had every permission; the server had a 500.
+       *
+       * Only 401 and 403 are about permission. Everything else is the server
+       * failing, and it says so.
+       */
+      const status = adminResult.reason instanceof ServiceError ? adminResult.reason.status : 0;
+      const refused = status === 401 || status === 403;
+      setHasAccess(!refused);
+      setLoadError(refused ? "" : "تعذّر تحميل نظرة عامة على السوق. المشكلة في الخادم لا في صلاحياتك.");
+    }
     if (providersResult.status === "fulfilled") setProviders(providersResult.value.profiles ?? []);
     if (reportsResult.status === "fulfilled") setReports(reportsResult.value.reports ?? []);
     if (categoriesResult.status === "fulfilled") setCategories(categoriesResult.value.categories ?? []);
@@ -306,6 +327,7 @@ export default function ServicesAdminClient() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">مركز التحكم</p><h1 className="mt-1 text-2xl font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary)]">إدارة سوق الخدمات</h1><p className="mt-1 text-sm text-[var(--color-text-muted)]">تحكم بالمحتوى والمهن والحرفيين والطلبات والتشغيل من مكان واحد.</p></div><div className="flex gap-2"><Link href="/services" target="_blank" className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-bold text-[var(--color-text-secondary)] dark:border-[var(--color-border)] dark:bg-[var(--color-surface)] dark:text-[var(--color-surface-muted)]">معاينة السوق<ExternalLink className="h-4 w-4" /></Link><select value={locale} onChange={(event) => setLocale(event.target.value as "ar" | "en" | "tr")} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs dark:border-[var(--color-border)] dark:bg-[var(--color-surface)]"><option value="ar">العربية</option><option value="en">English</option><option value="tr">Türkçe</option></select></div></div>
 
         {!hasAccess && <Notice tone="error">لا تملك الصلاحية المطلوبة لإدارة سوق الخدمات.</Notice>}
+        {loadError && <Notice tone="error">{loadError}</Notice>}
         {message && <Notice tone="error">{message}</Notice>}
         {success && <Notice tone="success">{success}</Notice>}
 

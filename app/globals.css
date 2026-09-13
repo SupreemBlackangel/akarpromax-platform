@@ -123,19 +123,32 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: var(--type-body); font-variant-numeric: tabular-nums; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-/* The headings, from the scale. Set here so a component that writes no type
-   classes at all is already correct, and `text-wrap: balance` so a two-line
-   Arabic heading does not leave one word alone on the second line. */
-h1 { font: var(--type-h1); }
-h2 { font: var(--type-h2); }
-h3 { font: var(--type-h3); }
-h4 { font: var(--type-h4); }
-h1, h2, h3, h4 { margin: 0; text-wrap: balance; letter-spacing: 0; }
+/* The scale as DEFAULTS — inside @layer base, and that is the whole point.
+ *
+ * These rules were unlayered. Unlayered CSS outranks every layered rule
+ * regardless of specificity, and Tailwind's utilities live in @layer
+ * utilities — so `h1 { font: var(--type-h1) }` silently beat `text-2xl` on
+ * every heading in the product. The admin console's 24px title rendered at
+ * 32px, its panel headings at h2 and h3 size, and no class could argue.
+ *
+ * In @layer base they are what an element looks like when nobody said
+ * otherwise, and a component that does say otherwise is obeyed.
+ */
+@layer base {
+  h1 { font: var(--type-h1); }
+  h2 { font: var(--type-h2); }
+  h3 { font: var(--type-h3); }
+  h4 { font: var(--type-h4); }
+  /* `text-wrap: balance` so a two-line Arabic heading does not leave one word
+     alone on the second line. */
+  h1, h2, h3, h4 { margin: 0; text-wrap: balance; letter-spacing: 0; }
+  p, li, td { text-wrap: pretty; }
+  table { font: var(--type-table); }
+  th { font: var(--type-table-head); text-align: start; }
+  label, .badge, .chip { font: var(--type-label); }
+}
+
 .brand-copy strong { font-family: var(--font-heading-stack); }
-p, li, td { text-wrap: pretty; }
-table { font: var(--type-table); }
-th { font: var(--type-table-head); text-align: start; }
-label, .badge, .chip { font: var(--type-label); }
 button, input, select, textarea { font-family: inherit; }
 a { color: inherit; text-decoration: none; transition: color 0.15s var(--easing-standard); }
 button, input, select, textarea { font: inherit; }
