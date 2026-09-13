@@ -125,7 +125,7 @@ body[data-tool-focus="on"] .tc-page .container {
   background: var(--color-primary);
   color: var(--color-primary-foreground);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .fml-dropzone-icon {
@@ -143,7 +143,7 @@ body[data-tool-focus="on"] .tc-page .container {
 .fml-dropzone-title {
   color: var(--color-text-primary);
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-dropzone-sub {
@@ -195,7 +195,7 @@ body[data-tool-focus="on"] .tc-page .container {
   overflow: hidden;
   color: var(--color-text-primary);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -236,7 +236,7 @@ body[data-tool-focus="on"] .tc-page .container {
   background: var(--color-primary);
   color: var(--color-primary-foreground);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: background .16s ease;
 }
@@ -256,7 +256,7 @@ body[data-tool-focus="on"] .tc-page .container {
   background: transparent;
   color: inherit;
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -303,7 +303,7 @@ body[data-tool-focus="on"] .tc-page .container {
   padding: 10px 16px;
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   list-style: none;
 }
@@ -366,7 +366,7 @@ body[data-tool-focus="on"] .tc-page .container {
 .fml-field-label {
   color: var(--color-text-secondary);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .fml-select {
@@ -446,7 +446,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin: 10px 0 0;
   color: var(--color-danger);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* ===== Stage: processing ===== */
@@ -473,7 +473,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin: 18px 0 0;
   color: var(--color-text-primary);
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-processing-sub {
@@ -505,7 +505,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin-block-start: 8px;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
   text-align: start;
 }
 
@@ -549,7 +549,7 @@ body[data-tool-focus="on"] .tc-page .container {
 .fml-panel-head h3 {
   margin: 0;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-panel-head p {
@@ -607,7 +607,7 @@ body[data-tool-focus="on"] .tc-page .container {
 .fml-group-title {
   color: var(--color-text-primary);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .fml-group-center {
@@ -647,7 +647,7 @@ body[data-tool-focus="on"] .tc-page .container {
   gap: 6px;
   color: var(--color-text-primary);
   font-size: 13.5px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .fml-doc-value em {
@@ -657,7 +657,7 @@ body[data-tool-focus="on"] .tc-page .container {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* ---- Area against the document ---- */
@@ -687,7 +687,7 @@ body[data-tool-focus="on"] .tc-page .container {
 .fml-area-check strong {
   color: var(--color-text-primary);
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-area-check strong em {
@@ -702,7 +702,7 @@ body[data-tool-focus="on"] .tc-page .container {
   padding: 5px 12px;
   border-radius: 999px;
   font-size: var(--text-xs);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-area-check--match {
@@ -769,7 +769,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin: 8px 0 0;
   color: var(--color-text-primary);
   font-size: 24px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -781,7 +781,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin-inline-start: 4px;
   color: var(--color-text-muted);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .fml-summary-note {
@@ -842,7 +842,7 @@ body[data-tool-focus="on"] .tc-page .container {
   margin: 0;
   color: var(--color-text-primary);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-map {
@@ -880,7 +880,7 @@ body[data-tool-focus="on"] .tc-page .container {
   border-radius: 6px !important;
   background: rgba(29, 78, 216, .92) !important;
   color: #fff !important;
-  font: 800 var(--text-xs)/1.5 ui-monospace, Menlo, Consolas, monospace !important;
+  font: 700 var(--text-xs)/1.5 ui-monospace, Menlo, Consolas, monospace !important;
   box-shadow: none !important;
 }
 
@@ -918,7 +918,7 @@ body[data-tool-focus="on"] .tc-page .container {
   font-size: 14px;
   /* 800, not 900: the identity reserves 900 for 28px and above, and at 14px the
      two weights are the same wall of ink anyway. */
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* The grid the numbers belong to. An easting is a different place in each of
@@ -1091,7 +1091,7 @@ button.fml-zone-badge:focus-visible {
   padding: 10px 14px;
   color: var(--color-text-secondary);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
   text-align: left;
   white-space: nowrap;
 }
@@ -1112,7 +1112,7 @@ button.fml-zone-badge:focus-visible {
 .fml-cell-label {
   color: var(--color-primary) !important;
   font-family: inherit !important;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .fml-cell-lat {
@@ -1145,7 +1145,7 @@ button.fml-zone-badge:focus-visible {
   background: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: border-color .16s ease, background .16s ease;
 }

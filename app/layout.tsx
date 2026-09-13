@@ -13,8 +13,12 @@ import "./globals.css";
 // the same pair serves ar/en/tr — Inter is gone.
 const heading = Cairo({
   subsets: ["arabic", "latin"],
-  weight: ["700", "800", "900"],
+  // 600 and 700 carry every heading; 800 exists for the brand mark alone, and
+  // 900 is gone — a weight that heavy below 28px is a smudge, and every place
+  // that used it was below 28px.
+  weight: ["600", "700", "800"],
   display: "swap",
+  preload: true,
   variable: "--font-heading",
 });
 
@@ -22,6 +26,7 @@ const body = IBM_Plex_Sans_Arabic({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "700"],
   display: "swap",
+  preload: true,
   variable: "--font-body",
 });
 

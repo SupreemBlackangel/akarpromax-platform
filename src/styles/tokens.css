@@ -145,41 +145,86 @@
   --font-family-arabic: var(--font-body-stack);
   --font-family-latin: var(--font-body-stack);
 
-  /* Type scale. Six steps; nothing in the UI goes below --text-xs. Small
-     sizes read as running text (1.5); headings sit tighter (1.25). */
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 20px;
-  --text-xl: 28px;
-  --text-2xl: 40px;
-  --leading-xs: 1.5;
-  --leading-sm: 1.5;
-  --leading-md: 1.5;
-  --leading-lg: 1.35;
-  --leading-xl: 1.25;
-  --leading-2xl: 1.15;
-  /* 11px, and twenty-six components read it. Nothing in this product renders
-     below 12px (docs/brand-identity.md), so the floor is enforced HERE rather
-     than by finding each of them: the older scale keeps its name and stops
-     being a way around the rule. */
-  --font-size-xs: 12px;
-  --font-size-sm: 13px;
-  --font-size-md: 15px;
-  --font-size-lg: 18px;
-  --font-size-xl: 22px;
-  --font-size-2xl: 28px;
-  --font-size-3xl: 36px;
-  --font-size-display: 48px;
+  /* ---- Type scale — the single source of truth ----------------------------
+     SYNC: identical to the office app's tokens.css `--type-*` block.
+
+     Thirteen roles, not a ladder of sizes: a component asks for what a thing
+     IS (a table row, a price, a field label) rather than picking a number, so
+     the same kind of text is the same size on every screen without anybody
+     comparing two files.
+
+     Every size that varies does so with clamp(), between a phone value and a
+     desktop one — no breakpoints to keep in step, and nothing jumps at a
+     particular width. The fixed ones are fixed on purpose: a 14px table row
+     and a 12px label are already at the floor this product allows, and there
+     is nothing below them to scale to.
+
+     To change a size, change its `--type-*-size` here and nowhere else. */
+  --type-display-size: clamp(32px, 2.2vw + 24px, 44px); --type-display-lh: 1.15;
+  --type-h1-size:      clamp(26px, 1.2vw + 20px, 32px); --type-h1-lh: 1.25;
+  --type-h2-size:      clamp(20px, 0.8vw + 16px, 24px); --type-h2-lh: 1.3;
+  --type-h3-size:      clamp(17px, 0.2vw + 16px, 18px); --type-h3-lh: 1.35;
+  --type-h4-size:      clamp(15px, 0.2vw + 14px, 16px); --type-h4-lh: 1.4;
+  --type-body-size:    clamp(15px, 0.2vw + 14px, 16px); --type-body-lh: 1.7;
+  --type-body-sm-size: 14px; --type-body-sm-lh: 1.6;
+  --type-table-size:   14px; --type-table-lh: 1.5;
+  --type-table-head-size: 13px; --type-table-head-lh: 1.4;
+  --type-label-size:   12px; --type-label-lh: 1.4;
+  --type-button-size:  clamp(14px, 0.2vw + 13px, 15px); --type-button-lh: 1;
+  --type-price-size:   clamp(24px, 0.8vw + 20px, 28px); --type-price-lh: 1.2;
+  --type-stat-size:    clamp(28px, 1.6vw + 20px, 36px); --type-stat-lh: 1.1;
+
+  /* Shorthands, so a rule is `font: var(--type-h1)` and carries the weight,
+     the size, the line height and the family together — the four that have to
+     agree and used to be set in four places. */
+  --type-display: 700 var(--type-display-size)/var(--type-display-lh) var(--font-heading-stack);
+  --type-h1:      700 var(--type-h1-size)/var(--type-h1-lh) var(--font-heading-stack);
+  --type-h2:      700 var(--type-h2-size)/var(--type-h2-lh) var(--font-heading-stack);
+  --type-h3:      600 var(--type-h3-size)/var(--type-h3-lh) var(--font-heading-stack);
+  --type-h4:      600 var(--type-h4-size)/var(--type-h4-lh) var(--font-heading-stack);
+  --type-body:    400 var(--type-body-size)/var(--type-body-lh) var(--font-body-stack);
+  --type-body-sm: 400 var(--type-body-sm-size)/var(--type-body-sm-lh) var(--font-body-stack);
+  --type-table:   400 var(--type-table-size)/var(--type-table-lh) var(--font-body-stack);
+  --type-table-head: 500 var(--type-table-head-size)/var(--type-table-head-lh) var(--font-body-stack);
+  --type-label:   500 var(--type-label-size)/var(--type-label-lh) var(--font-body-stack);
+  --type-button:  500 var(--type-button-size)/var(--type-button-lh) var(--font-body-stack);
+  --type-price:   700 var(--type-price-size)/var(--type-price-lh) var(--font-body-stack);
+  --type-stat:    700 var(--type-stat-size)/var(--type-stat-lh) var(--font-body-stack);
+
+  /* Legacy aliases. Both older scales now RESOLVE to the new one rather than
+     holding their own numbers, so a component that has not been migrated is
+     already on the scale and the migration cannot half-apply. They are deleted
+     when the last consumer is gone. */
+  --text-xs: var(--type-label-size);
+  --text-sm: var(--type-body-sm-size);
+  --text-md: var(--type-body-size);
+  --text-lg: var(--type-h3-size);
+  --text-xl: var(--type-h1-size);
+  --text-2xl: var(--type-display-size);
+  --leading-xs: var(--type-label-lh);
+  --leading-sm: var(--type-body-sm-lh);
+  --leading-md: var(--type-body-lh);
+  --leading-lg: var(--type-h3-lh);
+  --leading-xl: var(--type-h1-lh);
+  --leading-2xl: var(--type-display-lh);
+  --font-size-xs: var(--type-label-size);
+  --font-size-sm: var(--type-table-head-size);
+  --font-size-md: var(--type-body-size);
+  --font-size-lg: var(--type-h3-size);
+  --font-size-xl: var(--type-h2-size);
+  --font-size-2xl: var(--type-price-size);
+  --font-size-3xl: var(--type-stat-size);
+  --font-size-display: var(--type-display-size);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --font-weight-extra-bold: 800;
-  --line-height-tight: 1.2;
-  --line-height-snug: 1.375;
-  --line-height-normal: 1.6;
-  --line-height-relaxed: 1.8;
+  /* 800 is the brand mark's and nothing else's; the alias collapses it. */
+  --font-weight-extra-bold: 700;
+  --line-height-tight: var(--type-h1-lh);
+  --line-height-snug: var(--type-h4-lh);
+  --line-height-normal: var(--type-body-sm-lh);
+  --line-height-relaxed: var(--type-body-lh);
   --letter-spacing-tight: -0.025em;
   --letter-spacing-normal: 0;
   --letter-spacing-wide: 0.02em;
