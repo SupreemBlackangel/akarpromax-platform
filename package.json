@@ -12,7 +12,7 @@
     "postinstall": "node ./scripts/patch-vinext-windows.mjs",
     "test:all": "node scripts/run-release-tests.mjs",
     "test": "npm run build && npm run test:all",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "node scripts/lint-type.mjs && eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "node ./scripts/guard-db-generate.mjs",
     "db:migrate:forward": "node --env-file=.env --import tsx scripts/migrate-forward.ts",
     "db:bootstrap:pg": "node --env-file=.env --import tsx scripts/bootstrap-postgres.ts",
@@ -28,7 +28,8 @@
     "seed:auth:admin": "node --env-file=.env --import tsx scripts/seed-auth-admin.ts",
     "diagnose:admin": "node --env-file=.env --import tsx scripts/diagnose-admin-login.ts",
     "email:check": "node --env-file=.env --import tsx scripts/email-provider-check.ts",
-    "test:e2e:production-runtime": "node --import tsx --test tests/e2e/production-runtime.test.mjs"
+    "test:e2e:production-runtime": "node --import tsx --test tests/e2e/production-runtime.test.mjs",
+    "lint:type": "node scripts/lint-type.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/ara": "^1.0.0",

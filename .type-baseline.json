@@ -1,0 +1,4 @@
+{
+  "$comment": "Type-scale debt, ratcheted. scripts/lint-type.mjs fails if a count RISES. Lower it as call sites move to roles; delete the entry when it reaches zero.",
+  "tailwind-size-step": 1849
+}

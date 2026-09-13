@@ -71,7 +71,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
                       <Building2 size={16} />
                     </span>
                   </div>
-                  <strong className="line-clamp-2 text-[15px] font-bold text-[var(--color-text-primary)]">{String(p.titleAr ?? "عقار")}</strong>
+                  <strong className="line-clamp-2 text-body font-bold text-[var(--color-text-primary)]">{String(p.titleAr ?? "عقار")}</strong>
                   {p.city ? (
                     <p className="mt-2 inline-flex items-center gap-1 text-sm text-[var(--color-text-secondary)]">
                       <MapPin size={13} /> {String(p.city)}

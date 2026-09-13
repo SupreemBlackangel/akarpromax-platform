@@ -171,6 +171,10 @@
   --type-table-head-size: 13px; --type-table-head-lh: 1.4;
   --type-label-size:   12px; --type-label-lh: 1.4;
   --type-button-size:  clamp(14px, 0.2vw + 13px, 15px); --type-button-lh: 1;
+  /* A form field, and 16px is not a taste: Safari on iOS zooms the page when a
+     focused input is smaller, and the zoom does not come back. It is the one
+     size in the scale that may not shrink on a phone. */
+  --type-field-size:   16px; --type-field-lh: 1.5;
   --type-price-size:   clamp(24px, 0.8vw + 20px, 28px); --type-price-lh: 1.2;
   --type-stat-size:    clamp(28px, 1.6vw + 20px, 36px); --type-stat-lh: 1.1;
 
@@ -188,6 +192,7 @@
   --type-table-head: 500 var(--type-table-head-size)/var(--type-table-head-lh) var(--font-body-stack);
   --type-label:   500 var(--type-label-size)/var(--type-label-lh) var(--font-body-stack);
   --type-button:  500 var(--type-button-size)/var(--type-button-lh) var(--font-body-stack);
+  --type-field:   400 var(--type-field-size)/var(--type-field-lh) var(--font-body-stack);
   --type-price:   700 var(--type-price-size)/var(--type-price-lh) var(--font-body-stack);
   --type-stat:    700 var(--type-stat-size)/var(--type-stat-lh) var(--font-body-stack);
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const SPIN_CLASS = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-const BASE_CLASS = `w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:focus:ring-blue-400 focus:border-transparent ${SPIN_CLASS}`;
+const BASE_CLASS = `w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] dark:focus:ring-blue-400 focus:border-transparent ${SPIN_CLASS}`;
 const ERROR_CLASS = "border-red-400 dark:border-[var(--color-error)] focus:ring-red-200 dark:focus:ring-red-800";
 
 type ToolNumericInputProps = {

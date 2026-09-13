@@ -270,7 +270,7 @@ export function CoordinateConverter({ locale }: Props) {
                   value={latInput}
                   onChange={(e) => setLatInput(e.target.value)}
                   placeholder={inputFormat === "dd" ? "23.5880" : inputFormat === "dms" ? "23° 35' 16.8\" N" : inputFormat === "ddm" ? "23° 35.28' N" : "437000"}
-                  className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   aria-label={inputFormat === "utm" ? "Easting" : "Latitude"}
                 />
               </div>
@@ -283,7 +283,7 @@ export function CoordinateConverter({ locale }: Props) {
                   value={lngInput}
                   onChange={(e) => setLngInput(e.target.value)}
                   placeholder={inputFormat === "dd" ? "58.3829" : inputFormat === "dms" ? "58° 22' 58.4\" E" : inputFormat === "ddm" ? "58° 22.97' E" : "2606000"}
-                  className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   aria-label={inputFormat === "utm" ? "Northing" : "Longitude"}
                 />
               </div>
@@ -298,7 +298,7 @@ export function CoordinateConverter({ locale }: Props) {
                   <select
                     value={dmsDirLat}
                     onChange={(e) => setDmsDirLat(e.target.value)}
-                    className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     aria-label="Latitude direction"
                   >
                     <option value="N">N (North)</option>
@@ -312,7 +312,7 @@ export function CoordinateConverter({ locale }: Props) {
                   <select
                     value={dmsDirLng}
                     onChange={(e) => setDmsDirLng(e.target.value)}
-                    className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg min-h-[48px] md:min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     aria-label="Longitude direction"
                   >
                     <option value="E">E (East)</option>
@@ -355,7 +355,7 @@ export function CoordinateConverter({ locale }: Props) {
               value={batchInput}
               onChange={(e) => setBatchInput(e.target.value)}
               rows={7}
-              className="w-full px-3 py-2 text-[16px] sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2 text-field sm:text-sm bg-[var(--color-surface)] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-lg font-mono min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder={"21.543333, 39.172778\n23.5880, 58.3829\n23° 35' 16.8\" N 58° 22' 58.4\" E\n39N 437000 2606000"}
             />
             <button

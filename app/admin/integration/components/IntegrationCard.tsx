@@ -43,7 +43,7 @@ export default function IntegrationCard({ icon, name, description, status, lastS
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="truncate text-[15px] font-bold text-[color:var(--color-text-primary)]">{name}</h3>
+            <h3 className="truncate text-body font-bold text-[color:var(--color-text-primary)]">{name}</h3>
             <IntegrationStatusBadge status={status} />
           </div>
           <p className="mt-1 line-clamp-2 text-sm text-[color:var(--color-text-secondary)]">{description}</p>

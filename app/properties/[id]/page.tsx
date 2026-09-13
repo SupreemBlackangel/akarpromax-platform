@@ -316,7 +316,7 @@ export default function PropertyPage({ params }: Props) {
 
                 <div className="grid gap-x-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
                   <div className="px-6 py-5">
-                    <p className="text-[13px] leading-7 text-[color:var(--color-text-secondary)]">{property.description[locale]}</p>
+                    <p className="text-body-sm leading-7 text-[color:var(--color-text-secondary)]">{property.description[locale]}</p>
 
                     <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                       {property.bedrooms > 0 && (

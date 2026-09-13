@@ -6,8 +6,8 @@ import { cn } from "@/src/utils/cn";
  * A heading whose LEVEL and whose SIZE are the same decision.
  *
  * They were two decisions, made separately, and they disagreed: a page would
- * mark a section `<h2>` for the document outline and then style it `text-lg
- * font-black` because that looked right, so a screen reader announced a level
+ * mark a section `<h2>` for the document outline and then style it two steps
+ * larger and heavier because that looked right, so a screen reader announced a level
  * the eye could not see and the eye saw a rank the outline did not have.
  *
  * Here the level picks the tag and the type role together — `<Heading level={2}>`

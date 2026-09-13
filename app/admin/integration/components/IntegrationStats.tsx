@@ -47,7 +47,7 @@ export default function IntegrationStats({ stats, loading = false }: { stats: In
         <div key={s.key} className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4 transition-shadow hover:shadow-sm">
           <span className={`grid h-9 w-9 place-items-center rounded-xl ${TONE[s.tone]}`} aria-hidden="true">{s.icon}</span>
           {s.value === null ? (
-            <p className="mt-3 text-[15px] font-bold text-[color:var(--color-text-secondary)]">لا توجد بيانات</p>
+            <p className="mt-3 text-body font-bold text-[color:var(--color-text-secondary)]">لا توجد بيانات</p>
           ) : (
             <p className="mt-3 text-2xl font-bold leading-none text-[color:var(--color-text-primary)]">{s.value}</p>
           )}
